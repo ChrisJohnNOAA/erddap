@@ -1095,7 +1095,7 @@ TableWriterUnits twu;
 TaskThread tt;
 TouchThread tt2;
 TranslateMessages translateMessages;
-WaitThenTryAgainException wttae; 
+WaitThenTryAgainException wttae;
 
         StringBuilder errorSB = new StringBuilder();
         boolean interactive = false;
@@ -1114,7 +1114,7 @@ WaitThenTryAgainException wttae;
         XML.test(                        errorSB, interactive, doSlowTestsToo, 0, -1);
         LRUCache.test(                   errorSB, interactive, doSlowTestsToo, 0, -1);
 
-        ByteArray.test(                  errorSB, interactive, doSlowTestsToo, 0, -1);
+        ByteArrayTests.test(                  errorSB, interactive, doSlowTestsToo, 0, -1);
         CharArray.test(                  errorSB, interactive, doSlowTestsToo, 0, -1);
         ShortArray.test(                 errorSB, interactive, doSlowTestsToo, 0, -1);
         IntArray.test(                   errorSB, interactive, doSlowTestsToo, 0, -1);
