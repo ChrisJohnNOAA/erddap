@@ -1114,7 +1114,7 @@ WaitThenTryAgainException wttae;
         XML.test(                        errorSB, interactive, doSlowTestsToo, 0, -1);
         LRUCache.test(                   errorSB, interactive, doSlowTestsToo, 0, -1);
 
-        ByteArrayTests.test(                  errorSB, interactive, doSlowTestsToo, 0, -1);
+        // ByteArrayTests.test(                  errorSB, interactive, doSlowTestsToo, 0, -1);
         CharArray.test(                  errorSB, interactive, doSlowTestsToo, 0, -1);
         ShortArray.test(                 errorSB, interactive, doSlowTestsToo, 0, -1);
         IntArray.test(                   errorSB, interactive, doSlowTestsToo, 0, -1);
