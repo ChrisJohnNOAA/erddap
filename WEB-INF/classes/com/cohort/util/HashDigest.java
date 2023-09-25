@@ -331,13 +331,13 @@ public class HashDigest {
         Test.ensureEqual(doIt(new String[]{"password:myPassword", "type:SHA-256"}), 
             "76549b827ec46e705fd03831813fa52172338f0dfcbd711ed44b81a96dac51c6", "");
         Test.ensureEqual(doIt(new String[]{"filename:" + tName, "type:MD5"}), 
-            "327fbb2aa6c6297d4fdd5fdf4b14e289", "");
+            "96e9b4d974b734874a66f433b276a41a", "");
         Test.ensureEqual(doIt(new String[]{"filename:" + tName, "type:SHA-256"}), 
-            "e376c88953b2d56b00783fed071f1875e8ed94230f4e14eee5bce8bd608de5e6", "");
+            "f6afea3f5fa69c8e54b14b3fdb86a9aa261a423cea957c9c87b55b92441d56bb", "");
         Test.ensureEqual(doIt(new String[]{"filename:" + tName, "type:SHA-256", "-file"}), 
             "Created " + tName + ".sha256", "");
         Test.ensureEqual(File2.readFromFileUtf8(tName + ".sha256")[1],
-            "e376c88953b2d56b00783fed071f1875e8ed94230f4e14eee5bce8bd608de5e6  License.txt\n", "");
+            "f6afea3f5fa69c8e54b14b3fdb86a9aa261a423cea957c9c87b55b92441d56bb  License.txt\n", "");
         File2.delete(tName + ".sha256");
     }
 
