@@ -15,6 +15,8 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -454,6 +456,9 @@ public class RegexFilenameFilter implements FilenameFilter {
             coastwatchDir + "util/StringObject.java"             
             };
         Test.ensureEqual(sar, shouldBe, "RegexFilenameFilter.recursiveFullNameList");
+    }
+
+    public static void digirDirTest() throws Exception {
 
         //gatherInfo
         PrimitiveArray info[] = gatherInfo("C:\\programs\\digir", "obis.*");
@@ -483,31 +488,31 @@ public class RegexFilenameFilter implements FilenameFilter {
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? -1 : 0;
-        String msg = "\n^^^ RegexFilenameFilter.test(" + interactive + ") test=";
+            lastTest = config.interactive? -1 : 1;
+        String msg = "\n^^^ RegexFilenameFilter.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     //if (test ==  0) ...;
 
                 } else {
                     if (test ==  0) basicTest();
+                    if (test ==  1 && config.otherLocalFiles) digirDirTest();
                 }
 
                 String2.log(msg + test + " finished successfully in " + (System.currentTimeMillis() - time) + " ms.");
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

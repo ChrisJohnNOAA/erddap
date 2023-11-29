@@ -25,6 +25,7 @@ import com.cohort.util.Test;
 import com.cohort.util.Units2;
 import com.cohort.util.XML;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.griddata.DataHelper;
 import gov.noaa.pfel.coastwatch.griddata.Grid;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
@@ -20193,53 +20194,52 @@ expected =
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? -1 : 37;
-        String msg = "\n^^^ Erddap.test(" + interactive + ") test=";
+            lastTest = config.interactive? -1 : 37;
+        String msg = "\n^^^ Erddap.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     if (test ==  0) testAwsS3MediaFiles();
 
                 } else {
-                    if (test ==  0) testBasic();
-                    if (test ==  1) testJsonld();
-                    if (test ==  2) testSearch();
-                    if (test ==  3) testAdvancedSearch();
+                    if (test ==  0 && config.localERDDAPServer) testBasic();
+                    if (test ==  1 && config.localERDDAPServer) testJsonld();
+                    if (test ==  2 && config.localERDDAPServer) testSearch();
+                    if (test ==  3 && config.localERDDAPServer) testAdvancedSearch();
                     if (test ==  4) testCategorize();
                     if (test ==  5) testConvertInterpolate();
 
-                    if (test == 10 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/oceanicAtmosphericAcronyms.html");
-                    if (test == 11 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/fipscounty.html");
-                    if (test == 12 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/keywords.html");
-                    if (test == 13 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/time.html");
-                    if (test == 14 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/units.html");
-                    if (test == 15 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/urls.html");
-                    if (test == 16 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/oceanicAtmosphericVariableNames.html");
+                    if (test == 10 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/oceanicAtmosphericAcronyms.html");
+                    if (test == 11 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/fipscounty.html");
+                    if (test == 12 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/keywords.html");
+                    if (test == 13 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/time.html");
+                    if (test == 14 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/units.html");
+                    if (test == 15 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/urls.html");
+                    if (test == 16 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/convert/oceanicAtmosphericVariableNames.html");
 
-                    if (test == 20 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/AccessToPrivateDatasets.html");
-                    if (test == 21 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/changes.html");
-                    if (test == 22 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/EDDTableFromEML.html");
-                    if (test == 23 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/grids.html");
-                    if (test == 24 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/NCCSV.html");
-                    if (test == 25 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/NCCSV_1.00.html");
-                    if (test == 26 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/setup.html");
-                    if (test == 27 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/setupDatasetsXml.html");
+                    if (test == 20 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/AccessToPrivateDatasets.html");
+                    if (test == 21 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/changes.html");
+                    if (test == 22 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/EDDTableFromEML.html");
+                    if (test == 23 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/grids.html");
+                    if (test == 24 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/NCCSV.html");
+                    if (test == 25 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/NCCSV_1.00.html");
+                    if (test == 26 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/setup.html");
+                    if (test == 27 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/download/setupDatasetsXml.html");
 
-                    if (test == 30 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/information.html");
-                    if (test == 31 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/rest.html");
-                    if (test == 32 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/griddap/documentation.html");
-                    if (test == 33 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/tabledap/documentation.html");
-                    if (test == 34 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/files/documentation.html");
-                    if (test == 35 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/wms/documentation.html");
-                    if (test == 36 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/images/erddapTalk/TablesAndGrids.html");
-                    if (test == 37 && doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/images/erddapTalk/erdData.html");
+                    if (test == 30 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/information.html");
+                    if (test == 31 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/rest.html");
+                    if (test == 32 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/griddap/documentation.html");
+                    if (test == 33 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/tabledap/documentation.html");
+                    if (test == 34 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/files/documentation.html");
+                    if (test == 35 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/wms/documentation.html");
+                    if (test == 36 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/images/erddapTalk/TablesAndGrids.html");
+                    if (test == 37 && config.localERDDAPServer && config.doSlowTestsToo) SSR.testForBrokenLinks("http://localhost:8080/cwexperimental/images/erddapTalk/erdData.html");
 
                 }
 
@@ -20247,9 +20247,9 @@ expected =
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

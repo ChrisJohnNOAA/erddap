@@ -7,6 +7,8 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.TestUtil;
 import com.cohort.util.XML;
+
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.SSR;
 
@@ -2109,19 +2111,18 @@ import org.xml.sax.SAXException;
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         int language = 0;
         if (lastTest < 0)
-            lastTest = interactive? 0 : 6;
-        String msg = "\n^^^ TranslateMessages.test(" + interactive + ") test=";
+            lastTest = config.interactive? 0 : 6;
+        String msg = "\n^^^ TranslateMessages.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     //if (test ==  0) testSomething();
 
                 } else {
@@ -2131,16 +2132,16 @@ import org.xml.sax.SAXException;
                     if (test ==  3) testTranslateHtml();
                     if (test ==  4) testTranslateComment();
                     if (test ==  5) testTranslatePlainText();
-                    if (test ==  6) checkForUncaughtSpecialText(); 
+                    if (test ==  6 && config.localERDDAPServer) checkForUncaughtSpecialText(); 
                 }
 
                 String2.log(msg + test + " finished successfully in " + (System.currentTimeMillis() - time) + " ms.");
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

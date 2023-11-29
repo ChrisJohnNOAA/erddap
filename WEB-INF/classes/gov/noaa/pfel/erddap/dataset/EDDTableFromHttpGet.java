@@ -2007,7 +2007,7 @@ public class EDDTableFromHttpGet extends EDDTableFromFiles {
     public static void testGenerateDatasetsXml() throws Throwable {
         testVerboseOn();
         int language = 0;
-        String dataDir = "/u00/data/points/testFromHttpGet/";
+        String dataDir = "c:/u00/data/points/testFromHttpGet/";
         String sampleFile = dataDir + "testFromHttpGet.jsonl";
 
         String results = generateDatasetsXml(language, 
@@ -2040,10 +2040,10 @@ public class EDDTableFromHttpGet extends EDDTableFromFiles {
 String expected = 
 "<!-- NOTE! Since JSON Lines CSV files have no metadata, you MUST edit the chunk\n" +
 "  of datasets.xml below to add all of the metadata (especially \"units\"). -->\n" +
-"<dataset type=\"EDDTableFromHttpGet\" datasetID=\"testFromHttpGet_25bf_9033_586b\" active=\"true\">\n" +
+"<dataset type=\"EDDTableFromHttpGet\" datasetID=\"testFromHttpGet_134e_8cee_ef1b\" active=\"true\">\n" +
 "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n" +
 "    <updateEveryNMillis>-1</updateEveryNMillis>\n" +
-"    <fileDir>/u00/data/points/testFromHttpGet/</fileDir>\n" +
+"    <fileDir>c:/u00/data/points/testFromHttpGet/</fileDir>\n" +
 "    <fileNameRegex>.*\\.jsonl</fileNameRegex>\n" +
 "    <recursive>true</recursive>\n" +
 "    <pathRegex>.*</pathRegex>\n" +
@@ -2176,7 +2176,7 @@ String expected =
 "</dataset>\n\n\n";
         Test.ensureEqual(results, expected, "results=\n" + results);
 
-        String tDatasetID = "testFromHttpGet_25bf_9033_586b";
+        String tDatasetID = "testFromHttpGet_134e_8cee_ef1b";
         EDD.deleteCachedDatasetInfo(tDatasetID);
         //delete the data files (but not the seed data file)
         File2.deleteAllFiles(dataDir + "station1", true, true);
@@ -2207,7 +2207,7 @@ String expected =
         String name, tName, results, tResults, expected, userDapQuery, tQuery;
         String error = "";
         EDV edv;
-        String dataDir = "/u00/data/points/testFromHttpGet/";
+        String dataDir = "c:/u00/data/points/testFromHttpGet/";
         String dir = EDStatic.fullTestCacheDirectory;
         String today = Calendar2.getCurrentISODateTimeStringZulu().substring(0, 14); //14 is enough to check hour. Hard to check min:sec.
         boolean oReallyVerbose = reallyVerbose;
@@ -2240,7 +2240,7 @@ String expected =
 "  }\n" +
 "  time {\n" +
 "    String _CoordinateAxisType \"Time\";\n" +
-"    Float64 actual_range 1.529946e+9, 1.529946e+9;\n" +
+"    Float64 actual_range 1.461888e+9, 1.529946e+9;\n" +
 "    String axis \"T\";\n" +
 "    String ioos_category \"Time\";\n" +
 "    String long_name \"Time\";\n" +
@@ -2274,21 +2274,21 @@ String expected =
 "    String units \"degrees_east\";\n" +
 "  }\n" +
 "  airTemp {\n" +
-"    Float32 actual_range 14.2, 14.2;\n" +
+"    Float32 actual_range 10.2, 22.1;\n" +
 "    String ioos_category \"Temperature\";\n" +
 "    String long_name \"Air Temp\";\n" +
 "    Float32 missing_value NaN;\n" +
 "    String units \"degree_C\";\n" +
 "  }\n" +
 "  waterTemp {\n" +
-"    Float32 actual_range 12.2, 12.2;\n" +
+"    Float32 actual_range 11.2, 23.1;\n" +
 "    String ioos_category \"Unknown\";\n" +
 "    String long_name \"Water Temp\";\n" +
 "    Float32 missing_value NaN;\n" +
 "    String units \"degree_C\";\n" +
 "  }\n" +
 "  timestamp {\n" +
-"    Float64 actual_range 0.0, 0.0;\n" +
+"    Float64 actual_range 0.0, 1.531153327766e+9;\n" +
 "    String ioos_category \"Time\";\n" +
 "    String long_name \"Timestamp\";\n" +
 "    String time_origin \"01-JAN-1970 00:00:00\";\n" +
@@ -2332,7 +2332,7 @@ String expected =
 expected =
 "    String httpGetDirectoryStructure \"stationID/2months\";\n" +
 "    String httpGetRequiredVariables \"stationID, time\";\n" +
-"    String infoUrl \"https://erddap.github.io/setupDatasetsXml.html\";\n" +
+"    String infoUrl \"https://coastwatch.pfeg.noaa.gov/erddap/download/setupDatasetsXml.html\";\n" +
 "    String institution \"NOAA NMFS SWFSC ERD\";\n" +
 "    String keywords \"air, airTemp, author, center, command, data, erd, fisheries, great, identifier, latitude, longitude, marine, national, nmfs, noaa, science, service, southwest, station, stationID, swfsc, temperature, time, timestamp, title, water, waterTemp\";\n" +
 "    String license \"The data may be used and redistributed for free but is not intended\n" +
@@ -2350,7 +2350,7 @@ expected =
 "    String summary \"This is my great summary. NOAA National Marine Fisheries Service (NMFS) Southwest Fisheries Science Center (SWFSC) ERD data from a local source.\";\n" +
 "    String testOutOfDate \"now-1day\";\n" +
 "    String time_coverage_end \"2018-06-25T17:00:00Z\";\n" +
-"    String time_coverage_start \"2018-06-25T17:00:00Z\";\n" +
+"    String time_coverage_start \"2016-04-29T00:00:00Z\";\n" +
 "    String title \"My Great Title\";\n" +
 "    Float64 Westernmost_Easting -150.3;\n" +
 "  }\n" +
@@ -2623,7 +2623,7 @@ station2,2016-05-29T01:00:00Z,10.2,-150.3,NaN,NaN,2020-10-09T19:12:57.577Z,JohnS
 
         //direct read a data file 
         results = File2.directReadFromUtf8File(
-            "/u00/data/points/testFromHttpGet/station2/station2_2016-05.jsonl");
+            "c:/u00/data/points/testFromHttpGet/station2/station2_2016-05.jsonl");
         //String2.log(results);
         expected = 
 "\\[\"stationID\",\"time\",\"airTemp\",\"waterTemp\",\"timestamp\",\"author\",\"command\"\\]\n" +

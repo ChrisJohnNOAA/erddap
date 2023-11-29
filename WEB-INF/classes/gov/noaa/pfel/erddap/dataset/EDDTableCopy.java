@@ -19,6 +19,7 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.RegexFilenameFilter;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
@@ -685,23 +686,23 @@ public class EDDTableCopy extends EDDTable{
 "  }\n" +
 "  longitude {\n" +
 "    String _CoordinateAxisType \"Lon\";\n" +
-"    Float32 _FillValue NaN;\n" +
+"    Float32 _FillValue 327.67;\n" +
 "    Float32 actual_range -126.2, -124.1;\n" +
 "    String axis \"X\";\n" +
 "    String ioos_category \"Location\";\n" +
 "    String long_name \"Longitude\";\n" +
-"    Float32 missing_value NaN;\n" +
+"    Float32 missing_value 327.67;\n" +
 "    String standard_name \"longitude\";\n" +
 "    String units \"degrees_east\";\n" +
 "  }\n" +
 "  latitude {\n" +
 "    String _CoordinateAxisType \"Lat\";\n" +
-"    Float32 _FillValue NaN;\n" +
+"    Float32 _FillValue 327.67;\n" +
 "    Float32 actual_range 41.9, 44.65;\n" +
 "    String axis \"Y\";\n" +
 "    String ioos_category \"Location\";\n" +
 "    String long_name \"Latitude\";\n" +
-"    Float32 missing_value NaN;\n" +
+"    Float32 missing_value 327.67;\n" +
 "    String standard_name \"latitude\";\n" +
 "    String units \"degrees_north\";\n" +
 "  }\n" +
@@ -780,9 +781,9 @@ public class EDDTableCopy extends EDDTable{
 "    Float64 colorBarMaximum 37.0;\n" +
 "    Float64 colorBarMinimum 32.0;\n" +
 "    String ioos_category \"Salinity\";\n" +
-"    String long_name \"Salinity from T0 and C0 Sensors\";\n" +
+"    String long_name \"Practical Salinity from T0 and C0 Sensors\";\n" +
 "    Float32 missing_value -9999.0;\n" +
-"    String standard_name \"sea_water_salinity\";\n" +
+"    String standard_name \"sea_water_practical_salinity\";\n" +
 "    String units \"PSU\";\n" +
 "  }\n" +
 "  sal11 {\n" +
@@ -791,9 +792,9 @@ public class EDDTableCopy extends EDDTable{
 "    Float64 colorBarMaximum 37.0;\n" +
 "    Float64 colorBarMinimum 32.0;\n" +
 "    String ioos_category \"Salinity\";\n" +
-"    String long_name \"Salinity from T1 and C1 Sensors\";\n" +
+"    String long_name \"Practical Salinity from T1 and C1 Sensors\";\n" +
 "    Float32 missing_value -9999.0;\n" +
-"    String standard_name \"sea_water_salinity\";\n" +
+"    String standard_name \"sea_water_practical_salinity\";\n" +
 "    String units \"PSU\";\n" +
 "  }\n" +
 "  temperature0 {\n" +
@@ -945,9 +946,9 @@ public class EDDTableCopy extends EDDTable{
 //today + " https://oceanwatch.pfeg.noaa.gov/opendap/GLOBEC/GLOBEC_bottle\n" +
 //today + " http://localhost:8080/cwexperimental/tabledap/rGlobecBottle.das\";\n" +
     expected2 = 
-"    String infoUrl \"http://www.globec.org/\";\n" +
+"    String infoUrl \"https://en.wikipedia.org/wiki/Global_Ocean_Ecosystem_Dynamics\";\n" +
 "    String institution \"GLOBEC\";\n" +
-"    String keywords \"10um, active, after, ammonia, ammonium, attenuation, biosphere, bottle, cast, chemistry, chlorophyll, chlorophyll-a, color, concentration, concentration_of_chlorophyll_in_sea_water, cruise, data, density, dissolved, dissolved nutrients, dissolved o2, Earth Science > Biosphere > Vegetation > Photosynthetically Active Radiation, Earth Science > Oceans > Ocean Chemistry > Ammonia, Earth Science > Oceans > Ocean Chemistry > Chlorophyll, Earth Science > Oceans > Ocean Chemistry > Nitrate, Earth Science > Oceans > Ocean Chemistry > Nitrite, Earth Science > Oceans > Ocean Chemistry > Nitrogen, Earth Science > Oceans > Ocean Chemistry > Oxygen, Earth Science > Oceans > Ocean Chemistry > Phosphate, Earth Science > Oceans > Ocean Chemistry > Pigments, Earth Science > Oceans > Ocean Chemistry > Silicate, Earth Science > Oceans > Ocean Optics > Attenuation/Transmission, Earth Science > Oceans > Ocean Temperature > Water Temperature, Earth Science > Oceans > Salinity/Density > Salinity, fluorescence, fraction, from, globec, identifier, mass, mole, mole_concentration_of_ammonium_in_sea_water, mole_concentration_of_nitrate_in_sea_water, mole_concentration_of_nitrite_in_sea_water, mole_concentration_of_phosphate_in_sea_water, mole_concentration_of_silicate_in_sea_water, moles, moles_of_nitrate_and_nitrite_per_unit_mass_in_sea_water, n02, nep, nh4, nitrate, nitrite, nitrogen, no3, number, nutrients, o2, ocean, ocean color, oceans, optical, optical properties, optics, oxygen, passing, per, phaeopigments, phosphate, photosynthetically, pigments, plus, po4, properties, radiation, rosette, salinity, screen, sea, sea_water_salinity, sea_water_temperature, seawater, sensor, sensors, ship, silicate, temperature, time, total, transmission, transmissivity, unit, vegetation, voltage, volume, volume_fraction_of_oxygen_in_sea_water, water\";\n" +
+"    String keywords \"10um, active, after, ammonia, ammonium, attenuation, biosphere, bottle, cast, chemistry, chlorophyll, chlorophyll-a, color, concentration, concentration_of_chlorophyll_in_sea_water, cruise, data, density, dissolved, dissolved nutrients, dissolved o2, Earth Science > Biosphere > Vegetation > Photosynthetically Active Radiation, Earth Science > Oceans > Ocean Chemistry > Ammonia, Earth Science > Oceans > Ocean Chemistry > Chlorophyll, Earth Science > Oceans > Ocean Chemistry > Nitrate, Earth Science > Oceans > Ocean Chemistry > Nitrite, Earth Science > Oceans > Ocean Chemistry > Nitrogen, Earth Science > Oceans > Ocean Chemistry > Oxygen, Earth Science > Oceans > Ocean Chemistry > Phosphate, Earth Science > Oceans > Ocean Chemistry > Pigments, Earth Science > Oceans > Ocean Chemistry > Silicate, Earth Science > Oceans > Ocean Optics > Attenuation/Transmission, Earth Science > Oceans > Ocean Temperature > Water Temperature, Earth Science > Oceans > Salinity/Density > Salinity, fluorescence, fraction, from, globec, identifier, mass, mole, mole_concentration_of_ammonium_in_sea_water, mole_concentration_of_nitrate_in_sea_water, mole_concentration_of_nitrite_in_sea_water, mole_concentration_of_phosphate_in_sea_water, mole_concentration_of_silicate_in_sea_water, moles, moles_of_nitrate_and_nitrite_per_unit_mass_in_sea_water, n02, nep, nh4, nitrate, nitrite, nitrogen, no3, number, nutrients, o2, ocean, ocean color, oceans, optical, optical properties, optics, oxygen, passing, per, phaeopigments, phosphate, photosynthetically, pigments, plus, po4, properties, radiation, rosette, salinity, screen, sea, sea_water_practical_salinity, sea_water_temperature, seawater, sensor, sensors, ship, silicate, temperature, time, total, transmission, transmissivity, unit, vegetation, voltage, volume, volume_fraction_of_oxygen_in_sea_water, water\";\n" +
 "    String keywords_vocabulary \"GCMD Science Keywords\";\n" +
 "    String license \"The data may be used and redistributed for free but is not intended\n" +
 "for legal use, since it may contain inaccuracies. Neither the data\n" +
@@ -959,7 +960,7 @@ public class EDDTableCopy extends EDDTable{
 "    Float64 Northernmost_Northing 44.65;\n" +
 "    String sourceUrl \"(local files; contact erd.data@noaa.gov)\";\n" +
 "    Float64 Southernmost_Northing 41.9;\n" +
-"    String standard_name_vocabulary \"CF Standard Name Table v27\";\n" +
+"    String standard_name_vocabulary \"CF Standard Name Table v70\";\n" +
 "    String subsetVariables \"cruise_id, ship, cast, longitude, latitude, time\";\n" +
 "    String summary \"GLOBEC (GLOBal Ocean ECosystems Dynamics) NEP (Northeast Pacific)\n" +
 "Rosette Bottle Data from New Horizon Cruise (NH0207: 1-19 August 2002).\n" +
@@ -984,8 +985,8 @@ public class EDDTableCopy extends EDDTable{
 "NO2       0.003-0.004   0.003   Nitrite          micromoles per liter\n" +
 "Dates and Times are UTC.\n" +
 "\n" +
-"For more information, see\n" +
-"http://cis.whoi.edu/science/bcodmo/dataset.cfm?id=10180&flag=view\n" +
+"For more information, see https://www.bco-dmo.org/dataset/2452\n" +
+//"http://cis.whoi.edu/science/bcodmo/dataset.cfm?id=10180&flag=view\n" +
 "\n" +
 "Inquiries about how to access this data should be directed to\n" +
 "Dr. Hal Batchelder (hbatchelder@coas.oregonstate.edu).\";\n" +
@@ -1116,6 +1117,7 @@ public class EDDTableCopy extends EDDTable{
             //    edd.className() + "_Data", ".dods"); 
             //Test.displayInBrowser("file://" + tDir + tName);
             String2.log("\ndo .dods test");
+            System.out.println(EDStatic.erddapUrl);
             String tUrl = EDStatic.erddapUrl + //in tests, always use non-https url
                 "/tabledap/" + edd.datasetID();
             //for diagnosing during development:
@@ -1485,18 +1487,17 @@ reallyVerbose=false;
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? -1 : 1;
-        String msg = "\n^^^ EDDTableCopy.test(" + interactive + ") test=";
+            lastTest = config.interactive? -1 : 1;
+        String msg = "\n^^^ EDDTableCopy.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     //if (test ==  0) ...;
 
                     //no longer active
@@ -1505,7 +1506,7 @@ reallyVerbose=false;
 
                 } else {
                     if (test ==  0) testBasic();    //tests testTableCopy dataset on local erddap
-                    if (test ==  1) testFiles();    
+                    if (test ==  1 && config.localERDDAPServer) testFiles();    
 
                 }
 
@@ -1513,9 +1514,9 @@ reallyVerbose=false;
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

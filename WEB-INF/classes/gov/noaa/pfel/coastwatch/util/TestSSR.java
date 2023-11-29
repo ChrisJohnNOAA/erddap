@@ -12,6 +12,8 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
+
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.PixelGrabber;
@@ -676,18 +678,17 @@ public class TestSSR {
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? 2 : 1;
-        String msg = "\n^^^ TestSSR.test(" + interactive + ") test=";
+            lastTest = config.interactive? 2 : 1;
+        String msg = "\n^^^ TestSSR.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     if (test ==  0) runNonUnixTests();
                     if (test ==  1) testEmail();
                     if (test ==  2) testPostFormGetResponseString();
@@ -695,17 +696,17 @@ public class TestSSR {
                     if (test == 1000) runUnixTests();
 
                 } else {
-                    if (test ==  0) testAwsS3();
-                    if (test ==  1) testAwsTransferManager();
+                    if (test ==  0 && config.aws) testAwsS3();
+                    if (test ==  1 && config.aws) testAwsTransferManager();
                 }
 
                 String2.log(msg + test + " finished successfully in " + (System.currentTimeMillis() - time) + " ms.");
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

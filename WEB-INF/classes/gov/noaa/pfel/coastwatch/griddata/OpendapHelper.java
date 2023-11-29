@@ -16,7 +16,7 @@ import com.cohort.util.XML;
 
 /** The Java DAP classes.  */
 import dods.dap.*;
-
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.util.SSR;
 
 import java.io.ByteArrayOutputStream;
@@ -2978,26 +2978,25 @@ expected2 =
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? -1 : 6;
-        String msg = "\n^^^ OpendapHelper.test(" + interactive + ") test=";
+            lastTest = config.interactive? -1 : 6;
+        String msg = "\n^^^ OpendapHelper.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
 
                 } else {
                     if (test ==  0) testGetAttributes();
                     if (test ==  1) testParseStartStrideStop();
-                    if (test ==  2) testDapToNcDArray();
+                    if (test ==  2 && config.thredds) testDapToNcDArray();
                     if (test ==  3) testFindVarsWithSharedDimensions();
                     if (test ==  4) testFindAllScalarOrMultiDimVars();
-                    if (test ==  5) testDapToNcDGrid();
+                    if (test ==  5 && config.externalERDDAP) testDapToNcDGrid();
                     if (test ==  6) testAllDapToNc(-1);  //-1 for all tests, or 0.. for specific test   
                 }
 
@@ -3005,9 +3004,9 @@ expected2 =
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

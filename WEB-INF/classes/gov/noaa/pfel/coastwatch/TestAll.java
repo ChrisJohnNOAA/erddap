@@ -99,6 +99,8 @@ public class TestAll  {
         //make it appear that initialLoadDatasets() is not true
         EDStatic.majorLoadDatasetsTimeSeriesSB.append("\n");
 
+        TestConfig config = new TestConfig();
+
 //INDIVIDUAL TESTS (for convenience) -- ~alphabetical by class name
 
 //TestUtil.testString2();
@@ -1097,9 +1099,10 @@ TouchThread tt2;
 TranslateMessages translateMessages;
 WaitThenTryAgainException wttae; 
 
-        StringBuilder errorSB = new StringBuilder();
-        boolean interactive = false;
-        boolean doSlowTestsToo = false;
+        StringBuilder errorSB = config.errorSB;
+        boolean interactive = config.interactive;
+        boolean doSlowTestsToo = config.doSlowTestsToo;
+
 
 
 /* for releases, this line should have open/close comment */
@@ -1131,8 +1134,8 @@ WaitThenTryAgainException wttae;
         Attributes.test(                 errorSB, interactive, doSlowTestsToo, 0, -1);
         ResourceBundle2.test(            errorSB, interactive, doSlowTestsToo, 0, -1);
 
-        TestSSR.test(                    errorSB, interactive, doSlowTestsToo, 0, -1); //requires localhost ERDDAP
-        RegexFilenameFilter.test(        errorSB, interactive, doSlowTestsToo, 0, -1);  
+        TestSSR.test(                    config, 0, -1); //requires localhost ERDDAP
+        RegexFilenameFilter.test(        config, 0, -1);  
         Tally.test(                      errorSB, interactive, doSlowTestsToo, 0, -1);
         PersistentTable.test(            errorSB, interactive, doSlowTestsToo, 0, -1);
 
@@ -1149,24 +1152,24 @@ WaitThenTryAgainException wttae;
 
         ValidateDataSetProperties.test(  errorSB, interactive, doSlowTestsToo, 0, -1);       
         Matlab.test(                     errorSB, interactive, doSlowTestsToo, 0, -1);
-        Opendap.test(                    errorSB, interactive, doSlowTestsToo, 0, -1);
+        Opendap.test(                    config, 0, -1);
 
         //need tests of data.Grid2DDataSet classes
         //hdf.SdsWriter.main(null); //needs work
         DataHelper.test(                 errorSB, interactive, doSlowTestsToo, 0, -1);  
         NcHelper.test(                   errorSB, interactive, doSlowTestsToo, 0, -1);   
-        OpendapHelper.test(              errorSB, interactive, doSlowTestsToo, 0, -1);  //few tests. relies on testing in classes that use it.
+        OpendapHelper.test(              config, 0, -1);  //few tests. relies on testing in classes that use it.
         Grid.test(                       errorSB, interactive, doSlowTestsToo, 0, -1);
         //GridDataSetCWOpendap.test(     errorSB, interactive, doSlowTestsToo, 0, -1);  //INACTIVE. The test files are no longer available since we are moving to thredds
-        GridDataSetThredds.test(         errorSB, interactive, doSlowTestsToo, 0, -1); 
-        GridDataSetOpendap.test(         errorSB, interactive, doSlowTestsToo, 0, -1); 
+        GridDataSetThredds.test(         config, 0, -1); 
+        GridDataSetOpendap.test(         config, 0, -1); 
         SaveOpendap.test(                errorSB, interactive, doSlowTestsToo, 0, -1); 
         TwoGrids.test(                   errorSB, interactive, doSlowTestsToo, 0, -1); 
-        GridDataSetAnomaly.test(         errorSB, interactive, doSlowTestsToo, 0, -1); 
+        GridDataSetAnomaly.test(         config, 0, -1); 
         DoubleCenterGrids.test(          errorSB, interactive, doSlowTestsToo, 0, -1); 
 
         Shared.test(                     errorSB, interactive, doSlowTestsToo, 0, -1);   
-        Table.test(                      errorSB, interactive, doSlowTestsToo, 0, -1); 
+        Table.test(                      config, 0, -1); 
         DigirHelper.test(                errorSB, interactive, doSlowTestsToo, 0, -1); 
         PointIndex.test(                 errorSB, interactive, doSlowTestsToo, 0, -1); 
         StoredIndex.test(                errorSB, interactive, doSlowTestsToo, 0, -1); 
@@ -1202,7 +1205,7 @@ WaitThenTryAgainException wttae;
         EDVTimeStamp.test(               errorSB, interactive, doSlowTestsToo, 0, -1); 
         Units2.test(                     errorSB, interactive, doSlowTestsToo, 0, -1); 
         Subscriptions.test(              errorSB, interactive, doSlowTestsToo, 0, -1);  
-        FileVisitorDNLS.test(            errorSB, interactive, doSlowTestsToo, 0, -1);
+        FileVisitorDNLS.test(            config, 0, -1);
         FileVisitorSubdir.test(          errorSB, interactive, doSlowTestsToo, 0, -1);  
         WatchDirectory.test(             errorSB, interactive, doSlowTestsToo, 0, -1); 
         FindDuplicateTime.test(          errorSB, interactive, doSlowTestsToo, 0, -1); 
@@ -1259,7 +1262,7 @@ WaitThenTryAgainException wttae;
         EDDTableFromHttpGet.test(        errorSB, interactive, doSlowTestsToo, 0, -1); 
         EDDTableFromSOS.test(            errorSB, interactive, doSlowTestsToo, 0, -1); 
         EDDTableAggregateRows.test(      errorSB, interactive, doSlowTestsToo, 0, -1); 
-        EDDTableCopy.test(               errorSB, interactive, doSlowTestsToo, 0, -1);
+        EDDTableCopy.test(               config, 0, -1);
         EDDTableFromAllDatasets.test(    errorSB, interactive, doSlowTestsToo, 0, -1);
         EDDTable.test(                   errorSB, interactive, doSlowTestsToo, 0, -1);  //mostly currently-inactive SOS server tests
 
@@ -1271,8 +1274,8 @@ WaitThenTryAgainException wttae;
         //EDDTableFromPostDatabase.test( errorSB, interactive, doSlowTestsToo, 0, -1);  //INACTIVE.  very slow?        
         //EDDTableCopyPost.test(-1, false);                                             //INACTIVE   which, reallyVerbose?
 
-        Erddap.test(                     errorSB, interactive, doSlowTestsToo, 0, -1);
-        TranslateMessages.test(          errorSB, interactive, doSlowTestsToo, 0, -1);
+        Erddap.test(                     config, 0, -1);
+        TranslateMessages.test(          config, 0, -1);
         ArchiveADataset.test(            errorSB, interactive, doSlowTestsToo, 0, -1);
 
         //give antivirus a chance to get caught up

@@ -17,6 +17,7 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.TimePeriods;
 import gov.noaa.pfel.coastwatch.util.StringObject;
 import gov.noaa.pfel.coastwatch.util.SSR;
@@ -436,31 +437,30 @@ data[28] gds=3.990844964981079 cli=1.5286099910736084 ano=2.4622349739074707 */
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? -1 : 0;
-        String msg = "\n^^^ GridDataSetAnomaly.test(" + interactive + ") test=";
+            lastTest = config.interactive? -1 : 0;
+        String msg = "\n^^^ GridDataSetAnomaly.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     //if (test ==  0) ...;
 
                 } else {
-                    if (test ==  0) basicTest();
+                    if (test ==  0 && config.thredds) basicTest();
                 }
 
                 String2.log(msg + test + " finished successfully in " + (System.currentTimeMillis() - time) + " ms.");
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

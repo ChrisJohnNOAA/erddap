@@ -7,6 +7,7 @@ package gov.noaa.pfel.coastwatch.pointdata;
 import com.cohort.array.*;
 import com.cohort.util.*;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.griddata.DataHelper;
 import gov.noaa.pfel.coastwatch.griddata.FileNameUtility;
 import gov.noaa.pfel.coastwatch.griddata.Matlab;
@@ -87,14 +88,13 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 // from netcdfAll-x.jar
 import ucar.ma2.*;
+//import ucar.nc2.dods.*;
 import ucar.nc2.*;
 import ucar.nc2.constants.FeatureType;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.ft.FeatureDataset;
 import ucar.nc2.ft.point.standard.PointDatasetStandardFactory;
-//import ucar.nc2.dods.*;
-import ucar.nc2.Sequence;
 import ucar.nc2.util.*;
 import ucar.nc2.write.NetcdfFileFormat;
 import ucar.nc2.write.NetcdfFormatWriter;
@@ -3681,7 +3681,7 @@ public class Table  {
 "*GLOBAL*,creator_type,person\n" +
 "*GLOBAL*,creator_url,https://www.pfeg.noaa.gov\n" +
 "*GLOBAL*,featureType,trajectory\n" +
-"*GLOBAL*,infoUrl,https://erddap.github.io/NCCSV.html\n" +
+"*GLOBAL*,infoUrl,https://coastwatch.pfeg.noaa.gov/erddap/download/NCCSV.html\n" +
 "*GLOBAL*,institution,\"NOAA NMFS SWFSC ERD, NOAA PMEL\"\n" +
 "*GLOBAL*,keywords,\"NOAA, sea, ship, sst, surface, temperature, trajectory\"\n" +
 "*GLOBAL*,license,\"\"\"NCCSV Demonstration\"\" by Bob Simons and Steve Hankin is licensed under CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ .\"\n" +
@@ -34961,11 +34961,10 @@ readAsNcCF?
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? 2 : 67;
-        String msg = "\n^^^ Table.test(" + interactive + ") test=";
+            lastTest = config.interactive? 2 : 67;
+        String msg = "\n^^^ Table.test(" + config.interactive + ") test=";
 
         verbose = true;
         reallyVerbose = true;
@@ -34977,7 +34976,7 @@ readAsNcCF?
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     if (test ==  0) testNccsvInteractive();
                     if (test ==  1) testInteractiveNcCFMA(false); //pauseAfterEach?
                     if (test ==  2) testReadAudioWriteWaveFiles(0, 1000);
@@ -35004,7 +35003,7 @@ readAsNcCF?
                     if (test == 23) testReadColumnarASCIIFile();
                     if (test == 24) testNccsv();
                     if (test == 25) testHtml();
-                    if (test == 26) testJson();
+                    if (test == 26 && config.localERDDAPServer) testJson();
                     if (test == 27) testJsonlCSV();
                     if (test == 28) testFlatNc();
                     if (test == 29) test4DNc();
@@ -35020,7 +35019,7 @@ readAsNcCF?
                     if (test == 39) testUnpack();
                     //if (test == 40) testReadNcSequence(); //2021 NOT FINISHED
 
-                    if (test == 41 && doSlowTestsToo) testReadInvalidCRA(); //very slow
+                    if (test == 41 && config.doSlowTestsToo) testReadInvalidCRA(); //very slow
 
                     //readNcCF tests
                     if (test == 45) testReadNcCFPoint(false);  //pauseAfterEachTest
@@ -35061,9 +35060,9 @@ readAsNcCF?
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

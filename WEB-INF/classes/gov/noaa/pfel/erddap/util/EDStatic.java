@@ -1803,7 +1803,9 @@ public static boolean developmentMode = false;
             "and couldn't find '/webapps/' in classPath=" + 
             File2.getClassPath() + //with / separator and / at the end
             " (and 'content/erddap' should be a sibling of <tomcat>/webapps): ";
-        contentDirectory = System.getProperty(ecd);        
+        contentDirectory = System.getProperty(ecd);
+        contentDirectory = "C:\\Program Files\\Apache Software Foundation\\apache-tomcat-10.0.27\\content\\erddap";
+        System.out.println(contentDirectory);      
         if (contentDirectory == null) {
             //Or, it must be sibling of webapps
             //e.g., c:/programs/_tomcat/webapps/erddap/WEB-INF/classes/[these classes]

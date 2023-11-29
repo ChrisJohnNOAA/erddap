@@ -19,6 +19,7 @@ import com.cohort.util.Test;
 import com.cohort.util.XML;
 
 import gov.noaa.pfel.coastwatch.OneOf;
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.TimePeriods;
 import gov.noaa.pfel.coastwatch.util.SSR;
@@ -1070,32 +1071,31 @@ String2.log("trying dataSetUrl=" + dataSetUrl);
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? -1 : 1;
-        String msg = "\n^^^ GridDataSetOpendap.test(" + interactive + ") test=";
+            lastTest = config.interactive? -1 : 1;
+        String msg = "\n^^^ GridDataSetOpendap.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     //if (test ==  0) ...;
 
                 } else {
-                    if (test ==  0) basicTest();
-                    if (test ==  1) testGetTimeSeries();
+                    if (test ==  0 && config.thredds) basicTest();
+                    if (test ==  1 && config.thredds) testGetTimeSeries();
                 }
 
                 String2.log(msg + test + " finished successfully in " + (System.currentTimeMillis() - time) + " ms.");
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }

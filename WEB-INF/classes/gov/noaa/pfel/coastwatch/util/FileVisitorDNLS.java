@@ -18,6 +18,7 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 
+import gov.noaa.pfel.coastwatch.TestConfig;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.Tally;
 
@@ -3874,27 +3875,26 @@ String2.unitTestDataDir + "fileNames/sub/,jplMURSST20150105090000.png,1.42066570
      * @param lastTest The last test to be run, inclusive (0..., or -1 for the last test). 
      *   Test numbers may change.
      */
-    public static void test(StringBuilder errorSB, boolean interactive, 
-        boolean doSlowTestsToo, int firstTest, int lastTest) {
+    public static void test(TestConfig config, int firstTest, int lastTest) {
         if (lastTest < 0)
-            lastTest = interactive? 2 : 14;
-        String msg = "\n^^^ FileVisitorDNLS.test(" + interactive + ") test=";
+            lastTest = config.interactive? 2 : 14;
+        String msg = "\n^^^ FileVisitorDNLS.test(" + config.interactive + ") test=";
 
         for (int test = firstTest; test <= lastTest; test++) {
             try {
                 long time = System.currentTimeMillis();
                 String2.log(msg + test);
             
-                if (interactive) {
+                if (config.interactive) {
                     if (test ==  0) testInteractiveErddapFilesWAF();  
                     if (test ==  1) testSync();
                     if (test ==  2) testMakeTgz();
 
                 } else {
-                    if (test ==  0) testLocal(doSlowTestsToo); 
+                    if (test ==  0) testLocal(config.doSlowTestsToo); 
                     if (test ==  1) testAWSS3(); 
                     if (test ==  2) testBigAWSS3(); 
-                    if (test ==  3) testPrivateAWSS3(); 
+                    if (test ==  3 && config.aws) testPrivateAWSS3(); 
                     if (test ==  4) testHyrax();
                     if (test ==  5) testHyraxMUR();
                     if (test ==  6) testThredds();
@@ -3915,9 +3915,9 @@ String2.unitTestDataDir + "fileNames/sub/,jplMURSST20150105090000.png,1.42066570
             } catch (Throwable testThrowable) {
                 String eMsg = msg + test + " caught throwable:\n" + 
                     MustBe.throwableToString(testThrowable);
-                errorSB.append(eMsg);
+                config.errorSB.append(eMsg);
                 String2.log(eMsg);
-                if (interactive) 
+                if (config.interactive) 
                     String2.pressEnterToContinue("");
             }
         }
