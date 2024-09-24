@@ -6,8 +6,15 @@ import com.cohort.util.Calendar2;
 import com.cohort.util.File2;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
+import org.junit.jupiter.api.BeforeAll;
+import testDataset.Initialization;
 
 class RegexFilenameFilterTests {
+
+  @BeforeAll
+  static void init() {
+    Initialization.edStatic();
+  }
 
   /**
    * This tests the methods of RegexFilenameFilter.

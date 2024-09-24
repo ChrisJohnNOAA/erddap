@@ -7,10 +7,12 @@ import com.cohort.util.ResourceBundle2;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import gov.noaa.pfel.coastwatch.griddata.Grid;
+import gov.noaa.pfel.erddap.util.EDStatic;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeAll;
 import tags.TagImageComparison;
@@ -563,6 +565,8 @@ class SgtMapTests {
               cy[i] + inc[i],
               460,
               460);
+      String bathymetryCptFullPath =
+          File2.accessResourceFile(SgtMap.bathymetryCptFullName.toString());
       SgtMap.makeMap(
           false,
           SgtUtil.LEGEND_BELOW,
@@ -580,7 +584,7 @@ class SgtMapTests {
           1,
           1,
           0, // double gridScaleFactor, gridAltScaleFactor, gridAltOffset,
-          SgtMap.bathymetryCptFullName,
+          bathymetryCptFullPath,
           null, // SgtMap.BATHYMETRY_BOLD_TITLE + " (" + SgtMap.BATHYMETRY_UNITS + ")",
           "",
           "",
@@ -656,7 +660,7 @@ class SgtMapTests {
      */
     String vectorCpt =
         CompoundColorMap.makeCPT(
-            File2.webInfParentDirectory()
+            EDStatic.getWebInfParentDirectory()
                 + // with / separator and / at the end
                 "WEB-INF/cptfiles/",
             "Rainbow",
@@ -669,7 +673,7 @@ class SgtMapTests {
 
     String gridCpt =
         CompoundColorMap.makeCPT(
-            File2.webInfParentDirectory()
+            EDStatic.getWebInfParentDirectory()
                 + // with / separator and / at the end
                 "WEB-INF/cptfiles/",
             "BlueWhiteRed", // "LightBlueWhite"
@@ -740,7 +744,7 @@ class SgtMapTests {
         SgtUtil.LEGEND_BELOW,
         "NOAA",
         "CoastWatch",
-        File2.webInfParentDirectory()
+        EDStatic.getWebInfParentDirectory()
             + // with / separator and / at the end
             "images/", // imageDir
         "noaa20.gif", // logoImageFile
@@ -821,12 +825,15 @@ class SgtMapTests {
     int predicted[] =
         SgtMap.predictGraphSize(
             1, imageWidth, imageHeight, minX[region], maxX[region], minY[region], maxY[region]);
+
+    URL bathyResourceFile = bathCpt ? SgtMap.bathymetryCptFullName : SgtMap.topographyCptFullName;
+    String bathymetryCptFullPath = File2.accessResourceFile(bathyResourceFile.toString());
     SgtMap.makeMap(
         false,
         SgtUtil.LEGEND_BELOW,
         "NOAA",
         "CoastWatch",
-        File2.webInfParentDirectory()
+        EDStatic.getWebInfParentDirectory()
             + // with / separator and / at the end
             "images/", // imageDir
         "noaa20.gif", // logoImageFile
@@ -847,7 +854,7 @@ class SgtMapTests {
         1,
         1,
         0, // double gridScaleFactor, gridAltScaleFactor, gridAltOffset,
-        bathCpt ? SgtMap.bathymetryCptFullName : SgtMap.topographyCptFullName,
+        bathymetryCptFullPath,
         bathCpt
             ? SgtMap.BATHYMETRY_BOLD_TITLE + " (" + SgtMap.BATHYMETRY_UNITS + ")"
             : SgtMap.TOPOGRAPHY_BOLD_TITLE + " (" + SgtMap.TOPOGRAPHY_UNITS + ")",

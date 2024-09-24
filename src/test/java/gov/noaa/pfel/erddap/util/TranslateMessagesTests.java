@@ -3,7 +3,6 @@ package gov.noaa.pfel.erddap.util;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
-import java.io.FileInputStream;
 import java.util.Arrays;
 import tags.TagPassword;
 
@@ -64,7 +63,7 @@ class TranslateMessagesTests {
   void findTagsMissingCDATA() throws Exception {
     String2.log("\n*** TranslateMessages.findTagsMissingCDATA()");
     SimpleXMLReader xmlReader =
-        new SimpleXMLReader(new FileInputStream(TranslateMessages.messagesXmlFileName));
+        new SimpleXMLReader(TranslateMessages.messagesXmlFileName.openStream());
     int nTagsProcessed = 0;
     int nBad = 0;
     while (true) {

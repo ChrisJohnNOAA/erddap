@@ -9,6 +9,7 @@ import com.cohort.util.String2;
 import gov.noaa.pfel.coastwatch.griddata.Grid;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.SSR;
+import gov.noaa.pfel.erddap.util.EDStatic;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -34,7 +35,7 @@ class SgtGraphTests {
    */
   @org.junit.jupiter.api.Test
   void testForMemoryLeak() throws Exception {
-    File2.setWebInfParentDirectory();
+    File2.setWebInfParentDirectory(System.getProperty("user.dir") + "/");
     // verbose = true;
     // reallyVerbose = true;
     // PathCartesianRenderer.verbose = true;
@@ -48,7 +49,7 @@ class SgtGraphTests {
         new SgtGraph("SansSerif"); // "DejaVu Sans" "Bitstream Vera Sans"); //"SansSerif" is safe
     // choice
     String imageDir =
-        File2.webInfParentDirectory()
+        EDStatic.getWebInfParentDirectory()
             + // with / separator and / at the end
             "images/";
 
@@ -251,7 +252,7 @@ class SgtGraphTests {
         new SgtGraph("SansSerif"); // "DejaVu Sans" "Bitstream Vera Sans"); //"SansSerif" is safe
     // choice
     String imageDir =
-        File2.webInfParentDirectory()
+        EDStatic.getWebInfParentDirectory()
             + // with / separator and / at the end
             "images/";
     String baseImageName =
@@ -1027,7 +1028,7 @@ class SgtGraphTests {
         new SgtGraph("SansSerif"); // "DejaVu Sans" "Bitstream Vera Sans"); //"SansSerif" is safe
     // choice
     String imageDir =
-        File2.webInfParentDirectory()
+        EDStatic.getWebInfParentDirectory()
             + // with / separator and / at the end
             "images/";
 
@@ -1053,7 +1054,7 @@ class SgtGraphTests {
         new CompoundColorMap(
             // String baseDir, String palette, String scale, double minData,
             // double maxData, int nSections, boolean continuous, String resultDir)
-            File2.webInfParentDirectory() + "WEB-INF/cptfiles/",
+            EDStatic.getWebInfParentDirectory() + "WEB-INF/cptfiles/",
             "Rainbow",
             "linear",
             0,

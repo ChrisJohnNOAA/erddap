@@ -43,7 +43,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <erddapcontent.download.version>v2.23</erddapcontent.download.version>
+        <erddapcontent.download.version>v2.25</erddapcontent.download.version>
         <erddapreffiles.download.version>1.0.0</erddapreffiles.download.version>
         <netcdfJavaVersion>5.6.0</netcdfJavaVersion>
         <test.resources.version>test1.03</test.resources.version>
@@ -69,10 +69,7 @@
         <sourceDirectory>WEB-INF/classes</sourceDirectory>
         <resources>
             <resource>
-                <directory>WEB-INF/classes</directory>
-                <excludes>
-                    <exclude>**/*.java</exclude>
-                </excludes>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
         <plugins>
@@ -156,7 +153,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-             <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.5.0</version>
@@ -237,10 +234,11 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/ERDDAP/erddap/releases/download/${erddapcontent.download.version}/erddapContent.zip</url>
+                            <url>https://github.com/ERDDAP/erddapContent/releases/download/${erddapcontent.download.version}/erddapContent.zip</url>
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipResourceDownload}</skip>
                         </configuration>
                     </execution>
                     <execution>
@@ -254,6 +252,7 @@
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}/WEB-INF/ref/</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipResourceDownload}</skip>
                         </configuration>
                     </execution>
                     <execution>
@@ -267,6 +266,7 @@
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}/WEB-INF/ref/</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipResourceDownload}</skip>
                         </configuration>
                     </execution>
 
@@ -281,6 +281,7 @@
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}/src/test/resources/</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipTestResourceDownload}</skip>
                         </configuration>
                     </execution>
                     <execution>
@@ -294,6 +295,7 @@
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}/src/test/resources/</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipTestResourceDownload}</skip>
                         </configuration>
                     </execution>
                     <execution>
@@ -307,6 +309,7 @@
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}/src/test/resources/</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipTestResourceDownload}</skip>
                         </configuration>
                     </execution>
                     <execution>
@@ -320,6 +323,7 @@
                             <unpack>true</unpack>
                             <outputDirectory>${project.basedir}/src/test/resources/</outputDirectory>
                             <cacheDirectory>${project.basedir}/download_cache</cacheDirectory>
+                            <skip>${skipTestResourceDownload}</skip>
                         </configuration>
                     </execution>
                 </executions>
@@ -419,7 +423,7 @@
                     <artifactId>google-java-format</artifactId>
                     <version>5.3</version>
                     </dependency>
-                </dependencies>      
+                </dependencies>
                 <configuration>
                     <formatterOptions>
                         <!-- Use AOSP style instead of Google Style (4-space indentation). -->
@@ -881,7 +885,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.25.3</version>
+            <version>3.25.5</version>
         </dependency>
 
 
@@ -905,6 +909,21 @@
             <version>2.50.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-core</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exporter-servlet-jakarta</artifactId>
+            <version>1.3.1</version>
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -923,6 +942,18 @@
                         <id>integration-tests</id>
                         <reports>
                         <report>failsafe-report-only</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report>
                         </reports>
                     </reportSet>
                 </reportSets>
