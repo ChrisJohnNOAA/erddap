@@ -400,13 +400,13 @@
                 <version>5.3</version>
                 <executions>
                     <!-- On commit, format the modified files -->
-                    <execution>
+                    <!-- <execution>
                         <?m2e execute onConfiguration?>
                         <id>install-formatter-hook</id>
                         <goals>
                             <goal>install-hooks</goal>
                         </goals>
-                    </execution>
+                    </execution> -->
                     <!-- On Maven verify phase, fail if any file
                     (including unmodified) is badly formatted -->
                     <execution>
@@ -923,6 +923,11 @@
             <groupId>io.prometheus</groupId>
             <artifactId>prometheus-metrics-exporter-servlet-jakarta</artifactId>
             <version>1.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.176</version>
         </dependency>
 
         <dependency>
