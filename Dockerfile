@@ -34,7 +34,7 @@ RUN --mount=type=cache,id=m2_repo,target=/root/.m2/repository \
     && find target -maxdepth 1 -type d -name 'ERDDAP-*' -exec mv {} target/ERDDAP \;
 
 # Run the built erddap war via a tomcat instance
-FROM tomcat:11.0.7-jdk21-temurin-jammy
+FROM tomcat:11.0.8-jdk21-temurin-jammy
 
 RUN apt-get update && apt-get install -y \
     unzip \
