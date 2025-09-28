@@ -511,7 +511,6 @@ class OpendapHelperTests {
    * @param whichTests -1 for all, or 0.. for specific ones
    */
   @org.junit.jupiter.api.Test
-  @TagThredds
   void testAllDapToNc() throws Throwable {
     // tests from nodc template examples https://www.ncei.noaa.gov/netcdf-templates
     String2.log("\n*** OpendapHelper.testAllDapToNc()");
@@ -521,10 +520,18 @@ class OpendapHelperTests {
     // tdsUrl was
     // "https://data.nodc.noaa.gov/thredds/dodsC/testdata/netCDFTemplateExamples/";
     // //+e.g., point/KachemakBay.nc";
-    String tdsUrl = "https://www.ncei.noaa.gov/thredds-ocean/dodsC/example/v1.0/"; // +e.g.,
+    String tdsUrl = "https://www.ncei.noaa.gov/thredds-ocean/dodsC/example/v1.0/";
+    // "https://www.ncei.noaa.gov/thredds-ocean/catalog/example/v1.0/";
+    // "https://www.ncei.noaa.gov/thredds-ocean/dodsC/example/v1.0/"; // +e.g.,
+
     // point/KachemakBay.nc";
     String fileName;
     String url, results, expected;
+    OpendapHelper.allDapToNc(
+        "https://psl.noaa.gov/thredds/dodsC/Datasets/noaa.oisst.v2/sst.mnmean.nc.dods",
+        dir + "sst.mnmean.nc");
+    results = dds(dir + "sst.mnmean.nc");
+    String2.log(results);
 
     // this tests numeric scalars, and numeric and String 1D arrays
     fileName = "pointKachemakBay.nc";

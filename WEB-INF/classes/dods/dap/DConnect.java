@@ -256,6 +256,7 @@ public class DConnect {
     // System.err.println("Content Description: " + type);
     handleContentDesc(is, type);
 
+    String2.log(connection.getHeaderFields().toString());
     ver = new ServerVersion(connection.getHeaderField("xdods-server"));
     // System.err.println("Server: " + ver + ": " + ver.getMajor() + "," +
     //	       ver.getMinor());
