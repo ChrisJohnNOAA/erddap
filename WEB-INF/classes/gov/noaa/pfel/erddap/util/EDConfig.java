@@ -275,6 +275,7 @@ public class EDConfig {
   @FeatureFlag public boolean useHeadersForUrl = true;
   @FeatureFlag public boolean generateCroissantSchema = true;
   @FeatureFlag public boolean taskCacheClear = true;
+  @FeatureFlag public boolean useNetcdfDap = false;
 
   public EDConfig(String webInfParentDirectory) throws Exception {
     fullPaletteDirectory = webInfParentDirectory + "WEB-INF/cptfiles/";
@@ -666,6 +667,7 @@ public class EDConfig {
     includeNcCFSubsetVariables = getSetupEVBoolean(setup, ev, "includeNcCFSubsetVariables", false);
     useSisISO19115 = getSetupEVBoolean(setup, ev, "useSisISO19115", false);
     generateCroissantSchema = getSetupEVBoolean(setup, ev, "generateCroissantSchema", true);
+    useNetcdfDap = getSetupEVBoolean(setup, ev, "useNetcdfDap", true);
     deploymentInfo = getSetupEVString(setup, ev, "deploymentInfo", "");
     // Mqtt flags initialization
     mqttServerHost = getSetupEVString(setup, ev, "mqttServerHost", DEFAULT_MQTT_HOST);
