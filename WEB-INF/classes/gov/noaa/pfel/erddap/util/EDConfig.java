@@ -272,6 +272,7 @@ public class EDConfig {
   @FeatureFlag public boolean enableCors;
   @FeatureFlag public boolean includeNcCFSubsetVariables;
   @FeatureFlag public boolean useSisISO19115 = false;
+  @FeatureFlag public boolean useSisISO19139 = false;
   @FeatureFlag public boolean useHeadersForUrl = true;
   @FeatureFlag public boolean generateCroissantSchema = true;
   @FeatureFlag public boolean taskCacheClear = true;
@@ -308,7 +309,7 @@ public class EDConfig {
     // read static Strings from setup.xml
     String setupFileName = contentDirectory + "setup" + (developmentMode ? "2" : "") + ".xml";
     errorInMethod = "ERROR while reading " + setupFileName + ": ";
-    ResourceBundle2 setup = ResourceBundle2.fromXml(XML.parseXml(setupFileName, false));
+    ResourceBundle2 setup = ResourceBundle2.fromXml(XML.parseXml(setupFileName, false, true));
     Map<String, String> ev = System.getenv();
 
     // logLevel may be: warning, info(default), all
@@ -666,6 +667,7 @@ public class EDConfig {
     warName = getSetupEVString(setup, ev, "warName", "erddap");
     includeNcCFSubsetVariables = getSetupEVBoolean(setup, ev, "includeNcCFSubsetVariables", false);
     useSisISO19115 = getSetupEVBoolean(setup, ev, "useSisISO19115", false);
+    useSisISO19139 = getSetupEVBoolean(setup, ev, "useSisISO19139", false);
     generateCroissantSchema = getSetupEVBoolean(setup, ev, "generateCroissantSchema", true);
     useNetcdfDap = getSetupEVBoolean(setup, ev, "useNetcdfDap", true);
     deploymentInfo = getSetupEVString(setup, ev, "deploymentInfo", "");
