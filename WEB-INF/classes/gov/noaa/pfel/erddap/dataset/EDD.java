@@ -7926,8 +7926,7 @@ public abstract class EDD {
       String tSourceName,
       boolean tryToAddStandardName,
       boolean tryToAddColorBarMinMax,
-      boolean tryToFindLLAT)
-      throws Exception {
+      boolean tryToFindLLAT) {
 
     String value;
 

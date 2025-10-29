@@ -22,26 +22,33 @@ import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
-import dods.dap.*;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
-import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.Erddap;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper.DapMetadata;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper.DapVariableInfo;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.handlers.EDDGridFromDapHandler;
 import gov.noaa.pfel.erddap.handlers.SaxHandlerClass;
 import gov.noaa.pfel.erddap.util.EDMessages;
 import gov.noaa.pfel.erddap.util.EDMessages.Message;
 import gov.noaa.pfel.erddap.util.EDStatic;
-import gov.noaa.pfel.erddap.variable.*;
-import java.io.ByteArrayInputStream;
+import gov.noaa.pfel.erddap.variable.AxisVariableInfo;
+import gov.noaa.pfel.erddap.variable.DataVariableInfo;
+import gov.noaa.pfel.erddap.variable.EDV;
+import gov.noaa.pfel.erddap.variable.EDVAlt;
+import gov.noaa.pfel.erddap.variable.EDVGridAxis;
+import gov.noaa.pfel.erddap.variable.EDVTime;
+import gov.noaa.pfel.erddap.variable.EDVTimeGridAxis;
+import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
+import gov.noaa.pfel.erddap.variable.EDVTimeStampGridAxis;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import thredds.client.catalog.Access;
@@ -308,38 +315,22 @@ public class EDDGridFromDap extends EDDGrid {
       creationTimeMillis = quickRestartAttributes.getLong("creationTimeMillis");
     }
 
-    // open the connection to the opendap source
-    // Design decision: this doesn't use ucar.nc2.dt.GridDataSet
-    //  because GridDataSet determines axes via _CoordinateAxisType (or similar) metadata
-    //  which most datasets we use don't have yet.
-    //  One could certainly write another class that did use ucar.nc2.dt.GridDataSet.
-    DConnect dConnect = null;
-    if (quickRestartAttributes == null)
-      dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    sourceGlobalAttributes = new Attributes();
+    DapMetadata metadata;
+    if (quickRestartAttributes == null) {
+      metadata = DapServiceHelper.fetchMetadata(localSourceUrl, acceptDeflate);
 
-    // DAS
-    byte dasBytes[] =
-        quickRestartAttributes == null
-            ? SSR.getUrlResponseBytes(localSourceUrl + ".das")
-            : // has timeout and descriptive error
-            ((ByteArray) quickRestartAttributes.get("dasBytes")).toArray();
-    DAS das = new DAS();
-    // String2.log("\n***DAS=");
-    // String2.log(String2.annotatedString(new String(dasBytes)));
-    das.parse(new ByteArrayInputStream(dasBytes));
-
-    // DDS
-    byte ddsBytes[] =
-        quickRestartAttributes == null
-            ? SSR.getUrlResponseBytes(localSourceUrl + ".dds")
-            : // has timeout and descriptive error
-            ((ByteArray) quickRestartAttributes.get("ddsBytes")).toArray();
-    DDS dds = new DDS();
-    dds.parse(new ByteArrayInputStream(ddsBytes));
+    } else {
+      metadata =
+          DapServiceHelper.fetchMetadata(
+              ((ByteArray) quickRestartAttributes.get("dasBytes")).toArray(),
+              ((ByteArray) quickRestartAttributes.get("ddsBytes")).toArray(),
+              tLocalSourceUrl,
+              acceptDeflate);
+    }
 
     // get global attributes
-    sourceGlobalAttributes = new Attributes();
-    OpendapHelper.getAttributes(das, "GLOBAL", sourceGlobalAttributes);
+    DapServiceHelper.getAttributes(metadata, "GLOBAL", sourceGlobalAttributes);
     combinedGlobalAttributes =
         new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes); // order is important
     String tLicense = combinedGlobalAttributes.getString(language, "license");
@@ -359,30 +350,16 @@ public class EDDGridFromDap extends EDDGrid {
       String tDataDestName = tDataVariables.get(dv).destinationName();
       if (tDataDestName == null || tDataDestName.length() == 0) tDataDestName = tDataSourceName;
       Attributes tDataSourceAtts = new Attributes();
-      OpendapHelper.getAttributes(das, tDataSourceName, tDataSourceAtts);
+      DapServiceHelper.getAttributes(metadata, tDataSourceName, tDataSourceAtts);
       LocalizedAttributes tDataAddAtts = tDataVariables.get(dv).attributes();
       if (tDataAddAtts == null) tDataAddAtts = new LocalizedAttributes();
 
       // get the variable
-      BaseType bt = dds.getVariable(tDataSourceName); // throws Throwable if not found
-      DArray mainDArray;
-      if (bt instanceof DGrid dgrid)
-        mainDArray = (DArray) dgrid.getVar(0); // first element is always main array
-      else if (bt instanceof DArray darray) mainDArray = darray;
-      else
-        throw new RuntimeException(
-            "dataVariable="
-                + tDataSourceName
-                + " must be a DGrid or a DArray ("
-                + bt.toString()
-                + ").");
-
+      DapVariableInfo varInfo = DapServiceHelper.getVariableInfo(metadata, tDataSourceName);
       // look at the dimensions
-      PrimitiveVector pv = mainDArray.getPrimitiveVector(); // just gets the data type
-      // if (reallyVerbose) String2.log(tDataSourceName + " pv=" + pv.toString());
-      String dvSourceDataType = PAType.toCohortString(OpendapHelper.getElementPAType(pv));
+      String dvSourceDataType = PAType.toCohortString(varInfo.getSourceDataType());
       // String2.loge(">> dvSourceDataType=" + dvSourceDataType);
-      int numDimensions = mainDArray.numDimensions();
+      int numDimensions = varInfo.getNumDimensions();
       if (dv == 0) {
         axisVariables = new EDVGridAxis[numDimensions];
       } else {
@@ -402,8 +379,7 @@ public class EDDGridFromDap extends EDDGrid {
       }
       for (int av = 0; av < numDimensions; av++) {
 
-        DArrayDimension dad = mainDArray.getDimension(av);
-        String tSourceAxisName = dad.getName();
+        String tSourceAxisName = varInfo.getDimensionName(av);
 
         // ensure this dimension's name is the same as for the other dataVariables
         // (or as specified in tAxisVariables()[0])
@@ -443,14 +419,14 @@ public class EDDGridFromDap extends EDDGrid {
         Attributes tSourceAttributes = new Attributes();
         PrimitiveArray tSourceValues = null;
         try {
-          dds.getVariable(tSourceAxisName); // throws NoSuchVariableException
-          OpendapHelper.getAttributes(das, tSourceAxisName, tSourceAttributes);
+          DapServiceHelper.getAttributes(metadata, tSourceAxisName, tSourceAttributes);
           tSourceValues =
               quickRestartAttributes == null
-                  ? OpendapHelper.getPrimitiveArray(dConnect, "?" + tSourceAxisName)
+                  ? DapServiceHelper.getAxisValues(metadata, tSourceAxisName)
                   : quickRestartAttributes.get(
                       "sourceValues_" + String2.encodeVariableNameSafe(tSourceAxisName));
-          if (tSourceValues == null) throw new NoSuchVariableException(tSourceAxisName);
+          if (tSourceValues == null)
+            throw new IllegalArgumentException("Source axis not found: " + tSourceAxisName);
           if (reallyVerbose) {
             int nsv = tSourceValues.size();
             String2.log(
@@ -463,10 +439,10 @@ public class EDDGridFromDap extends EDDGrid {
                     + "="
                     + tSourceValues.getString(nsv - 1));
           }
-        } catch (NoSuchVariableException nsve) {
+        } catch (IllegalArgumentException nsve) {
           // this occurs if no corresponding variable; ignore it
           // make tSourceValues 0..dimensionSize-1
-          int dadSize1 = dad.getSize() - 1;
+          int dadSize1 = varInfo.getDimensionSize(av) - 1;
           tSourceValues =
               av > 0 && dadSize1 < 32000
                   ? // av==0 -> intArray is useful for incremental update
@@ -544,8 +520,8 @@ public class EDDGridFromDap extends EDDGrid {
       try {
         quickRestartAttributes = new Attributes();
         quickRestartAttributes.set("creationTimeMillis", "" + creationTimeMillis);
-        quickRestartAttributes.set("dasBytes", new ByteArray(dasBytes));
-        quickRestartAttributes.set("ddsBytes", new ByteArray(ddsBytes));
+        quickRestartAttributes.set("dasBytes", new ByteArray(metadata.getDasBytes()));
+        quickRestartAttributes.set("ddsBytes", new ByteArray(metadata.getDdsBytes()));
         for (EDVGridAxis axisVariable : axisVariables) {
           quickRestartAttributes.set(
               "sourceValues_" + String2.encodeVariableNameSafe(axisVariable.sourceName()),
@@ -598,11 +574,7 @@ public class EDDGridFromDap extends EDDGrid {
   @Override
   public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
 
-    // read dds
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
-    byte ddsBytes[] = SSR.getUrlResponseBytes(localSourceUrl + ".dds");
-    DDS dds = new DDS();
-    dds.parse(new ByteArrayInputStream(ddsBytes));
+    DapMetadata metadata = DapServiceHelper.fetchMetadata(localSourceUrl, acceptDeflate);
 
     // has edvga[0] changed size?
     EDVGridAxis edvga = axisVariables[0];
@@ -611,29 +583,24 @@ public class EDDGridFromDap extends EDDGrid {
     int oldSize = oldValues.size();
 
     // get mainDArray
-    BaseType bt = dds.getVariable(dataVariables[0].sourceName()); // throws NoSuchVariableException
-    DArray mainDArray = null;
-    if (bt instanceof DGrid dgrid) {
-      mainDArray = (DArray) dgrid.getVar(0); // first element is always main array
-    } else if (bt instanceof DArray darray) {
-      mainDArray = darray;
-    } else {
+    DapVariableInfo varInfo;
+    try {
+      varInfo = DapServiceHelper.getVariableInfo(metadata, dataVariables[0].sourceName());
+    } catch (RuntimeException e) {
       String2.log(
           msg
               + String2.ERROR
               + ": Unexpected "
               + dataVariables[0].destinationName()
-              + " source type="
-              + bt.getTypeName()
+              + " "
+              + e.toString()
               + ". So I called requestReloadASAP().");
       // requestReloadASAP()+WaitThenTryAgain might lead to endless cycle of full reloads
       requestReloadASAP();
       return false;
     }
-
     // get the leftmost dimension
-    DArrayDimension dad = mainDArray.getDimension(0);
-    int newSize = dad.getSize();
+    int newSize = varInfo.getDimensionSize(0);
     if (newSize < oldSize)
       throw new WaitThenTryAgainException(
           EDStatic.simpleBilingual(language, Message.WAIT_THEN_TRY_AGAIN)
@@ -650,7 +617,6 @@ public class EDDGridFromDap extends EDDGrid {
       if (reallyVerbose) String2.log(msg + "no change to leftmost dimension");
       return false; // finally{} below sets lastUpdate = startUpdateMillis
     }
-
     // newSize > oldSize, get last old value (for testing below) and new values
     PrimitiveArray newValues = null;
     if (edvga.sourceDataPAType() == PAType.INT
@@ -660,10 +626,9 @@ public class EDDGridFromDap extends EDDGrid {
     else {
       try {
         newValues =
-            OpendapHelper.getPrimitiveArray(
-                dConnect,
-                "?" + edvga.sourceName() + "[" + (oldSize - 1) + ":" + (newSize - 1) + "]");
-      } catch (NoSuchVariableException nsve) {
+            DapServiceHelper.getAxisValues(
+                metadata, edvga.sourceName() + "[" + (oldSize - 1) + ":" + (newSize - 1) + "]");
+      } catch (Throwable t) {
         // hopefully avoided by testing for units=count and int datatype above
         String2.log(
             msg
@@ -968,7 +933,6 @@ public class EDDGridFromDap extends EDDGrid {
     // String errorInMethod = "Error in EDDGridFromDap.getSourceData for " + datasetID + ": ";
     String constraint = buildDapArrayQuery(tConstraints);
 
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
     PrimitiveArray results[] = new PrimitiveArray[axisVariables.length + tDataVariables.length];
     for (int dv = 0; dv < tDataVariables.length; dv++) {
       // ???why not get all the dataVariables at once?
@@ -976,11 +940,11 @@ public class EDDGridFromDap extends EDDGrid {
       // so breaking into parts avoids the problem.
 
       // get the data
-      PrimitiveArray pa[] = null;
+      PrimitiveArray[] pa = null;
       try {
         pa =
-            OpendapHelper.getPrimitiveArrays(
-                dConnect, "?" + tDataVariables[dv].sourceName() + constraint);
+            DapServiceHelper.getGridData(
+                localSourceUrl, "?" + tDataVariables[dv].sourceName() + constraint, acceptDeflate);
       } catch (Throwable t) {
         EDStatic.rethrowClientAbortException(t); // first thing in catch{}
 
@@ -1084,8 +1048,6 @@ public class EDDGridFromDap extends EDDGrid {
    */
   public static String generateDatasetsXml(
       String tLocalSourceUrl,
-      DAS das,
-      DDS dds,
       String dimensionNames[],
       int tReloadEveryNMinutes,
       Attributes externalAddGlobalAttributes)
@@ -1108,55 +1070,8 @@ public class EDDGridFromDap extends EDDGrid {
     if (tLocalSourceUrl.endsWith(".html"))
       tLocalSourceUrl = tLocalSourceUrl.substring(0, tLocalSourceUrl.length() - 5);
 
-    // get DConnect
     long getDasDdsTime = System.currentTimeMillis();
-    DConnect dConnect =
-        new DConnect(tLocalSourceUrl, acceptDeflate, 1, 1); // open nRetries, data nRetries
-    int timeOutMinutes = 5;
-    int longTimeOut = (int) (timeOutMinutes * Calendar2.MILLIS_PER_MINUTE);
-    int nRetries = 3;
-    // String2.log(">nRetries=1"); nRetries = 1;
-    for (int tri = 0; tri < nRetries; tri++) {
-      try {
-        if (das == null) {
-          String2.log("getDAS try#" + tri + " (timeout is " + timeOutMinutes + " minutes)");
-          das = dConnect.getDAS(longTimeOut);
-        }
-        break;
-      } catch (Throwable t) {
-        Math2.sleep(10000); // a good idea for most causes of trouble
-        String msg =
-            "Error while getting DAS from " + tLocalSourceUrl + ".das .\n" + t.getMessage();
-        if (tri < nRetries - 1) {
-          String2.log(msg);
-        } else {
-          String2.log(
-              "getDasDds failed. time=" + (System.currentTimeMillis() - getDasDdsTime) + "ms");
-          throw new SimpleException(msg, t);
-        }
-      }
-    }
-
-    for (int tri = 0; tri < nRetries; tri++) {
-      try {
-        if (dds == null) {
-          String2.log("getDDS try#" + tri + " (timeout is " + timeOutMinutes + " minutes)");
-          dds = dConnect.getDDS(longTimeOut);
-        }
-        break;
-      } catch (Throwable t) {
-        Math2.sleep(10000); // a good idea for most causes of trouble
-        String msg =
-            "Error while getting DDS from " + tLocalSourceUrl + ".dds .\n" + t.getMessage();
-        if (tri < nRetries - 1) {
-          String2.log(msg);
-        } else {
-          String2.log(
-              "getDasDds failed. time=" + (System.currentTimeMillis() - getDasDdsTime) + "ms");
-          throw new SimpleException(msg, t);
-        }
-      }
-    }
+    DapMetadata metadata = DapServiceHelper.fetchMetadata(tPublicSourceUrl, acceptDeflate);
     String2.log("getDasDds succeeded. time=" + (System.currentTimeMillis() - getDasDdsTime) + "ms");
 
     // create tables to hold info
@@ -1166,26 +1081,24 @@ public class EDDGridFromDap extends EDDGrid {
     Table dataAddTable = new Table();
 
     // get source global attributes
-    OpendapHelper.getAttributes(das, "GLOBAL", axisSourceTable.globalAttributes());
+    DapServiceHelper.getAttributes(metadata, "GLOBAL", axisSourceTable.globalAttributes());
 
     // read through the variables[]
     HashSet<String> dimensionNameCsvsFound = new HashSet<>();
-    Iterator<BaseType> vars = dds.getVariables();
+    List<DapVariableInfo> varInfos = DapServiceHelper.getAllVariableInfos(metadata);
     StringArray varNames = new StringArray();
     StringBuilder results = new StringBuilder();
     // if dimensionName!=null, this notes if a var with another dimension combo was found
     boolean otherComboFound = false;
     String sourceDimensionNamesInBrackets = null;
     Attributes gridMappingAtts = null;
-    NEXT_VAR:
-    while (vars.hasNext()) {
-      BaseType bt = vars.next();
-      String dName = bt.getName();
+    for (DapVariableInfo varInfo : varInfos) {
+      String dName = varInfo.getName();
       varNames.add(dName);
 
       Attributes sourceAtts = new Attributes();
       try {
-        OpendapHelper.getAttributes(das, dName, sourceAtts);
+        DapServiceHelper.getAttributes(metadata, dName, sourceAtts);
       } catch (Throwable t) {
         // e.g., ignore exception for dimension without corresponding coordinate variable
       }
@@ -1193,20 +1106,12 @@ public class EDDGridFromDap extends EDDGrid {
       // Is this the pseudo-data var with CF grid_mapping (projection) information?
       if (gridMappingAtts == null) gridMappingAtts = NcHelper.getGridMappingAtts(sourceAtts);
 
-      // ensure it is a DGrid or DArray
-      DArray mainDArray;
-      if (bt instanceof DGrid dgrid)
-        mainDArray = (DArray) dgrid.getVariables().next(); // first element is always main array
-      else if (bt instanceof DArray darray) mainDArray = darray;
-      else continue;
-
       // if it's a coordinate variable, skip it
-      int numDimensions = mainDArray.numDimensions();
-      if (numDimensions == 1 && mainDArray.getDimension(0).getName().equals(dName)) continue;
+      int numDimensions = varInfo.getNumDimensions();
+      if (numDimensions == 1 && varInfo.getDimensionName(0).equals(dName)) continue;
 
       // reduce numDimensions by 1 if String var
-      PrimitiveVector pv = mainDArray.getPrimitiveVector(); // just gets the data type
-      String dvSourceDataType = PAType.toCohortString(OpendapHelper.getElementPAType(pv));
+      String dvSourceDataType = PAType.toCohortString(varInfo.getSourceDataType());
       if (dvSourceDataType.equals("String")) numDimensions--;
 
       // skip if numDimensions == 0
@@ -1214,7 +1119,7 @@ public class EDDGridFromDap extends EDDGrid {
 
       // skip if combo is 1D bnds=bounds info
       if (numDimensions == 1) {
-        String tName = mainDArray.getDimension(0).getName();
+        String tName = varInfo.getDimensionName(0);
         if (tName == null
             || tName.endsWith("bnds")
             || tName.endsWith("bounds")
@@ -1223,13 +1128,13 @@ public class EDDGridFromDap extends EDDGrid {
       }
       // skip if combo is 2D bnds=bounds info  (bnds, time_bnds, etc)
       if (numDimensions == 2) {
-        String tName = mainDArray.getDimension(1).getName();
+        String tName = varInfo.getDimensionName(1);
         if (tName == null || tName.endsWith("bnds") || tName.endsWith("bounds")) continue;
       }
       // skip if combo is 3D [][colorindex][rgb]  (or uppercase)
       if (numDimensions == 3
-          && "colorindex".equalsIgnoreCase(mainDArray.getDimension(1).getName())
-          && "rgb".equalsIgnoreCase(mainDArray.getDimension(2).getName())) continue;
+          && "colorindex".equalsIgnoreCase(varInfo.getDimensionName(1))
+          && "rgb".equalsIgnoreCase(varInfo.getDimensionName(2))) continue;
 
       // skip if varName endsWith("bnds")
       if (dName.endsWith("bnds") || dName.endsWith("bounds")) continue;
@@ -1240,7 +1145,7 @@ public class EDDGridFromDap extends EDDGrid {
         // has this combo of dimensionNames been seen?
         String tDimensionNames[] = new String[numDimensions];
         for (int av = 0; av < numDimensions; av++)
-          tDimensionNames[av] = mainDArray.getDimension(av).getName();
+          tDimensionNames[av] = varInfo.getDimensionName(av);
         String dimCsv = String2.toCSSVString(tDimensionNames);
         boolean alreadyExisted = !dimensionNameCsvsFound.add(dimCsv);
         if (reallyVerbose)
@@ -1256,8 +1161,6 @@ public class EDDGridFromDap extends EDDGrid {
             results.append(
                 generateDatasetsXml(
                     tLocalSourceUrl,
-                    das,
-                    dds,
                     tDimensionNames,
                     tReloadEveryNMinutes,
                     externalAddGlobalAttributes));
@@ -1277,26 +1180,27 @@ public class EDDGridFromDap extends EDDGrid {
       // if dimensionNames was specified, ensure current dimension names match it
       if (dimensionNames.length != numDimensions) {
         otherComboFound = true;
-        continue NEXT_VAR;
+        continue;
       }
+      boolean badCombo = false;
       for (int av = 0; av < numDimensions; av++) {
-        DArrayDimension dad = mainDArray.getDimension(av);
-        if (!dimensionNames[av].equals(dad.getName())) {
+        if (!dimensionNames[av].equals(varInfo.getDimensionName(av))) {
           otherComboFound = true;
-          continue NEXT_VAR;
+          badCombo = true;
+          break;
         }
       }
+      if (badCombo) continue;
       // and if all ok, it falls through and continues
 
       // first data variable found? create axis tables
       if (axisSourceTable.nColumns() == 0) {
         StringBuilder sourceNamesInBrackets = new StringBuilder();
         for (int av = 0; av < numDimensions; av++) {
-          DArrayDimension dad = mainDArray.getDimension(av);
-          String aName = dad.getName();
+          String aName = varInfo.getDimensionName(av);
           Attributes aSourceAtts = new Attributes();
           try {
-            OpendapHelper.getAttributes(das, aName, aSourceAtts);
+            DapServiceHelper.getAttributes(metadata, aName, aSourceAtts);
           } catch (Throwable t) {
             // e.g., ignore exception for dimension without corresponding coordinate variable
           }
@@ -1433,7 +1337,7 @@ public class EDDGridFromDap extends EDDGrid {
       axisPAs[av] = null; // explicit
       for (int it = 0; it < nit; it++) {
         try {
-          axisPAs[av] = OpendapHelper.getPrimitiveArray(dConnect, "?" + tSourceName);
+          axisPAs[av] = DapServiceHelper.getAxisValues(metadata, tSourceName);
           break; // success
         } catch (Throwable t) {
           if (it < nit - 1) {
@@ -1735,12 +1639,7 @@ public class EDDGridFromDap extends EDDGrid {
       // append to results  (it should succeed completely, or fail)
       results.write(
           generateDatasetsXml(
-              tLocalSourceUrl,
-              null,
-              null,
-              null,
-              tReloadEveryNMinutes,
-              externalAddGlobalAttributes));
+              tLocalSourceUrl, null, tReloadEveryNMinutes, externalAddGlobalAttributes));
       time = System.currentTimeMillis() - time;
       String2.distributeTime(time, datasetSuccessTimes);
       String ts = indent + tLocalSourceUrl + "  (" + time + " ms)\n";

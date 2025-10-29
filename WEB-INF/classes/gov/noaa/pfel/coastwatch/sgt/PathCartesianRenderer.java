@@ -11,7 +11,7 @@ import gov.noaa.pmel.sgt.CartesianGraph;
 import gov.noaa.pmel.sgt.CartesianRenderer;
 import gov.noaa.pmel.sgt.JPane;
 import gov.noaa.pmel.sgt.dm.SGTData;
-import gov.noaa.pmel.util.*;
+import gov.noaa.pmel.util.Range2D;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;

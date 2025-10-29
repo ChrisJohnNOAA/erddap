@@ -2860,7 +2860,7 @@ public class EDStatic {
    * @return the oceanic/atmospheric variable names table
    * @throws Exception if trouble (e.g., file not found)
    */
-  public static Table oceanicAtmosphericVariableNamesTable() throws Exception {
+  public static Table oceanicAtmosphericVariableNamesTable() {
     Table table = new Table();
     StringArray col1 = new StringArray();
     StringArray col2 = new StringArray();
@@ -2868,7 +2868,13 @@ public class EDStatic {
     table.addColumn("fullName", col2);
     URL resourceFile =
         Resources.getResource("gov/noaa/pfel/erddap/util/OceanicAtmosphericVariableNames.tsv");
-    List<String> lines = File2.readLinesFromFile(resourceFile, File2.UTF_8, 1);
+    List<String> lines;
+    try {
+      lines = File2.readLinesFromFile(resourceFile, File2.UTF_8, 1);
+    } catch (Exception e) {
+      String2.log("Error reading OceanicAtmosphericVariableNames.tsv: " + e.getMessage());
+      return table;
+    }
     int nLines = lines.size();
     for (int i = 1; i < nLines; i++) {
       String s = lines.get(i).trim();
@@ -2937,7 +2943,7 @@ public class EDStatic {
    * @return the oceanic/atmospheric variable names table as a HashMap
    * @throws Exception if trouble (e.g., file not found)
    */
-  public static Map<String, String> gdxVariableNamesHashMap() throws Exception {
+  public static Map<String, String> gdxVariableNamesHashMap() {
     if (gdxVariableNamesHashMap == null) {
       Table table = oceanicAtmosphericVariableNamesTable();
       StringArray varNameSA = (StringArray) table.getColumn(0);

@@ -7,7 +7,6 @@ package gov.noaa.pfel.erddap.dataset;
 import com.cohort.array.Attributes;
 import com.cohort.array.LongArray;
 import com.cohort.array.PAOne;
-import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import com.cohort.util.File2;
@@ -15,17 +14,14 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
-import dods.dap.AttributeTable;
-import dods.dap.BaseType;
-import dods.dap.DAS;
-import dods.dap.DDS;
-import dods.dap.DSequence;
-import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.FileVisitorDNLS;
 import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.Erddap;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper.DapMetadata;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper.DapSequenceVariableInfo;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.handlers.EDDTableFromErddapHandler;
 import gov.noaa.pfel.erddap.handlers.SaxHandlerClass;
@@ -40,11 +36,11 @@ import gov.noaa.pfel.erddap.variable.EDVTime;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Map;
 import java.util.Queue;
 import org.semver4j.Semver;
 
@@ -301,63 +297,19 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
         // get sourceTable from remote DAP
         if (verbose) String2.log("  using info from remote dataset's DAP services");
 
-        DAS das = new DAS();
-        das.parse(
-            new ByteArrayInputStream(
-                SSR.getUrlResponseBytes(
-                    localSourceUrl + ".das"))); // has timeout and descriptive error
-        DDS dds = new DDS();
-        dds.parse(
-            new ByteArrayInputStream(
-                SSR.getUrlResponseBytes(
-                    localSourceUrl + ".dds"))); // has timeout and descriptive error
+        DapMetadata metadata = DapServiceHelper.fetchMetadata(localSourceUrl, acceptDeflate);
+        DapServiceHelper.getAttributes(metadata, "GLOBAL", sourceGlobalAttributes);
 
-        // get global attributes
-        OpendapHelper.getAttributes(das, "GLOBAL", sourceGlobalAttributes);
-
-        // delve into the outerSequence
-        BaseType outerVariable = dds.getVariable(SEQUENCE_NAME);
-        if (!(outerVariable instanceof DSequence outerSequence))
-          throw new IllegalArgumentException(
-              errorInMethod
-                  + "outerVariable not a DSequence: name="
-                  + outerVariable.getName()
-                  + " type="
-                  + outerVariable.getTypeName());
-        int nOuterColumns = outerSequence.elementCount();
-        AttributeTable outerAttributeTable = das.getAttributeTable(SEQUENCE_NAME);
-        for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
-
-          // look at the variables in the outer sequence
-          BaseType obt = outerSequence.getVar(outerCol);
-          String tSourceName = obt.getName();
-
-          // get the data sourcePAType
-          PAType tSourcePAType = OpendapHelper.getElementPAType(obt.newPrimitiveVector());
-
-          // get the attributes
-          Attributes tSourceAtt = new Attributes();
-          // note use of getName in this section
-          // if (reallyVerbose) String2.log("try getting attributes for outer " + tSourceName);
-          dods.dap.Attribute attribute = outerAttributeTable.getAttribute(tSourceName);
-          // it should be a container with the attributes for this column
-          if (attribute == null) {
-            String2.log("WARNING!!! Unexpected: no attribute for outerVar=" + tSourceName + ".");
-          } else if (attribute.isContainer()) {
-            OpendapHelper.getAttributes(attribute.getContainer(), tSourceAtt);
-          } else {
-            String2.log(
-                "WARNING!!! Unexpected: attribute for outerVar="
-                    + tSourceName
-                    + " not a container: "
-                    + attribute.getName()
-                    + "="
-                    + attribute.getValueAt(0));
-          }
-
-          sourceTable.addColumn(
-              outerCol, tSourceName, PrimitiveArray.factory(tSourcePAType, 8, false), tSourceAtt);
-        }
+        Map<String, DapSequenceVariableInfo> outerVariable =
+            DapServiceHelper.getSequenceVariableInfo(metadata, SEQUENCE_NAME, null, errorInMethod);
+        outerVariable.forEach(
+            (tSourceName, tDapSequenceVariableInfo) -> {
+              sourceTable.addColumn(
+                  sourceTable.nColumns(),
+                  tSourceName,
+                  PrimitiveArray.factory(tDapSequenceVariableInfo.sourceType, 8, false),
+                  tDapSequenceVariableInfo.sourceAttributes);
+            });
       }
     }
 
@@ -489,12 +441,10 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
           // this will only work if remote ERDDAP is v2.10+
           int po = localSourceUrl.indexOf("/tabledap/");
           Test.ensureTrue(po > 0, "localSourceUrl doesn't have /tabledap/.");
-          InputStream is =
+          try (InputStream is =
               SSR.getUrlBufferedInputStream(
-                  String2.replaceAll(localSourceUrl, "/tabledap/", "/files/") + "/.csv");
-          try {
+                  String2.replaceAll(localSourceUrl, "/tabledap/", "/files/") + "/.csv")) {
             is.close();
-          } catch (Exception e2) {
           }
         } catch (Exception e) {
           String2.log(
@@ -626,11 +576,12 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
             + subDir
             + (subDir.length() > 0 ? "/" : "")
             + ".csv";
-    BufferedReader reader = SSR.getBufferedUrlReader(url);
     Table table = new Table();
-    table.readASCII(
-        url, reader, "", "", 0, 1, ",", null, null, null, null,
-        false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+    try (BufferedReader reader = SSR.getBufferedUrlReader(url)) {
+      table.readASCII(
+          url, reader, "", "", 0, 1, ",", null, null, null, null,
+          false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+    }
     table.setColumn(1, new LongArray(table.getColumn(1)));
     table.setColumn(2, new LongArray(table.getColumn(2)));
     StringArray names = (StringArray) table.getColumn(0);
@@ -660,7 +611,7 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
     Table resultsTable = FileVisitorDNLS.makeEmptyTable();
     Queue<String> subdirs = new ArrayDeque<>();
     subdirs.add("");
-    while (subdirs.size() > 0) {
+    while (!subdirs.isEmpty()) {
       String subdir = subdirs.remove();
       getFilesForSubdir(subdir, resultsTable, subdirs);
     }
@@ -693,11 +644,12 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
       // get the .csv table from remote fromErddap dataset
       String url =
           String2.replaceAll(localSourceUrl, "/tabledap/", "/files/") + "/" + nextPath + ".csv";
-      BufferedReader reader = SSR.getBufferedUrlReader(url);
       Table table = new Table();
-      table.readASCII(
-          url, reader, "", "", 0, 1, ",", null, null, null, null,
-          false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+      try (BufferedReader reader = SSR.getBufferedUrlReader(url)) {
+        table.readASCII(
+            url, reader, "", "", 0, 1, ",", null, null, null, null,
+            false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+      }
       String colNames = table.getColumnNamesCSVString();
       Test.ensureEqual(colNames, "Name,Last modified,Size,Description", "");
       table.setColumn(1, new LongArray(table.getColumn(1)));

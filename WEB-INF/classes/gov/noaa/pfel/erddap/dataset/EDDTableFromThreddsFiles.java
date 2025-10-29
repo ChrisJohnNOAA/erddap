@@ -428,7 +428,7 @@ public class EDDTableFromThreddsFiles extends EDDTableFromFiles {
             String2.log(
                 "  task#"
                     + taskNumber
-                    + " TASK_DAP_TO_NC reason="
+                    + " TASK_ALL_DAP_TO_NC reason="
                     + reason
                     + "\n    from="
                     + sourceDir

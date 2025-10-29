@@ -19,20 +19,15 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
-import dods.dap.BaseType;
-import dods.dap.DArray;
-import dods.dap.DArrayDimension;
-import dods.dap.DConnect;
-import dods.dap.DDS;
-import dods.dap.DGrid;
-import dods.dap.NoSuchVariableException;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
-import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.FileVisitorDNLS;
 import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.Erddap;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper.DapMetadata;
+import gov.noaa.pfel.erddap.dap.DapServiceHelper.DapVariableInfo;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.handlers.EDDGridFromErddapHandler;
 import gov.noaa.pfel.erddap.handlers.SaxHandlerClass;
@@ -47,7 +42,6 @@ import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import gov.noaa.pfel.erddap.variable.EDVTimeStampGridAxis;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -283,11 +277,6 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
       creationTimeMillis = quickRestartAttributes.getLong("creationTimeMillis");
     }
 
-    // open the connection to the opendap source
-    DConnect dConnect = null;
-    if (quickRestartAttributes == null)
-      dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
-
     // setup via info.json
     // source https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMHchla5day
     // json   https://coastwatch.pfeg.noaa.gov/erddap/info/erdMHchla5day/index.json
@@ -307,6 +296,10 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     Attributes tSourceAttributes = new Attributes();
     ArrayList<EDVGridAxis> tAxisVariables = new ArrayList<>();
     ArrayList<EDV> tDataVariables = new ArrayList<>();
+    DapMetadata metadata =
+        quickRestartAttributes == null
+            ? DapServiceHelper.fetchMetadata(localSourceUrl, acceptDeflate)
+            : null;
     for (int row = nRows - 1; row >= 0; row--) {
 
       // "columnNames": ["Row Type", "Variable Name", "Attribute Name", "Data Type", "Value"],
@@ -338,7 +331,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
         case "dimension" -> {
           PrimitiveArray tSourceValues =
               quickRestartAttributes == null
-                  ? OpendapHelper.getPrimitiveArray(dConnect, "?" + varName)
+                  ? DapServiceHelper.getAxisValues(metadata, varName)
                   : quickRestartAttributes.get(
                       "sourceValues_" + String2.encodeVariableNameSafe(varName));
 
@@ -429,7 +422,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
         default -> throw new RuntimeException("Unexpected rowType=" + rowType + ".");
       }
     }
-    if (tAxisVariables.size() == 0) throw new RuntimeException("No axisVariables found!");
+    if (tAxisVariables.isEmpty()) throw new RuntimeException("No axisVariables found!");
     sourceGlobalAttributes = tSourceAttributes; // at the top of table, so collected last
     addGlobalAttributes = new LocalizedAttributes();
     combinedGlobalAttributes =
@@ -475,12 +468,10 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
           // this will only work if remote ERDDAP is v2.10+
           int po = localSourceUrl.indexOf("/griddap/");
           Test.ensureTrue(po > 0, "localSourceUrl doesn't have /griddap/.");
-          InputStream is =
+          try (InputStream is =
               SSR.getUrlBufferedInputStream(
-                  String2.replaceAll(localSourceUrl, "/griddap/", "/files/") + "/.csv");
-          try {
+                  String2.replaceAll(localSourceUrl, "/griddap/", "/files/") + "/.csv")) {
             is.close();
-          } catch (Exception e2) {
           }
         } catch (Exception e) {
           String2.log(
@@ -553,10 +544,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
   public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
 
     // read dds
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
-    byte ddsBytes[] = SSR.getUrlResponseBytes(localSourceUrl + ".dds");
-    DDS dds = new DDS();
-    dds.parse(new ByteArrayInputStream(ddsBytes));
+    DapMetadata metadata = DapServiceHelper.fetchMetadata(localSourceUrl, acceptDeflate);
 
     // has edvga[0] changed size?
     EDVGridAxis edvga = axisVariables[0];
@@ -565,29 +553,24 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     int oldSize = oldValues.size();
 
     // get mainDArray
-    BaseType bt = dds.getVariable(dataVariables[0].sourceName()); // throws NoSuchVariableException
-    DArray mainDArray = null;
-    if (bt instanceof DGrid dgrid) {
-      mainDArray = (DArray) dgrid.getVar(0); // first element is always main array
-    } else if (bt instanceof DArray darray) {
-      mainDArray = darray;
-    } else {
+    DapVariableInfo varInfo;
+    try {
+      varInfo = DapServiceHelper.getVariableInfo(metadata, dataVariables[0].sourceName());
+    } catch (RuntimeException e) {
       String2.log(
           msg
               + String2.ERROR
               + ": Unexpected "
               + dataVariables[0].destinationName()
-              + " source type="
-              + bt.getTypeName()
-              + ".");
+              + " "
+              + e.toString()
+              + ". So I called requestReloadASAP().");
       // requestReloadASAP()+WaitThenTryAgain might lead to endless cycle of full reloads
       requestReloadASAP();
       return false;
     }
-
     // get the leftmost dimension
-    DArrayDimension dad = mainDArray.getDimension(0);
-    int newSize = dad.getSize();
+    int newSize = varInfo.getDimensionSize(0);
     if (newSize < oldSize)
       throw new WaitThenTryAgainException(
           EDStatic.simpleBilingual(language, Message.WAIT_THEN_TRY_AGAIN)
@@ -614,10 +597,9 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     else {
       try {
         newValues =
-            OpendapHelper.getPrimitiveArray(
-                dConnect,
-                "?" + edvga.sourceName() + "[" + (oldSize - 1) + ":" + (newSize - 1) + "]");
-      } catch (NoSuchVariableException nsve) {
+            DapServiceHelper.getAxisValues(
+                metadata, edvga.sourceName() + "[" + (oldSize - 1) + ":" + (newSize - 1) + "]");
+      } catch (Throwable t) {
         // hopefully avoided by testing for units=count and int datatype above
         String2.log(
             msg
@@ -924,15 +906,14 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     String constraint = buildDapArrayQuery(tConstraints);
 
     // get results one var at a time (that's how OpendapHelper is set up)
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
     PrimitiveArray results[] = new PrimitiveArray[axisVariables.length + tDataVariables.length];
     for (int dv = 0; dv < tDataVariables.length; dv++) {
       // get the data
       PrimitiveArray pa[] = null;
       try {
         pa =
-            OpendapHelper.getPrimitiveArrays(
-                dConnect, "?" + tDataVariables[dv].sourceName() + constraint);
+            DapServiceHelper.getGridData(
+                localSourceUrl, "?" + tDataVariables[dv].sourceName() + constraint, acceptDeflate);
 
       } catch (Throwable t) {
         EDStatic.rethrowClientAbortException(t); // first thing in catch{}
@@ -994,11 +975,12 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
             + subDir
             + (subDir.length() > 0 ? "/" : "")
             + ".csv";
-    BufferedReader reader = SSR.getBufferedUrlReader(url);
     Table table = new Table();
-    table.readASCII(
-        url, reader, "", "", 0, 1, ",", null, null, null, null,
-        false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+    try (BufferedReader reader = SSR.getBufferedUrlReader(url)) {
+      table.readASCII(
+          url, reader, "", "", 0, 1, ",", null, null, null, null,
+          false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+    }
     table.setColumn(1, new LongArray(table.getColumn(1)));
     table.setColumn(2, new LongArray(table.getColumn(2)));
     StringArray names = (StringArray) table.getColumn(0);
@@ -1024,7 +1006,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     Table resultsTable = FileVisitorDNLS.makeEmptyTable();
     Queue<String> subdirs = new ArrayDeque<>();
     subdirs.add("");
-    while (subdirs.size() > 0) {
+    while (!subdirs.isEmpty()) {
       String subdir = subdirs.remove();
       getFilesForSubdir(subdir, resultsTable, subdirs);
     }
@@ -1057,11 +1039,12 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
       // get the .csv table from remote fromErddap dataset
       String url =
           String2.replaceAll(localSourceUrl, "/griddap/", "/files/") + "/" + nextPath + ".csv";
-      BufferedReader reader = SSR.getBufferedUrlReader(url);
       Table table = new Table();
-      table.readASCII(
-          url, reader, "", "", 0, 1, ",", null, null, null, null,
-          false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+      try (BufferedReader reader = SSR.getBufferedUrlReader(url)) {
+        table.readASCII(
+            url, reader, "", "", 0, 1, ",", null, null, null, null,
+            false); // testColumns[], testMin[], testMax[], loadColumns[], simplify)
+      }
       String colNames = table.getColumnNamesCSVString();
       Test.ensureEqual(colNames, "Name,Last modified,Size,Description", "");
       table.setColumn(1, new LongArray(table.getColumn(1)));

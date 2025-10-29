@@ -14,6 +14,8 @@ import dods.dap.DDS;
 import gov.noaa.pfel.coastwatch.griddata.Opendap;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 
 /**
@@ -188,6 +190,18 @@ public class OpendapTest extends NetCheckTest {
   }
 
   /**
+   * This converts a dds to a string.
+   *
+   * @param dds from dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT)
+   * @return the string form of the dds
+   */
+  private static String getDdsString(DDS dds) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    dds.print(baos);
+    return baos.toString(StandardCharsets.UTF_8);
+  }
+
+  /**
    * This does the test and returns an error string ("" if no error). This does not send out emails.
    * This won't throw an Exception.
    *
@@ -247,7 +261,7 @@ public class OpendapTest extends NetCheckTest {
 
       // check ddsMustContain
       if (ddsMustContain != null && ddsMustContain.length() > 0) {
-        String ddsString = OpendapHelper.getDdsString(dds);
+        String ddsString = getDdsString(dds);
         if (ddsString.indexOf(ddsMustContain) < 0) {
           errorSB.append(
               "  "

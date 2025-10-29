@@ -921,8 +921,7 @@ public class EDV {
    * @return the suggested longName
    * @throws Exception if trouble
    */
-  public static String suggestLongName(String oLongName, String tSourceName, String tStandardName)
-      throws Exception {
+  public static String suggestLongName(String oLongName, String tSourceName, String tStandardName) {
     if (oLongName == null) oLongName = "";
     if (tSourceName == null) tSourceName = "";
     if (tStandardName == null) tStandardName = "";
