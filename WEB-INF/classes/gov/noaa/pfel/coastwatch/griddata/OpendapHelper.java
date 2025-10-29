@@ -1081,7 +1081,6 @@ public class OpendapHelper {
       String varNames[] = findAllScalarOrMultiDimVars(dds);
       int nVars = varNames.length;
       if (nVars == 0) throw new RuntimeException(beginError + "No variables found!");
-
       // If procedure fails half way through, there won't be a half-finished file.
       int randomInt = Math2.random(Integer.MAX_VALUE);
 
@@ -1103,7 +1102,6 @@ public class OpendapHelper {
         boolean[] isString = new boolean[nVars]; // all false
         Variable.Builder<?>[] newVars = new Variable.Builder[nVars];
         for (int v = 0; v < nVars; v++) {
-
           BaseType baseType = dds.getVariable(varNames[v]);
           if (debug)
             String2.log(
@@ -1153,7 +1151,10 @@ public class OpendapHelper {
                   NcHelper.addVariable(
                       rootGroup, varNames[v], NcHelper.getNc3DataType(tPAType), tDims);
             }
-
+            // make numeric variable
+            newVars[v] =
+                NcHelper.addVariable(
+                    rootGroup, varNames[v], NcHelper.getNc3DataType(tPAType), tDims);
           } else if (baseType instanceof DArray dArray) {
             // dArray is usually 1 dim, but may be multidimensional
             // 2021-01-08 I think this is now incorrect with netcdf-java 5.4.1
@@ -1194,13 +1195,11 @@ public class OpendapHelper {
                   NcHelper.addVariable(
                       rootGroup, varNames[v], NcHelper.getNc3DataType(tPAType), tDims);
             }
-
           } else {
             // it's a scalar variable
             PrimitiveVector pv = baseType.newPrimitiveVector(); // has no data
             tPAType = getElementPAType(pv);
             if (debug) String2.log("  scalar pv=" + pv.toString() + " tPAType=" + tPAType);
-
             if (tPAType == PAType.STRING) {
               // make String scalar variable
               isString[v] = true;
@@ -1224,7 +1223,6 @@ public class OpendapHelper {
               varShape[v] = new int[1];
               varShape[v][0] = dimSize;
               newVars[v] = NcHelper.addNc3StringVariable(rootGroup, varNames[v], tDims, strlen);
-
             } else {
               // make numeric scalar variable
               varShape[v] = new int[0];
@@ -1233,7 +1231,6 @@ public class OpendapHelper {
                       rootGroup, varNames[v], NcHelper.getNc3DataType(tPAType), new ArrayList<>());
             }
           }
-
           // write data variable attributes in ncOut
           NcHelper.setAttributes(nc3Mode, newVars[v], varAtts, tPAType.isUnsigned());
         }
@@ -1278,7 +1275,6 @@ public class OpendapHelper {
                     varShape[v],
                     pas[0].toObjectArray()));
           }
-
           if (verbose)
             String2.log(
                 "  v#"
@@ -1288,7 +1284,6 @@ public class OpendapHelper {
                     + " finished. time="
                     + Calendar2.elapsedTimeString(System.currentTimeMillis() - vTime));
         }
-
         // if close throws Throwable, it is trouble
         ncWriter.close(); // it calls flush() and doesn't like flush called separately
         ncWriter = null;
