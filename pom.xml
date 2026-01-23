@@ -121,8 +121,8 @@
                 <version>3.14.0</version>
                 <configuration>
                     <failOnError>true</failOnError>
-                    <source>25</source>   <!-- java version -->
-                    <target>25</target>
+                    <source>21</source>   <!-- java version -->
+                    <target>21</target>
                     <encoding>UTF-8</encoding>
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
