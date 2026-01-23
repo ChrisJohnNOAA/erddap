@@ -1119,11 +1119,12 @@ public class EDStatic {
    */
   public static YouAreHere getYouAreHere(
       HttpServletRequest request, int language, String loggedInAs, String protocol) {
+    // ⚡ Bolt: Use immutable empty list to avoid unnecessary object allocation.
     return new YouAreHere(
         erddapUrl(request, loggedInAs, language),
         EDStatic.messages.get(Message.CLICK_ERDDAP, language),
-        protocol == null ? new ArrayList<String>() : List.of(protocol),
-        new ArrayList<String>());
+        protocol == null ? List.of() : List.of(protocol),
+        List.of());
   }
 
   /**
