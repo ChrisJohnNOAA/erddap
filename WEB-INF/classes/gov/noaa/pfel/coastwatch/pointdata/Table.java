@@ -13587,9 +13587,7 @@ public class Table {
    * @param con a Connection (these are sometimes pooled to save time)
    * @param query e.g., "SELECT * FROM names WHERE id = 3"
    * @throws Exception if trouble
-   * @deprecated As of ERDDAP v2.23, this method is deprecated because it is vulnerable to SQL injection. Use readSql(Connection con, String sql, PrimitiveArray parameters) instead.
    */
-  @Deprecated
   public void readSql(Connection con, String query) throws Exception {
 
     String msg = "  Table.readSql " + query;
@@ -13620,73 +13618,6 @@ public class Table {
           statement.close();
         } catch (Throwable t9) {
         }
-      throw t;
-    }
-  }
-
-  /**
-   * This reads data from a parameterized sql query using jdbc.
-   * This approach using PreparedStatement protects against SQL injection.
-   *
-   * <p>Examples of things done to prepare to use this method:
-   *
-   * <ul>
-   *   <li>Class.forName("org.postgresql.Driver");
-   *   <li>String url = "jdbc:postgresql://otter.pfeg.noaa.gov/posttest"; //database name
-   *   <li>String user = "postadmin";
-   *   <li>String password = String2.getPasswordFromSystemIn("Password for '" + user + "'? ");
-   *   <li>Connection con = DriverManager.getConnection(url, user, password);
-   * </ul>
-   *
-   * @param con a Connection (these are sometimes pooled to save time)
-   * @param sql e.g., "SELECT * FROM names WHERE id = ?"
-   * @param parameters a PrimitiveArray of parameters to be substituted into the query. All parameters must be of the same type.
-   * @throws Exception if trouble
-   */
-  public void readSql(Connection con, String sql, PrimitiveArray parameters) throws Exception {
-
-    String msg = "  Table.readSql " + sql;
-    long time = System.currentTimeMillis();
-    clear();
-
-    // create the statement and execute the query
-    try (PreparedStatement statement = con.prepareStatement(sql)) {
-      PAType et = parameters.elementType();
-      for (int i = 0; i < parameters.size(); i++) {
-        // i+1 because sql counts columns as 1...
-        if (et == PAType.BYTE) {
-          statement.setByte(i + 1, ((ByteArray) parameters).get(i));
-        } else if (et == PAType.SHORT) {
-          statement.setShort(i + 1, ((ShortArray) parameters).get(i));
-        } else if (et == PAType.INT) {
-          statement.setInt(i + 1, parameters.getInt(i));
-        } else if (et == PAType.LONG) {
-          statement.setLong(i + 1, parameters.getLong(i));
-        } else if (et == PAType.FLOAT) {
-          statement.setFloat(i + 1, parameters.getFloat(i));
-        } else if (et == PAType.DOUBLE) {
-          statement.setDouble(i + 1, parameters.getDouble(i));
-        } else if (et == PAType.STRING || et == PAType.CHAR) {
-          statement.setString(i + 1, parameters.getString(i)); // null is ok
-        } else {
-          throw new SimpleException(
-              "Unsupported parameter type in Table.readSql: " + et.toString());
-        }
-      }
-      readSqlResultSet(statement.executeQuery());
-      if (reallyVerbose)
-        String2.log(
-            msg
-                + " finished. nColumns="
-                + nColumns()
-                + " nRows="
-                + nRows()
-                + " TIME="
-                + (System.currentTimeMillis() - time)
-                + "ms");
-
-    } catch (Throwable t) {
-      String2.log(msg);
       throw t;
     }
   }

@@ -97,4 +97,9 @@ Use netcat to test if this works:
 
 <!-- JSPC servlet mappings end -->
 
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/WEB-INF/errors/error.html</location>
+    </error-page>
+
 </web-app>
