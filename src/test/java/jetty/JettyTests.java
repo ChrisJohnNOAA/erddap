@@ -1,5 +1,7 @@
 package jetty;
 
+import static org.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -127,10 +129,13 @@ class JettyTests {
     server.start();
 
     // Delay the tests to give the server a chance to load all of the data.
-    // If the cache/data folder is cold some machines might need longer. If
-    // all of the data is already loaded on the machine, this can probably be
-    // shortened.
-    Thread.sleep(5 * 60 * 1000);
+    // Awaitility will poll the server until it's ready.
+    await()
+        .atMost(5, MINUTES)
+        .until(
+            () ->
+                SSR.getUrlResponseStringUnchanged("http://localhost:" + PORT + "/erddap/version")
+                    .startsWith("ERDDAP_version="));
     initialCroissantSetting = EDStatic.config.generateCroissantSchema;
   }
 
