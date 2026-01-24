@@ -7570,23 +7570,18 @@ public class TestUtil {
 
     // test boolean touch(String dirName) and getLastModified
     String2.log("test touch and getLastModified");
-    String tempTxtFile = utilDir + "temp.txt";
-    File2.writeToFile88591(tempTxtFile, "This\nis a\n\ntest.\n");
-    long originalFileTime = File2.getLastModified(tempTxtFile);
+    Math2.gcAndWait("TestUtil (between tests)");
+    File2.writeToFile88591(utilDir + "temp.txt", "This\nis a\n\ntest.\n");
+    final long originalFileTime = File2.getLastModified(utilDir + "temp.txt");
 
-    // Instead of waiting for a file's last modified time to change (which can be unreliable),
-    // delete the file and wait for it to be re-created.
-    File2.delete(tempTxtFile);
-    await().atMost(5, SECONDS).until(() -> !File2.isFile(tempTxtFile));
-    File2.writeToFile88591(tempTxtFile, "This\nis a\n\ntest.\n");
-    await().atMost(5, SECONDS).until(() -> File2.isFile(tempTxtFile));
+    // Wait for the system clock to advance far enough that a new touch will have a new timestamp
+    await().atMost(5, SECONDS).until(() -> System.currentTimeMillis() > originalFileTime);
 
-    long time1 = System.currentTimeMillis();
-    Test.ensureTrue(File2.touch(tempTxtFile), "a"); // touch the file
-    await().atMost(5, SECONDS).until(() -> File2.getLastModified(tempTxtFile) >= time1);
-    long fileTime = File2.getLastModified(tempTxtFile);
-    long time2 = System.currentTimeMillis();
-    Test.ensureTrue(fileTime <= time2, "c");
+    Test.ensureTrue(File2.touch(utilDir + "temp.txt"), "a"); // touch the file
+
+    // Now wait for the file's timestamp to be updated
+    await().atMost(5, SECONDS).until(() -> File2.getLastModified(utilDir + "temp.txt") > originalFileTime);
+
     Test.ensureEqual(File2.touch(utilDir + "temp.gibberish"), false, "d");
 
     // test boolean delete(String dirName) {
