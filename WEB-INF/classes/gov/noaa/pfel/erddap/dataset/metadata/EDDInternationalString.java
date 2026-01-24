@@ -1,21 +1,17 @@
 package gov.noaa.pfel.erddap.dataset.metadata;
 
+import java.io.Serial;
 import java.util.Locale;
 import java.util.Map;
 import org.opengis.util.InternationalString;
 
-public class EDDInternationalString implements InternationalString {
+public record EDDInternationalString(String string, Map<Locale, String> localized)
+    implements InternationalString {
 
-  private String string;
-  Map<Locale, String> localized;
+  @Serial private static final long serialVersionUID = 1L;
 
   public EDDInternationalString(String string) {
-    this.string = string;
-  }
-
-  public EDDInternationalString(String string, Map<Locale, String> localized) {
-    this.string = string;
-    this.localized = localized;
+    this(string, null);
   }
 
   @Override
