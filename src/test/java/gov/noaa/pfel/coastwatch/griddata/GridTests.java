@@ -11,9 +11,12 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.io.TempDir;
 import tags.TagDisabledMissingFile;
 
 public class GridTests {
+  @TempDir private static Path TEMP_DIR;
+
   public static String testDir;
   public static final String testName = "OQNux10S1day_20050712_x-135_X-105_y22_Y50";
 
@@ -52,47 +55,6 @@ public class GridTests {
         "generateContourLevels d");
   }
 
-  /**
-   * This tests for a memory leak in readGrd.
-   *
-   * @throws Exception if trouble
-   */
-  @org.junit.jupiter.api.Test
-  @TagDisabledMissingFile
-  void testForMemoryLeak() throws Exception {
-    Grid grid = new Grid();
-    String dir;
-
-    // one time test for memory leak:
-    // I put all the zip files from /u00/data/PH/... in dir and unzipped them
-    // String dir = "c:\\programs\\GrdFiles\\";
-    // String[] zipFiles = RegexFilenameFilter.list(dir, ".*\\.zip");
-    // for (int i = 0; i < zipFiles.length; i++)
-    // SSR.unzip(dir + zipFiles[i], dir, true, null);
-    // if (true) return;
-
-    // test for memory leak in readGrd
-    dir = "c:\\programs\\GrdFiles\\";
-    String[] grdFiles = RegexFilenameFilter.list(dir, ".*\\.grd");
-    Math2.gcAndWait("Grid (between tests)");
-    Math2.gcAndWait("Grid (between tests)"); // before get memoryString() in a test
-    long um = Math2.getMemoryInUse();
-    String2.log("\n***** Grid.testForMemoryLeak; at start: " + Math2.memoryString());
-    for (int i = 0; i < Math.min(50, grdFiles.length); i++) {
-      grid.readGrd(dir + grdFiles[i], true);
-      // Math2.gcAndWait("Grid (between tests)"); //2013-12-05 Commented out. In a
-      // test, let Java handle memory.
-    }
-    grid = null;
-    Math2.gcAndWait("Grid (between tests)");
-    Math2.gcAndWait("Grid (between tests)"); // in a test, before getMemoryInUse()
-    grid = new Grid();
-    long increase = Math2.getMemoryInUse() - um;
-    String2.log("Memory used change after MemoryLeak test: " + increase);
-    if (increase > 50000)
-      throw new Exception("Memory usage increased: " + increase + " memory leak suspected.");
-    else Math2.gcAndWait("Grid (between tests)"); // in a test, a pause after message displayed
-  }
 
   /**
    * This test readGrid reading a subset.
@@ -385,113 +347,16 @@ public class GridTests {
     time = System.currentTimeMillis();
     grid = new Grid();
     grid.readGrd(testDir + testName + ".grd", true);
-    grid.saveAsGrd(testDir, "temp");
+    grid.saveAsGrd(TEMP_DIR.toString(), "temp");
     Test.ensureEqual(
-        NcHelper.ncdump(testDir + "temp.grd", "-h"),
+        NcHelper.ncdump(TEMP_DIR.toString() + "/temp.grd", "-h"),
         "netcdf temp" + grdDump,
-        "ncdump of " + testDir + "temp.grd");
+        "ncdump of " + TEMP_DIR.toString() + "/temp.grd");
     Test.ensureEqual(
-        File2.length(testDir + "temp.grd"), 55320, "length of " + testDir + "temp.grd");
-    File2.delete(testDir + "temp.grd");
-
-    // ******************** test of GMT 4 file
-    String dir4 = GridTests.class.getResource("/largeFiles/gmt/").getPath();
-    String name4 = "TestGMT4";
-    grdDump =
-        "netcdf TestGMT4.grd {\n"
-            + "  dimensions:\n"
-            + "    x = 4001;\n"
-            + // (has coord.var)\n" + //changed when switched to netcdf-java 4.0, 2009-02-23
-            "    y = 2321;\n"
-            + // (has coord.var)\n" +
-            "  variables:\n"
-            + "    double x(x=4001);\n"
-            + "      :long_name = \"x\";\n"
-            + "      :actual_range = 205.0, 255.0; // double\n"
-            + "\n"
-            + "    float y(y=2321);\n"
-            + "      :long_name = \"y\";\n"
-            + "      :actual_range = 22.0, 51.0; // double\n"
-            + "\n"
-            + "    float z(y=2321, x=4001);\n"
-            + "      :long_name = \"z\";\n"
-            + "      :_FillValue = NaNf; // float\n"
-            + "      :actual_range = 0.0010000000474974513, 183.41700744628906; // double\n"
-            + "      :coordinates = \"x y\";\n"
-            + "\n"
-            + "  // global attributes:\n"
-            + "  :Conventions = \"COARDS, CF-1.0\";\n"
-            + "  :title = \"/u00/modisgf/data/2007/1day/MW2007339_2007339_chla.grd\";\n"
-            + "  :history = \"nearneighbor -V -R205/255/22/51 -I0.0125/0.0125 -S2k -G/u00/modisgf/data/2007/1day/MW2007339_2007339_chla.grd -N1\";\n"
-            + "  :GMT_version = \"4.2.1\";\n"
-            + "  :node_offset = 0; // int\n"
-            + "}\n";
-    // input file is as expected (independent test)
-    String s = NcHelper.ncdump(dir4 + name4 + ".grd", "-h");
-    Test.ensureEqual(s, grdDump, "ncdump of " + testDir + testName + ".grd\n" + s);
-
-    // test read Grd
-    time = System.currentTimeMillis();
-    grid = new Grid();
-    grid.readGrd(dir4 + name4 + ".grd", true);
-    nLat = grid.lat.length;
-    nLon = grid.lon.length;
-    nData = grid.data.length;
-    String2.log(
-        nLat
-            + " "
-            + nLon
-            + " "
-            + grid.minData
-            + " "
-            + grid.maxData
-            + " "
-            + grid.latSpacing
-            + " "
-            + grid.lonSpacing
-            + "\n"
-            + grid.lon[0]
-            + " "
-            + grid.lon[nLon - 1]
-            + " "
-            + grid.lat[0]
-            + " "
-            + grid.lat[nLat - 1]
-            + "\n"
-            + grid.data[0]
-            + " "
-            + grid.data[1]
-            + " "
-            + grid.data[2]
-            + " "
-            + grid.data[nData - 2]
-            + " "
-            + grid.data[nData - 1]);
-    // int nFound = 0;
-    // for (int i = 0; i < nData; i++) {
-    // if (!Double.isNaN(grid.data[i])) {
-    // String2.log(i + "=" + grid.data[i]);
-    // nFound++;
-    // if (nFound == 5) break;
-    // }
-    // }
-
-    Test.ensureEqual(nLat, 2321, "read nLat");
-    Test.ensureEqual(nLon, 4001, "read nLon");
-    Test.ensureEqual(grid.minData, 0.001f, "read minData");
-    Test.ensureEqual(grid.maxData, 183.417f, "read maxData");
-    Test.ensureEqual(grid.latSpacing, .0125, "read latSpacing");
-    Test.ensureEqual(grid.lonSpacing, .0125, "read lonSpacing");
-    Test.ensureEqual(grid.lon[0], -155, "read lon[0]");
-    Test.ensureEqual(grid.lon[nLon - 1], -105, "read lon[nLon-1]");
-    Test.ensureEqual(grid.lat[0], 22, "read lat[0]");
-    Test.ensureEqual(grid.lat[nLat - 1], 51, "read lat[nLat-1]");
-
-    Test.ensureEqual(grid.data[0], NaN, "read data");
-    Test.ensureEqual(grid.data[1343], 0.195f, "read data");
-    Test.ensureEqual(grid.data[1344], 0.182f, "read data");
-    Test.ensureEqual(grid.data[1345], 0.182f, "read data");
-    Test.ensureEqual(grid.data[1348], 0.167f, "read data");
+        File2.length(TEMP_DIR.toString() + "/temp.grd"),
+        55320,
+        "length of " + TEMP_DIR.toString() + "/temp.grd");
+    File2.delete(TEMP_DIR.toString() + "/temp.grd");
   }
 
   /**

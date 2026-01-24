@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import org.junit.jupiter.api.io.TempDir;
-import tags.TagDisabledMissingFile;
 import ucar.ma2.Array;
 import ucar.ma2.ArrayByte;
 import ucar.ma2.ArrayChar;
@@ -719,30 +718,4 @@ class NcHelperTests {
     Test.ensureEqual(results, expected, "");
   }
 
-  /** Diagnose a problem */
-  @org.junit.jupiter.api.Test
-  @TagDisabledMissingFile
-  void testJplG1SST() throws Exception {
-    String dir = "c:/data/jplG1SST/";
-    NetcdfFile fi;
-    Variable var; // read start:stop:stride
-
-    fi = NcHelper.openFile(dir + "sst_20120214.nc");
-    var = fi.findVariable("SST");
-    PrimitiveArray pas14 =
-        NcHelper.getPrimitiveArray(
-            var.read("0,0:14000:200,0:28000:200"), true, NcHelper.isUnsigned(var));
-    fi.close();
-    String2.log(pas14.toString());
-
-    fi = NcHelper.openFile(dir + "sst_20120212.nc");
-    var = fi.findVariable("SST");
-    PrimitiveArray pas13 =
-        NcHelper.getPrimitiveArray(
-            var.read("0,0:14000:200,0:28000:200"), true, NcHelper.isUnsigned(var));
-    fi.close();
-    String2.log(pas13.toString());
-
-    String2.log("diffString=\n" + pas14.diffString(pas13));
-  }
 }

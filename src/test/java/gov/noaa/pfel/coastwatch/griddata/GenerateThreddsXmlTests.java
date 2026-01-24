@@ -4,11 +4,14 @@ import com.cohort.array.StringArray;
 import com.cohort.util.ResourceBundle2;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
+import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import org.junit.jupiter.api.io.TempDir;
 import tags.TagDisabledMissingFile;
 
 class GenerateThreddsXmlTests {
+  @TempDir private Path TEMP_DIR;
   /**
    * This tests shortening all the boldTitles in DataSet.properties, which is only useful while
    * testing shortenBoldTitles.
@@ -33,13 +36,11 @@ class GenerateThreddsXmlTests {
     // verbose = true;
     StringArray sa =
         GenerateThreddsXml.generateThreddsXml(
-            "c:/u00/",
+            TEMP_DIR.toString(),
             "satellite/",
-            "C:/programs/_tomcat/webapps/cwexperimental/WEB-INF/incompleteMainCatalog.xml",
-            "c:/u00/xml/");
+            TEMP_DIR.toString() + "/incompleteMainCatalog.xml",
+            TEMP_DIR.toString() + "/xml/");
     String2.log("first catalog.xml=" + sa.get(0));
-    //        TestUtil.displayInBrowser("file://" + sa.get(0));  //.xml
-    //        TestUtil.displayInBrowser("file://f:/u00/xml/catalog.xml");
   }
 
   @org.junit.jupiter.api.Test

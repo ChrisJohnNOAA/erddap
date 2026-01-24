@@ -370,7 +370,9 @@ class OpendapHelperTests {
           "java.lang.RuntimeException: ERROR in OpendapHelper.dapToNc\n"
               + "  url=https://tds.coaps.fsu.edu/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc\n"
               + "  varNames=zztop,time,lat,lon,PL_HD,history  projection=null\n"
-              + "  file=C:/programs/_tomcat/webapps/cwexperimental/WEB-INF/temp/testDapToNcDArraySubset.nc\n"
+              + "  file="
+              + fileName
+              + "\n"
               + "var=history has different dimensions than previous vars.";
       if (results.indexOf("java.net.ConnectException: Connection timed out: connect") >= 0)
         String2.pressEnterToContinue(

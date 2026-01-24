@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.StringReader;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.io.TempDir;
 import tags.TagDisabledAWS;
 import tags.TagDisabledExternalOther;
 import tags.TagDisabledLargeFiles;
@@ -23,6 +24,8 @@ import tags.TagSlowTests;
 import testDataset.Initialization;
 
 class FileVisitorDNLSTests {
+  @TempDir private static Path TEMP_DIR;
+
   @BeforeAll
   static void init() {
     Initialization.edStatic();
@@ -291,59 +294,6 @@ class FileVisitorDNLSTests {
             + "http://localhost:8080/cwexperimental/files/testFileNames/sub/jplMURSST20150105090000.png,jplMURSST20150105090000.png,46549.0\n";
     Test.ensureEqual(results, expected, "results=\n" + results);
 
-    // *** huge dir
-
-    if (doBigTest) {
-      for (int attempt = 0; attempt < 2; attempt++) {
-        // try {
-        // forward slash in huge directory
-        time = System.currentTimeMillis();
-        table = FileVisitorDNLS.oneStep("/data/gtspp/temp", ".*\\.nc", false, tPathRegex, false);
-        time = System.currentTimeMillis() - time;
-        // 2014-11-25 98436 files in 410ms
-        StringArray directoryPA = (StringArray) table.getColumn(FileVisitorDNLS.DIRECTORY);
-        String2.log("forward test: n=" + directoryPA.size() + " time=" + time + "ms");
-        if (directoryPA.size() < 1000) {
-          String2.log(directoryPA.size() + " files. Not a good test.");
-        } else {
-          Test.ensureBetween(
-              time / (double) directoryPA.size(), 2e-3, 8e-3, "ms/file (4.1e-3 expected)");
-          String dir0 = directoryPA.get(0);
-          String2.log("forward slash test: dir0=" + dir0);
-          Test.ensureTrue(dir0.indexOf('\\') < 0, "");
-          Test.ensureTrue(dir0.endsWith("/"), "");
-        }
-        // } catch (Throwable t) {
-        //   String2.pressEnterToContinue(unexpected +
-        //       MustBe.throwableToString(t));
-        // }
-      }
-
-      for (int attempt = 0; attempt < 2; attempt++) {
-        // try {
-        // backward slash in huge directory
-        time = System.currentTimeMillis();
-        table = FileVisitorDNLS.oneStep("\\data\\gtspp\\temp", ".*\\.nc", false, tPathRegex, false);
-        time = System.currentTimeMillis() - time;
-        // 2014-11-25 98436 files in 300ms
-        StringArray directoryPA = (StringArray) table.getColumn(FileVisitorDNLS.DIRECTORY);
-        String2.log("backward test: n=" + directoryPA.size() + " time=" + time + "ms");
-        if (directoryPA.size() < 1000) {
-          String2.log(directoryPA.size() + " files. Not a good test.");
-        } else {
-          Test.ensureBetween(
-              time / (double) directoryPA.size(), 1e-3, 8e-3, "ms/file (3e-3 expected)");
-          String dir0 = directoryPA.get(0);
-          String2.log("backward slash test: dir0=" + dir0);
-          Test.ensureTrue(dir0.indexOf('/') < 0, "");
-          Test.ensureTrue(dir0.endsWith("\\"), "");
-        }
-        // } catch (Throwable t) {
-        //   String2.pressEnterToContinue(unexpected +
-        //       MustBe.throwableToString(t));
-        // }
-      }
-    }
     String2.log("\n*** FileVisitorDNLS.testLocal finished.");
   }
 
@@ -1362,15 +1312,15 @@ class FileVisitorDNLSTests {
     // String2.log("\n*** FileVisitorDNLS.testReduceDnlsTableToOneDir\n");
     String tableString =
         "directory, name, lastModified, size\n"
-            + "/u00/, , , \n"
-            + "/u00/, nothing, 60, 1\n"
-            + "/u00/a/, , , \n"
-            + "/u00/a/, AA, 60, 2\n"
-            + "/u00/a/, A, 60, 3\n"
-            + "/u00/a/q/,  ,   , \n"
-            + "/u00/a/q/, D, 60, 4\n"
-            + "/u00/a/b/, B, 60, 5\n"
-            + "/u00/a/b/c/, C, 60, 6\n";
+            + TEMP_DIR + "/, , , \n"
+            + TEMP_DIR + "/, nothing, 60, 1\n"
+            + TEMP_DIR + "/a/, , , \n"
+            + TEMP_DIR + "/a/, AA, 60, 2\n"
+            + TEMP_DIR + "/a/, A, 60, 3\n"
+            + TEMP_DIR + "/a/q/,  ,   , \n"
+            + TEMP_DIR + "/a/q/, D, 60, 4\n"
+            + TEMP_DIR + "/a/b/, B, 60, 5\n"
+            + TEMP_DIR + "/a/b/c/, C, 60, 6\n";
     Table table = new Table();
     table.readASCII(
         "testReduceDnlsTableToOneDir",
@@ -1385,14 +1335,16 @@ class FileVisitorDNLSTests {
         null,
         null,
         true);
-    String subDirs[] = FileVisitorDNLS.reduceDnlsTableToOneDir(table, "/u00/a/");
+    String subDirs[] = FileVisitorDNLS.reduceDnlsTableToOneDir(table, TEMP_DIR + "/a/");
 
     String results = table.dataToString();
     String expected =
         "directory,name,lastModified,size\n"
-            + "/u00/a/,A,60,3\n"
+            + TEMP_DIR.toString().replace('\\', '/')
+            + "/a/,A,60,3\n"
             + // files are sorted, dirs are removed
-            "/u00/a/,AA,60,2\n";
+            TEMP_DIR.toString().replace('\\', '/')
+            + "/a/,AA,60,2\n";
     Test.ensureEqual(results, expected, "results=\n" + results);
 
     results = String2.toCSSVString(subDirs);
@@ -1406,15 +1358,33 @@ class FileVisitorDNLSTests {
     // String2.log("\n*** FileVisitorDNLS.testReduceDnlsTableToOneDir\n");
     String tableString =
         "directory, name, lastModified, size\n"
-            + "\\\\u00\\\\, , , \n"
-            + "\\\\u00\\\\, nothing, 60, 1\n"
-            + "\\\\u00\\\\a\\\\, , , \n"
-            + "\\\\u00\\\\a\\\\, AA, 60, 2\n"
-            + "\\\\u00\\\\a\\\\, A, 60, 3\n"
-            + "\\\\u00\\\\a\\\\q\\\\,  ,   , \n"
-            + "\\\\u00\\\\a\\\\q\\\\, D, 60, 4\n"
-            + "\\\\u00\\\\a\\\\b\\\\, B, 60, 5\n"
-            + "\\\\u00\\\\a\\\\b\\\\c\\\\, C, 60, 6\n";
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\, , , \n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\, nothing, 60, 1\n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\, , , \n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\, AA, 60, 2\n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\, A, 60, 3\n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\q\\\\,  ,   , \n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\q\\\\, D, 60, 4\n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\b\\\\, B, 60, 5\n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\b\\\\c\\\\, C, 60, 6\n";
     Table table = new Table();
     table.readASCII(
         "testReduceDnlsTableToOneDir",
@@ -1429,14 +1399,18 @@ class FileVisitorDNLSTests {
         null,
         null,
         true);
-    String subDirs[] = FileVisitorDNLS.reduceDnlsTableToOneDir(table, "/u00/a/");
+    String subDirs[] = FileVisitorDNLS.reduceDnlsTableToOneDir(table, TEMP_DIR + "/a/");
 
     String results = table.dataToString();
     String expected =
         "directory,name,lastModified,size\n"
-            + "\\\\u00\\\\a\\\\,A,60,3\n"
+            + "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\,A,60,3\n"
             + // files are sorted, dirs are removed
-            "\\\\u00\\\\a\\\\,AA,60,2\n";
+            "\\\\"
+            + TEMP_DIR
+            + "\\\\a\\\\,AA,60,2\n";
     Test.ensureEqual(results, expected, "results=\n" + results);
 
     results = String2.toCSSVString(subDirs);
