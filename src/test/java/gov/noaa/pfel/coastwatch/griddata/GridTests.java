@@ -347,16 +347,16 @@ public class GridTests {
     time = System.currentTimeMillis();
     grid = new Grid();
     grid.readGrd(testDir + testName + ".grd", true);
-    grid.saveAsGrd(TEMP_DIR.toString(), "temp");
+    grid.saveAsGrd(TEMP_DIR.toString() + File.separator, "temp");
     Test.ensureEqual(
-        NcHelper.ncdump(TEMP_DIR.toString() + "/temp.grd", "-h"),
+        NcHelper.ncdump(TEMP_DIR.toString() + File.separator + "temp.grd", "-h"),
         "netcdf temp" + grdDump,
-        "ncdump of " + TEMP_DIR.toString() + "/temp.grd");
+        "ncdump of " + TEMP_DIR.toString() + File.separator + "temp.grd");
     Test.ensureEqual(
-        File2.length(TEMP_DIR.toString() + "/temp.grd"),
+        File2.length(TEMP_DIR.toString() + File.separator + "temp.grd"),
         55320,
-        "length of " + TEMP_DIR.toString() + "/temp.grd");
-    File2.delete(TEMP_DIR.toString() + "/temp.grd");
+        "length of " + TEMP_DIR.toString() + File.separator + "temp.grd");
+    File2.delete(TEMP_DIR.toString() + File.separator + "temp.grd");
   }
 
   /**
