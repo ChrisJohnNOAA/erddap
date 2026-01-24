@@ -7,8 +7,6 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import gov.noaa.pfel.erddap.util.EDStatic;
-import java.util.concurrent.TimeUnit;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -47,10 +45,10 @@ class EDDGridCopyTests {
       String2.log(MustBe.throwableToString(t2));
     }
     if (checkSourceData) {
-      Awaitility.await()
-          .pollInterval(1, TimeUnit.SECONDS)
-          .atMost(30, TimeUnit.SECONDS)
-          .until(() -> EDStatic.nUnfinishedTasks() <= 0);
+      while (EDStatic.nUnfinishedTasks() > 0) {
+        String2.log("nUnfinishedTasks=" + EDStatic.nUnfinishedTasks());
+        Math2.sleep(1000);
+      }
       // recreate edd to see new copied data files
       eddGrid = (EDDGridCopy) EDDTestDataset.gettestGridCopy();
     }
