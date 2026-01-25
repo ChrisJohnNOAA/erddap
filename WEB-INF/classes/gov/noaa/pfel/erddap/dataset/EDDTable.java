@@ -26,6 +26,10 @@ import com.cohort.util.Test;
 import com.cohort.util.Units2;
 import com.cohort.util.XML;
 import com.google.common.collect.ImmutableList;
+import gov.noaa.pfel.erddap.Erddap;
+import gov.noaa.pfel.erddap.jte.Subset;
+import gov.noaa.pfel.erddap.jte.YouAreHere;
+import java.io.StringWriter;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.sgt.GraphDataLayer;
@@ -10409,6 +10413,95 @@ public abstract class EDDTable extends EDD {
       String requestUrl,
       String endOfRequest,
       String userQuery,
+
+    if (Erddap.useHtmlTemplates()) {
+      try (Writer writer =
+          File2.getBufferedWriterUtf8(outputStreamSource.outputStream(File2.UTF_8))) {
+        String tErddapUrl = EDStatic.erddapUrl(request, loggedInAs, language);
+        Table distinctTable = distinctSubsetVariablesDataTable(language, loggedInAs, userDapQuery);
+        StringArray resultsVariables = new StringArray();
+        StringArray constraintVariables = new StringArray();
+        StringArray constraintOps = new StringArray();
+        StringArray constraintValues = new StringArray();
+        parseUserDapQuery(
+            language,
+            userDapQuery,
+            resultsVariables,
+            constraintVariables,
+            constraintOps,
+            constraintValues,
+            true);
+
+        // This is tricky:
+        // A variable may be constrained and the user wants to see the distinct values of
+        // another variable.
+        // For that, the distinct values table must be made with the constraints.
+        // So the query has to be parsed.
+        // But then the variable that the user wants to see the distinct values of may have
+        // been constrained.
+        // So that constraint must be removed from the query.
+        // But what if that variable is constrained twice, e.g., lat>=10 & lat<=20.
+        // This simple system just removes all constraints on that variable.
+        StringArray dvar = new StringArray();
+        StringArray dops = new StringArray();
+        StringArray dvals = new StringArray();
+        String view = ;
+
+        // separate view and data query constraints
+        for (int i = 0; i < constraintVariables.size(); i++) {
+          String name = constraintVariables.get(i);
+          if (name.equals(.view)) {
+            view = constraintValues.get(i);
+          } else {
+            dvar.add(name);
+            dops.add(constraintOps.get(i));
+            dvals.add(constraintValues.get(i));
+          }
+        }
+
+        Subset subset =
+            new Subset(
+                tErddapUrl,
+                datasetID,
+                title(language),
+                EDD.getDapFileTypeOptions(false, false, true),
+                publicGraphFileTypeNames,
+                dataVariableDestinationNames(),
+                dataVariables,
+                distinctTable,
+                dvar,
+                dops,
+                dvals,
+                view,
+                new YouAreHere(
+                    language,
+                    tabledap,
+                    .subset,
+                    datasetID,
+                    userDapQuery,
+                    EDStatic.customProtocol,
+                    EDStatic.customUrl(request),
+                    EDStatic.googleTrackingID(request),
+                    EDStatic.justAddHttp(EDStatic.config.baseUrl) + /images/erddap_logo.png,
+                    EDStatic.erddapVersion,
+                    EDStatic.commonThreddsCatalogs,
+                    EDStatic.common2ThreddsCatalogs,
+                    EDStatic.common3ThreddsCatalogs,
+                    EDStatic.customThreddsCatalogs,
+                    EDStatic.custom2ThreddsCatalogs,
+                    EDStatic.custom3ThreddsCatalogs,
+                    false // isGrid
+                    ));
+
+        Erddap.getJteSingleton().render(subset.jte, subset, writer);
+
+      } catch (Exception e) {
+        String2.log(MustBe.throwableToString(e));
+        EDStatic.htmlErddapException(language, loggedInAs, request, e, outputStreamSource);
+      }
+      return;
+    }
+
       OutputStreamSource outputStreamSource,
       String dir,
       String fileName,

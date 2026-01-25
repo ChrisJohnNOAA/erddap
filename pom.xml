@@ -121,8 +121,8 @@
                 <version>3.14.0</version>
                 <configuration>
                     <failOnError>true</failOnError>
-                    <source>25</source>   <!-- java version -->
-                    <target>25</target>
+                    <source>21</source>   <!-- java version -->
+                    <target>21</target>
                     <encoding>UTF-8</encoding>
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
@@ -565,7 +565,7 @@
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/Units2.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/XML.java</file>
                     </suppressedFiles>
-                    <jdkVersion>25</jdkVersion>
+                    <jdkVersion>21</jdkVersion>
                     <noStdlibLink>true</noStdlibLink> <!-- This is the Kotlin stdlib -->
                     <dokkaPlugins>
                         <plugin>
