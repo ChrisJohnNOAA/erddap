@@ -44,21 +44,4 @@ public record SoTPoint(SoTValue x, SoTValue y) implements Serializable {
   public String toString() {
     return "(" + x + ", " + y + ")";
   }
-
-  /** Test for equality. For equality both x and y values must be equal. */
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof SoTPoint stp)) {
-      return false;
-    }
-    return (x.equals(stp.x()) && y.equals(stp.y()));
-  }
-
-  @Override
-  public int hashCode() {
-    int hash = 7 * 31;
-    hash = 31 * hash + x.hashCode();
-    hash = 31 * hash + y.hashCode();
-    return hash;
-  }
 }
