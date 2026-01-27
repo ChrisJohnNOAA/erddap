@@ -2837,7 +2837,7 @@ public class Calendar2 {
     if (end > start) d = String2.parseDouble(mmString.substring(start, end));
     if (Double.isNaN(d)) throw new SimpleException(tError);
     start = end;
-    if (start >= mmString.length()) return mmValue += d;
+    if (start >= mmString.length()) return mmValue + d;
 
     // test sUnits.equals to ensure no junk at end of constraint
     String sUnits = mmString.substring(start); // it will be something

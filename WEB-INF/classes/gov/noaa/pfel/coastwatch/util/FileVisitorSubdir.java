@@ -114,7 +114,6 @@ public class FileVisitorSubdir extends SimpleFileVisitor<Path> {
    * @throws IOException notably, if "Too many open files".
    */
   public static StringArray oneStep(String tDir, String tPathRegex) throws IOException {
-    long time = System.currentTimeMillis();
 
     tPathRegex = tPathRegex == null || tPathRegex.length() == 0 ? ".*" : tPathRegex;
 
@@ -142,13 +141,6 @@ public class FileVisitorSubdir extends SimpleFileVisitor<Path> {
         EnumSet.of(FileVisitOption.FOLLOW_LINKS), // follow symbolic links
         Integer.MAX_VALUE, // maxDepth
         fv);
-    if (verbose)
-      String2.log(
-          "FileVisitorSubdir.oneStep finished successfully. n="
-              + fv.results.size()
-              + " time="
-              + (System.currentTimeMillis() - time)
-              + "ms");
     return fv.results;
   }
 }

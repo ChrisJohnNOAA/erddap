@@ -460,7 +460,7 @@ public class TimeAxis extends Axis implements Cloneable {
   //
   @Override
   public Rectangle getBounds() {
-    double xp, yp, ymin, ymax, xmin, xmax;
+    double xp, yp, ymin, ymax, xmin;
     int xd, yd, width, height, x, y;
     if (orientation_ == Axis.HORIZONTAL) {
       //
@@ -494,17 +494,12 @@ public class TimeAxis extends Axis implements Cloneable {
       y = graph_.getYUtoD(tRange_.end);
       height = yd - y;
       xmin = xp;
-      xmax = xp;
       if (labelPosition_ == POSITIVE_SIDE) {
-        xmax = xmajor_ + MAJOR_LABEL_RATIO__ * labelHeight_;
         if (ticPosition_ == BOTH_SIDES || ticPosition_ == NEGATIVE_SIDE) {
           xmin = xmin - 1.3 * largeTicHeight_;
         }
       } else {
         xmin = xmajor_ - MAJOR_LABEL_RATIO__ * labelHeight_;
-        if (ticPosition_ == BOTH_SIDES || ticPosition_ == POSITIVE_SIDE) {
-          xmax = xmax + 1.3 * largeTicHeight_;
-        }
       }
       x = graph_.getLayer().getXPtoD(xmin);
       width = graph_.getLayer().getXPtoD(xp) - x;

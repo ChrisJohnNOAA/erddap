@@ -3949,11 +3949,10 @@ public class EDDTableFromSOS extends EDDTable {
 
       // make addAtts
       Attributes sourceAtts = sosTable.columnAttributes(col);
-      Attributes addAtts = new Attributes();
       PAType tPAType = sosTable.getColumn(col).elementType();
       sourceAtts.add("standard_name", colNameNoParen); // add now, remove later
       PrimitiveArray destPA = PrimitiveArray.factory(tPAType, 1, false);
-      addAtts =
+      Attributes addAtts =
           makeReadyToUseAddVariableAttributesForDatasetsXml(
               sosTable.globalAttributes(), // but there are none
               sourceAtts,

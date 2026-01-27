@@ -241,7 +241,6 @@ public class TableWriterOrderByMean extends TableWriterAll {
     cannotMeanCol = new BitSet(ncols);
     degreesCol = new BitSet(ncols);
     degreesTrueCol = new BitSet(ncols);
-    BitSet wasDecimalCol = new BitSet(ncols);
     for (int k = 0; k < nKeyCols; k++) {
       int col = table.findColumnNumber(orderBy[k]);
       if (col < 0)
@@ -292,9 +291,6 @@ public class TableWriterOrderByMean extends TableWriterAll {
           degreesTrueCol.set(col);
         } else if (isDegreeUnitsColumn(table, col)) {
           degreesCol.set(col);
-        }
-        if (column.isFloatingPointType()) {
-          wasDecimalCol.set(col);
         }
         int timeCol = -1;
         if (column.isIntegerType() || column.isFloatingPointType()) {

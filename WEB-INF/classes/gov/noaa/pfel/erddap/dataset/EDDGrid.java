@@ -10213,7 +10213,6 @@ public abstract class EDDGrid extends EDD {
     String license = combinedGlobalAttributes.getString(language, "license");
     String project = combinedGlobalAttributes.getString(language, "project");
     if (project == null) project = institution;
-    String references = combinedGlobalAttributes.getString(language, "references");
     String satellite = combinedGlobalAttributes.getString(language, "satellite");
     String sensor = combinedGlobalAttributes.getString(language, "sensor");
     String sourceUrl = publicSourceUrl(language);
@@ -10258,7 +10257,6 @@ public abstract class EDDGrid extends EDD {
     if (keywordsVocabulary == null || testMinimalMetadata) keywordsVocabulary = unknown;
     if (license == null || testMinimalMetadata) license = unknown;
     if (project == null || testMinimalMetadata) project = unknown;
-    if (references == null || testMinimalMetadata) references = unknown;
     if (satellite == null || testMinimalMetadata) satellite = unknown;
     if (sensor == null || testMinimalMetadata) sensor = unknown;
     if (sourceUrl == null || testMinimalMetadata) sourceUrl = unknown;

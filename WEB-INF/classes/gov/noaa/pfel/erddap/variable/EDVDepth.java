@@ -103,7 +103,5 @@ public class EDVDepth extends EDV {
   @Override
   public void ensureValid(String errorInMethod) throws Throwable {
     super.ensureValid(errorInMethod);
-    errorInMethod +=
-        "\ndatasets.xml/EDVDepth.ensureValid error for soureName=" + sourceName + ":\n";
   }
 }

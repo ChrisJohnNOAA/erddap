@@ -17710,9 +17710,6 @@ public abstract class EDDTable extends EDD {
     String datasetUrl = tErddapUrl + "/" + dapProtocol + "/" + datasetID();
     String sosUrl = tErddapUrl + "/sos/" + datasetID() + "/" + sosServer; // "?" at end?
     String wmsUrl = tErddapUrl + "/wms/" + datasetID() + "/" + WMS_SERVER; // "?" at end?
-    String domain = EDStatic.config.baseUrl;
-    if (domain.startsWith("http://")) domain = domain.substring(7);
-    else if (domain.startsWith("https://")) domain = domain.substring(8);
     String eddCreationDate =
         String2.replaceAll(Calendar2.millisToIsoDateString(creationTimeMillis()), "-", "");
     String unknown = "Unknown"; // pg viii of FGDC document
@@ -17754,7 +17751,6 @@ public abstract class EDDTable extends EDD {
     String license = combinedGlobalAttributes.getString(language, "license");
     String project = combinedGlobalAttributes.getString(language, "project");
     if (project == null) project = institution;
-    String references = combinedGlobalAttributes.getString(language, "references");
     String satellite = combinedGlobalAttributes.getString(language, "satellite");
     String sensor = combinedGlobalAttributes.getString(language, "sensor");
     String sourceUrl = publicSourceUrl(language);
@@ -17800,7 +17796,6 @@ public abstract class EDDTable extends EDD {
     if (keywordsVocabulary == null || testMinimalMetadata) keywordsVocabulary = unknown;
     if (license == null || testMinimalMetadata) license = unknown;
     if (project == null || testMinimalMetadata) project = unknown;
-    if (references == null || testMinimalMetadata) references = unknown;
     if (satellite == null || testMinimalMetadata) satellite = unknown;
     if (sensor == null || testMinimalMetadata) sensor = unknown;
     if (sourceUrl == null || testMinimalMetadata) sourceUrl = unknown;

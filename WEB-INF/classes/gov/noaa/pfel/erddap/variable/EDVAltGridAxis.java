@@ -115,7 +115,5 @@ public class EDVAltGridAxis extends EDVGridAxis {
   @Override
   public void ensureValid(String errorInMethod) throws Throwable {
     super.ensureValid(errorInMethod);
-    errorInMethod +=
-        "\ndatasets.xml/EDVAltGridAxis.ensureValid error for sourceName=" + sourceName + ":\n";
   }
 }

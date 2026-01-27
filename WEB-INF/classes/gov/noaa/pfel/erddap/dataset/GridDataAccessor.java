@@ -519,7 +519,8 @@ public class GridDataAccessor implements AutoCloseable {
     tb = rowMajor ? partialIndex.increment() : partialIndex.incrementCM();
     if (!tb) {
       partialIndex.reset();
-      tb = rowMajor ? partialIndex.increment() : partialIndex.incrementCM();
+      if (rowMajor) partialIndex.increment();
+      else partialIndex.incrementCM();
     }
 
     // need to get more partial data from source?

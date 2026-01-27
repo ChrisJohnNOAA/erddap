@@ -302,8 +302,6 @@ public class HandlerFactory {
         if (tryToUnload(erddap, datasetID, changedDatasetIDs, needToUpdateLucene)) {
           // yes, it was unloaded
           String2.log("*** unloaded datasetID=" + datasetID + " because active=\"false\".");
-          if (needToUpdateLucene)
-            lastLuceneUpdate = System.currentTimeMillis(); // because Lucene was updated
         }
 
         skip = true;

@@ -151,6 +151,5 @@ public class EDVAlt extends EDV {
   @Override
   public void ensureValid(String errorInMethod) throws Throwable {
     super.ensureValid(errorInMethod);
-    errorInMethod += "\ndatasets.xml/EDVAlt.ensureValid error for soureName=" + sourceName + ":\n";
   }
 }

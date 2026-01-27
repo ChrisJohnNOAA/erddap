@@ -140,11 +140,6 @@ public class LogAxis extends SpaceAxis implements Cloneable {
       int vertalign;
       int horzalign;
 
-      if (dir * uRangeStart <= 0 && dir * uRangeEnd >= 0) {
-        x = ((int) (uRangeStart / (delta * labelInterval_) - 0.00001)) * delta * labelInterval_;
-      } else {
-        x = xt;
-      }
       long jump = 10; // label display on each tic
       // if(istop<nblabel) jump = 100; // one on two
 
@@ -270,11 +265,6 @@ public class LogAxis extends SpaceAxis implements Cloneable {
       SGLabel label;
       int vertalign;
 
-      if (dir * uRangeStart <= 0 && dir * uRangeEnd >= 0) {
-        y = ((int) (uRangeStart / (delta * labelInterval_) - 0.00001)) * delta * labelInterval_;
-      } else {
-        y = yt;
-      }
 
       long jump = 10; // label display on each tic
       // if(istop<nblabel) jump = 100; // one on two

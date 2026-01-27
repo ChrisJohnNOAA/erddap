@@ -6363,9 +6363,6 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
     String nextPath = ""; // "" is valid reference to baseUrl of .files
     int slashPoNP = hasDatasetID ? endOfRequestUrl.indexOf('/') : -1;
     if (slashPoNP >= 0) {
-      nextPath = endOfRequestUrl.substring(slashPoNP + 1); // no leading /
-      endOfRequestUrl = endOfRequestUrl.substring(0, slashPoNP);
-
       // currently no nextPath options
       sendResourceNotFoundError(
           requestNumber, request, response, "No options after '/' in request URL.");
@@ -23858,9 +23855,6 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
     if (error == null || error.length() == 0) return;
     int colonPo = error.indexOf(": ");
     if (colonPo >= 0 && colonPo < error.length() - 5) error = error.substring(colonPo + 2);
-    String requestUrl = request.getRequestURI();
-    if (requestUrl == null) requestUrl = "";
-    if (requestUrl.startsWith("/")) requestUrl = requestUrl.substring(1);
     // encodeAsPreHTML(error) is essential -- to prevent Cross-site-scripting security vulnerability
     // (which allows hacker to insert his javascript into pages returned by server)
     // See Tomcat (Definitive Guide) pg 147

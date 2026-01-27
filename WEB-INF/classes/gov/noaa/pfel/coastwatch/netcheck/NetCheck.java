@@ -658,7 +658,6 @@ public class NetCheck {
       String2.log("The name of the setup file must end in \".xml\".");
       System.exit(0);
     }
-    @SuppressWarnings("unused")
-    NetCheck unusedNetCheck = new NetCheck(xmlName, testMode);
+    new NetCheck(xmlName, testMode);
   }
 }

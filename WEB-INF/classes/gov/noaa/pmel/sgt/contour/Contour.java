@@ -603,8 +603,6 @@ public class Contour implements PropertyChangeListener {
       nx = px.length;
       ny = py.length;
       //
-      x = new double[kmax + 1];
-      y = new double[kmax + 1];
       s = new double[kmax + 1];
       s[1] = 0.0;
       //

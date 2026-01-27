@@ -889,8 +889,6 @@ public class KmlFiles extends ImageTypes {
 
         if (drawOrder < doMax) {
           // NetworkLinks to subregions (quadrant)
-          tQuery =
-              new StringBuilder(tDestinationNames.get(0)); // limited chars, no need to URLEncode
           for (int nl = 0; nl < 4; nl++) {
             double tLonStartd = nl < 2 ? lonStartd : lonMidd;
             double tLonStopd = nl < 2 ? lonMidd : lonStopd;
