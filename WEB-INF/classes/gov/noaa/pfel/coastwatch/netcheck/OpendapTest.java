@@ -14,6 +14,8 @@ import dods.dap.DDS;
 import gov.noaa.pfel.coastwatch.griddata.Opendap;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 
 /**
@@ -247,7 +249,7 @@ public class OpendapTest extends NetCheckTest {
 
       // check ddsMustContain
       if (ddsMustContain != null && ddsMustContain.length() > 0) {
-        String ddsString = OpendapHelper.getDdsString(dds);
+        String ddsString = getDdsString(dds);
         if (ddsString.indexOf(ddsMustContain) < 0) {
           errorSB.append(
               "  "
@@ -296,11 +298,17 @@ public class OpendapTest extends NetCheckTest {
   }
 
   /**
-   * This returns a description of this test (suitable for putting at the top of an error message),
-   * with " " at the start and \n at the end.
+   * This converts a dds to a string.
    *
-   * @return a description
+   * @param dds from dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT)
+   * @return the string form of the dds
    */
+  public static String getDdsString(DDS dds) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    dds.print(baos);
+    return baos.toString(StandardCharsets.UTF_8);
+  }
+
   @Override
   public String getDescription() {
     return "  url: "
