@@ -18494,9 +18494,9 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
                   + "              \"@id\": \"files\"\n"
                   + "            },\n"
                   + "            \"extract\": {\n"
-                    + "              \"column\": "
-                    + String2.toJson65536(dataVariable.sourceName())
-                    + "\n"
+                  + "              \"column\": "
+                  + String2.toJson65536(dataVariable.sourceName())
+                  + "\n"
                   + "            }\n"
                   + "          }\n"
                   + "        }"

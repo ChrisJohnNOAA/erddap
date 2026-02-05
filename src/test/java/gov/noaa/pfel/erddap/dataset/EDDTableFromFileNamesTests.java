@@ -1629,8 +1629,8 @@ http://localhost:8080/erddap/files/awsS3NoaaGoes17/SUVI-L1b-He303/,,,NaN,
             eddTable.className(),
             ".croissant");
     results = File2.directReadFrom88591File(EDStatic.config.fullTestCacheDirectory + tName);
-                expected =
-            "{\n"
+    expected =
+        "{\n"
             + "  \"@context\":  {\n"
             + "    \"@language\": \"en\",\n"
             + "    \"@vocab\": \"https://schema.org/\",\n"
@@ -2329,7 +2329,7 @@ http://localhost:8080/erddap/files/awsS3NoaaGoes17/SUVI-L1b-He303/,,,NaN,
             + "    }\n"
             + "  }\n"
             + "}\n";
-tResults = results.substring(0, Math.min(results.length(), expected.length()));
+    tResults = results.substring(0, Math.min(results.length(), expected.length()));
     Test.ensureEqual(tResults, expected, "results=\n" + results);
   }
 }
