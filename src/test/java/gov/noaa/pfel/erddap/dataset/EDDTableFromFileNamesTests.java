@@ -1686,7 +1686,7 @@ http://localhost:8080/erddap/files/awsS3NoaaGoes17/SUVI-L1b-He303/,,,NaN,
             + "    \"@id\": \"manifest\",\n"
             + "    \"name\": \"manifest\",\n"
             + "    \"description\": \"Manifest file containing the list of all data files.\",\n"
-            + "    \"contentUrl\": \"http://localhost:8080/erddap/files/testFileNames/manifest.csv\",\n"
+            + "    \"contentUrl\": \"http://localhost:8080/erddap/files/testFileNames.manifest\",\n"
             + "    \"encodingFormat\": \"text/csv\"\n"
             + "  },\n"
             + "  {\n"

@@ -6795,6 +6795,14 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         nextPath = "";
         nameAndExt = ts;
       }
+    } else {
+      // This is here to support the file manifest (used by croissant).
+      // Specifically "/files/datasetID.manifest" with no slash after datasetID.
+      int dotIndex = endOfRequestUrl.indexOf('.');
+      if (dotIndex > 0) {
+        id = endOfRequestUrl.substring(0, dotIndex);
+        nameAndExt = endOfRequestUrl.substring(dotIndex);
+      }
     }
 
     // catch pseudo filename that is just an extension
@@ -7014,8 +7022,8 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
       return;
     }
 
-    // handle manifest.csv request
-    if ("manifest.csv".equals(nameAndExt) && (nextPath == null || nextPath.length() == 0)) {
+    // handle .manifest request
+    if (".manifest".equals(nameAndExt) && (nextPath == null || nextPath.length() == 0)) {
       Table fileTable = edd.getFilesUrlList(request, loggedInAs, language);
       sendPlainTable(
           language,
@@ -18416,7 +18424,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
                   EDStatic.erddapUrl(request, loggedInAs, language)
                       + "/files/"
                       + edd.datasetID()
-                      + "/manifest.csv")
+                      + ".manifest")
               + ",\n"
               + "    \"encodingFormat\": \"text/csv\"\n"
               + "  },\n");

@@ -62,7 +62,7 @@ class ErddapTests {
     when(response.getOutputStream()).thenReturn(outStream);
 
     String datasetID = "testDataset";
-    when(request.getRequestURI()).thenReturn("/erddap/files/" + datasetID + "/manifest.csv");
+    when(request.getRequestURI()).thenReturn("/erddap/files/" + datasetID + ".manifest");
 
     EDDTable edd = mock(EDDTable.class);
     when(edd.datasetID()).thenReturn(datasetID);
@@ -79,7 +79,7 @@ class ErddapTests {
     erddap.tableDatasetHashMap.put(datasetID, edd);
     try {
       erddap.doFiles(
-          0, 1, request, response, null, "/erddap/files/".length(), "testDataset/manifest.csv", "");
+          0, 1, request, response, null, "/erddap/files/".length(), "testDataset.manifest", "");
       String result = baos.toString();
       Test.ensureTrue(result.contains("file1.nc"), "Result should contain file1.nc");
       Test.ensureTrue(

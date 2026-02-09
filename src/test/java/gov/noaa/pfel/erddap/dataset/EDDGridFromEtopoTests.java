@@ -421,7 +421,7 @@ class EDDGridFromEtopoTests {
             + "    \"@id\": \"manifest\",\n"
             + "    \"name\": \"manifest\",\n"
             + "    \"description\": \"Manifest file containing the list of all data files.\",\n"
-            + "    \"contentUrl\": \"http://localhost:8080/erddap/files/etopo360/manifest.csv\",\n"
+            + "    \"contentUrl\": \"http://localhost:8080/erddap/files/etopo360.manifest\",\n"
             + "    \"encodingFormat\": \"text/csv\"\n"
             + "  },\n"
             + "  {\n"
