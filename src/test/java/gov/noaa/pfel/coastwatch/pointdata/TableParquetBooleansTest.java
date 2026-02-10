@@ -12,12 +12,15 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
+import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.example.ExampleParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.parquet.io.LocalInputFile;
 import org.apache.parquet.io.LocalOutputFile;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
+import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import testDataset.Initialization;
@@ -107,6 +110,13 @@ class TableParquetBooleansTest {
         }
         writer.write(record);
       }
+    }
+
+    // VERIFY THE PARQUET FILE SCHEMA DIRECTLY
+    try (ParquetFileReader reader = ParquetFileReader.open(new LocalInputFile(java.nio.file.Path.of(roundTripFileName)))) {
+        MessageType rtSchema = reader.getFileMetaData().getSchema();
+        Test.ensureEqual(rtSchema.getType("bool_col").asPrimitiveType().getPrimitiveTypeName(), PrimitiveTypeName.BOOLEAN, "rtSchema bool_col");
+        Test.ensureEqual(rtSchema.getType("bool_opt").asPrimitiveType().getPrimitiveTypeName(), PrimitiveTypeName.BOOLEAN, "rtSchema bool_opt");
     }
 
     // Read round-trip file back
