@@ -56,7 +56,8 @@ public class CustomWriteSupport extends WriteSupport<List<PAOne>> {
         switch (cols.get(i).getPrimitiveType().getPrimitiveTypeName()) {
           case BOOLEAN:
             // erddap stores booleans as bytes 1|0
-            recordConsumer.addBoolean(com.cohort.util.String2.parseBooleanToInt(val.getString()) == 1);
+            recordConsumer.addBoolean(
+                com.cohort.util.String2.parseBooleanToInt(val.getString()) == 1);
             break;
           case FLOAT:
             recordConsumer.addFloat(val.getFloat());

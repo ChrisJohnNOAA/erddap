@@ -57,10 +57,12 @@ class TableParquetBooleansTest {
       SimpleGroupFactory factory = new SimpleGroupFactory(schema);
 
       // Row 0: id="r0", bool_col=true, bool_opt=false
-      writer.write(factory.newGroup().append("id", "r0").append("bool_col", true).append("bool_opt", false));
+      writer.write(
+          factory.newGroup().append("id", "r0").append("bool_col", true).append("bool_opt", false));
 
       // Row 1: id="r1", bool_col=false, bool_opt=true
-      writer.write(factory.newGroup().append("id", "r1").append("bool_col", false).append("bool_opt", true));
+      writer.write(
+          factory.newGroup().append("id", "r1").append("bool_col", false).append("bool_opt", true));
 
       // Row 2: id="r2", bool_col=true, bool_opt is missing (null)
       writer.write(factory.newGroup().append("id", "r2").append("bool_col", true));
@@ -71,13 +73,10 @@ class TableParquetBooleansTest {
     table.readParquet(fileName, null, null, true);
 
     // Verify results
-    // ERDDAP should have converted booleans to bytes: 1=true, 0=false, missing value=127 (empty string in CSV)
+    // ERDDAP should have converted booleans to bytes: 1=true, 0=false, missing value=127 (empty
+    // string in CSV)
     String results = table.dataToString();
-    String expected =
-        "id,bool_col,bool_opt\n"
-            + "r0,1,0\n"
-            + "r1,0,1\n"
-            + "r2,1,\n";
+    String expected = "id,bool_col,bool_opt\n" + "r0,1,0\n" + "r1,0,1\n" + "r2,1,\n";
     Test.ensureEqual(results, expected, "Initial read results=\n" + results);
 
     // Verify column types are ByteArray
@@ -96,9 +95,7 @@ class TableParquetBooleansTest {
 
     try (ParquetWriter<List<PAOne>> writer =
         new ParquetWriterBuilder(
-                schema,
-                new LocalOutputFile(java.nio.file.Path.of(roundTripFileName)),
-                metadata)
+                schema, new LocalOutputFile(java.nio.file.Path.of(roundTripFileName)), metadata)
             .withCompressionCodec(CompressionCodecName.SNAPPY)
             .withConf(new Configuration())
             .build()) {
@@ -113,10 +110,17 @@ class TableParquetBooleansTest {
     }
 
     // VERIFY THE PARQUET FILE SCHEMA DIRECTLY
-    try (ParquetFileReader reader = ParquetFileReader.open(new LocalInputFile(java.nio.file.Path.of(roundTripFileName)))) {
-        MessageType rtSchema = reader.getFileMetaData().getSchema();
-        Test.ensureEqual(rtSchema.getType("bool_col").asPrimitiveType().getPrimitiveTypeName(), PrimitiveTypeName.BOOLEAN, "rtSchema bool_col");
-        Test.ensureEqual(rtSchema.getType("bool_opt").asPrimitiveType().getPrimitiveTypeName(), PrimitiveTypeName.BOOLEAN, "rtSchema bool_opt");
+    try (ParquetFileReader reader =
+        ParquetFileReader.open(new LocalInputFile(java.nio.file.Path.of(roundTripFileName)))) {
+      MessageType rtSchema = reader.getFileMetaData().getSchema();
+      Test.ensureEqual(
+          rtSchema.getType("bool_col").asPrimitiveType().getPrimitiveTypeName(),
+          PrimitiveTypeName.BOOLEAN,
+          "rtSchema bool_col");
+      Test.ensureEqual(
+          rtSchema.getType("bool_opt").asPrimitiveType().getPrimitiveTypeName(),
+          PrimitiveTypeName.BOOLEAN,
+          "rtSchema bool_opt");
     }
 
     // Read round-trip file back
