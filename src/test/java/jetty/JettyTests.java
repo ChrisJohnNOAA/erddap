@@ -4515,10 +4515,45 @@ class JettyTests {
       String content;
       String sa[];
       HashSet<String> hs;
-      try {
-        content = SSR.getUrlResponseStringUnchanged(tErddapUrl + pages[i]);
-      } catch (Exception e) {
-        results.append("\n* Trouble: " + e.toString() + "\n");
+      String pageUrl = tErddapUrl + pages[i];
+      content = null;
+
+      // Retry logic for transient 503 errors (Service Unavailable)
+      // These can occur during graph generation or when server is under load
+      int maxRetries = 3;
+      int retryDelayMs = 1000;
+      for (int attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          content = SSR.getUrlResponseStringUnchanged(pageUrl);
+          break; // Success, exit retry loop
+        } catch (Exception e) {
+          String errorMsg = e.toString();
+          boolean is503Error = errorMsg.contains("503") || errorMsg.contains("Service Unavailable");
+
+          if (is503Error && attempt < maxRetries) {
+            // Transient 503 error, retry after delay
+            String2.log(
+                "  Note: Got 503 on attempt "
+                    + attempt
+                    + "/"
+                    + maxRetries
+                    + " for "
+                    + pages[i]
+                    + ". Waiting "
+                    + retryDelayMs
+                    + "ms before retry...");
+            Thread.sleep(retryDelayMs);
+            retryDelayMs = Math.min(retryDelayMs * 2, 5000); // Exponential backoff, max 5s
+          } else if (attempt == maxRetries || !is503Error) {
+            // Final attempt failed or non-503 error, report it
+            results.append("\n* Trouble: " + errorMsg + "\n");
+            break;
+          }
+        }
+      }
+
+      if (content == null) {
+        // Failed after retries or caught non-retriable exception
         continue;
       }
 
