@@ -584,4 +584,9 @@ public class TopLevelHandler extends State {
   public void popState() {
     String2.log("Attempt to pop top level handler. Something likely went wrong.");
   }
+
+  @Override
+  public State getCompleteState() {
+    return null;
+  }
 }

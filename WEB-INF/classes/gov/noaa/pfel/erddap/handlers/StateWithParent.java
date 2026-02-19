@@ -12,4 +12,9 @@ public abstract class StateWithParent extends State {
   public void popState() {
     saxHandler.setState(this.completeState);
   }
+
+  @Override
+  public State getCompleteState() {
+    return this.completeState;
+  }
 }

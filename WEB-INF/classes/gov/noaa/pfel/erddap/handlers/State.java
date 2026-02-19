@@ -24,4 +24,6 @@ public abstract class State {
   public abstract void endElement(String uri, String localName, String qName) throws Throwable;
 
   public abstract void popState();
+
+  public abstract State getCompleteState();
 }

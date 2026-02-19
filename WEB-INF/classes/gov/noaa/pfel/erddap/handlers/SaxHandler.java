@@ -36,16 +36,7 @@ public class SaxHandler extends DefaultHandler {
     try {
       this.state.startElement(uri, localName, qName, attributes);
     } catch (Throwable e) {
-      context.getWarningsFromLoadDatasets().append(e.getMessage());
-      context.getDatasetsThatFailedToLoadSB().append(EDStatic.cldDatasetID).append(" ");
-      context
-          .getFailedDatasetsWithErrorsSB()
-          .append(EDStatic.cldDatasetID)
-          .append(": ")
-          .append(e.getMessage())
-          .append("\n");
-      String2.log(e.getMessage());
-      this.state.popState();
+      handleError(e, " ");
     }
   }
 
@@ -54,16 +45,7 @@ public class SaxHandler extends DefaultHandler {
     try {
       this.state.characters(ch, start, length);
     } catch (Throwable e) {
-      context.getWarningsFromLoadDatasets().append(e.getMessage());
-      context.getDatasetsThatFailedToLoadSB().append(EDStatic.cldDatasetID).append(" ");
-      context
-          .getFailedDatasetsWithErrorsSB()
-          .append(EDStatic.cldDatasetID)
-          .append(": ")
-          .append(e.getMessage())
-          .append("\n");
-      String2.log(e.getMessage());
-      this.state.popState();
+      handleError(e, " ");
     }
   }
 
@@ -72,15 +54,24 @@ public class SaxHandler extends DefaultHandler {
     try {
       this.state.endElement(uri, localName, qName);
     } catch (Throwable e) {
-      context.getWarningsFromLoadDatasets().append(e.getMessage());
-      context.getDatasetsThatFailedToLoadSB().append(EDStatic.cldDatasetID).append(", ");
-      context
-          .getFailedDatasetsWithErrorsSB()
-          .append(EDStatic.cldDatasetID)
-          .append(": ")
-          .append(e.getMessage())
-          .append("\n");
-      String2.log(e.getMessage());
+      handleError(e, localName.equals("dataset") ? ", " : " ");
+    }
+  }
+
+  private void handleError(Throwable e, String type) {
+    context.getWarningsFromLoadDatasets().append(e.getMessage());
+    context.getDatasetsThatFailedToLoadSB().append(EDStatic.cldDatasetID).append(type);
+    context
+        .getFailedDatasetsWithErrorsSB()
+        .append(EDStatic.cldDatasetID)
+        .append(": ")
+        .append(e.getMessage())
+        .append("\n");
+    String2.log(e.getMessage());
+    State completeState = this.state.getCompleteState();
+    if (completeState != null && !type.equals(", ")) {
+      this.setState(new SkipDatasetHandler(this, completeState));
+    } else {
       this.state.popState();
     }
   }
