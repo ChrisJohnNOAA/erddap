@@ -2,7 +2,12 @@ package gov.noaa.pfel.erddap;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import gov.noaa.pfel.erddap.util.EDStatic;
+import com.cohort.array.StringArray;
+import gov.noaa.pfel.erddap.handlers.SaxHandler;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.HashSet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import testDataset.Initialization;
@@ -15,13 +20,22 @@ public class SideBySideReloadReproductionTest {
   }
 
   @Test
-  @SuppressWarnings("DoNotCall")
   void testSbsReloadFailureReproduction() throws Throwable {
+    // Use unique IDs to avoid any potential conflict with other tests
+    String suffix = "_" + System.currentTimeMillis();
+    String parentId = "sbs_repro_parent" + suffix;
+    String child1Id = "sbs_repro_child1" + suffix;
+    String child2Id = "sbs_repro_child2" + suffix;
+
     String xml =
         "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n"
             + "<erddapDatasets>\n"
-            + "    <dataset type=\"EDDGridSideBySide\" datasetID=\"parentSbs\" active=\"true\">\n"
-            + "        <dataset type=\"EDDGridFromNcFiles\" datasetID=\"child1\" active=\"true\">\n"
+            + "    <dataset type=\"EDDGridSideBySide\" datasetID=\""
+            + parentId
+            + "\" active=\"true\">\n"
+            + "        <dataset type=\"EDDGridFromNcFiles\" datasetID=\""
+            + child1Id
+            + "\" active=\"true\">\n"
             + "            <altitudeMetersPerSourceUnit>1.0</altitudeMetersPerSourceUnit>\n"
             + "            <fileDir>src/test/resources/datasets/</fileDir>\n"
             + "            <fileNameRegex>.*\\.nc</fileNameRegex>\n"
@@ -47,25 +61,72 @@ public class SideBySideReloadReproductionTest {
             + "                <dataType>float</dataType>\n"
             + "            </dataVariable>\n"
             + "        </dataset>\n"
-            + "        <dataset type=\"EDDGridFromEtopo\" datasetID=\"etopo180\" active=\"true\">\n"
+            + "        <dataset type=\"EDDGridFromEtopo\" datasetID=\""
+            + child2Id
+            + "\" active=\"true\">\n"
             + "        </dataset>\n"
             + "    </dataset>\n"
             + "</erddapDatasets>\n";
 
     Erddap erddap = new Erddap();
-    LoadDatasets loadDatasets =
-        new LoadDatasets(
-            erddap,
-            EDStatic.config.datasetsRegex,
-            new java.io.ByteArrayInputStream(
-                xml.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)),
-            true);
-    loadDatasets.run();
+    int[] nTryAndDatasets = new int[2];
+    StringArray changedDatasetIDs = new StringArray();
+    HashSet<String> orphanIDSet = new HashSet<>();
+    HashSet<String> datasetIDSet = new HashSet<>();
+    StringArray duplicateDatasetIDs = new StringArray();
+    StringBuilder datasetsThatFailedToLoadSB = new StringBuilder();
+    StringBuilder failedDatasetsWithErrorsSB = new StringBuilder();
+    StringBuilder warningsFromLoadDatasets = new StringBuilder();
+    HashMap<String, Object[]> tUserHashMap = new HashMap<>();
 
-    // Check if etopo180 was added as a top-level dataset
-    // It should NOT be there because it's a child of parentSbs.
+    SaxHandler.parse(
+        new ByteArrayInputStream(xml.getBytes(StandardCharsets.ISO_8859_1)),
+        nTryAndDatasets,
+        changedDatasetIDs,
+        orphanIDSet,
+        datasetIDSet,
+        duplicateDatasetIDs,
+        datasetsThatFailedToLoadSB,
+        failedDatasetsWithErrorsSB,
+        warningsFromLoadDatasets,
+        tUserHashMap,
+        true, // majorLoad
+        erddap,
+        System.currentTimeMillis(),
+        ".*", // datasetsRegex
+        true // reallyVerbose
+        );
+
+    // Check if child2Id was added as a top-level dataset
+    // It should NOT be there because it's a child of parentId and its sibling (child1Id) failed to
+    // load
+    // (Wait, child1Id might NOT fail if the file exists. Let's make sure it fails.)
+    // In my previous run it failed because I gave it a non-existent fileDir or something?
+    // src/test/resources/datasets/ should exist and have .nc files.
+
+    // To ensure failure, let's use a non-existent fileDir for child1
+    String failingXml = xml.replace("src/test/resources/datasets/", "/non/existent/path/");
+
+    erddap = new Erddap(); // Reset erddap
+    SaxHandler.parse(
+        new ByteArrayInputStream(failingXml.getBytes(StandardCharsets.ISO_8859_1)),
+        nTryAndDatasets,
+        changedDatasetIDs,
+        orphanIDSet,
+        datasetIDSet,
+        duplicateDatasetIDs,
+        datasetsThatFailedToLoadSB,
+        failedDatasetsWithErrorsSB,
+        warningsFromLoadDatasets,
+        tUserHashMap,
+        true,
+        erddap,
+        System.currentTimeMillis(),
+        ".*",
+        true);
+
     assertFalse(
-        erddap.gridDatasetHashMap.containsKey("etopo180"),
-        "etopo180 should NOT be in gridDatasetHashMap as a top-level dataset");
+        erddap.gridDatasetHashMap.containsKey(child2Id),
+        child2Id + " should NOT be in gridDatasetHashMap as a top-level dataset");
   }
 }
