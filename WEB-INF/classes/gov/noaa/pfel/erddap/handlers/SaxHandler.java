@@ -36,7 +36,7 @@ public class SaxHandler extends DefaultHandler {
     try {
       this.state.startElement(uri, localName, qName, attributes);
     } catch (Throwable e) {
-      handleError(e, " ");
+      handleError(e, localName.equals("dataset") ? "start_dataset" : " ");
     }
   }
 
@@ -54,25 +54,36 @@ public class SaxHandler extends DefaultHandler {
     try {
       this.state.endElement(uri, localName, qName);
     } catch (Throwable e) {
-      handleError(e, localName.equals("dataset") ? ", " : " ");
+      handleError(e, localName.equals("dataset") ? "end_dataset" : " ");
     }
   }
 
   private void handleError(Throwable e, String type) {
-    context.getWarningsFromLoadDatasets().append(e.getMessage());
-    context.getDatasetsThatFailedToLoadSB().append(EDStatic.cldDatasetID).append(type);
+    String msg = e.getMessage() == null ? e.toString() : e.getMessage();
+    context.getWarningsFromLoadDatasets().append(msg).append("\n\n");
+    String datasetID = EDStatic.cldDatasetID == null ? "null" : EDStatic.cldDatasetID;
     context
-        .getFailedDatasetsWithErrorsSB()
-        .append(EDStatic.cldDatasetID)
-        .append(": ")
-        .append(e.getMessage())
-        .append("\n");
-    String2.log(e.getMessage());
-    State completeState = this.state.getCompleteState();
-    if (completeState != null && !type.equals(", ")) {
-      this.setState(new SkipDatasetHandler(this, completeState));
-    } else {
+        .getDatasetsThatFailedToLoadSB()
+        .append(datasetID)
+        .append(type.contains("dataset") ? ", " : " ");
+    context.getFailedDatasetsWithErrorsSB().append(datasetID).append(": ").append(msg).append("\n");
+    String2.log(msg);
+    if (type.equals("start_dataset")) {
+      // Failed to start a dataset. Skip it and return to the CURRENT state (the parent).
+      this.setState(new SkipDatasetHandler(this, this.state));
+    } else if (type.equals("end_dataset")) {
+      // Failed at the end of a dataset. Just pop state.
       this.state.popState();
+    } else {
+      // Error inside a dataset handler or elsewhere.
+      State completeState = this.state.getCompleteState();
+      if (completeState != null) {
+        // Skip until the end of the current dataset and return to its parent.
+        this.setState(new SkipDatasetHandler(this, completeState));
+      } else {
+        // We are at the top level or something else. Just try to continue.
+        this.state.popState();
+      }
     }
   }
 
