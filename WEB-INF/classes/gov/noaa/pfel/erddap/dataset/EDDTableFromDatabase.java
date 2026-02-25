@@ -888,7 +888,7 @@ public class EDDTableFromDatabase extends EDDTable {
             String2.log("The existing connection isn't working. Closing it and creating a new one...");
             try {
                 connection.close();
-            } catch (Throwable ignored) { // ignore
+            } catch (Throwable t2) {
             }
             connection = null; //so new one will be created below
         }

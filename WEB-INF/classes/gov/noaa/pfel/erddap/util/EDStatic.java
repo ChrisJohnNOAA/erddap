@@ -796,7 +796,7 @@ public class EDStatic {
 
               } finally {
                   if (ncWriter != null) {
-                      try {ncWriter.abort(); } catch (Exception ignored) { /* ignore */ }
+                      try {ncWriter.abort(); } catch (Exception e9) {}
                       File2.delete(testNc4Name);
                       ncWriter = null;
                   }
@@ -1722,7 +1722,7 @@ public class EDStatic {
                 + (uBean.getFreeSwapSpaceSize() / Math2.BytesPerMB)
                 + "MB\n");
       }
-    } catch (Exception ignored) { // ignore
+    } catch (Exception e) {
     }
     sb.append("Number of active requests=" + activeRequests.size() + "\n");
   }

@@ -299,12 +299,12 @@ public class DConnect {
           } catch (NullPointerException e) {
             String2.log("DConnect NullPointer; retry open ("+retry+") "+url);
             try { Thread.sleep(backoff); }
-            catch (InterruptedException ignored) { /* ignore */ }
+            catch (InterruptedException ie) {}
 
           } catch (FileNotFoundException e) {
             String2.log("DConnect FileNotFound; retry open ("+retry+") "+url);
             try { Thread.sleep(backoff); }
-            catch (InterruptedException ignored) { /* ignore */ }
+            catch (InterruptedException ie) {}
           }
 
           if (retry == openConnectionMaxRetry)

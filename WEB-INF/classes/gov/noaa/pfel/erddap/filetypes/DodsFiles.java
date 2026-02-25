@@ -234,7 +234,7 @@ public class DodsFiles extends TableWriterFileType {
         if (writer != null) {
           try {
             writer.close();
-          } catch (Exception ignored) { // ignore
+          } catch (Exception e) {
           }
           writer = null;
         }
@@ -243,7 +243,7 @@ public class DodsFiles extends TableWriterFileType {
       if (writer != null)
         try {
           writer.close();
-        } catch (Exception ignored) { // ignore
+        } catch (Exception e) {
         }
     }
 

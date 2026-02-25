@@ -6587,7 +6587,7 @@ public class Table {
                       " finished. nRows=" + nRows() + " nCols=" + nColumns() +
                       " time=" + (System.currentTimeMillis() - time) + "ms");
           } finally {
-              try {if (ncFile != null) ncFile.close(); } catch (Exception ignored) { /* ignore */ }
+              try {if (ncFile != null) ncFile.close(); } catch (Exception e9) {}
           }
       }
   */
@@ -13131,7 +13131,7 @@ public class Table {
           } catch (Throwable t) {
               String2.log(NcHelper.ERROR_WHILE_CREATING_NC_FILE + MustBe.throwableToString(t));
               if (ncWriter != null) {
-                  try {ncWriter.abort(); } catch (Exception ignored) { /* ignore */ }
+                  try {ncWriter.abort(); } catch (Exception e9) {}
                   File2.delete(fileName);
                   ncWriter = null;
               }
@@ -15624,7 +15624,7 @@ public class Table {
             long tl = modifiedPA.getLong(row);
             newMod = tl == Long.MAX_VALUE? "" : //show hh:mm, not more
                 Calendar2.formatAsDDMonYYYY(Calendar2.newGCalendarZulu(tl)).substring(0, 17);
-        } catch (Throwable ignored) { // ignore
+        } catch (Throwable t) {
         }
         newModifiedPA.add(newMod);
     }
@@ -15647,7 +15647,7 @@ public class Table {
                  tl >= lim * Math2.BytesPerGB? (tl / Math2.BytesPerGB) + "G" :
                  tl >= lim * Math2.BytesPerMB? (tl / Math2.BytesPerMB) + "M" :
                  tl >= lim * Math2.BytesPerKB? (tl / Math2.BytesPerKB) + "K" : tl + "");
-        } catch (Throwable ignored) { // ignore
+        } catch (Throwable t) {
         }
         newSizePA.add(newSize);
     }

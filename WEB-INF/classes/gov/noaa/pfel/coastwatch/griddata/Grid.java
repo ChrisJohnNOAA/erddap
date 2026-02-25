@@ -1197,7 +1197,7 @@ public class Grid {
               sa.add(Calendar2.epochSecondsToIsoStringTZ(pa.getDouble(i)));
           String2.log("time values=" + sa);
 
-      } catch (Exception ignored) { // ignore
+      } catch (Exception e) {
       }
       */
       // get the dataVariable

@@ -14329,13 +14329,13 @@ public abstract class EDD {
 
           } finally {
               //close oldXmlReader
-              if (oldXmlReader != null) try {oldXmlReader.close(); } catch (Exception ignored) { /* ignore */ }
+              if (oldXmlReader != null) try {oldXmlReader.close(); } catch (Exception e) {}
 
               //close newXmlWriter
-              if (newXmlWriter != null) try {newXmlWriter.close(); } catch (Exception ignored) { /* ignore */ }
+              if (newXmlWriter != null) try {newXmlWriter.close(); } catch (Exception e) {}
 
               //close notes
-              if (notes != null) try {notes.close(); } catch (Exception ignored) { /* ignore */ }
+              if (notes != null) try {notes.close(); } catch (Exception e) {}
 
           }
 
