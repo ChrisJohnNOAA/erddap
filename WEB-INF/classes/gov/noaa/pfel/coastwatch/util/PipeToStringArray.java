@@ -48,7 +48,7 @@ public class PipeToStringArray extends PipeTo {
   /**
    * Print a message to the storage container.
    *
-   * @param message
+   * @param message the message
    */
   @Override
   public void print(String message) {

@@ -148,11 +148,11 @@ public class PersistentTable implements AutoCloseable {
         if (raf != null) {
           try {
             raf.getChannel().force(true);
-          } catch (Exception e) {
+          } catch (Exception ignored) { // ignore
           }
           try {
             raf.close();
-          } catch (Exception e) {
+          } catch (Exception ignored) { // ignore
           }
           raf = null;
         }
@@ -171,11 +171,11 @@ public class PersistentTable implements AutoCloseable {
     if (raf != null) {
       try {
         flush();
-      } catch (Exception e) {
+      } catch (Exception ignored) { // ignore
       }
       try {
         raf.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) { // ignore
       }
       raf = null;
     }
@@ -217,7 +217,7 @@ public class PersistentTable implements AutoCloseable {
   /**
    * This clears (fills with spaces) an existing row.
    *
-   * @param row
+   * @param row the row
    * @return the number of rows after the rows are added
    */
   public void clearRow(int row) throws IOException {
@@ -255,7 +255,7 @@ public class PersistentTable implements AutoCloseable {
    *
    * @param s a String. If s is too long, it is truncated. If too short, it is space-padded at the
    *     end.
-   * @param length
+   * @param length the length
    * @return the corresponding byte[] (or null if s is null)
    */
   public void writeString(int col, int row, String s) throws IOException {

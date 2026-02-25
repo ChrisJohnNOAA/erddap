@@ -97,7 +97,7 @@ public class TableWriterAll extends TableWriter {
             // close the stream
             try {
               if (columnStreams[col] != null) columnStreams[col].close();
-            } catch (Exception e) {
+            } catch (Exception ignored) { // ignore
             }
             // an attempt to solve File2.delete problem on these files: it couldn't hurt
             columnStreams[col] = null;
@@ -204,7 +204,7 @@ public class TableWriterAll extends TableWriter {
       // close the stream
       try {
         if (columnStreams[col] != null) columnStreams[col].close();
-      } catch (Exception e) {
+      } catch (Exception ignored) { // ignore
       }
       // an attempt to solve File2.delete problem on these files: it couldn't hurt
       columnStreams[col] = null;
@@ -339,7 +339,7 @@ public class TableWriterAll extends TableWriter {
           // close the stream
           try {
             if (columnStreams[col] != null) columnStreams[col].close();
-          } catch (Exception e) {
+          } catch (Exception ignored) { // ignore
           }
           // an attempt to solve File2.delete problem on these files: it couldn't hurt
           columnStreams[col] = null;

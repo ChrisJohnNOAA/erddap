@@ -139,7 +139,7 @@ public class YearDecadeAxis implements TimeAxisStyle {
         time = new GeoDate(1, 1, tRange.end.getGMTYear(), 0, 0, 0, 0);
         if (!time.equals(tRange.end)) time.increment(1.0, GeoDate.YEARS);
       }
-    } catch (IllegalTimeValue e) {
+    } catch (IllegalTimeValue ignored) { // ignore
     }
     return time;
   }

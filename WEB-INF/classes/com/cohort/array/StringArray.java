@@ -154,7 +154,7 @@ public class StringArray extends PrimitiveArray {
    * LET'S YOU SPECIFY THE BACKING ARRAY! The values anArray are stored in a different way in a
    * different data structure.
    *
-   * @param anArray
+   * @param anArray the anArray
    */
   public StringArray(final String[] anArray) {
     int al = anArray.length;
@@ -166,7 +166,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * A constructor which gets values from an ImmutableList<String>.
    *
-   * @param anArray
+   * @param anArray the anArray
    */
   public StringArray(final ImmutableList<String> immutableList) {
     int al = immutableList.size();
@@ -178,7 +178,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * A constructor which gets values from anArray[i].toString().
    *
-   * @param anArray
+   * @param anArray the anArray
    */
   public StringArray(final Object[] anArray) {
     final int al = anArray.length;
@@ -561,7 +561,7 @@ public class StringArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {
@@ -1410,7 +1410,7 @@ public class StringArray extends PrimitiveArray {
    * Test if o is an StringArray with the same size and values, but returns a String describing the
    * difference (or "" if equal).
    *
-   * @param o
+   * @param o the o
    * @return a String describing the difference (or "" if equal).
    */
   @Override
@@ -1660,8 +1660,8 @@ public class StringArray extends PrimitiveArray {
    * compatible common 8bit. Ah: dods.dap.DString reader assumes ISO-8859-1, which is first page of
    * unicode.
    *
-   * @param dos
-   * @param s
+   * @param dos the dos
+   * @param s the s
    * @throws Exception if trouble
    */
   public static void externalizeForDODS(final DataOutputStream dos, final String s)
@@ -1686,7 +1686,7 @@ public class StringArray extends PrimitiveArray {
    * DAP 2.0 standard, section 7.3.2.1). See also the XDR standard
    * (http://tools.ietf.org/html/rfc4506#section-4.11).
    *
-   * @param dos
+   * @param dos the dos
    * @throws Exception if trouble
    */
   @Override
@@ -1701,7 +1701,7 @@ public class StringArray extends PrimitiveArray {
    * www.opendap.org DAP 2.0 standard, section 7.3.2). See also the XDR standard
    * (http://tools.ietf.org/html/rfc4506#section-4.11).
    *
-   * @param dos
+   * @param dos the dos
    * @param i the index of the element to be written
    * @throws Exception if trouble
    */
@@ -1714,7 +1714,7 @@ public class StringArray extends PrimitiveArray {
    * This reads/appends String values from a StringArray from a DODS DataInputStream, and is thus
    * the complement of externalizeForDODS.
    *
-   * @param dis
+   * @param dis the dis
    * @throws IOException if trouble
    */
   @Override
@@ -1738,7 +1738,7 @@ public class StringArray extends PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   @Override
@@ -1783,7 +1783,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * This appends the data in another pa to the current data.
    *
-   * @param pa
+   * @param pa the pa
    */
   @Override
   public void append(final PrimitiveArray pa) {
@@ -2040,7 +2040,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * This is like fromCSV, but with any "" elements removed.
    *
-   * @param searchFor
+   * @param searchFor the searchFor
    * @return a StringArray with the words and double-quoted phrases from searchFor. The items are
    *     trim'd.
    */
@@ -2062,7 +2062,7 @@ public class StringArray extends PrimitiveArray {
    * "" becomes sa.length() == 0. <br>
    * " " becomes sa.length() == 1.
    *
-   * @param searchFor
+   * @param searchFor the searchFor
    * @return a String[] with the words and double-quoted phrases from searchFor. The items are
    *     trim'd. <br>
    *     Note that null and "null" return the word "null". No returned element will be null. <br>
@@ -2507,7 +2507,7 @@ public class StringArray extends PrimitiveArray {
    * null becomes sa.length() == 0. <br>
    * "" becomes sa.length() == 1.
    *
-   * @param csv
+   * @param csv the csv
    * @return a StringArray with the items. <br>
    *     Quoted strings are still in quoted strings. <br>
    *     Backslashed characters are not converted to the special character (e.g., double quotes or
@@ -2810,7 +2810,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * This returns the index of the first value that matches the regex.
    *
-   * @param regex
+   * @param regex the regex
    * @return the index of the first value that matches the regex, or -1 if none matches.
    * @throws RuntimeException if regex won't compile.
    */
@@ -2821,7 +2821,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * This returns the index of the first value that matches the regex pattern p.
    *
-   * @param p
+   * @param p the p
    * @return the index of the first value that matches the regex pattern p, or -1 if none matches.
    */
   public int firstMatch(final Pattern p) {
@@ -2835,7 +2835,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * This returns the index of the first value that doesn't match the regex.
    *
-   * @param regex
+   * @param regex the regex
    * @return the index of the first value that doesn't match the regex, or -1 if they all match.
    * @throws RuntimeException if regex won't compile.
    */
@@ -2846,7 +2846,7 @@ public class StringArray extends PrimitiveArray {
   /**
    * This returns the index of the first value that doesn't match the regex pattern p.
    *
-   * @param p
+   * @param p the p
    * @return the index of the first value that doesn't match the regex pattern p, or -1 if they all
    *     match.
    */

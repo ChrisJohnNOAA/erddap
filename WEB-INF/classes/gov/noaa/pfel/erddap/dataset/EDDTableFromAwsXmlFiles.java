@@ -196,7 +196,7 @@ public class EDDTableFromAwsXmlFiles extends EDDTableFromFiles {
    * @param sampleFileName one of the files in the collection
    * @param columnNamesRow first row of file is called 1.
    * @param firstDataRow first row if file is called 1.
-   * @param tReloadEveryNMinutes
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tPreExtractRegex part of info for extracting e.g., stationName from file name. Set to ""
    *     if not needed.
    * @param tPostExtractRegex part of info for extracting e.g., stationName from file name. Set to

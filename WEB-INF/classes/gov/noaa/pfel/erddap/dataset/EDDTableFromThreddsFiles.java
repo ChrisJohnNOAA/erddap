@@ -761,7 +761,7 @@ public class EDDTableFromThreddsFiles extends EDDTableFromFiles {
    *     generated to catch the same extension as the sampleFileName (".*" if no extension or e.g.,
    *     ".*\\.nc").
    * @param oneFileDapUrl url for one file, without ending .das or .html
-   * @param tReloadEveryNMinutes
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tPreExtractRegex part of info for extracting e.g., stationName from file name. Set to ""
    *     if not needed.
    * @param tPostExtractRegex part of info for extracting e.g., stationName from file name. Set to

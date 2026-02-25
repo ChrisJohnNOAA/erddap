@@ -153,7 +153,7 @@ public class PlainAxis extends SpaceAxis implements Cloneable {
         label.setLayer(graph_.getLayer());
         try {
           label.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
         x = x + delta * labelInterval_;
       }
@@ -166,7 +166,7 @@ public class PlainAxis extends SpaceAxis implements Cloneable {
         title.setOrientation(SGLabel.HORIZONTAL);
         try {
           title.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
       }
     } else { // orientation is vertical
@@ -239,7 +239,7 @@ public class PlainAxis extends SpaceAxis implements Cloneable {
         label.setLayer(graph_.getLayer());
         try {
           label.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
         y = y + delta * labelInterval_;
       }
@@ -252,7 +252,7 @@ public class PlainAxis extends SpaceAxis implements Cloneable {
         title.setOrientation(SGLabel.VERTICAL);
         try {
           title.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
       }
     }

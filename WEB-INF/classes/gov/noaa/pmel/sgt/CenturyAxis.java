@@ -135,7 +135,7 @@ public class CenturyAxis implements TimeAxisStyle {
         time = new GeoDate(1, 1, Math.max(100, tRange.end.getGMTYear() / 100 * 100), 0, 0, 0, 0);
         if (!time.equals(tRange.end)) time.increment(100, GeoDate.YEARS);
       }
-    } catch (IllegalTimeValue e) {
+    } catch (IllegalTimeValue ignored) { // ignore
     }
     return time;
   }

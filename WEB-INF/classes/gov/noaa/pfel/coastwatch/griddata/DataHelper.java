@@ -91,9 +91,9 @@ public class DataHelper {
   /**
    * This gets a regularly spaced array of n values, starting at min, and separated by spacing.
    *
-   * @param n
-   * @param min
-   * @param spacing
+   * @param n the n
+   * @param min the min
+   * @param spacing the spacing
    * @return a regularly spaced array
    */
   public static double[] getRegularArray(int n, double min, double spacing) {
@@ -188,7 +188,7 @@ public class DataHelper {
    * Adjust nPointsNeeded if axis range has changed. E.g., If axis range available is smaller, you
    * don't need so many points.
    *
-   * @param nPointsNeeded
+   * @param nPointsNeeded the nPointsNeeded
    * @param oldAxisRange max - min
    * @param newAxisRange max - min
    * @return the modified nPointsNeeded
@@ -208,8 +208,8 @@ public class DataHelper {
    * Given a startIndex, endIndex and nPointsNeeded, this determines the maximum stride you can use
    * and still get at least nPoints.
    *
-   * @param startIndex
-   * @param endIndex
+   * @param startIndex the startIndex
+   * @param endIndex the endIndex
    * @param nPointsNeeded If nPointsNeeded is really big, this still returns 1.
    * @return the optimal stride
    */
@@ -238,7 +238,7 @@ public class DataHelper {
    * maximum stride you can use and still get at least nPoints. The parameters use "lon" so easier
    * to think about, but it works for "lat" too.
    *
-   * @param actualLonSpacing
+   * @param actualLonSpacing the actualLonSpacing
    * @param desiredMinLon One of the values from the lon array. If NaN, stride is 1.
    * @param desiredMaxLon One of the values from the lon array. If NaN, stride is 1.
    * @param nPointsNeeded If nPointsNeeded is really big, this still returns 1.
@@ -270,9 +270,9 @@ public class DataHelper {
    * This multiplies the values in 'doubleArray' by the 'scale' and adds 'offset'. If scale = 1 and
    * offset = 0, nothing is done.
    *
-   * @param doubleArray
-   * @param scale
-   * @param offset
+   * @param doubleArray the doubleArray
+   * @param scale the scale
+   * @param offset the offset
    * @return the same pointer to doubleArray (for convenience)
    */
   public static double[] scale(double doubleArray[], double scale, double offset) {

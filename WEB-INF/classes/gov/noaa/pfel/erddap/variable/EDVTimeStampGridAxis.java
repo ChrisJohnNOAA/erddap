@@ -303,7 +303,7 @@ public class EDVTimeStampGridAxis extends EDVGridAxis {
    * This converts a destination String value to a destination double (time variable overwrites this
    * to catch iso 8601 strings). "" or null returns NaN.
    *
-   * @param destS
+   * @param destS the destS
    * @return destination double
    */
   @Override

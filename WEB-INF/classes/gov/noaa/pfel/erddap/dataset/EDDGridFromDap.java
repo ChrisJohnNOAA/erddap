@@ -841,7 +841,7 @@ public class EDDGridFromDap extends EDDGrid {
   /**
    * This makes a sibling dataset, based on the new sourceUrl.
    *
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @param firstAxisToMatch If 0, this tests if sourceValues for axis-variable #0+ are same. If 1,
    *     this tests if sourceValues for axis-variable #1+ are same.
    * @param shareInfo if true, this ensures that the sibling's axis and data variables are basically
@@ -1708,9 +1708,9 @@ public class EDDGridFromDap extends EDDGrid {
    * This calls generateDatasetsXml within try/catch so very safe. Only completely successful xml
    * will be added to results.
    *
-   * @param tLocalSourceUrl
-   * @param tReloadEveryNMinutes
-   * @param externalAddGlobalAttributes
+   * @param tLocalSourceUrl the tLocalSourceUrl
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
+   * @param externalAddGlobalAttributes the externalAddGlobalAttributes
    * @param results to capture the results
    * @param summary captures the summary of what was done.
    * @param indent a string of spaces to be used to indent info added to summary
@@ -1777,11 +1777,11 @@ public class EDDGridFromDap extends EDDGrid {
   /**
    * This gets matching datasetURLs from a thredds catalog.
    *
-   * @param startUrl
+   * @param startUrl the startUrl
    *     https://thredds1.pfeg.noaa.gov/thredds/catalog/Satellite/aggregsatMH/chla/catalog.xml
    * @param datasetNameRegex e.g. ".*\.nc"
-   * @param recursive
-   * @throws Exception
+   * @param recursive the recursive
+   * @throws Exception if an error occurs
    */
   public static StringArray getUrlsFromThreddsCatalog(
       String startUrl, String datasetNameRegex, String pathRegex, String negativePathRegex)

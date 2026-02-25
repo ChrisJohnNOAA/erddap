@@ -28,7 +28,7 @@ public class HttpTest extends NetCheckTest {
    * method will read information until xmlReader.getNextTag() returns the close tag for the
    * reference to this class.
    *
-   * @param xmlReader
+   * @param xmlReader the xmlReader
    * @throws Exception if trouble
    */
   public HttpTest(SimpleXMLReader xmlReader) throws Exception {
@@ -121,7 +121,7 @@ public class HttpTest extends NetCheckTest {
    * For use after the constructor and before test(), this adds another String that must be in the
    * HTTP response.
    *
-   * @param mustInclude
+   * @param mustInclude the mustInclude
    */
   public void addResponseMustInclude(String mustInclude) {
     String errorIn = String2.ERROR + " in HttpTest.addResponseMustInclude: ";
@@ -134,7 +134,7 @@ public class HttpTest extends NetCheckTest {
    * For use after the constructor and before test(), this adds another String that must not be in
    * the HTTP response.
    *
-   * @param mustNotInclude
+   * @param mustNotInclude the mustNotInclude
    */
   public void addResponseMustNotInclude(String mustNotInclude) {
     String errorIn = String2.ERROR + " in HttpTest.addResponseMustNotInclude: ";

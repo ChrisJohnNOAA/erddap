@@ -494,7 +494,7 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
                   String2.replaceAll(localSourceUrl, "/tabledap/", "/files/") + "/.csv");
           try {
             is.close();
-          } catch (Exception e2) {
+          } catch (Exception ignored) { // ignore
           }
         } catch (Exception e) {
           String2.log(
@@ -577,7 +577,7 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -749,7 +749,7 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
    * @param tLocalSourceUrl the base url for the dataset, e.g.,
    *     "https://coastwatch.pfeg.noaa.gov/erddap". This is a localSourceUrl since it has to be
    *     accessible, but usually it is also a publicSourceUrl.
-   * @param keepOriginalDatasetIDs
+   * @param keepOriginalDatasetIDs the keepOriginalDatasetIDs
    * @return a suggested chunk of xml for this dataset for use in datasets.xml
    * @throws Throwable if trouble, e.g., if no Grid or Array variables are found. If no trouble,
    *     then a valid dataset.xml chunk has been returned.

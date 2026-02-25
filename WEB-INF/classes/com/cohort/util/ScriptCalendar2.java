@@ -139,7 +139,7 @@ public class ScriptCalendar2 {
    * an ISO 8601 string with 'Z' at end. This is the most flexible approach to parsing/cleaning a
    * weird date time string.
    *
-   * @param someDateTimeString
+   * @param someDateTimeString the someDateTimeString
    * @return an iso8601String as a date, a dateTime with T and Z, or "" if trouble;
    */
   public static String tryToIsoString(String someDateTimeString) {
@@ -149,7 +149,7 @@ public class ScriptCalendar2 {
   /**
    * This formats the epochSeconds time value using the pattern.
    *
-   * @param epochSeconds
+   * @param epochSeconds the epochSeconds
    * @param pattern see
    *     https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
    *     If pattern is null or "", this uses the ISO TZ format with seconds precision.
@@ -183,7 +183,7 @@ public class ScriptCalendar2 {
    * This clears the fields smaller than 'field' (e.g., HOUR_OF_DAY clears MINUTE, SECOND, and
    * MILLISECOND, but doesn't change HOUR_OF_DAY, MONTH, or YEAR).
    *
-   * @param epochSeconds
+   * @param epochSeconds the epochSeconds
    * @param field e.g., HOUR_OF_DAY
    * @return the new epochSeconds value (or NaN if trouble).
    */

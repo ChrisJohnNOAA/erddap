@@ -290,9 +290,9 @@ public class DigirHelper {
   /**
    * This makes the filter part of a request. See searchDigir for parameter descriptions.
    *
-   * @param filterVariables
-   * @param filterCops
-   * @param filterValues
+   * @param filterVariables the filterVariables
+   * @param filterCops the filterCops
+   * @param filterValues the filterValues
    * @throws Exception if trouble (e.g., filterVariables, filterCops, and/or filterValues lengths
    *     are different)
    */
@@ -1123,10 +1123,10 @@ public class DigirHelper {
   /**
    * This formats the filters as an opendap constraint.
    *
-   * @param resultsVariables
-   * @param filterVariables
+   * @param resultsVariables the resultsVariables
+   * @param filterVariables the filterVariables
    * @param filterCops all should be valid COP_NAMES
-   * @param filterValues
+   * @param filterValues the filterValues
    * @return e.g.,
    *     obis:Temperature,darwin:ScientificName&darwin:Genus=Macrocystis&darwin:Species=integrifolia
    */

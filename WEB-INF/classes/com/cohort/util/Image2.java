@@ -105,7 +105,7 @@ public class Image2 {
    * @param height the height of the image (image.getHeight(null))
    * @param millis 10000 milliseconds is a good timeout
    * @return an array of integers representing the image
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static int[] makeArrayFromImage(Image img, int width, int height, int millis)
       throws Exception {
@@ -125,7 +125,7 @@ public class Image2 {
    * @param height the height of the image
    * @param millis 10000 milliseconds is a good timeout
    * @return a BufferedImage object
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static BufferedImage makeImageFromArray(int ar[], int width, int height, int millis)
       throws Exception {
@@ -159,7 +159,7 @@ public class Image2 {
    * @param background the color to be made transparent
    * @param millis 10000 milliseconds is a good timeout
    * @return a BufferedImage object
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static BufferedImage makeImageBackgroundTransparent(
       Image image, Color background, int millis) throws Exception {

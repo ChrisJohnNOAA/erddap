@@ -68,13 +68,13 @@ public class MatFiles extends TableWriterFileType {
    * because .mat files don't store attributes. This maintains the data types (Strings become
    * char[][]).
    *
-   * @param outputStreamSource
+   * @param outputStreamSource the outputStreamSource
    * @param twawm all the results data, with missingValues stored as destinationMissingValues or
    *     destinationFillValues (they are converted to NaNs)
    * @param structureName the name to use for the variable which holds all of the data, usually the
    *     dataset's internal name (datasetID). If structureName isn't a valid Matlab variable name,
    *     it will be made so via String2.modifyToBeVariableNameSafe().
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private void saveAsMatlab(
       OutputStreamSource outputStreamSource, TableWriterAllWithMetadata twawm, String structureName)
@@ -221,7 +221,7 @@ public class MatFiles extends TableWriterFileType {
    *     null), e.g., ATssta[45:1:45][0:1:0][120:10:140][130:10:160]
    * @param outputStreamSource the source of an outputStream (usually already buffered) to receive
    *     the results. At the end of this method the outputStream is flushed, not closed.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private void saveAsMatlab(
       int language,

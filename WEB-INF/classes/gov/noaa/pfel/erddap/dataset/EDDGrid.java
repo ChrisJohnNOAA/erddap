@@ -2226,7 +2226,7 @@ public abstract class EDDGrid extends EDD {
    * This builds an OPeNDAP DAP-style grid-style query, e.g.,
    * var1[start1:stop1][start2:stride2:stop2]. This is close to the opposite of parseDapQuery.
    *
-   * @param destinationNames
+   * @param destinationNames the destinationNames
    * @param constraints will receive the list of constraints, stored in axisVariables.length groups
    *     of 3 int's: start0, stride0, stop0, start1, stride1, stop1, ...
    * @return the array part of an OPeNDAP DAP-style grid-style query, e.g.,
@@ -2290,7 +2290,7 @@ public abstract class EDDGrid extends EDD {
   /**
    * This makes a sibling dataset, based on the new sourceUrl.
    *
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @param firstAxisToMatch If 0, this tests if sourceValues for axis-variable #0+ are same. If 1,
    *     this tests if sourceValues for axis-variable #1+ are same.
    * @param shareInfo if true, this ensures that the sibling's axis and data variables are basically
@@ -2307,7 +2307,7 @@ public abstract class EDDGrid extends EDD {
    * This tests if the axisVariables and dataVariables of the other dataset are similar (same
    * destination data var names, same sourceDataType, same units, same missing values).
    *
-   * @param other
+   * @param other the other
    * @param firstAxisToMatch If 0, this tests if sourceValues for axis-variable #0+ are same. If 1,
    *     this tests if sourceValues for axis-variable #1+ are same.
    * @param strict if !strict, this is less strict
@@ -2442,7 +2442,7 @@ public abstract class EDDGrid extends EDD {
    *
    * <p>EDDGrid overwrites this to also check the axis variables.
    *
-   * @param old
+   * @param old the old
    * @return "" if same or message if not.
    */
   @Override
@@ -2539,7 +2539,7 @@ public abstract class EDDGrid extends EDD {
    * This tests if the axisVariables of the other dataset are similar (same destination data var
    * names, same sourceDataType, same units, same missing values).
    *
-   * @param other
+   * @param other the other
    * @param firstAxisToMatch If 0, this tests if sourceValues for axis-variable #0+ are same. If 1,
    *     this tests if sourceValues for axis-variable #1+ are same.
    * @param strict if !strict, this is less strict (including allowing different sourceDataTypes and
@@ -5953,7 +5953,7 @@ public abstract class EDDGrid extends EDD {
    * @param keepUnusedAxes if true, axes with size=1 will be stored in the file. If false, axes with
    *     size=1 will not be stored in the file (geotiff needs this).
    * @param lonAdjust the value to be added to all lon values (e.g., 0 or -360).
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   public void saveAsNc(
       int language,
@@ -6058,7 +6058,7 @@ public abstract class EDDGrid extends EDD {
         if (ncWriter != null) {
           try {
             ncWriter.abort();
-          } catch (Exception e9) {
+          } catch (Exception ignored) { // ignore
           }
           File2.delete(fullFileName + randomInt);
           ncWriter = null;
@@ -6252,7 +6252,7 @@ public abstract class EDDGrid extends EDD {
         if (ncWriter != null) {
           try {
             ncWriter.abort();
-          } catch (Exception e9) {
+          } catch (Exception ignored) { // ignore
           }
           File2.delete(fullFileName + randomInt);
           ncWriter = null;
@@ -6378,7 +6378,7 @@ public abstract class EDDGrid extends EDD {
    *     (EDDTableFromPost?) it could be. Normally, this is just used to determine which erddapUrl
    *     to use (http vs https).
    * @param userDapQuery the part after the '?', still percentEncoded (shouldn't be null).
-   * @param writer
+   * @param writer the writer
    * @throws Throwable if trouble
    */
   public void writeDapHtmlForm(
@@ -9175,7 +9175,7 @@ public abstract class EDDGrid extends EDD {
       OutputStream out = outputStreamSource.outputStream("");
       if (out instanceof ZipOutputStream zos) zos.closeEntry();
       out.close();
-    } catch (Exception e) {
+    } catch (Exception ignored) { // ignore
     }
   }
 
@@ -9832,8 +9832,8 @@ public abstract class EDDGrid extends EDD {
    * This writes the html with detailed info about WCS queries.
    *
    * @param language the index of the selected language
-   * @param tErddapUrl
-   * @param writer
+   * @param tErddapUrl the tErddapUrl
+   * @param writer the writer
    * @param getCapabilities a sample URL.
    * @param describeCoverage a sample URL.
    * @param getCoverage a sample URL.

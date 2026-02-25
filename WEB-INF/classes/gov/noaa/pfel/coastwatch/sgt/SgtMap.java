@@ -275,7 +275,7 @@ public class SgtMap {
    *
    * @param maxRange the larger of xMax-xMin and yMax-yMin.
    * @param mapSizePixels the length of the larger edge of the map
-   * @param fontScale
+   * @param fontScale the fontScale
    * @return the suggested majorIncrement (distance between labels in axis units).
    */
   public static double suggestMajorIncrement(double maxRange, int mapSizePixels, double fontScale) {
@@ -287,7 +287,7 @@ public class SgtMap {
    *
    * @param maxRange the larger of xMax-xMin and yMax-yMin.
    * @param mapSizePixels the length of the larger edge of the map
-   * @param fontScale
+   * @param fontScale the fontScale
    * @return the suggested distance between minor ticks in axis units.
    */
   public static double suggestMinorIncrement(double maxRange, int mapSizePixels, double fontScale) {
@@ -299,7 +299,7 @@ public class SgtMap {
    *
    * @param maxRange the larger of xMax-xMin and yMax-yMin.
    * @param mapSizePixels the length of the larger edge of the map
-   * @param fontScale
+   * @param fontScale the fontScale
    * @return the appropriate distance between vectors in axis units.
    */
   public static double suggestVectorIncrement(
@@ -334,10 +334,10 @@ public class SgtMap {
    * @param gridAltScaleFactor is a scale factor to be applied to the data (use "1" if none)
    * @param gridAltOffset is a scale factor to be added to the data (use "0" if none)
    * @param gridPaletteFileName is the complete name of the palette file to be used
-   * @param gridBoldTitle
-   * @param gridTitle2
-   * @param gridTitle3
-   * @param gridTitle4
+   * @param gridBoldTitle the gridBoldTitle
+   * @param gridTitle2 the gridTitle2
+   * @param gridTitle3 the gridTitle3
+   * @param gridTitle4 the gridTitle4
    * @param drawLakesAndRivers one of the LAKES_AND_RIVERS constants from above. But even if true,
    *     they are never drawn if resolution = 'c'
    * @param plotContourData is true if the contour dataset should be plotted (if false, other
@@ -352,11 +352,11 @@ public class SgtMap {
    *     contour lines should be drawn param contourPaletteFileName is the complete name of the
    *     palette file to be used
    * @param contourColor is an int with the rgb color value for the contour lines
-   * @param contourBoldTitle
-   * @param contourUnits
-   * @param contourTitle2
-   * @param contourDate
-   * @param contourCourtesy
+   * @param contourBoldTitle the contourBoldTitle
+   * @param contourUnits the contourUnits
+   * @param contourTitle2 the contourTitle2
+   * @param contourDate the contourDate
+   * @param contourCourtesy the contourCourtesy
    * @param graphDataLayers an ArrayList of GraphDataLayers with the data to be plotted.
    * @param g2 the graphics2D object to be used (the image background color should already have been
    *     drawn)
@@ -373,7 +373,7 @@ public class SgtMap {
    *     6=IntArray originX,endX,originY,endY, XY double MinMax graph 7=DoubleArray
    *     originX,endX,originY,endY. For 0..5, if no graphDataLayers or no visible stations, these
    *     will exist but have size()=0.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   @SuppressWarnings("ReferenceEquality") // below gridGrid == contourGrid
   public static List<PrimitiveArray> makeMap(
@@ -1792,8 +1792,8 @@ public class SgtMap {
    * of Cause 2?
    *
    * @param methodName for diagnostic messages
-   * @param jPane
-   * @param layerNames
+   * @param jPane the jPane
+   * @param layerNames the layerNames
    */
   public static void deconstructJPane(String methodName, JPane jPane, StringArray layerNames) {
     // 2011-01-11 This problem seems to be fixed, so I am commenting out this code.
@@ -1822,7 +1822,7 @@ public class SgtMap {
       if (JPane.debug) {
         try {
           String2.pressEnterToContinue();
-        } catch (Throwable t2) {
+        } catch (Throwable ignored) { // ignore
         }
       }
     }
@@ -1912,7 +1912,7 @@ public class SgtMap {
    * @param baseULYPixel defines area to be used, in pixels
    * @param graphWidthPixels defines area to be used, in pixels
    * @param graphHeightPixels defines area to be used, in pixels
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static void makeCleanMap(
       double minX,

@@ -1513,7 +1513,7 @@ public abstract class EDDTable extends EDD {
    * @param resultsVariables destinationNames
    * @param constraintVariables destinationNames
    * @param constraintOps any ops are ok.
-   * @param constraintValues
+   * @param constraintValues the constraintValues
    * @throws
    */
   public void applyConstraints(
@@ -1712,7 +1712,7 @@ public abstract class EDDTable extends EDD {
    * @param userDapQuery the OPeNDAP DAP-style query from the user after the '?', still
    *     percentEncoded (may be null). (e.g., var1,var2&var3%3C=40) referring to destination
    *     variable names. See parseUserDapQuery.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   public abstract void getDataForDapQuery(
@@ -2769,10 +2769,10 @@ public abstract class EDDTable extends EDD {
    * constraintVariable names, so, e.g., axisVariables may be referred to by the sourceNames or the
    * destinationNames, so this method can be used in various ways.
    *
-   * @param resultsVariables
-   * @param constraintVariables
+   * @param resultsVariables the resultsVariables
+   * @param constraintVariables the constraintVariables
    * @param constraintOps are usually the standard OPERATORS (or ~=, the non-standard regex op)
-   * @param constraintValues
+   * @param constraintValues the constraintValues
    * @return the OPeNDAP DAP-style query,
    *     <tt>var1,var2,var3&amp;var4=value4&amp;var5&amp;gt;=value5</tt>. See parseUserDapQuery.
    */
@@ -3134,7 +3134,7 @@ public abstract class EDDTable extends EDD {
    * @param dir a private cache directory for storing the intermediate files
    * @param fileName is the fileName without dir or extension (used as basis for temp files).
    * @param tableWriter the final tableWriter (e.g., TableWriterJson)
-   * @param userDapQuery
+   * @param userDapQuery the userDapQuery
    * @return the (possibly) wrapped tableWriter (or the same tableWriter if no need to enclose it,
    *     e.g., no orderByMax).
    */
@@ -3440,7 +3440,7 @@ public abstract class EDDTable extends EDD {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'. I
    *     think it's currently just used to add to "history" metadata.
    * @param userDapQuery the part after the '?', still percentEncoded (shouldn't be null).
-   * @param withAttributes
+   * @param withAttributes the withAttributes
    * @return an empty table (with columns, but without rows) corresponding to the request
    * @throws Throwable if trouble
    */
@@ -3796,7 +3796,7 @@ public abstract class EDDTable extends EDD {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullName + randomInt);
         ncWriter = null;
@@ -3830,7 +3830,7 @@ public abstract class EDDTable extends EDD {
    *
    * @param language the index of the selected language
    * @param ncCFName the complete name of the file that will be created
-   * @param twawm
+   * @param twawm the twawm
    * @throws Throwable if trouble
    */
   public void saveAsNcCF0(int language, String ncCFName, TableWriterAllWithMetadata twawm)
@@ -3904,7 +3904,7 @@ public abstract class EDDTable extends EDD {
    *     https://www.ncei.noaa.gov/netcdf-templates with Multidimensional Array Representation. If
    *     false, data will be saved in .ncCF file with Contiguous Ragged Array Representation.
    * @param ncCFName the complete name of the file that will be created
-   * @param twawm
+   * @param twawm the twawm
    * @throws Throwable if trouble
    */
   public void saveAsNcCF1(
@@ -4253,7 +4253,7 @@ public abstract class EDDTable extends EDD {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(ncCFName + randomInt);
         ncWriter = null;
@@ -4276,7 +4276,7 @@ public abstract class EDDTable extends EDD {
    *     https://www.ncei.noaa.gov/netcdf-templates with Multidimensional Array Representation. If
    *     false, data will be saved in .ncCF file with Contiguous Ragged Array Representation.
    * @param ncCFName the complete name of the file that will be created
-   * @param twawm
+   * @param twawm the twawm
    * @throws Throwable if trouble
    */
   public void saveAsNcCF2(
@@ -4762,7 +4762,7 @@ public abstract class EDDTable extends EDD {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(ncCFName + randomInt);
         ncWriter = null;
@@ -4783,7 +4783,7 @@ public abstract class EDDTable extends EDD {
    *     (EDDTableFromPost?) it could be. Normally, this is just used to determine which erddapUrl
    *     to use (http vs https).
    * @param userDapQuery the part after the '?', still percentEncoded (shouldn't be null).
-   * @param writer
+   * @param writer the writer
    * @throws Throwable if trouble
    */
   public void writeDapHtmlForm(
@@ -10359,7 +10359,7 @@ public abstract class EDDTable extends EDD {
   /**
    * This suggests nPlaces precision for a given lat lon radius (used in Make A Graph).
    *
-   * @param radius
+   * @param radius the radius
    * @return nPlaces precision for a given lat lon radius (used in Make A Graph).
    */
   public static int lonLatNPlaces(double radius) {
@@ -12413,7 +12413,7 @@ public abstract class EDDTable extends EDD {
    * results. There are no attributes, since attributes are added in standardizeResultsTable.
    *
    * @param resultsDVIs the indices of the results dataVariables.
-   * @param capacityNRows
+   * @param capacityNRows the capacityNRows
    * @return an empty table with the specified columns and 0 rows active, suitable for catching
    *     source results.
    */
@@ -12428,8 +12428,8 @@ public abstract class EDDTable extends EDD {
    * This returns a table with the specified columns and 0 rows active, suitable for catching source
    * results. There are no attributes, since attributes are added in standardizeResultsTable.
    *
-   * @param resultsEDVs
-   * @param capacityNRows
+   * @param resultsEDVs the resultsEDVs
+   * @param capacityNRows the capacityNRows
    * @return an empty table with the specified columns and 0 rows active, suitable for catching
    *     source results.
    */
@@ -12535,7 +12535,7 @@ public abstract class EDDTable extends EDD {
    *     think it's currently just used to add to "history" metadata.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @return true if it was handled
    * @throws Throwable e.g., if it should have been handled, but failed. Or if no data.
    */
@@ -14121,7 +14121,7 @@ public abstract class EDDTable extends EDD {
    * https://opendap.co-ops.nos.noaa.gov/ioos-dif-sos-test/get/describesensor/getstation.jsp
    *
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param shortName the short "procedure" name (from the query, but shortened): the network name
    *     (the datasetID, for all) or a station name (41004). It must be already checked for
    *     validity.
@@ -14605,7 +14605,7 @@ public abstract class EDDTable extends EDD {
    * This returns the fileTypeName (e.g., .csvp) which corresponds to the data or image
    * responseFormat.
    *
-   * @param responseFormat
+   * @param responseFormat the responseFormat
    * @return returns the fileTypeName (e.g., .csvp) which corresponds to the data or image
    *     responseFormat (or null if no match).
    */
@@ -14623,7 +14623,7 @@ public abstract class EDDTable extends EDD {
    * XML format response types.
    *
    * @param language the index of the selected language
-   * @param responseFormat
+   * @param responseFormat the responseFormat
    * @throws SimpleException if trouble (e.g., not a valid responseFormat)
    */
   public static boolean isIoosSosXmlResponseFormat(int language, String responseFormat) {
@@ -14647,7 +14647,7 @@ public abstract class EDDTable extends EDD {
    * XML format response types.
    *
    * @param language the index of the selected language
-   * @param responseFormat
+   * @param responseFormat the responseFormat
    * @throws SimpleException if trouble (e.g., not a valid responseFormat)
    */
   public static boolean isOostethysSosXmlResponseFormat(int language, String responseFormat) {
@@ -14665,7 +14665,7 @@ public abstract class EDDTable extends EDD {
    *
    * @param request the request
    * @param language the index of the selected language
-   * @param sosQuery
+   * @param sosQuery the sosQuery
    * @param ipAddress The user's IP address (for statistics).
    * @param loggedInAs or null if not logged in
    * @param outputStreamSource if all goes well, this method calls out.close() at the end.
@@ -14748,7 +14748,7 @@ public abstract class EDDTable extends EDD {
           try {
             twawm.releaseResources();
             twawm.close();
-          } catch (Exception e) {
+          } catch (Exception ignored) { // ignore
           }
         }
       } else {
@@ -14776,7 +14776,7 @@ public abstract class EDDTable extends EDD {
           if (out instanceof ZipOutputStream zos) zos.closeEntry();
           out.close();
         }
-      } catch (Exception e) {
+      } catch (Exception ignored) { // ignore
       }
     }
   }
@@ -14787,8 +14787,8 @@ public abstract class EDDTable extends EDD {
    *
    * @param the request
    * @param language the index of the selected language
-   * @param loggedInAs
-   * @param sosQuery
+   * @param loggedInAs the loggedInAs
+   * @param sosQuery the sosQuery
    * @return [0]=dapQuery (percent encoded), [1]=requestOfferingType (e.g., "network" or e.g.,
    *     "station"), [2]=requestShortOfferingName (short name: e.g., all or 41004)
    *     [3]=responseFormat (in request) //[4]=responseMode (e.g., inline) [5]=requestedVars (csv of

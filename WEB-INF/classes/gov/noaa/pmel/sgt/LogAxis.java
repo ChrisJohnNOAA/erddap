@@ -200,7 +200,7 @@ public class LogAxis extends SpaceAxis implements Cloneable {
         label.setLayer(graph_.getLayer());
         try {
           label.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
         // x = x + delta*labelInterval_;
       }
@@ -215,7 +215,7 @@ public class LogAxis extends SpaceAxis implements Cloneable {
         title.setOrientation(SGLabel.HORIZONTAL);
         try {
           title.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
       }
     } else { // orientation is vertical
@@ -353,7 +353,7 @@ public class LogAxis extends SpaceAxis implements Cloneable {
         label.setLayer(graph_.getLayer());
         try {
           label.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
         // y = j*10;//delta*labelInterval_;
       }
@@ -366,7 +366,7 @@ public class LogAxis extends SpaceAxis implements Cloneable {
         title.setOrientation(SGLabel.VERTICAL);
         try {
           title.draw(g);
-        } catch (LayerNotFoundException e) {
+        } catch (LayerNotFoundException ignored) { // ignore
         }
       }
     }

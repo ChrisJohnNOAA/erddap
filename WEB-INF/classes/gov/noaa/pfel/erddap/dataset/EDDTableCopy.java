@@ -235,7 +235,7 @@ public class EDDTableCopy extends EDDTable {
    *     up some data requests).
    *     <p>Note that the combination of extractDestinationNames+orderExtractBy should fully define
    *     the desired sort order for the dataset.
-   * @param tSourceNeedsExpandedFP_EQ
+   * @param tSourceNeedsExpandedFP_EQ the tSourceNeedsExpandedFP_EQ
    * @param tSourceEdd the remote dataset to be copied. After the first time (to generate tasks to
    *     copy data), there will be local files so it's okay if tSourceEdd is null (unavailable).
    * @throws Throwable if trouble
@@ -745,7 +745,7 @@ public class EDDTableCopy extends EDDTable {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override

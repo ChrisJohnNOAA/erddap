@@ -310,7 +310,7 @@ public class XML {
    * This returns a String with the HTML tags removed and common entities (&amp; &lt; &gt; &quot;
    * &nbsp;) converted to the original characters.
    *
-   * @param htmlString
+   * @param htmlString the htmlString
    * @return the plain text version
    */
   public static String removeHTMLTags(String htmlString) {
@@ -369,8 +369,8 @@ public class XML {
   /**
    * If encodeAsHTML is true, this encodes as HTML; otherwise it returns the original string.
    *
-   * @param s
-   * @param encodeAsHTML
+   * @param s the s
+   * @param encodeAsHTML the encodeAsHTML
    * @return If encodeAsHTML is true, this encodes as HTML; otherwise it returns the original
    *     string.
    */
@@ -405,7 +405,7 @@ public class XML {
   /**
    * This is the standard encodeAsXML which leaves chars &gt;=256 as is.
    *
-   * @param plainText
+   * @param plainText the plainText
    */
   public static String encodeAsXML(String plainText) {
     return encodeAsXMLOpt(plainText, false);
@@ -456,7 +456,7 @@ public class XML {
    *
    * <p>This is reasonable for HTML, but not recommended for xhtml(?).
    *
-   * @param s
+   * @param s the s
    * @return s with some spaces encoded as (char)160 (nbsp)
    */
   public static String minimalEncodeSpaces(String s) {
@@ -502,7 +502,7 @@ public class XML {
   /**
    * This is like encodeAsHTML but adds specific line breaks (&lt;br&gt;).
    *
-   * @param plainText
+   * @param plainText the plainText
    * @param maxLineLength if lines are longer, they are broken
    */
   public static String encodeAsPreHTML(String plainText, int maxLineLength) {
@@ -517,7 +517,7 @@ public class XML {
    * This is like encodeAsHTML but adds specific line breaks (&lt;br&gt;). This variant doesn't call
    * noLongLinesAtSpace
    *
-   * @param plainText
+   * @param plainText the plainText
    */
   public static String encodeAsPreHTML(String plainText) {
     String s = encodeAsHTML(plainText);
@@ -621,7 +621,7 @@ public class XML {
    * Parse XML from a Reader and return a DOM Document. If validating is true, the XML is validated
    * against the DTD specified by DOCTYPE in the file.
    *
-   * @param input
+   * @param input the input
    * @param validating use true to validate the file against the DTD specified in the file.
    * @return a DOM Document
    * @throws Exception if trouble
@@ -634,7 +634,7 @@ public class XML {
    * Parse XML from a Reader and return a DOM Document. If validating is true, the XML is validated
    * against the DTD specified by DOCTYPE in the file.
    *
-   * @param inputSource
+   * @param inputSource the inputSource
    * @param validating use true to validate the file against the DTD specified in the file.
    * @return a DOM Document
    * @throws Exception if trouble
@@ -694,8 +694,8 @@ public class XML {
   /**
    * This returns the value of the specified attribute of a node.
    *
-   * @param node
-   * @param attributeName
+   * @param node the node
+   * @param attributeName the attributeName
    * @return attribute's value (null if node=null or attributeName not present)
    */
   public static String getAttribute(Node node, String attributeName) {
@@ -709,7 +709,7 @@ public class XML {
    * This returns the text content contained in this node (and all subelements), with leading and
    * trailing white space removed.
    *
-   * @param node
+   * @param node the node
    * @return the text content contained in this node (and all subelements), with leading and
    *     trailing white space removed. This won't return null. This may return "" (if node is null
    *     or no content).

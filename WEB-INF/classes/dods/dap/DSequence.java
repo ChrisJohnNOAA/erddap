@@ -400,7 +400,7 @@ public class DSequence extends DConstructor implements ClientIO {
       for (; ; ) {
         deserializeSingle(source, sv, statusUI);
       }
-    } catch (EOFException e) {
+    } catch (EOFException ignored) { // ignore
     }
   }
 

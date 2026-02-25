@@ -386,7 +386,7 @@ public class UIntArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {
@@ -1149,7 +1149,7 @@ public class UIntArray extends PrimitiveArray {
    * Test if o is an UIntArray with the same size and values, but returns a String describing the
    * difference (or "" if equal).
    *
-   * @param o
+   * @param o the o
    * @return a String describing the difference (or "" if equal). o=null doesn't throw an exception.
    */
   @Override
@@ -1375,7 +1375,7 @@ public class UIntArray extends PrimitiveArray {
    * This reads/appends int values to this PrimitiveArray from a DODS DataInputStream, and is thus
    * the complement of externalizeForDODS.
    *
-   * @param dis
+   * @param dis the dis
    * @throws IOException if trouble
    */
   @Override
@@ -1390,7 +1390,7 @@ public class UIntArray extends PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   @Override
@@ -1413,7 +1413,7 @@ public class UIntArray extends PrimitiveArray {
   /**
    * This fully skips 'n' elements in the dataInputStream.
    *
-   * @param dis
+   * @param dis the dis
    * @param n the number of elements to skip
    * @throws Exception if trouble
    */
@@ -1425,7 +1425,7 @@ public class UIntArray extends PrimitiveArray {
   /**
    * This reads an elements from the dataInputStream.
    *
-   * @param dis
+   * @param dis the dis
    * @return param n the number of elements to skip
    * @throws Exception if trouble
    */

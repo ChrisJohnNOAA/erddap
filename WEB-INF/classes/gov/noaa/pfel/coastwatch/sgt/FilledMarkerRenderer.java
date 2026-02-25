@@ -75,7 +75,7 @@ public class FilledMarkerRenderer extends CartesianRenderer {
   /**
    * The constructor.
    *
-   * @param graph
+   * @param graph the graph
    * @param sourceID indicates which, e.g., pointScreen led to this (not used, but held)
    * @param xPA the longitude values
    * @param yPA the latitude values
@@ -116,7 +116,7 @@ public class FilledMarkerRenderer extends CartesianRenderer {
   /**
    * This draws the filled area on the map. Required to extend CartesianRenderer.
    *
-   * @param g
+   * @param g the g
    */
   @Override
   public void draw(java.awt.Graphics g) {

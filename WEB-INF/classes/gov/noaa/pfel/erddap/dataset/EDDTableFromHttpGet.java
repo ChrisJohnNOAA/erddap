@@ -1459,9 +1459,9 @@ public class EDDTableFromHttpGet extends EDDTableFromFiles {
    *
    * @param tFileDir the starting (parent) directory for searching for files
    * @param sampleFileName the full file name of one of the files in the collection
-   * @param tHttpGetRequiredVariables
-   * @param tHttpGetDirectoryStructure
-   * @param tHttpGetKeys
+   * @param tHttpGetRequiredVariables the tHttpGetRequiredVariables
+   * @param tHttpGetDirectoryStructure the tHttpGetDirectoryStructure
+   * @param tHttpGetKeys the tHttpGetKeys
    * @param tInfoUrl or "" if in externalAddGlobalAttributes or if not available
    * @param tInstitution or "" if in externalAddGlobalAttributes or if not available
    * @param tSummary or "" if in externalAddGlobalAttributes or if not available

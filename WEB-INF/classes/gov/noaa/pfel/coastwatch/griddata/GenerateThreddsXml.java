@@ -911,7 +911,7 @@ public class GenerateThreddsXml {
   /**
    * This shortens a boldTitle.
    *
-   * @param boldTitle
+   * @param boldTitle the boldTitle
    * @return a shortened boldTitle
    */
   public static String shortenBoldTitle(String boldTitle) {

@@ -601,7 +601,7 @@ public class TableFromMultidimNcFile {
     } finally {
       try {
         if (ncFile != null) ncFile.close();
-      } catch (Exception e9) {
+      } catch (Exception ignored) { // ignore
       }
     }
   }

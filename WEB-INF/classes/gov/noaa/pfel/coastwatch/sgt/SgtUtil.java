@@ -79,7 +79,7 @@ public class SgtUtil {
    * This returns the maxCharsPerLine based on charsPerLine.
    *
    * @param legendTextWidth in pixels
-   * @param fontScale
+   * @param fontScale the fontScale
    */
   public static int maxCharsPerLine(int legendTextWidth, double fontScale) {
     // lessen the effect of small fonts (they stay wide to stay legible)
@@ -97,7 +97,7 @@ public class SgtUtil {
   /**
    * This creates a font and throws exception if font family not available
    *
-   * @param fontFamily
+   * @param fontFamily the fontFamily
    * @throws Exception if fontFamily not available
    */
   public static Font getFont(String fontFamily) {
@@ -139,11 +139,11 @@ public class SgtUtil {
   /**
    * This draws the standard legend text for a BELOW legend.
    *
-   * @param g2
-   * @param legentTextX
-   * @param legendTextY
-   * @param fontFamily
-   * @param labelHeightPixels
+   * @param g2 the g2
+   * @param legentTextX the legentTextX
+   * @param legendTextY the legendTextY
+   * @param fontFamily the fontFamily
+   * @param labelHeightPixels the labelHeightPixels
    * @param shortBoldLines must be valid (if null, nothing will be drawn, and return value will be
    *     legendTextY unchanged)
    * @param shortLines from makeShortLines
@@ -291,11 +291,11 @@ public class SgtUtil {
    * from setting non-text antialising ON: <tt>g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
    * RenderingHints.VALUE_ANTIALIAS_ON); </tt> Now perhaps antialiasing on by default.
    *
-   * @param g2d
+   * @param g2d the g2d
    * @param x the base x for the text (in pixels)
    * @param y the base y for the text (in pixels)
    * @param hAlign one of SGLabel.LEFT|CENTER|RIGHT (0=left 1=center 2=right).
-   * @param fontFamily
+   * @param fontFamily the fontFamily
    * @param labelHeight (in pixels)
    * @param extraGapBelow adds an extra labelHeight to the returned yAdjusted (even if htmlText is
    *     null or "")
@@ -326,7 +326,7 @@ public class SgtUtil {
    * This is a special version of XML.encodeAsHTML that displays any occurence of "EXPERIMENTAL
    * PRODUCT" or "EXPERIMENTAL" in red.
    *
-   * @param plainText
+   * @param plainText the plainText
    * @return htmlText
    */
   public static String encodeAsHtml(String plainText) {
@@ -350,8 +350,8 @@ public class SgtUtil {
    * This makes a new bufferedImage suitable for SgtMap.makeMap or SgtGraph.makeGraph. The
    * background is white.
    *
-   * @param gifWidth
-   * @param gifHeight
+   * @param gifWidth the gifWidth
+   * @param gifHeight the gifHeight
    * @return a bufferedImage of the requested size
    * @throws Exception if trouble
    */
@@ -393,7 +393,7 @@ public class SgtUtil {
    * it does the best job at color reduction (and is fast and is cross-platform). This will
    * overwrite an existing file.
    *
-   * @param bi
+   * @param bi the bi
    * @param fullGifName but without the .gif at the end
    * @throws Exception if trouble
    */
@@ -434,7 +434,7 @@ public class SgtUtil {
   /**
    * Saves an image as a png. This will overwrite an existing file.
    *
-   * @param bi
+   * @param bi the bi
    * @param fullPngName but without the .png at the end
    * @throws Exception if trouble
    */
@@ -445,7 +445,7 @@ public class SgtUtil {
   /**
    * Saves an image as a png. This will overwrite an existing file.
    *
-   * @param bi
+   * @param bi the bi
    * @param transparent the color to be made transparent (or null if none)
    * @param fullPngName but without the .png at the end
    * @throws Exception if trouble
@@ -473,7 +473,7 @@ public class SgtUtil {
   /**
    * Saves an image as a png. This will overwrite an existing file.
    *
-   * @param bi
+   * @param bi the bi
    * @param transparent the color to be made transparent (or null if none)
    * @param outputStream (it is flushed at the end)
    * @throws Exception if trouble
@@ -620,7 +620,7 @@ public class SgtUtil {
   /**
    * This returns a whiter color than c.
    *
-   * @param color
+   * @param color the color
    * @return a whiter color than c
    */
   public static Color whiter(Color color) {
@@ -668,7 +668,7 @@ public class SgtUtil {
    * Given a bufferedImage with a legend near the bottom (entire width of image), this replaces the
    * legend with white.
    *
-   * @param bufferedImage
+   * @param bufferedImage the bufferedImage
    * @return a bufferedImage without the legend. If trouble, this returns the original image.
    */
   public static BufferedImage removeLegend(BufferedImage bufferedImage) {
@@ -689,7 +689,7 @@ public class SgtUtil {
    * Given a bufferedImage with a legend near the bottom (entire width of image), this returns an
    * image with just the legend.
    *
-   * @param bufferedImage
+   * @param bufferedImage the bufferedImage
    * @return a bufferedImage with just the legend.
    * @throws RuntimeException if trouble (e.g., no legend found)
    */
@@ -718,7 +718,7 @@ public class SgtUtil {
   /**
    * Given a bufferedImage, this removes any whitespace more than 10 lines at the bottom.
    *
-   * @param bufferedImage
+   * @param bufferedImage the bufferedImage
    * @param borderWidth in pixels
    * @return a trimmed bufferedImage. If trouble, this returns the original image.
    */

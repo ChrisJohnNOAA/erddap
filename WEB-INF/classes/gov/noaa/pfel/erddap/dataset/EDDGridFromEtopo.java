@@ -405,7 +405,7 @@ public class EDDGridFromEtopo extends EDDGrid {
           if (dos != null) {
             try {
               dos.close();
-            } catch (Throwable t2) {
+            } catch (Throwable ignored) { // ignore
             }
           }
           File2.delete(cacheName + random);

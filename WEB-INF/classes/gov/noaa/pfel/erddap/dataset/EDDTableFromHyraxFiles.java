@@ -474,7 +474,7 @@ public class EDDTableFromHyraxFiles extends EDDTableFromFiles {
    *     "pentad.*\\.nc\\.gz"
    * @param oneFileDapUrl the locally useful url for one file, without ending .das or .html e.g.,
    *     https://opendap.jpl.nasa.gov/opendap/allData/ccmp/L3.5a/pentad/flk/1987/M09/pentad_19870908_v11l35flk.nc.gz
-   * @param tReloadEveryNMinutes
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tPreExtractRegex part of info for extracting e.g., stationName from file name. Set to ""
    *     if not needed.
    * @param tPostExtractRegex part of info for extracting e.g., stationName from file name. Set to

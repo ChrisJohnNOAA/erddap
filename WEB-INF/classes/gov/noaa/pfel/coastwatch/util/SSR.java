@@ -203,7 +203,7 @@ public class SSR {
    * @param timeOutSeconds (use -1 for no time out)
    * @param resultingFullFileNames If this isn't null, the full names of unzipped files are added to
    *     this. This method doesn't initially cleared this StringArray!
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static void unzip(
       String fullZipName,
@@ -274,7 +274,7 @@ public class SSR {
    * @param errPipe a PipeTo to catch stdErr from the process
    * @param timeOutSeconds (use -1 for no time out)
    * @return the exitValue (Integer.MAX_VALUE indicates time out)
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static int shell(String cmd[], PipeTo outPipe, PipeTo errPipe, int timeOutSeconds)
       throws Exception {
@@ -731,7 +731,7 @@ public class SSR {
     } finally {
       try {
         if (smtpTransport != null) smtpTransport.close();
-      } catch (Throwable t) {
+      } catch (Throwable ignored) { // ignore
       }
       emailLock.unlock();
     }
@@ -854,7 +854,7 @@ public class SSR {
    *     See https://en.wikipedia.org/wiki/Percent-encoding . <br>
    *     Note that reserved characters only need to be percent encoded in special circumstances (not
    *     always).
-   * @param timeOutMillis
+   * @param timeOutMillis the timeOutMillis
    * @param handleS3ViaSDK If true (usually), this method handles AWS S3 URLs specially, via the
    *     Java S3 SDK. If false, this handles them like any other URL (which will only work for
    *     public buckets).
@@ -1291,7 +1291,7 @@ public class SSR {
   /**
    * Given an awsS3FileUrl, this tests if the file is private.
    *
-   * @param awsS3FileUrl
+   * @param awsS3FileUrl the awsS3FileUrl
    * @return true if the file is private
    */
   public static boolean awsS3FileIsPrivate(String awsS3FileUrl) {
@@ -1309,7 +1309,7 @@ public class SSR {
    * This returns the BufferedInputStream from the connection, with a content decoder if needed.
    *
    * @param urlString for diagnostics only
-   * @param con
+   * @param con the con
    * @return the BufferedInputStream from the connection, with a content decoder if needed.
    */
   public static BufferedInputStream getBufferedInputStream(String urlString, URLConnection con)

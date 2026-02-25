@@ -678,7 +678,7 @@ public class ScriptMath2 {
    * This converts a compass heading (usually 0..360, where North is 0, East is 90...) to Math-style
    * degrees (East is 0, North is 90, ...).
    *
-   * @param compass
+   * @param compass the compass
    * @return degrees always &gt;=0 and &lt;360 (compass=NaN -&gt; 0).
    */
   public static final double compassToMathDegrees(double compass) {
@@ -689,7 +689,7 @@ public class ScriptMath2 {
    * This converts a Math-style degrees (East is 0, North is 90, ...) to a compass heading (where
    * North is 0, East is 90, ...).
    *
-   * @param math
+   * @param math the math
    * @return degrees always &gt;=0 and &lt;360 (compass=NaN -&gt; 0).
    */
   public static final double mathToCompassDegrees(double math) {
@@ -770,7 +770,7 @@ public class ScriptMath2 {
   /**
    * This converts a long to a double (Long.MAX_VALUE becomes NaN).
    *
-   * @param tl
+   * @param tl the tl
    * @return a double. If tl is Long.MAX_VALUE, this returns Double.NaN.
    */
   public static final double longToDoubleNaN(long tl) {
@@ -780,7 +780,7 @@ public class ScriptMath2 {
   /**
    * This converts an unsigned long to a double. !!! possible loss of precision!
    *
-   * @param tl
+   * @param tl the tl
    * @return a double.
    */
   public static final double ulongToDouble(long tl) {
@@ -924,7 +924,7 @@ public class ScriptMath2 {
   /**
    * This returns a small increment roughly 1/100th the range (e.g., .1, 1, 10, ....).
    *
-   * @param range
+   * @param range the range
    * @return an appropriate increment for the range
    */
   public static double getSmallIncrement(double range) {
@@ -1052,7 +1052,7 @@ public class ScriptMath2 {
    * than or greater than all the values, or between two adjacent values).
    *
    * @param dar an ascending sorted double[] which may have duplicate values
-   * @param x
+   * @param x the x
    * @return the index of the last element which is &lt;= x in an ascending sorted array. If x &lt;
    *     the smallest element, this returns -1 (no element is appropriate). If x &gt; the largest
    *     element, this returns dar.length-1. If x is NaN, this is currently undefined.
@@ -1068,7 +1068,7 @@ public class ScriptMath2 {
    * than or greater than all the values, or between two adjacent values).
    *
    * @param dar an ascending sorted double[] which may have duplicate values
-   * @param x
+   * @param x the x
    * @param precision e.g., 5 for floats and 9 for doubles
    * @return the index of the last element which is &lt;= x in an ascending sorted array. If x &lt;
    *     the smallest element, this returns -1 (no element is appropriate). If x &gt; the largest
@@ -1085,7 +1085,7 @@ public class ScriptMath2 {
    * than or greater than all the values, or between two adjacent values).
    *
    * @param dar an ascending sorted double[] which currently may not have duplicate values
-   * @param x
+   * @param x the x
    * @return the index of the first element which is &gt;= x in an ascending sorted array. If x &lt;
    *     the smallest element, this returns 0. If x &gt; the largest element, this returns
    *     dar.length (no element is appropriate). If x is NaN, this is currently undefined.
@@ -1102,7 +1102,7 @@ public class ScriptMath2 {
    * than or greater than all the values, or between two adjacent values).
    *
    * @param dar an ascending sorted double[] which currently may not have duplicate values
-   * @param x
+   * @param x the x
    * @param precision e.g., 5 for floats and 9 for doubles
    * @return the index of the first element which is &gt;= x in an ascending sorted array. If x &lt;
    *     the smallest element, this returns 0. If x &gt; the largest element, this returns
@@ -1117,7 +1117,7 @@ public class ScriptMath2 {
    *
    * @param dar an ascending sorted double[]. It the array has duplicates and x equals one of them,
    *     it isn't specified which duplicate's index will be returned.
-   * @param x
+   * @param x the x
    * @return the index of the index of the element closest to x. If x is NaN, this returns -1.
    */
   public static int binaryFindClosest(double[] dar, double x) {
@@ -1128,7 +1128,7 @@ public class ScriptMath2 {
    * This reduces a hash code (currently to a 10 digit unsigned number -- no loss of information).
    * For much stronger than hashCode, use String2.md5Hex or even String2.md5Hex12.
    *
-   * @param hashCode
+   * @param hashCode the hashCode
    * @return the reduced version
    */
   public static String reduceHashCode(int hashCode) {
@@ -1149,8 +1149,8 @@ public class ScriptMath2 {
    * This returns true if a == b. This treats as true: NaN=NaN (which Java says is false),
    * NEGATIVE_INFINITY=NEGATIVE_INFINITY, and POSITIVE_INFINITY=POSITIVE_INFINITY.
    *
-   * @param a
-   * @param b
+   * @param a the a
+   * @param b the b
    * @return true if a == b.
    */
   public static boolean equalsIncludingNanOrInfinite(double a, double b) {
@@ -1161,8 +1161,8 @@ public class ScriptMath2 {
    * This returns true if a == b. This treats as true: NaN=NaN (which Java says is false),
    * NEGATIVE_INFINITY=NEGATIVE_INFINITY, and POSITIVE_INFINITY=POSITIVE_INFINITY.
    *
-   * @param a
-   * @param b
+   * @param a the a
+   * @param b the b
    * @return true if a == b.
    */
   public static boolean equalsIncludingNanOrInfinite(float a, float b) {

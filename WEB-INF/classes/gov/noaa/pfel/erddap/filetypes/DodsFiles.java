@@ -114,7 +114,7 @@ public class DodsFiles extends TableWriterFileType {
         if (writer != null)
           try {
             writer.close();
-          } catch (Exception e) {
+          } catch (Exception ignored) { // ignore
           }
       }
 

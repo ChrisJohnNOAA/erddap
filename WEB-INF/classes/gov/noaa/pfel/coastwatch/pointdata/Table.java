@@ -725,8 +725,8 @@ public class Table {
   /**
    * This makes a deep clone of the current table (data and attributes).
    *
-   * @param startRow
-   * @param stride
+   * @param startRow the startRow
+   * @param stride the stride
    * @param endRow (inclusive) e.g., nRows()-1
    * @return a new Table.
    */
@@ -787,7 +787,7 @@ public class Table {
   /**
    * This returns the PrimitiveArray for a specific column.
    *
-   * @param columnName
+   * @param columnName the columnName
    * @return the corresponding PrimitiveArray
    * @throws IllegalArgumentException if columnName is invalid
    */
@@ -1008,7 +1008,7 @@ public class Table {
   /**
    * This removes a column (and any associated columnName and attributes).
    *
-   * @param columnName
+   * @param columnName the columnName
    * @throws IllegalArgumentException if columnName is invalid
    */
   public void removeColumn(String columnName) {
@@ -1038,8 +1038,8 @@ public class Table {
   /**
    * This moves a column.
    *
-   * @param from
-   * @param to
+   * @param from the from
+   * @param to the to
    * @throws Exception if 'from' or 'to' is not valid.
    */
   public void moveColumn(int from, int to) {
@@ -1100,7 +1100,7 @@ public class Table {
   /**
    * This returns the number of the column named columnName.
    *
-   * @param columnName
+   * @param columnName the columnName
    * @return the corresponding column number (or -1 if not found).
    */
   public int findColumnNumber(String columnName) {
@@ -1110,7 +1110,7 @@ public class Table {
   /**
    * This returns the number of the column named columnName (case-insensitive).
    *
-   * @param columnName
+   * @param columnName the columnName
    * @return the corresponding column number (or -1 if not found).
    */
   public int findColumnNumberIgnoreCase(String columnName) {
@@ -1136,7 +1136,7 @@ public class Table {
   /**
    * This returns the column named columnName.
    *
-   * @param columnName
+   * @param columnName the columnName
    * @return the corresponding column
    * @throws IllegalArgumentException if not found
    */
@@ -1849,7 +1849,7 @@ public class Table {
    * This gets the Attributes for a given column. Use this with care; this is the actual data
    * structure, not a clone.
    *
-   * @param column
+   * @param column the column
    * @return the ArrayList with the attributes for the column
    */
   public Attributes columnAttributes(int column) {
@@ -1860,7 +1860,7 @@ public class Table {
    * This gets the Attributes for a given column. Use this with care; this is the actual data
    * structure, not a clone.
    *
-   * @param columnName
+   * @param columnName the columnName
    * @return the ArrayList with the attributes for the column
    * @throws IllegalArgumentException if columnName not found
    */
@@ -1909,7 +1909,7 @@ public class Table {
    * @param keywords e.g., a keyword string from
    *     http://gcmd.gsfc.nasa.gov/Resources/valids/gcmd_parameters.html e.g., "Oceans > Ocean
    *     Temperature > Sea Surface Temperature"
-   * @param references
+   * @param references the references
    * @param summary a longer description of this data
    * @param courtesy e.g., "Channel Islands National Park (David Kushner)"
    * @param timeLongName "Time" (the default if this is null), or a better description of time,
@@ -2176,7 +2176,7 @@ public class Table {
    * This works on the current (unpacked; not scaled) data. So call this when the data is unpacked.
    * If the column is a String column, nothing will be done.
    *
-   * @param column
+   * @param column the column
    */
   public void setActualRange(int column) {
     PrimitiveArray pa = getColumn(column);
@@ -2310,7 +2310,7 @@ public class Table {
    * doesn't test globalAttribute or columnAttribute.
    *
    * @param o (usually) a Table object
-   * @param ensureColumnTypesEqual
+   * @param ensureColumnTypesEqual the ensureColumnTypesEqual
    * @return true if o is a Table object and has column types and data values that equal this Table
    *     object.
    */
@@ -2403,8 +2403,8 @@ public class Table {
    * This makes a table with 2 String columns with the keys (sorted) and values from the map.
    *
    * @param map if it needs to be thread-safe, use ConcurrentHashMap
-   * @param keysName
-   * @param valuesName
+   * @param keysName the keysName
+   * @param valuesName the valuesName
    */
   public void readMap(Map<String, String> map, String keysName, String valuesName) {
     // create the empty table
@@ -2429,7 +2429,7 @@ public class Table {
    * See readASCII(lines, nHeaderLines) for other details. <br>
    * This does simplify the columns.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @param charset e.g., ISO-8859-1 (used if charset is null or "") or UTF-8.
    * @param columnNamesLine (0.., or -1 if no names)
    * @param dataStartLine (0..)
@@ -2440,7 +2440,7 @@ public class Table {
    * @param testMax the maximum allowed value for each testColumn (null = no tests)
    * @param loadColumns the names of the columns to be loaded (perhaps in different order than in
    *     the file). If loadColumns is null, this will read all of the data columns.
-   * @param simplify
+   * @param simplify the simplify
    * @throws Exception if trouble
    */
   public void readASCII(
@@ -3125,7 +3125,7 @@ public class Table {
    * in the table is thrown away.
    *
    * @param fileName for diagnostic messages only
-   * @param reader
+   * @param reader the reader
    * @param dataStartLine (0..)
    * @param loadColumns the names of the columns to be loaded (perhaps in different order than in
    *     the file). The values won't be changed.
@@ -3270,14 +3270,14 @@ public class Table {
 
       try {
         reader.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
       reader = null;
 
     } catch (Exception e) {
       try {
         reader.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
       if (!reallyVerbose) String2.log(msg + " failed.");
       throw e;
@@ -3592,7 +3592,7 @@ public class Table {
       if (bw != null) {
         try {
           bw.close();
-        } catch (Throwable t2) {
+        } catch (Throwable ignored) { // ignore
         }
       }
       File2.delete(fullFileName + randomInt);
@@ -3723,7 +3723,7 @@ public class Table {
    * @param maxDepth in meters; use null or "" for no preference;
    * @param startDate an ISO date string (optional time, space or T connected), use null or "" for
    *     no preference; startDate must be &lt;= endDate. The time part of the string is used.
-   * @param endDate
+   * @param endDate the endDate
    * @param loadColumns which will follow LON,LAT,DEPTH,TIME,ID (which are always loaded) (use null
    *     to load all). <br>
    *     DEPTH is from Minimumdepth <br>
@@ -4178,7 +4178,7 @@ public class Table {
    *
    * @param colName (e.g., aws:ob-date)
    * @param currentRow 0..
-   * @param value
+   * @param value the value
    * @param atts If the column already exists, oldAtts.equals(atts) must be true or it throws a
    *     runtimeException.
    */
@@ -4213,7 +4213,7 @@ public class Table {
    * columns. !!! Note, some units in the file have HTML character entities. ERDDAP converts them to
    * ASCII / UDUnits.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @throws an exception if trouble (file not found, too much data, etc.). This won't throw an
    *     exception if no data.
    */
@@ -4695,7 +4695,7 @@ public class Table {
     } catch (Exception e) {
       try {
         if (bos != null) bos.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
       File2.delete(fullFileName + randomInt);
       File2.delete(fullFileName);
@@ -5061,7 +5061,7 @@ public class Table {
    *     separate or nested.
    * @param secondRowHasUnits (ERDDAP tables do; others usually don't)
    * @param simplify if the columns should be simplified
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void readHtml(
       String fullFileName,
@@ -5524,7 +5524,7 @@ public class Table {
    * @param fullName of the nc file
    * @param sourceColumnNames the list of columns to be loaded. Thus must be specified. If one isn't
    *     found, it's okay; the column will still be in the results, but with no metadata.
-   * @param sourceDataTypes
+   * @param sourceDataTypes the sourceDataTypes
    * @param standardizeWhat see Attributes.unpackVariable's standardizeWhat This always returns
    *     _Unsigned=true vars and related atts as unsigned vars and atts.
    */
@@ -6338,7 +6338,7 @@ public class Table {
    * This inserts columns starting at column #0 with the indices for the specified shape (0, 1, 2,
    * ..., for each dimension in shape[]).
    *
-   * @param shape
+   * @param shape the shape
    * @throws RuntimeException if this requires &gt;= Integer.MAX_VALUE rows.
    */
   public void addIndexColumns(int shape[]) {
@@ -9522,11 +9522,11 @@ public class Table {
           dis = null;
           audioInputStream = null;
         }
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
       try {
         if (audioInputStream != null) audioInputStream.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
 
       // clear()?
@@ -9651,11 +9651,11 @@ public class Table {
    *
    * @param fullInName the dir + name + ext for the data stream file, ready to go (columns
    *     interspersed).
-   * @param nCol
-   * @param nRow
+   * @param nCol the nCol
+   * @param nRow the nRow
    * @param tPAType a numeric type. UNTIL JAVA 9, BECAUSE OF JAVA BUG, this must be an integer type.
-   * @param globalAtts
-   * @param randomInt
+   * @param globalAtts the globalAtts
+   * @param randomInt the randomInt
    * @param fullOutName the dir + name + .wav for the .wav file
    * @throws Exception if trouble. If trouble, this makes an effort not to leave any (partial) file.
    */
@@ -9829,7 +9829,7 @@ public class Table {
    * @param loadVariables the variables to be loaded. They must all be ArrayXxx.D1 or ArrayChar.D2
    *     variables and use the same, one, dimension as the first dimension. This must not be null or
    *     empty. If you have variable names, use ncFile.findVariable(name);
-   * @param okRows
+   * @param okRows the okRows
    * @throws Exception if trouble
    */
   public void appendNcRows(Variable loadVariables[], BitSet okRows) throws Exception {
@@ -9873,7 +9873,7 @@ public class Table {
    * @param loadVariables the variables to be loaded. They must all be ArrayXxx.D1 or ArrayChar.D2
    *     variables and use the same, one, dimension as the first dimension. This must not be null or
    *     empty.
-   * @param okRows
+   * @param okRows the okRows
    * @throws Exception if trouble
    */
   public void blockAppendNcRows(Variable loadVariables[], BitSet okRows) throws Exception {
@@ -9927,7 +9927,7 @@ public class Table {
    * <p>!!!This is used inside the readXxx methods. And this is used inside saveAsXxx methods to
    * convert fake missing values back to NaNs. It is rarely called elsewhere.
    *
-   * @param column
+   * @param column the column
    */
   public void convertToStandardMissingValues(int column) {
     Attributes colAtt = columnAttributes(column);
@@ -9960,7 +9960,7 @@ public class Table {
    * <p>!!!This is used inside the saveAsXxx methods to temporarily convert to fake missing values.
    * It is rarely called elsewhere.
    *
-   * @param column
+   * @param column the column
    */
   public void convertToFakeMissingValues(int column) {
     // String2.log("Table.convertToFakeMissingValues column=" + column);
@@ -10721,7 +10721,7 @@ public class Table {
    * @param conName perhaps a column name in the table. If not, this constraint is ignored. This
    *     correctly deals with float, double, and other data types.
    * @param conOp an EDDTable-operator, e.g., "="
-   * @param conVal
+   * @param conVal the conVal
    * @param keep the bitset that will be modified. If you are setting up keep for this, set the bit
    *     for each row to true. Rows where the bit is initially false won't even be checked.
    * @return keep.cardinality()
@@ -11251,7 +11251,7 @@ public class Table {
    * missing_value and _FillValue metadata so the table can be reused. This is a convenience for
    * most orderBy() variants.
    *
-   * @param col
+   * @param col the col
    * @return true if some values were converted
    */
   public boolean temporarilyConvertToStandardMissingValues(int col) {
@@ -11284,7 +11284,7 @@ public class Table {
    * This converts standard (e.g., NaN) missing values to the variable's missing_value or _FillValue
    * (preferred). This is a convenience for most orderBy() variants.
    *
-   * @param col
+   * @param col the col
    * @return true if some values were converted
    */
   public boolean temporarilySwitchNaNToFakeMissingValues(int col) {
@@ -11416,7 +11416,7 @@ public class Table {
   /**
    * This moves the specified columns into place and removes other columns.
    *
-   * @param colNames
+   * @param colNames the colNames
    * @param extraErrorMessage (may be "")
    * @throws IllegalArgumentException if a colName not found.
    */
@@ -11916,7 +11916,7 @@ public class Table {
    * This converts an array of column names to column numbers.
    *
    * @param responsible The name of the caller (for an error message).
-   * @param keyColumnNames
+   * @param keyColumnNames the keyColumnNames
    * @return an array of column numbers
    * @throws SimpleException if name not found
    */
@@ -12596,7 +12596,7 @@ public class Table {
    * @param outputStream usually already buffered. Afterwards, it is flushed, not closed.
    * @param varName the name to use for the variable which holds all of the data, usually the
    *     dataset's internal name.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   /* commented out 2008-02-07
       public void saveAsMatlab(OutputStream outputStream, String varName)
@@ -12657,7 +12657,7 @@ public class Table {
    * @param structureName the name to use for the Matlab structure which holds all of the data,
    *     usually the dataset's internal name. If varName isn't a valid Matlab variable name, it will
    *     be made so via String2.encodeMatlabNameSafe().
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsMatlab(OutputStream outputStream, String structureName) throws Exception {
     if (reallyVerbose) String2.log("Table.saveAsMatlab outputStream");
@@ -12789,7 +12789,7 @@ public class Table {
    *     <p>OBSOLETE [To conform to the Unidata Observation Dataset Conventions
    *     (https://www.unidata.ucar.edu/software/netcdf-java/formats/UnidataObsConvention.html): This
    *     sets the global attribute observationDimension={dimensionName}.]
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsFlatNc(String fullName, String dimensionName) throws Exception {
     saveAsFlatNc(fullName, dimensionName, true);
@@ -12817,7 +12817,7 @@ public class Table {
    *     [GONE!] This sets the global attribute observationDimension={dimensionName}.]
    * @param convertToFakeMissingValues if true, NaN's are converted to DataHelper.FAKE_MISSING_VALUE
    *     temporarily.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsFlatNc(
       String fullName, String dimensionName, boolean convertToFakeMissingValues) throws Exception {
@@ -12960,7 +12960,7 @@ public class Table {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullName + randomInt);
       }
@@ -12989,7 +12989,7 @@ public class Table {
    * file-defined _FillValue (first choice) or missing_value or the standard PrimitiveArray missing
    * value (last choice).
    *
-   * @param fileName
+   * @param fileName the fileName
    * @param dimName e.g., "time" or
    * @throws Exception if trouble (but the file will be closed in all cases)
    */
@@ -13176,7 +13176,7 @@ public class Table {
    *     non-"" if stringVariableName isn't null)
    * @param stringVariableAttributes the attributes for the optional 1D String variable (must be
    *     non-null if stringVariableName isn't null)
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAs4DNc(
       String fullName,
@@ -13496,7 +13496,7 @@ public class Table {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
       }
 
@@ -13511,7 +13511,7 @@ public class Table {
   /**
    * This populates the table with the data from a sql resultsSet. See readSql.
    *
-   * @param rs
+   * @param rs the rs
    * @throws Exception if trouble
    */
   public void readSqlResultSet(ResultSet rs) throws Exception {
@@ -13941,7 +13941,7 @@ public class Table {
   /**
    * This returns a list of tables of a certain type or types.
    *
-   * @param con
+   * @param con the con
    * @param schema a specific schema (a subdirectory of the database) e.g., "public" (not null)
    * @param types null (for any) or String[] of one or more of "TABLE", "VIEW", "SYSTEM TABLE",
    *     "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
@@ -14026,7 +14026,7 @@ public class Table {
    *
    * @param fullFileName the complete file name (including directory and extension, usually ".asc").
    *     An existing file with this name will be overwritten.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsTabbedASCII(String fullFileName) throws Exception {
     saveAsTabbedASCII(fullFileName, File2.ISO_8859_1);
@@ -14038,7 +14038,7 @@ public class Table {
    * @param fullFileName the complete file name (including directory and extension, usually ".asc").
    *     An existing file with this name will be overwritten.
    * @param charset e.g., ISO-8859-1 (default, used if charset is null or "") or UTF-8.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsTabbedASCII(String fullFileName, String charset) throws Exception {
     if (reallyVerbose) String2.log("Table.saveAsTabbedASCII " + fullFileName);
@@ -14064,7 +14064,7 @@ public class Table {
       if (os != null) {
         try {
           os.close();
-        } catch (Exception e2) {
+        } catch (Exception ignored) { // ignore
         }
       }
 
@@ -14083,7 +14083,7 @@ public class Table {
    *
    * @param outputStream There is no need for it to be buffered. Afterwards, it is flushed, not
    *     closed.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsTabbedASCII(OutputStream outputStream) throws Exception {
     saveAsSeparatedAscii(outputStream, null, "\t");
@@ -14098,7 +14098,7 @@ public class Table {
    *
    * @param fullFileName the complete file name (including directory and extension, usually ".csv").
    *     An existing file with this name will be overwritten.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsCsvASCII(String fullFileName) throws Exception {
     if (reallyVerbose) String2.log("Table.saveAsCsvASCII " + fullFileName);
@@ -14123,7 +14123,7 @@ public class Table {
     } catch (Exception e) {
       try {
         if (os != null) os.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
 
       File2.delete(fullFileName + randomInt);
@@ -14151,7 +14151,7 @@ public class Table {
    *
    * @param outputStream There is no need for it to be buffered. Afterwards, it is flushed, not
    *     closed.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsCsvASCII(OutputStream outputStream) throws Exception {
     saveAsSeparatedAscii(outputStream, null, ",");
@@ -14170,7 +14170,7 @@ public class Table {
    *     closed.
    * @param charset e.g., ISO-8859-1 (default, used if charset is null or "") or UTF-8.
    * @param separator usually a tab or a comma
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsSeparatedAscii(OutputStream outputStream, String charset, String separator)
       throws Exception {
@@ -14249,8 +14249,8 @@ public class Table {
    * This is usually just used for diagnostics, since the string might be very large. <br>
    * Missing values should already be stored as NaNs (perhaps via convertToStandardMissingValues()).
    *
-   * @param timeColumn
-   * @param writeUnits
+   * @param timeColumn the timeColumn
+   * @param writeUnits the writeUnits
    */
   public String saveAsJsonString(int timeColumn, boolean writeUnits) throws Exception {
     StringWriter sw = new StringWriter();
@@ -14900,7 +14900,7 @@ public class Table {
       if (bw != null) {
         try {
           bw.close();
-        } catch (Throwable t2) {
+        } catch (Throwable ignored) { // ignore
         }
       }
       File2.delete(fullFileName + randomInt);
@@ -15205,7 +15205,7 @@ public class Table {
    * or the cNamesHashset. The new name will be added to colNamesHashset.
    *
    * @param colName The raw, initial column name.
-   * @param colNamesHashset
+   * @param colNamesHashset the colNamesHashset
    * @return the safe name.
    */
   public static String makeUniqueIgorColumnName(String colName, Set<String> colNamesHashset) {
@@ -15416,7 +15416,7 @@ public class Table {
       if (writer != null)
         try {
           writer.close();
-        } catch (Throwable t9) {
+        } catch (Throwable ignored) { // ignore
         }
 
       throw t;
@@ -16033,8 +16033,8 @@ public class Table {
   /**
    * Derive the actual column names by removing the rounding part eg time/1day =&gt; time.
    *
-   * @param keyColumnNames
-   * @return
+   * @param keyColumnNames the keyColumnNames
+   * @return the result
    */
   public static String[] deriveActualColumnNames(String[] keyColumnNames) {
     final String[] actualKeyColumnNames = new String[keyColumnNames.length];

@@ -1615,8 +1615,8 @@ public abstract class EDDGridFromFiles extends EDDGrid implements WatchUpdateHan
    * so: compare the incoming values with expected to ensure compatible, or set expected if not
    * already set.
    *
-   * @param dirName
-   * @param fileName
+   * @param dirName the dirName
+   * @param fileName the fileName
    * @param tSourceGlobalAttributes from the new file
    * @param tSourceAxisAttributes from the new file
    * @param tSourceAxisValues from the new file
@@ -2382,8 +2382,8 @@ public abstract class EDDGridFromFiles extends EDDGrid implements WatchUpdateHan
    * does nothing if that isn't possible). This is a high-level request that handles axis
    * manipulation.
    *
-   * @param tFileDir
-   * @param tFileName
+   * @param tFileDir the tFileDir
+   * @param tFileName the tFileName
    * @param sourceAxisNames If there is a special axis0, this will still be the full list.
    * @param sourceDataNames the names of the desired source data columns.
    * @param sourceDataTypes the data types of the desired source columns (e.g., "String" or "float")
@@ -2509,8 +2509,8 @@ public abstract class EDDGridFromFiles extends EDDGrid implements WatchUpdateHan
    * This gets source axis values from one file. This is a high-level request that handles axis
    * manipulation.
    *
-   * @param tFileDir
-   * @param tFileName
+   * @param tFileDir the tFileDir
+   * @param tFileName the tFileName
    * @param sourceAxisNames the names of the desired source axis variables. If there is a special
    *     axis0, this will still be the full list.
    * @param sourceDataNames When there are unnamed dimensions, this is to find out the shape of the
@@ -2642,8 +2642,8 @@ public abstract class EDDGridFromFiles extends EDDGrid implements WatchUpdateHan
    * This gets source data from one file. This is a high-level request that handles axis
    * manipulation.
    *
-   * @param tFileDir
-   * @param tFileName
+   * @param tFileDir the tFileDir
+   * @param tFileName the tFileName
    * @param tDataVariables the desired data variables
    * @param tConstraints where the first axis variable's constraints have been customized for this
    *     file.

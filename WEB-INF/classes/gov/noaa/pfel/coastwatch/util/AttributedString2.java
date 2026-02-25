@@ -76,7 +76,7 @@ public class AttributedString2 {
   /**
    * This adds a character but doesn't reset lastStart.
    *
-   * @param ch
+   * @param ch the ch
    */
   public void addChar(char ch) {
     cumulative.append(ch);
@@ -85,7 +85,7 @@ public class AttributedString2 {
   /**
    * This adds the characters but doesn't reset lastStart.
    *
-   * @param s
+   * @param s the s
    */
   public void addChars(String s) {
     cumulative.append(s);
@@ -119,9 +119,9 @@ public class AttributedString2 {
   /**
    * This actually draws the attributed text.
    *
-   * @param g2d
-   * @param x
-   * @param y
+   * @param g2d the g2d
+   * @param x the x
+   * @param y the y
    * @param hAlign position of x,y relative to the text: 0=left 1=center 2=right
    */
   public void draw(Graphics2D g2d, float x, float y, int hAlign) {
@@ -165,7 +165,7 @@ public class AttributedString2 {
    * Currently supported tags: b, /b, color=#FFFFFF, /color, i, /i, u, /u. Currently supported
    * character entities: amp, gt, lt, quot.
    *
-   * @param g2d
+   * @param g2d the g2d
    * @param htmlText basically plain text but with support for some html tags. The characters &lt;
    *     &gt; &amp; (and perhaps ") should be represented by their corresponding character entities.
    * @param x in the current coordinate system (perhaps just pixels)

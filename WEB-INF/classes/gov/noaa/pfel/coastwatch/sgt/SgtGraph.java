@@ -125,7 +125,7 @@ public class SgtGraph {
    *     yIsTimeAxis, specify minY in epochSeconds.
    * @param yAscending if true, the axis will be drawn low to high; else it will be flipped. The
    *     current minY maxY order is irrelevant.
-   * @param yIsTimeAxis
+   * @param yIsTimeAxis the yIsTimeAxis
    * @param yIsLogAxis This states a preference. If yIsTimeAxis or minY&lt;=0 or this is a Sticks
    *     graph, this is ignored and treated as false.
    * @param graphDataLayers an ArrayList of GraphDataLayers with the data to be plotted; the first
@@ -145,7 +145,7 @@ public class SgtGraph {
    *     maxY, 4=IntArray rowNumber 5=IntArray whichPointScreen(0,1,2,...)), pixel location of graph
    *     6=IntArray originX,endX,originY,endY, XY double MinMax graph 7=DoubleArray
    *     originX,endX,originY,endY. (The returnAL isn't extensively tested yet.)
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public List<PrimitiveArray> makeGraph(
       boolean transparent,
@@ -1559,14 +1559,14 @@ public class SgtGraph {
    * This draws the requested marker at the requested position. g2.setColor must have been already
    * used.
    *
-   * @param g2d
-   * @param markerType
+   * @param g2d the g2d
+   * @param markerType the markerType
    * @param markerSize2 the marker size in pixels (actually Graphics2D units)
    * @param x the center x
    * @param y the center y
    * @param interiorColor use null if inactive, or to get hollow "filled" marker. For non-filled
    *     markers, this color is used as the line color.
-   * @param lineColor
+   * @param lineColor the lineColor
    */
   public static void drawMarker(
       Graphics2D g2d,

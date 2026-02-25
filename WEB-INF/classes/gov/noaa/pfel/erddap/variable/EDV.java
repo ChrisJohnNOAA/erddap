@@ -1023,7 +1023,7 @@ public class EDV {
    * This is used by constructors to set the sourceName and fixedValue (if sourceName starts with
    * "=" and contains a single number or a single Json-like string).
    *
-   * @param tSourceName
+   * @param tSourceName the tSourceName
    * @throws Throwable if trouble (e.g., if fixed value parses to NaN).
    */
   public void setSourceName(String tSourceName) throws Throwable {
@@ -1036,7 +1036,7 @@ public class EDV {
    * number or string. A fixedValue is a single number or a single String (which must be
    * Json-encoded in the sourceName).
    *
-   * @param sourceName
+   * @param sourceName the sourceName
    * @return the fixed value (or null if not a fixed value)
    */
   public static String extractFixedValue(String sourceName) throws Throwable {
@@ -1400,7 +1400,7 @@ public class EDV {
    * <p>This version of this method just deals with scaleAddOffset. Some subclasses overwrite this.
    * (Time variables will return a DoubleArray.)
    *
-   * @param source
+   * @param source the source
    * @return a PrimitiveArray with destinationDataPAType (the same Primitive array if the data type
    *     wasn't changed) with source values converted to destinationValues.
    */
@@ -1433,7 +1433,7 @@ public class EDV {
    *
    * <p>This version of this method just deals with scaleAddOffset. Some subclasses overwrite this.
    *
-   * @param destination
+   * @param destination the destination
    * @return a PrimitiveArray (the same Primitive array if the data type wasn't changed) with
    *     destination values converted to sourceValues.
    */
@@ -1573,7 +1573,7 @@ public class EDV {
    * <p>For EDVGridAxis (which overwrites the superclass version), this works whether isAscending or
    * not.
    *
-   * @param destinationValue
+   * @param destinationValue the destinationValue
    * @return the nearest slider position (0 .. EDV.SLIDER_PIXELS-1) (or -1 if trouble, e.g.,
    *     sliderCsvValues can't be constructed (e.g., no min + max values)).
    */

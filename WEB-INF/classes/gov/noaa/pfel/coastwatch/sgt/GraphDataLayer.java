@@ -341,7 +341,7 @@ public class GraphDataLayer {
    * This returns the number of legend line equivalents which are needed for this GraphDataLayer in
    * the legend (symbol, text, and gap).
    *
-   * @param maxCharsPerLine
+   * @param maxCharsPerLine the maxCharsPerLine
    * @return the number of legend line equivalents which are needed for this GraphDataLayer in the
    *     legend.
    */

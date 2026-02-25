@@ -19,8 +19,8 @@ public class ScriptString2 {
   /**
    * This returns the string which sorts higher. null sorts low.
    *
-   * @param s1
-   * @param s2
+   * @param s1 the s1
+   * @param s2 the s2
    * @return the string which sorts higher.
    */
   public static String max(String s1, String s2) {
@@ -30,8 +30,8 @@ public class ScriptString2 {
   /**
    * This returns the string which sorts lower. null sorts low.
    *
-   * @param s1
-   * @param s2
+   * @param s1 the s1
+   * @param s2 the s2
    * @return the string which sorts lower.
    */
   public static String min(String s1, String s2) {
@@ -91,8 +91,8 @@ public class ScriptString2 {
    * This returns a string no more than max characters long, throwing away the excess. If you want
    * to keep the whole string and just insert newlines periodically, use noLongLines() instead.
    *
-   * @param s
-   * @param max
+   * @param s the s
+   * @param max the max
    * @return s (if it is short) or the first max characters of s. If s==null, this returns "".
    */
   public static String noLongerThan(String s, int max) {
@@ -102,8 +102,8 @@ public class ScriptString2 {
   /**
    * This is like noLongerThan, but if truncated, s.substring(0, max-3) + "..." is returned.
    *
-   * @param s
-   * @param max
+   * @param s the s
+   * @param max the max
    * @return s (if it is short) or the first max characters of s
    */
   public static String noLongerThanDots(String s, int max) {
@@ -125,8 +125,8 @@ public class ScriptString2 {
   /**
    * This determines the number of initial characters that match.
    *
-   * @param s1
-   * @param s2
+   * @param s1 the s1
+   * @param s2 the s2
    * @return the number of characters that are the same at the start of both strings.
    */
   public static int getNMatchingCharacters(String s1, String s2) {
@@ -136,8 +136,8 @@ public class ScriptString2 {
   /**
    * Finds the first instance of 'find' at or after fromIndex (0..), ignoring case.
    *
-   * @param s
-   * @param find
+   * @param s the s
+   * @param find the find
    * @return the first instance of 'find' at or after fromIndex (0..), ignoring case.
    */
   public static int indexOfIgnoreCase(String s, String find) {
@@ -147,9 +147,9 @@ public class ScriptString2 {
   /**
    * Finds the first instance of 'find' at or after fromIndex (0..), ignoring case.
    *
-   * @param s
-   * @param find
-   * @param fromIndex
+   * @param s the s
+   * @param find the find
+   * @param fromIndex the fromIndex
    * @return the first instance of 'find' at or after fromIndex (0..), ignoring case.
    */
   public static int indexOfIgnoreCase(String s, String find, int fromIndex) {
@@ -159,8 +159,8 @@ public class ScriptString2 {
   /**
    * This goes beyond indexOfIgnoreCase by looking after punctuation removed.
    *
-   * @param s
-   * @param find
+   * @param s the s
+   * @param find the find
    * @return true if find is loosely in s. Return false if s or find !isSomething.
    */
   public static boolean looselyContains(String s, String find) {
@@ -170,8 +170,8 @@ public class ScriptString2 {
   /**
    * This goes beyond equalsIgnoreCase by looking after punctuation removed.
    *
-   * @param s1
-   * @param s2
+   * @param s1 the s1
+   * @param s2 the s2
    * @return true if find is loosely in s. Return false if s or find !isSomething.
    */
   public static boolean looselyEquals(String s1, String s2) {
@@ -251,7 +251,7 @@ public class ScriptString2 {
   /**
    * Finds the first instance of i at or after fromIndex (0.. ) in iArray.
    *
-   * @param iArray
+   * @param iArray the iArray
    * @param i the int you want to find
    * @param fromIndex the index number of the position to start the search
    * @return The first instance of i. If not found, it returns -1.
@@ -263,7 +263,7 @@ public class ScriptString2 {
   /**
    * Finds the first instance of i in iArray.
    *
-   * @param iArray
+   * @param iArray the iArray
    * @param i the int you want to find
    * @return The first instance of i. If not found, it returns -1.
    */
@@ -274,7 +274,7 @@ public class ScriptString2 {
   /**
    * Finds the first instance of c at or after fromIndex (0.. ) in cArray.
    *
-   * @param cArray
+   * @param cArray the cArray
    * @param c the char you want to find
    * @param fromIndex the index number of the position to start the search
    * @return The first instance of c. If not found, it returns -1.
@@ -286,7 +286,7 @@ public class ScriptString2 {
   /**
    * Finds the first instance of c in cArray.
    *
-   * @param cArray
+   * @param cArray the cArray
    * @param c the char you want to find
    * @return The first instance of c. If not found, it returns -1.
    */
@@ -322,7 +322,7 @@ public class ScriptString2 {
    * Finds the first instance of d at or after fromIndex (0.. ) in dArray (tested with
    * Math2.almostEqual5).
    *
-   * @param dArray
+   * @param dArray the dArray
    * @param d the double you want to find
    * @param fromIndex the index number of the position to start the search
    * @return The first instance of d. If not found, it returns -1.
@@ -343,7 +343,7 @@ public class ScriptString2 {
   /**
    * Finds the first instance of d in dArray (tested with Math2.almostEqual5).
    *
-   * @param dArray
+   * @param dArray the dArray
    * @param d the double you want to find
    * @return The first instance of d. If not found, it returns -1.
    */
@@ -498,7 +498,7 @@ public class ScriptString2 {
   /**
    * This returns the string with all non-isPrintable characters removed.
    *
-   * @param s
+   * @param s the s
    * @return s with all the non-isPrintable characters removed. If s is null, this throws null
    *     pointer exception.
    */
@@ -512,7 +512,7 @@ public class ScriptString2 {
    * conversion is always character-for-character, so the string length will be unchanged). Other
    * characters become '?'. The result will be the same length as s.
    *
-   * @param s
+   * @param s the s
    * @return the string converted to plain ascii (0..127).
    */
   public static String modifyToBeASCII(String s) {
@@ -522,7 +522,7 @@ public class ScriptString2 {
   /**
    * This indicates if ch is a file-name-safe character (A-Z, a-z, 0-9, _, -, or .).
    *
-   * @param ch
+   * @param ch the ch
    * @return true if ch is a file-name-safe character (A-Z, a-z, 0-9, _, -, .).
    */
   public static boolean isFileNameSafe(char ch) {
@@ -652,7 +652,7 @@ public class ScriptString2 {
    * encodeMatlabNameSafe(String s). Note, this does not check for names that are too long (many
    * system have an 80 or 255 char limit).
    *
-   * @param s
+   * @param s the s
    * @return a safe variable name (but perhaps two s's lead to the same result)
    */
   public static String modifyToBeVariableNameSafe(String s) {
@@ -737,7 +737,7 @@ public class ScriptString2 {
    * is also trim'd to remove leading and trailing spaces. Also, spaces after { or ( and before ) or
    * } will be removed.
    *
-   * @param s
+   * @param s the s
    * @return s, but with the spaces combined (or null if s is null)
    */
   public static String combineSpaces(String s) {
@@ -778,7 +778,7 @@ public class ScriptString2 {
   /**
    * The converts a string[] into a JSON array of strings.
    *
-   * @param sa
+   * @param sa the sa
    * @return e.g., ["aa", "bb", "cc"]. If sa is null, this returns null (as a String).
    */
   public static String toJsonArray(String sa[]) {
@@ -788,7 +788,7 @@ public class ScriptString2 {
   /**
    * This makes a JSON version of a float.
    *
-   * @param f
+   * @param f the f
    * @return "null" if not finite. Return an integer if it ends with ".0". Else returns the number
    *     as a string.
    */
@@ -799,7 +799,7 @@ public class ScriptString2 {
   /**
    * This makes a JSON version of a number.
    *
-   * @param d
+   * @param d the d
    * @return "null" if not finite. Return an integer if it ends with ".0". Else returns the number
    *     as a string.
    */
@@ -812,7 +812,7 @@ public class ScriptString2 {
    * character and double quotes are added before and after). null is returned as null. This variant
    * encodes char #127 and above.
    *
-   * @param s
+   * @param s the s
    * @return the JSON-encoded string surrounded by "'s.
    */
   public static String toJson(String s) {
@@ -822,7 +822,7 @@ public class ScriptString2 {
   /**
    * This variant doesn't encode high characters.
    *
-   * @param s
+   * @param s the s
    * @return the JSON-encoded string surrounded by "'s.
    */
   public static String toJson65536(String s) {
@@ -1175,7 +1175,7 @@ public class ScriptString2 {
    * This converts an Object[] into a String[]. If you have an ArrayList or a Vector, use
    * arrayList.toArray().
    *
-   * @param aa
+   * @param aa the aa
    * @return the corresponding String[] by calling toString() for each object
    */
   public static String[] toStringArray(Object aa[]) {
@@ -1188,7 +1188,7 @@ public class ScriptString2 {
    *
    * <p>CHANGED: before 2011-09-04, this was called toCSVString.
    *
-   * @param value
+   * @param value the value
    * @return a nice String representation
    */
   public static String arrayToCSSVString(Object value) {
@@ -1411,7 +1411,7 @@ public class ScriptString2 {
    * string is treated as "" (not discarded as with String.split).
    *
    * @param s a string with 0 or more separator chatacters
-   * @param separator
+   * @param separator the separator
    * @return a String[] with the strings (not canonical). s=null returns null. s="" returns
    *     String[1]{""}.
    */
@@ -1424,7 +1424,7 @@ public class ScriptString2 {
    * discarded as with String.split).
    *
    * @param s a string with 0 or more separator chatacters
-   * @param separator
+   * @param separator the separator
    * @return a String[] with the strings (not canonical). s=null returns null. s="" returns
    *     String[1]{""}.
    */
@@ -1555,8 +1555,8 @@ public class ScriptString2 {
   /**
    * This removes leading ch's.
    *
-   * @param s
-   * @param ch
+   * @param s the s
+   * @param ch the ch
    * @return s or a new string without leading ch's. null returns null.
    */
   public static String removeLeading(String s, char ch) {
@@ -1739,7 +1739,7 @@ public class ScriptString2 {
   /**
    * This trims just the start of the string.
    *
-   * @param s
+   * @param s the s
    * @return s with just the start of the string trim'd. If s == null, this returns null.
    */
   public static String trimStart(String s) {
@@ -1749,7 +1749,7 @@ public class ScriptString2 {
   /**
    * This trims just the end of the string.
    *
-   * @param s
+   * @param s the s
    * @return s with just the end of the string trim'd. If s == null, this returns null.
    */
   public static String trimEnd(String s) {
@@ -1760,7 +1760,7 @@ public class ScriptString2 {
    * Find the last element which is &lt;= s in an ascending sorted array.
    *
    * @param sar an ascending sorted String[] which may have duplicate values
-   * @param s
+   * @param s the s
    * @return the index of the last element which is &lt;= s in an ascending sorted array. If s is
    *     null or s &lt; the smallest element, this returns -1 (no element is appropriate). If s &gt;
    *     the largest element, this returns sar.length-1.
@@ -1773,7 +1773,7 @@ public class ScriptString2 {
    * Find the first element which is &gt;= s in an ascending sorted array.
    *
    * @param sar an ascending sorted String[] which currently may not have duplicate values
-   * @param s
+   * @param s the s
    * @return the index of the first element which is &gt;= s in an ascending sorted array. If s &lt;
    *     the smallest element, this returns 0. If s is null or s &gt; the largest element, this
    *     returns sar.length (no element is appropriate).
@@ -1787,7 +1787,7 @@ public class ScriptString2 {
    *
    * @param sar an ascending sorted String[]. It the array has duplicates and s equals one of them,
    *     it isn't specified which duplicate's index will be returned.
-   * @param s
+   * @param s the s
    * @return the index of the element closest to s. If s is null, this returns -1.
    */
   public static int binaryFindClosest(String[] sar, String s) {
@@ -1798,7 +1798,7 @@ public class ScriptString2 {
    * This returns the index of the first non-Unicode character. Currently, valid characters are #32
    * - #126, #160+.
    *
-   * @param s
+   * @param s the s
    * @param alsoOK a string with characters (e.g., \r, \n, \t) which are also valid
    * @return the index of the first non-utf-8 character, or -1 if all valid.
    */
@@ -1811,7 +1811,7 @@ public class ScriptString2 {
    * (literally 2 backslashes, so no info is lost). The invalid characters are often Windows charset
    * characters #127 - 159.
    *
-   * @param s
+   * @param s the s
    * @param alsoOK a string with characters (e.g., \r, \n, \t) which are also valid
    * @return the valid Unicode string.
    */
@@ -1903,8 +1903,8 @@ public class ScriptString2 {
    * Given two strings with internal newlines, oldS and newS, this a message indicating where they
    * differ.
    *
-   * @param oldS
-   * @param newS
+   * @param oldS the oldS
+   * @param newS the newS
    * @return a message indicating where they differ, or "" if there is no difference.
    */
   public static String differentLine(String oldS, String newS) {
@@ -1916,7 +1916,7 @@ public class ScriptString2 {
    * Math2.intExponent, but works via string manipulation to avoid roundoff problems (e.g., with
    * 6.6260755e-24).
    *
-   * @param d
+   * @param d the d
    * @return int[2]: [0]=m, [1]=t. (or {0, 0} if d=0, or {1, Integer.MAX_VALUE} if !finite(d))
    */
   public static int[] toRational(double d) {
@@ -1936,7 +1936,7 @@ public class ScriptString2 {
    * <p>THIS WON'T BE CHANGED. FILE NAMES CREATED FOR EDDGridCopy and EDDTableCopy DEPEND ON SAME
    * ENCODING OVER TIME.
    *
-   * @param s
+   * @param s the s
    * @return s with all of the non-fileNameSafe characters changed. <br>
    *     If s is null, this returns "x-1". <br>
    *     If s is "", this returns "x-0".
@@ -1966,7 +1966,7 @@ public class ScriptString2 {
    * <p>THIS WON'T BE CHANGED. FILE NAMES CREATED FOR EDDGridFromFile and EDDTableFromFile DEPEND ON
    * SAME ENCODING OVER TIME.
    *
-   * @param s
+   * @param s the s
    * @return s with all of the non-variableNameSafe characters changed. <br>
    *     If s is null, this returns "x_1". <br>
    *     If s is "", this returns "x_0".
@@ -1994,7 +1994,7 @@ public class ScriptString2 {
    *
    * <p>THIS WON'T BE CHANGED. SOME datasetIDs DEPEND ON SAME ENCODING OVER TIME.
    *
-   * @param s
+   * @param s the s
    * @return s with all of the non-variableNameSafe characters changed. <br>
    *     If s is null, this returns "null_". <br>
    *     If s is "", this returns "nothing_".

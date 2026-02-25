@@ -130,7 +130,7 @@ public class DecadeAxis implements TimeAxisStyle {
         time = new GeoDate(1, 1, Math.max(10, tRange.end.getGMTYear() / 10 * 10), 0, 0, 0, 0);
         if (!time.equals(tRange.end)) time.increment(incrementValue__, GeoDate.YEARS);
       }
-    } catch (IllegalTimeValue e) {
+    } catch (IllegalTimeValue ignored) { // ignore
     }
     return time;
   }

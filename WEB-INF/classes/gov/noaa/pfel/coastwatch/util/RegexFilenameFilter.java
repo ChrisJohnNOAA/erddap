@@ -43,8 +43,8 @@ public class RegexFilenameFilter implements FilenameFilter {
    * <p>Note that this doesn't check if the name represents a file or a directory (and there is no
    * way I know of to specify that distinction as part of the regex).
    *
-   * @param dir
-   * @param name
+   * @param dir the dir
+   * @param name the name
    * @return true if the name matches the pattern
    */
   @Override

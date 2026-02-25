@@ -523,8 +523,8 @@ public class Grid {
    * This is like readGrd with more parameters, but uses NaN or MAX_VALUE for all of the desiredXxx
    * parameters, and so reads all of the data.
    *
-   * @param fullFileName
-   * @param makeLonPM180
+   * @param fullFileName the fullFileName
+   * @param makeLonPM180 the makeLonPM180
    * @throws Exception if trouble (e.g., no data)
    */
   public void readGrd(String fullFileName, boolean makeLonPM180) throws Exception {
@@ -542,7 +542,7 @@ public class Grid {
    * This is like readGrd with more parameters, but uses NaN or MAX_VALUE for all of the desiredXxx
    * parameters, and so reads all of the data, as it is in the file.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @throws Exception if trouble
    */
   public void readGrd(String fullFileName) throws Exception {
@@ -557,7 +557,7 @@ public class Grid {
    * <a href="https://www.unidata.ucar.edu/software/netcdf-java/" >NetCDF Java Library</a> renamed
    * as netcdf-latest.jar. Put it in the classpath for the compiler and for Java.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @param desiredMinLon the minimum desired longitude. minLon and maxLon may imply +-180 or
    *     0..360; The native data will be converted to conform. Or use Double.NaN to use the file's
    *     minLon.
@@ -1049,7 +1049,7 @@ public class Grid {
    * This is like readNetCDF with more parameters, but uses NaN or MAX_VALUE for all of the
    * desiredXxx parameters, and so reads all of the data.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @param dataName is the name of the gridded data variable, or use null to read the first
    *     variable which uses the lat and lon dimensions.
    * @throws Exception if trouble (e.g., no data)
@@ -1092,7 +1092,7 @@ public class Grid {
    *
    * <p>This sets globalAttributes, latAttributes, lonAttributes, and dataAttributes.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @param dataName is the name of the gridded data variable, or use null to read the first
    *     variable which uses the lat and lon dimensions.
    * @param desiredMinLon the minimum desired longitude. The resulting grid will conform to the
@@ -1796,9 +1796,9 @@ public class Grid {
    * expanded into a series of values given minData and maxData) or a comma-separated list of values
    * (which is simply converted into a double[]).
    *
-   * @param contourString
-   * @param minData
-   * @param maxData
+   * @param contourString the contourString
+   * @param minData the minData
+   * @param maxData the maxData
    * @return an array of values (double[0] if trouble, including requests for &gt; 500
    *     contourLevels).
    */
@@ -1843,8 +1843,8 @@ public class Grid {
    * Get a data value given lon and lat index values. This does no checking of the validity of the
    * lon and lat values.
    *
-   * @param lonIndex
-   * @param latIndex
+   * @param lonIndex the lonIndex
+   * @param latIndex the latIndex
    * @return a double
    */
   public double getData(int lonIndex, int latIndex) {
@@ -1856,9 +1856,9 @@ public class Grid {
    * Set a data value given lon and lat index values. This does no checking of the validity of the
    * lon and lat values.
    *
-   * @param lonIndex
-   * @param latIndex
-   * @param datum
+   * @param lonIndex the lonIndex
+   * @param latIndex the latIndex
+   * @param datum the datum
    */
   public void setData(int lonIndex, int latIndex, double datum) {
     // data has data column by column, left to right, starting from lat0 lon0
@@ -2110,7 +2110,7 @@ public class Grid {
    * @param name The file name with out the extension (e.g., myFile). The extension ".nc" will be
    *     added. The name does not have to be a CWBrowser-style name.
    * @param dataName The name for the data variable (e.g., ATssta).
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsNetCDF(String directory, String name, String dataName) throws Exception {
     if (verbose) String2.log("Grid.saveAsNetCDF " + name);
@@ -2321,7 +2321,7 @@ public class Grid {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(directory + randomInt);
         ncWriter = null;
@@ -2341,7 +2341,7 @@ public class Grid {
    * @param directory with a slash at the end
    * @param name The file name with out the extension (e.g., myFile). The extension ".grd" will be
    *     added.
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void saveAsGrd(String directory, String name) throws Exception {
 
@@ -2470,7 +2470,7 @@ public class Grid {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(directory + randomInt);
         ncWriter = null;

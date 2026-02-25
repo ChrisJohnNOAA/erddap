@@ -24,7 +24,7 @@ public class PauseTest extends NetCheckTest {
    * method will read information until xmlReader.getNextTag() returns the close tag for the
    * reference to this class.
    *
-   * @param xmlReader
+   * @param xmlReader the xmlReader
    * @throws Exception if trouble
    */
   public PauseTest(SimpleXMLReader xmlReader) throws Exception {
@@ -62,7 +62,7 @@ public class PauseTest extends NetCheckTest {
    * methods of the superclass NetCheckTest.
    *
    * @param title e.g., Pause for 10 seconds
-   * @param nSeconds
+   * @param nSeconds the nSeconds
    * @throws Exception if trouble
    */
   public PauseTest(String title, int nSeconds) throws Exception {

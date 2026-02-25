@@ -447,7 +447,7 @@ public class File2 {
    * This returns an index into ICON_FILENAME and ICON_ALT suitable for the fileName. The fallback
    * is "UNK".
    *
-   * @param fileName
+   * @param fileName the fileName
    * @return an index into ICON_FILENAME and ICON_ALT suitable for the fileName.
    */
   public static int whichIcon(String fileName) {
@@ -707,7 +707,7 @@ public class File2 {
           try {
             nRemain = -1;
             String2.log(msg + value.getCanonicalPath());
-          } catch (Exception e2) {
+          } catch (Exception ignored) { // ignore
           }
         }
       }
@@ -736,7 +736,7 @@ public class File2 {
   /**
    * This deletes an AWS file.
    *
-   * @param awsUrl
+   * @param awsUrl the awsUrl
    * @return true if the file existed and was successfully deleted; otherwise returns false.
    */
   public static boolean deleteAwsS3File(String awsUrl) {
@@ -854,7 +854,7 @@ public class File2 {
   public static void safeRename(String fullOldName, String fullNewName) {
     try {
       rename(fullOldName, fullNewName);
-    } catch (Throwable t) {
+    } catch (Throwable ignored) { // ignore
     }
   }
 
@@ -893,7 +893,7 @@ public class File2 {
    * date and time minus millisInPast. (The name comes from the Unix "touch" program.)
    *
    * @param fullName the full name of the file
-   * @param millisInPast
+   * @param millisInPast the millisInPast
    * @return true if the directory or file exists and if the modification was successful
    */
   public static boolean touch(String fullName, long millisInPast) {
@@ -915,7 +915,7 @@ public class File2 {
    * If the directory or file exists, this changes its lastModification date/time to millis
    *
    * @param fullName the full name of the file
-   * @param millis
+   * @param millis the millis
    * @return true if the directory or file exists and if the modification was successful
    */
   public static boolean setLastModified(String fullName, long millis) {
@@ -1158,7 +1158,7 @@ public class File2 {
   /**
    * This gets a new S3Client for the specified region.
    *
-   * @param region
+   * @param region the region
    * @return an S3Client
    */
   @MustBeClosed
@@ -1555,7 +1555,7 @@ public class File2 {
     } catch (Exception e) {
       try {
         if (is != null) is.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
       throw e;
     }
@@ -1706,7 +1706,7 @@ public class File2 {
     } finally {
       try {
         if (br != null) br.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
     }
 
@@ -1991,8 +1991,8 @@ public class File2 {
   /**
    * This generates a hex dump of the first nBytes of the file.
    *
-   * @param fullFileName
-   * @param nBytes
+   * @param fullFileName the fullFileName
+   * @param nBytes the nBytes
    * @return a String with a hex dump of the first nBytes of the file.
    * @throws Exception if trouble
    */
@@ -2009,7 +2009,7 @@ public class File2 {
   /**
    * This makes a directory (and any necessary parent directories) (if it doesn't already exist).
    *
-   * @param name
+   * @param name the name
    * @throws RuntimeException if unable to comply.
    */
   public static void makeDirectory(String name) throws RuntimeException {
@@ -2073,7 +2073,7 @@ public class File2 {
     }
     try {
       if (out != null) out.close();
-    } catch (Exception e) {
+    } catch (Exception ignored) { // ignore
     }
 
     if (!success) delete(destination);

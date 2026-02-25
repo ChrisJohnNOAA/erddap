@@ -215,7 +215,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
    * column (exclusive, 0..) in a columnar ASCII data file. It assumes column names on the first row
    * and data on subsequent rows.
    *
-   * @param sampleFileName
+   * @param sampleFileName the sampleFileName
    * @param charset ISO-8859-1, UTF-8, or "" or null for the default (ISO-8859-1)
    * @param columnNamesRow first row of file is called 1.
    * @param firstDataRow first row of file is called 1.
@@ -319,7 +319,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
    * @param sampleFileName one of the files in the collection
    * @param columnNamesRow first row of file is called 1.
    * @param firstDataRow first row if file is called 1.
-   * @param tReloadEveryNMinutes
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tPreExtractRegex part of info for extracting e.g., stationName from file name. Set to ""
    *     if not needed.
    * @param tPostExtractRegex part of info for extracting e.g., stationName from file name. Set to
@@ -717,7 +717,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
    * @param dir directory that has or will be used to store the EML file and data file.
    * @param emlFileName one of the files in the collection This can be a URL or just the file name
    *     of the file in the dir.
-   * @param useLocalFilesIfPresent
+   * @param useLocalFilesIfPresent the useLocalFilesIfPresent
    * @param tAccessibleTo may be null (public access), "" (no one access), or CSV of groups that
    *     have access (e.g., lterSbc),
    * @param localTimeZone is a time zone name from the TZ column at
@@ -1619,7 +1619,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
     } finally {
       try {
         if (xmlReader != null) xmlReader.close();
-      } catch (Throwable t2) {
+      } catch (Throwable ignored) { // ignore
       }
     }
 

@@ -26,7 +26,7 @@ public class FindDuplicateTime {
    * value per file. This standardizes the times to ISO 8601 times.
    *
    * @param directory This directory and recursive subdirectories will be searched
-   * @param fileNameRegex
+   * @param fileNameRegex the fileNameRegex
    * @param timeVarName usually "time"
    * @return a string with a description of the duplicates (if any) and summary statistics
    */

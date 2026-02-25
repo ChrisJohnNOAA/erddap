@@ -84,7 +84,7 @@ public class ItxFiles extends TableWriterFileType {
    * @param outputStreamSource If all goes well, the outputstream is closed at the end.
    * @param twawm all the results data, with missingValues stored as destinationMissingValues or
    *     destinationFillValues (they will be converted to NaNs)
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private void saveAsIgor(OutputStreamSource outputStreamSource, TableWriterAllWithMetadata twawm)
       throws Throwable {
@@ -157,7 +157,7 @@ public class ItxFiles extends TableWriterFileType {
    *     null). e.g., ATssta[45:1:45][0:1:0][120:10:140][130:10:160]
    * @param outputStreamSource the source of an outputStream (usually already buffered) to receive
    *     the results. If all goes well, at the end of this method the outputStream is closed.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private void saveAsIgor(
       int language,

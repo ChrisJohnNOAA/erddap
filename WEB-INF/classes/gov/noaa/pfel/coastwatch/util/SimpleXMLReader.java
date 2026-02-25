@@ -87,7 +87,7 @@ public class SimpleXMLReader {
     } catch (Exception e) {
       try {
         inputStream.close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) { // ignore
       }
       reader = null;
       throw e;
@@ -136,7 +136,7 @@ public class SimpleXMLReader {
   /**
    * This returns the requested item from the stack of tags. Call this right after nextTag().
    *
-   * @param item
+   * @param item the item
    * @return the requested tag (not including the '&lt;' and '&gt;') or null if the item number is
    *     invalid.
    */
@@ -527,7 +527,7 @@ public class SimpleXMLReader {
   /**
    * This throws the standard "Unexpected tag" Exception. This also calls close().
    *
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void unexpectedTagException() throws Exception {
     throwException("Unexpected tag=" + allTags() + " content=\"" + content() + "\".");
@@ -536,7 +536,7 @@ public class SimpleXMLReader {
   /**
    * This throws a Exception (prefaced by "ERROR on xml line #...: "). This also calls close().
    *
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void throwException(String message) throws Exception {
     close();
@@ -553,7 +553,7 @@ public class SimpleXMLReader {
         reader.close();
         reader = null;
       }
-    } catch (Exception e) {
+    } catch (Exception ignored) { // ignore
     }
   }
 

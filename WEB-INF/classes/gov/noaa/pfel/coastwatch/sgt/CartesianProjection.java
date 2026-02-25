@@ -140,7 +140,7 @@ public class CartesianProjection implements Projection {
   /**
    * This converts a graphXDistance into a deviceXDistance. THIS DOESN'T WORK WITH xIsLogAxis!
    *
-   * @param graphXDistance
+   * @param graphXDistance the graphXDistance
    * @return deviceXDistance
    */
   public double graphToDeviceXDistance(double graphXDistance) {
@@ -152,7 +152,7 @@ public class CartesianProjection implements Projection {
    * This converts a graphYDistance into a deviceYDistance. In the typical setup, a positive
    * graphYDistance generates a positive deviceYDistance. THIS DOESN'T WORK WITH yIsLogAxis!
    *
-   * @param graphYDistance
+   * @param graphYDistance the graphYDistance
    * @return deviceYDistance
    */
   public double graphToDeviceYDistance(double graphYDistance) {

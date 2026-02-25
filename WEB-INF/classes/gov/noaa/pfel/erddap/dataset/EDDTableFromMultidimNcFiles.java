@@ -269,7 +269,7 @@ public class EDDTableFromMultidimNcFiles extends EDDTableFromFilesNcLow {
    *     not needed.
    * @param tColumnNameForExtract part of info for extracting e.g., stationName from file name. Set
    *     to "" if not needed.
-   * @param tRemoveMVRows
+   * @param tRemoveMVRows the tRemoveMVRows
    * @param tSortFilesBySourceNames This is useful, because it ultimately determines default results
    *     order.
    * @param tInfoUrl or "" if in externalAddGlobalAttributes or if not available

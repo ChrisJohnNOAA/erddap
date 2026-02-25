@@ -152,7 +152,7 @@ public class Subscriptions implements AutoCloseable {
     if (persistentTable != null) {
       try {
         persistentTable.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) { // ignore
       }
       persistentTable = null;
     }
@@ -401,7 +401,7 @@ public class Subscriptions implements AutoCloseable {
   /**
    * This tests that an email address is valid (syntax and blacklist).
    *
-   * @param email
+   * @param email the email
    * @return an error message or "" if no error.
    */
   public synchronized String testEmailValid(String email) {
@@ -431,7 +431,7 @@ public class Subscriptions implements AutoCloseable {
   /**
    * This ensures that an email address is valid.
    *
-   * @param email
+   * @param email the email
    * @throws Throwable if it isn't valid
    */
   public synchronized void ensureEmailValid(String email) throws Exception {
@@ -632,8 +632,8 @@ public class Subscriptions implements AutoCloseable {
   /**
    * This tries to validate a subscription which has been added. Validating a second time is ok.
    *
-   * @param row
-   * @param key
+   * @param row the row
+   * @param key the key
    * @return error message if subscription not found or key is wrong (which doesn't invalidate
    *     already valid subscription) or "" if subscription was already or is now valid.
    */
@@ -665,9 +665,9 @@ public class Subscriptions implements AutoCloseable {
    * This adds and validates a subscription (this method is used for pre-authorized subscriptions,
    * e.g., in datasets.xml). It is okay if an identical already-valid subscription already exists.
    *
-   * @param datasetID
-   * @param email
-   * @param action
+   * @param datasetID the datasetID
+   * @param email the email
+   * @param action the action
    * @return the row number of the newly (or already) valid subscription
    * @throws Throwable if invalid datasetID, email, or action (see add()).
    */
@@ -683,8 +683,8 @@ public class Subscriptions implements AutoCloseable {
   /**
    * This removes a pending or valid subscription. It is ok of the subscription isn't found.
    *
-   * @param row
-   * @param key
+   * @param row the row
+   * @param key the key
    * @return error message if trouble (row is invalid, or subscription was found (validated or
    *     pending), but key is wrong) or "" if no error.
    */
@@ -717,7 +717,7 @@ public class Subscriptions implements AutoCloseable {
   /**
    * This lists the actions from validated subscriptions for a given dataset.
    *
-   * @param datasetID
+   * @param datasetID the datasetID
    * @return a StringArray of actions (urls or email:(email address)) (or String[0] if none) The
    *     order may vary.
    * @throws Throwable if trouble
@@ -737,7 +737,7 @@ public class Subscriptions implements AutoCloseable {
    * This lists the validated and not validated subscriptions for a given email.
    *
    * @param ipAddress requestor's ipAddress (use "(unknownIPAddress)" if not known)
-   * @param email
+   * @param email the email
    * @return a string suitable for an email
    * @throws Throwable if trouble (e.g., email is on the blacklist)
    */

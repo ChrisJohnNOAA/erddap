@@ -105,7 +105,7 @@ public class NcoJsonFiles extends TableWriterFileType {
    * <p>See test of this in EDDTableFromNccsvFiles.testChar().
    *
    * @param language the index of the selected language
-   * @param outputStreamSource
+   * @param outputStreamSource the outputStreamSource
    * @param twawm all the results data, with missingValues stored as destinationMissingValues or
    *     destinationFillValues (they are converted to NaNs)
    * @param jsonp the not-percent-encoded jsonp functionName to be prepended to the results (or null
@@ -114,7 +114,7 @@ public class NcoJsonFiles extends TableWriterFileType {
    *     https://www.raymondcamden.com/2014/03/12/Reprint-What-in-the-heck-is-JSONP-and-why-would-you-use-it/
    *     . A SimpleException will be thrown if tJsonp is not null but isn't
    *     String2.isVariableNameSafe.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private void saveAsNcoJson(
       OutputStreamSource outputStreamSource, TableWriterAllWithMetadata twawm, String jsonp)
@@ -289,7 +289,7 @@ public class NcoJsonFiles extends TableWriterFileType {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery an OPeNDAP DAP-style query string, still percentEncoded (shouldn't be
    *     null). e.g., ATssta[45:1:45][0:1:0][120:10:140][130:10:160]
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private void saveAsNcoJson(
       int language,

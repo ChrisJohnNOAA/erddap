@@ -379,7 +379,7 @@ public class EDDTableFromOBIS extends EDDTable {
    * @param tAltMax see tLonMin description.
    * @param tTimeMin in EDVTimeStamp.ISO8601TZ_FORMAT, or "" if not known.
    * @param tTimeMax in EDVTimeStamp.ISO8601TZ_FORMAT, or "" if not known
-   * @param tSourceNeedsExpandedFP_EQ
+   * @param tSourceNeedsExpandedFP_EQ the tSourceNeedsExpandedFP_EQ
    * @throws Throwable if trouble
    */
   public EDDTableFromOBIS(
@@ -652,7 +652,7 @@ public class EDDTableFromOBIS extends EDDTable {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -790,10 +790,10 @@ public class EDDTableFromOBIS extends EDDTable {
    * This generates a datasets.xml entry for an EDDTableFromOBIS.
    * The XML can then be edited by hand and added to the datasets.xml file.
    *
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @param tSourceCode  If you read the XML response from the sourceUrl, the source code (e.g., GHMP)
    *     is the value from one of the <resource><code> tags.
-   * @param tReloadEveryNMinutes
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tCreatorEmail  A suitable email address can be found by reading the XML response from the sourceURL.
    * @param externalAddGlobalAttributes  These attributes are given priority.  Use null in none available.
    * @return a suggested chunk of xml for this dataset for use in datasets.xml

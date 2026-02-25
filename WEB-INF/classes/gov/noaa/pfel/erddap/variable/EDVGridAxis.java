@@ -419,7 +419,7 @@ public class EDVGridAxis extends EDV {
    * <p>For EDVGridAxis (which overwrites the superclass version), this works whether isAscending or
    * not.
    *
-   * @param destinationValue
+   * @param destinationValue the destinationValue
    * @return the nearest slider position (0 .. EDV.SLIDER_PIXELS-1) (or -1 if trouble, e.g.,
    *     sliderCsvValues can't be constructed (e.g., no min + max values)).
    */
@@ -437,7 +437,7 @@ public class EDVGridAxis extends EDV {
    * This converts a destination double value to a string (time variable overwrite this to make an
    * iso string). NaN returns "";
    *
-   * @param destD
+   * @param destD the destD
    * @return destination String
    */
   public String destinationToString(double destD) {
@@ -452,7 +452,7 @@ public class EDVGridAxis extends EDV {
    * This converts a destination String value to a destination double (time variable overwrites this
    * to catch iso 8601 strings). "" or null returns NaN.
    *
-   * @param destS
+   * @param destS the destS
    * @return destination double
    */
   public double destinationToDouble(String destS) {
@@ -608,7 +608,7 @@ public class EDVGridAxis extends EDV {
    * This works whether isAscending or not. !!!If there are ties, this doesn't specify which of the
    * tied values will be found (which is part of why EDVGridAxis doesn't allow ties).
    *
-   * @param destinationD
+   * @param destinationD the destinationD
    * @return the closest source index
    */
   public int destinationToClosestIndex(double destinationD) {
@@ -629,7 +629,7 @@ public class EDVGridAxis extends EDV {
    * specify which of the tied values would be found, which is part of why EDVGridAxis doesn't allow
    * ties).
    *
-   * @param destinationD
+   * @param destinationD the destinationD
    * @return the closest source index as a continuous value
    */
   public double destinationToDoubleIndex(double destinationD) {

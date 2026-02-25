@@ -339,7 +339,7 @@ public class NDimensionalIndex {
   /**
    * Given a subset selection for this index, this creates a subsetIndex.
    *
-   * @param variableName
+   * @param variableName the variableName
    * @param tConstraints For each axis variable, there will be 3 numbers (startIndex, stride,
    *     stopIndex). !!! If there is a special axis0, this will not include constraints for axis0.
    * @return int[nDim] with the start values for all dimensions.

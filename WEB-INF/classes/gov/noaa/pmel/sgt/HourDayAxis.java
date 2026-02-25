@@ -141,7 +141,7 @@ public class HourDayAxis implements TimeAxisStyle {
                 0);
         if (!time.equals(tRange.end)) time.increment(1.0f, GeoDate.HOURS);
       }
-    } catch (IllegalTimeValue e) {
+    } catch (IllegalTimeValue ignored) { // ignore
     }
     return time;
   }

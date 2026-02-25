@@ -60,10 +60,10 @@ public class AxisDataAccessor {
    * This is the constructor.
    *
    * @param language the index of the selected language
-   * @param tEDDGrid
+   * @param tEDDGrid the tEDDGrid
    * @param tRequestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param tUserDapQuery the part after the '?', still percentEncoded, may be null.
-   * @param tConstraints
+   * @param tConstraints the tConstraints
    * @throws Throwable if trouble
    */
   public AxisDataAccessor(int language, EDDGrid tEDDGrid, String tRequestUrl, String tUserDapQuery)

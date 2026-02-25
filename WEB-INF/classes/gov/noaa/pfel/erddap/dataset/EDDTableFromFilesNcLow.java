@@ -555,7 +555,7 @@ public abstract class EDDTableFromFilesNcLow extends EDDTableFromFiles {
    * @param varTypes list of source variable types (as cohort strings)
    * @param sortedDVI the index of the sorted variable, or -1
    * @return A Map linking variable names to their extracted metadata.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   @Override
   protected Map<String, FileVariableMetadata> getFileMetadata(String fullDir, String fileName)
