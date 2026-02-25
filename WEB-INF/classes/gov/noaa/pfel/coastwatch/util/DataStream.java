@@ -20,7 +20,7 @@ public class DataStream {
   /**
    * This creates a buffered file DataOutputStream for writing data to a file.
    *
-   * @param fullFileName
+   * @param fullFileName the fullFileName
    * @return a buffered file dataOutputStream
    */
   public static DataOutputStream getDataOutputStream(String fullFileName) throws Exception {

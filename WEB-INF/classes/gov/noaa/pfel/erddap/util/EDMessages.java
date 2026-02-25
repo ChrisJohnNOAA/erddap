@@ -4165,7 +4165,7 @@ public class EDMessages {
    *
    * @param language the index of the selected language
    * @param headingType e.g., h2 or h3
-   * @param tErddapUrl
+   * @param tErddapUrl the tErddapUrl
    * @return the html needed to document acceptEncodig.
    */
   public String acceptEncodingHtml(int language, String headingType, String tErddapUrl) {
@@ -4182,7 +4182,7 @@ public class EDMessages {
    * This returns the html documentation for the /files/ system.
    *
    * @param language the index of the selected language
-   * @param tErddapUrl
+   * @param tErddapUrl the tErddapUrl
    * @return the html needed to document acceptEncodig.
    */
   public String filesDocumentation(int language, String tErddapUrl) {
@@ -4197,7 +4197,7 @@ public class EDMessages {
    * is to an external website.
    *
    * @param language the index of the selected language
-   * @param tErddapUrl
+   * @param tErddapUrl the tErddapUrl
    * @return the html needed to display the external.png image and messages.
    */
   public String externalLinkHtml(int language, String tErddapUrl) {

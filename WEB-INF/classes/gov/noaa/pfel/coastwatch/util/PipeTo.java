@@ -36,7 +36,7 @@ public abstract class PipeTo extends Thread {
   /**
    * Print a message to the storage container.
    *
-   * @param message
+   * @param message the message
    */
   public abstract void print(String message);
 }

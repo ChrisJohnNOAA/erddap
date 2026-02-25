@@ -395,7 +395,7 @@ public class PAOne implements Comparable<PAOne> {
   /**
    * This returns true of the values are almost equal.
    *
-   * @param precision
+   * @param precision the precision
    * @param otherPAOne the other PA which must be of the same (or smaller) PAType.
    * @return true if the values are almost equal. Only FLOAT and DOUBLE test 'almost'. Other classes
    *     do pure ==. This returns false if otherPAOne is null.

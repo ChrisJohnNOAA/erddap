@@ -172,7 +172,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
    *     dirPA will contain dirs with matching slashes.
    * @param pathRegex This is a regex to constrain which subdirectories to include. null or "" is
    *     treated as .* (i.e., match everything).
-   * @param tDirectoriesToo
+   * @param tDirectoriesToo the tDirectoriesToo
    */
   public FileVisitorDNLS(
       String tDir,
@@ -1378,7 +1378,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
    *     https://inport.nmfs.noaa.gov/inport-metadata/NOAA/NMFS/
    *     https://coastwatch.pfeg.noaa.gov/erddap/files/fedCalLandings/
    * @param fileNameRegex e.g., "pentad.*flk\\.nc\\.gz"
-   * @param recursive
+   * @param recursive the recursive
    * @param pathRegex a regex to constrain which subdirs to include. This is ignored if recursive is
    *     false. null or "" is treated as .* (i.e., match everything).
    * @param dirsToo if true, subdirectories should be collected also. But the original url won't be
@@ -1645,7 +1645,8 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
     } finally {
       try {
         if (in != null) in.close();
-      } catch (Throwable t) {
+      } catch (Throwable ignored) {
+      // ignore
       }
     }
     return completelySuccessful.toString();
@@ -1661,7 +1662,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
    *     http://dods.jpl.nasa.gov/opendap/ocean_wind/ccmp/L3.5a/data/flk/1988/ or
    *     https://opendap.jpl.nasa.gov/opendap/hyrax/allData/avhrr/L4/reynolds_er/v3b/monthly/netcdf/2014/
    * @param fileNameRegex e.g., "pentad.*flk\\.nc\\.gz"
-   * @param recursive
+   * @param recursive the recursive
    * @param pathRegex a regex to constrain which subdirs to include. This is ignored if recursive is
    *     false. null or "" is treated as .* (i.e., match everything).
    * @return a String[] with a list of full URLs of the children (may be new String[0])
@@ -1698,7 +1699,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
    *     e.g., http://dods.jpl.nasa.gov/opendap/ocean_wind/ccmp/L3.5a/data/flk/1988/ (If url has a
    *     file name, it must be "contents.html".)
    * @param fileNameRegex e.g., "pentad.*flk\\.nc\\.gz"
-   * @param recursive
+   * @param recursive the recursive
    * @param pathRegex a regex to constrain which subdirs to include. This is ignored if recursive is
    *     false. null or "" is treated as .* (i.e., match everything).
    * @param dirsToo if true, directories should be collected also
@@ -1922,7 +1923,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
    *     https://data.nodc.noaa.gov/thredds/catalog/pathfinder/Version5.1_CloudScreened/5day/FullRes/
    *     (If url has a file name, it must be catalog.html or catalog.xml.)
    * @param fileNameRegex e.g., ".*\\.hdf"
-   * @param recursive
+   * @param recursive the recursive
    * @param pathRegex a regex to constrain which subdirs to include. This is ignored if recursive is
    *     false. null or "" is treated as .* (i.e., match everything).
    * @param childUrls new children will be added to this

@@ -480,7 +480,8 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
                   String2.replaceAll(localSourceUrl, "/griddap/", "/files/") + "/.csv");
           try {
             is.close();
-          } catch (Exception e2) {
+          } catch (Exception ignored) {
+          // ignore
           }
         } catch (Exception e) {
           String2.log(
@@ -819,7 +820,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
   /**
    * This makes a sibling dataset, based on the new sourceUrl.
    *
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @param firstAxisToMatch If 0, this tests if sourceValues for axis-variable #0+ are same. If 1,
    *     this tests if sourceValues for axis-variable #1+ are same.
    * @param shareInfo if true, this ensures that the sibling's axis and data variables are basically

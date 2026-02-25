@@ -919,7 +919,7 @@ public abstract class EDD {
    * <tomcat>/content/erddap/datasets.xml. This ignores the &lt;dataset active=.... &gt; setting.
    *
    * @param erddap if known in this context, else null
-   * @param tDatasetID
+   * @param tDatasetID the tDatasetID
    * @return an instance of a subclass of EDD
    * @throws Throwable if trouble
    */
@@ -1282,7 +1282,7 @@ public abstract class EDD {
    * This tests if the dataVariables of the other dataset are similar (same destination data var
    * names, same sourceDataType, same units, same missing values).
    *
-   * @param other
+   * @param other the other
    * @return "" if similar (same axis and data var names, same units, same sourceDataType, same
    *     missing values) or a message if not.
    */
@@ -1403,7 +1403,7 @@ public abstract class EDD {
    *
    * <p>EDDGrid overwrites this to also check the axis variables.
    *
-   * @param old
+   * @param old the old
    * @return "" if same or message if not.
    */
   public String changed(Map<String, String> oldSnapshot) {
@@ -1491,7 +1491,7 @@ public abstract class EDD {
    *
    * <p>EDDGrid overwrites this to also check the axis variables.
    *
-   * @param old
+   * @param old the old
    * @return "" if same or message if not.
    */
   public String changed(EDD old) {
@@ -1634,7 +1634,7 @@ public abstract class EDD {
    * emailIfAlreadyValid=false so there won't be excess email confirmation requests and if
    * flagKeyKey changes, the new tFlagUrl will be sent.
    *
-   * @param tryToSubscribe
+   * @param tryToSubscribe the tryToSubscribe
    * @param remoteUrl ending with /griddap/someDatasetID or /tabledap/someDatasetID
    */
   public void tryToSubscribeToRemoteErddapDataset(boolean tryToSubscribe, String remoteUrl) {
@@ -1921,7 +1921,7 @@ public abstract class EDD {
    *
    * @param request the request
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    */
   public String emailHref(HttpServletRequest request, int language, String loggedInAs) {
     if (EDStatic.config.subscriptionSystemActive)
@@ -2331,7 +2331,7 @@ public abstract class EDD {
    * Gets the list of files that make up the dataset.
    *
    * @return a table, which contains the list of files for the dataset.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   public Table getFilesUrlList(HttpServletRequest request, String loggedInAs, int language)
       throws Throwable {
@@ -2796,7 +2796,7 @@ public abstract class EDD {
    * local sourceUrl (such as http://192.168.31.18/thredds/dodsC/satellite/BA/ssta/5day) into a
    * public sourceUrl (https://oceanwatch.pfeg.noaa.gov/thredds/dodsC/satellite/BA/ssta/5day).
    *
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @return publicSourceUrl (or tLocalSourceUrl if no change specified).
    */
   public static String convertToPublicSourceUrl(String tLocalSourceUrl) {
@@ -3278,7 +3278,7 @@ public abstract class EDD {
    * This returns the flagKey (a String of digits) for the datasetID. The result if different if
    * EDStatic.preferredUrl starts with https.
    *
-   * @param datasetID
+   * @param datasetID the datasetID
    * @return the flagKey (a String of digits)
    */
   public static String flagKey(String tDatasetID) {
@@ -3299,7 +3299,7 @@ public abstract class EDD {
   /**
    * This returns flag URL for the datasetID.
    *
-   * @param datasetID
+   * @param datasetID the datasetID
    * @return the url which will cause a flag to be set for a given dataset.
    */
   public static String flagUrl(String tDatasetID) {
@@ -3452,8 +3452,8 @@ public abstract class EDD {
    *
    * @param loggedInAs is only used for POST datasets (which overwrite EDD.suggestFileName) since
    *     loggedInAs is used by POST for row-by-row authorization
-   * @param userDapQuery
-   * @param fileTypeName
+   * @param userDapQuery the userDapQuery
+   * @param fileTypeName the fileTypeName
    * @return a suggested fileName (no dir or extension)
    * @throws Exception if trouble (in practice, it shouldn't)
    */
@@ -3827,7 +3827,7 @@ public abstract class EDD {
    *     not used to test if this edd is accessibleTo loggedInAs, but it unusual cases
    *     (EDDTableFromPost?) it could be. Normally, this is just used to determine which erddapUrl
    *     to use (http vs https).
-   * @param writer
+   * @param writer the writer
    * @param showDafLink if true, a link is shown to this dataset's Data Access Form
    * @param showSubsetLink if true, a link is shown to this dataset's .subset form (if
    *     accessibleViaSubset() is "").
@@ -4577,8 +4577,8 @@ public abstract class EDD {
   /**
    * This adds the whole phrase.toLowerCase and its parts to hashSet.
    *
-   * @param phrase
-   * @param hashset
+   * @param phrase the phrase
+   * @param hashset the hashset
    * @return the same hashSet for convenience
    */
   public static void addAllAndParts(String phrase, Set<String> hashSet) {
@@ -4593,8 +4593,8 @@ public abstract class EDD {
   /**
    * This chops a csv list into words/phrases and adds them and their parts to hashSet.
    *
-   * @param phrase
-   * @param hashset
+   * @param phrase the phrase
+   * @param hashset the hashset
    * @return the same hashSet for convenience
    */
   public static Set<String> chopUpCsvAddAllAndParts(String csv, Set<String> hashSet) {
@@ -4608,8 +4608,8 @@ public abstract class EDD {
   /**
    * This chops a csv list into words/phrases and adds them as is and their parts to hashSet.
    *
-   * @param phrase
-   * @param hashset
+   * @param phrase the phrase
+   * @param hashset the hashset
    * @return the same hashSet for convenience
    */
   public static Set<String> chopUpCsvAndAdd(String csv, Set<String> hashSet) {
@@ -4628,8 +4628,8 @@ public abstract class EDD {
   /**
    * This chops phrase.toLowerCase into words and adds words[i] to hashSet.
    *
-   * @param phrase
-   * @param hashset
+   * @param phrase the phrase
+   * @param hashset the hashset
    * @return the same hashSet for convenience
    */
   public static Set<String> chopUpAndAdd(String phrase, Set<String> hashSet) {
@@ -4708,8 +4708,8 @@ public abstract class EDD {
    * on variable's standard_names, long_name, and ioos_category (for use by
    * makeReadyToUseAddGlobalAttributesForDatasetsXml).
    *
-   * @param dataSourceTable
-   * @param dataAddTable
+   * @param dataSourceTable the dataSourceTable
+   * @param dataAddTable the dataAddTable
    * @return a HashSet of suggested keywords (may be String[0])
    */
   public static Set<String> suggestKeywords(Table dataSourceTable, Table dataAddTable) {
@@ -4809,7 +4809,7 @@ public abstract class EDD {
   /**
    * This cleans the keywords hashset (e.g., removes common words like 'from').
    *
-   * @param suggestedKeywords
+   * @param suggestedKeywords the suggestedKeywords
    * @throws Exception if touble
    */
   public static void cleanSuggestedKeywords(Set<String> keywords) throws Exception {
@@ -7913,7 +7913,7 @@ public abstract class EDD {
    * @param sourceAtts the source's variable attributes
    * @param addAtts some atts that should be in addAtts (may be null if none). If not null, this is
    *     the Attributes that will be modified.
-   * @param tSourceName
+   * @param tSourceName the tSourceName
    * @param tryToAddStandardName If the var doesn't have standard_name, try to add it.
    *     EDD.doNotAddStandardNames=true overrides this.
    * @param tryToAddColorBarMinMax If the var doesn't have colorBarMin and Max, try to add them.
@@ -8897,7 +8897,8 @@ public abstract class EDD {
       if (Calendar2.isNumericTimeUnits(tUnits)) {
         try {
           tUnits = Calendar2.cleanUpNumericTimeUnits(tUnits);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
+        // ignore
         }
       }
 
@@ -11832,7 +11833,7 @@ public abstract class EDD {
    *
    * @param isAddAtts if isAddAtts, then they are written as addAttributes. If not, they are written
    *     as sourceAttributes and commented out.
-   * @param addAtts
+   * @param addAtts the addAtts
    * @param indent a string of spaces
    * @throws Throwable if trouble
    */
@@ -11915,8 +11916,8 @@ public abstract class EDD {
    * This determines if a longName is substantially different from a destinationName and should be
    * shown on a Data Access Form.
    *
-   * @param varName
-   * @param longName
+   * @param varName the varName
+   * @param longName the longName
    * @param extra Other string that will be show. Usually units. Musn't be null.
    * @param maxLength is the max length of longName+extra
    * @return true if the longName is substantially different and should be shown.
@@ -12014,7 +12015,7 @@ public abstract class EDD {
    * If the file can't be written, an email is sent to emailEverythingToCsv. <br>
    * If there are no bad files, don't call this. There will be no file.
    *
-   * @param badFilesMap
+   * @param badFilesMap the badFilesMap
    * @throws Throwable if trouble
    */
   public void writeBadFileMap(
@@ -12057,11 +12058,11 @@ public abstract class EDD {
   /**
    * This adds dirIndex/fileName, lastMod, and reason to a badFiles map.
    *
-   * @param badFileMap
-   * @param dirIndex
+   * @param badFileMap the badFileMap
+   * @param dirIndex the dirIndex
    * @param fileName the fileName, for example AG20090109.nc
    * @param lastMod the lastModified time (millis) of the file
-   * @param reason
+   * @param reason the reason
    */
   public void addBadFile(
       ConcurrentHashMap<String, Object[]> badFileMap,
@@ -12078,10 +12079,10 @@ public abstract class EDD {
    * badFiles. This is used outside of the constructor, when a previously good file is found to be
    * bad. This won't throw an exception, just logs the message.
    *
-   * @param dirIndex
+   * @param dirIndex the dirIndex
    * @param fileName the fileName, for example AG20090109.nc
    * @param lastMod the lastModified time (millis) of the file
-   * @param reason
+   * @param reason the reason
    * @return an error string ("" if no error).
    */
   public String addBadFileToTableOnDisk(
@@ -12106,8 +12107,8 @@ public abstract class EDD {
   /**
    * This returns a string representation of the information in a badFileMap.
    *
-   * @param badFileMap
-   * @param dirList
+   * @param badFileMap the badFileMap
+   * @param dirList the dirList
    * @return a string representation of the information in a badFileMap. If there are no badFiles,
    *     this returns "".
    */
@@ -12321,7 +12322,7 @@ public abstract class EDD {
   /**
    * This returns the pngInfo file name for a request.
    *
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param userDapQuery the same as used to make the image file (should be percent-encoded)
    * @param fileTypeName the same as used to make the image. e.g., .png or .smallPng
    * @return the canonical fileName string
@@ -12335,7 +12336,7 @@ public abstract class EDD {
    * This writes pngInfo image information to a .json file (dictionary with entries). If trouble,
    * this logs the error to String2.log, but doesn't throw exception.
    *
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param userDapQuery the same as used to make the image file (should be percent-encoded)
    * @param fileTypeName the same as used to make the image. e.g., .png or .smallPng
    * @param mmal ArrayList returned by SgtMap.makeMap or SgtGraph.makeGraph
@@ -12414,7 +12415,7 @@ public abstract class EDD {
   /**
    * This reads the info from a pngInfo file.
    *
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param userDapQuery the same as used to make the image file (should be percent-encoded)
    * @param fileTypeName the same as used to make the image. e.g., .png or .smallPng
    * @return Object[]: [0]=graphDoubleWESN[], [1]=graphIntWESN[] or null if trouble (e.g., file not
@@ -14329,13 +14330,13 @@ public abstract class EDD {
 
           } finally {
               //close oldXmlReader
-              if (oldXmlReader != null) try {oldXmlReader.close(); } catch (Exception e) {}
+              if (oldXmlReader != null) try {oldXmlReader.close(); } catch (Exception ignored) { /* ignore */ }
 
               //close newXmlWriter
-              if (newXmlWriter != null) try {newXmlWriter.close(); } catch (Exception e) {}
+              if (newXmlWriter != null) try {newXmlWriter.close(); } catch (Exception ignored) { /* ignore */ }
 
               //close notes
-              if (notes != null) try {notes.close(); } catch (Exception e) {}
+              if (notes != null) try {notes.close(); } catch (Exception ignored) { /* ignore */ }
 
           }
 

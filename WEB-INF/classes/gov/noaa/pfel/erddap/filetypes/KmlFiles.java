@@ -94,7 +94,7 @@ public class KmlFiles extends ImageTypes {
    *     to use (http vs https).
    * @param requestUrl I think it's currently just used to add to "history" metadata.
    * @param userDapQuery the part after the '?', still percentEncoded (shouldn't be null).
-   * @param outputStreamSource
+   * @param outputStreamSource the outputStreamSource
    * @return true of written ok; false if exception occurred (and written on image)
    * @throws Throwable if trouble
    */

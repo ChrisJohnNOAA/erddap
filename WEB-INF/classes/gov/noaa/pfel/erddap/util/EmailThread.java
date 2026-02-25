@@ -218,12 +218,14 @@ public class EmailThread extends Thread {
         lastStartTime = -1;
         try {
           if (smtpTransport != null) smtpTransport.close();
-        } catch (Throwable t) {
+        } catch (Throwable ignored) {
+        // ignore
         }
         try {
           SSR.emailLock.unlock(); // This should be locked.  If not, this throws an
           // IllegaMonitorStateException.
-        } catch (Throwable t) {
+        } catch (Throwable ignored) {
+        // ignore
         }
 
         // note: failed session shows up as 0 emailsPerSession
@@ -248,7 +250,8 @@ public class EmailThread extends Thread {
                       + ".");
             }
           }
-        } catch (Throwable t) {
+        } catch (Throwable ignored) {
+        // ignore
         }
       }
     } // while (true)

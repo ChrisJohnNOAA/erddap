@@ -36,7 +36,7 @@ public class SharedWatchService {
    *
    * @param tWatchDir the starting directory, with \\ or /, with or without trailing slash. The
    *     results will contain dirs with matching slashes.
-   * @param tRecursive
+   * @param tRecursive the tRecursive
    * @param tPathRegex null and "" are treated like .* (which matches all)
    * @param handler the WatchUpdateHandler that should be called for matching events.
    * @param handlerId the identifier of the dataset
@@ -104,7 +104,7 @@ public class SharedWatchService {
   /**
    * Process all events for keys queued to the watcher
    *
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   public static void processEvents() throws Throwable {
     // for each file service, get watch service

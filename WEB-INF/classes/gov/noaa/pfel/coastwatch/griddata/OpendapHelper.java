@@ -463,9 +463,9 @@ public class OpendapHelper {
   /**
    * Given start, stride, stop, this returns the actual number of points that will be found.
    *
-   * @param start
+   * @param start the start
    * @param stride (must be >= 1)
-   * @param stop
+   * @param stop the stop
    * @return the actual number of points that will be found.
    */
   public static int calculateNValues(int start, int stride, int stop) {
@@ -479,7 +479,7 @@ public class OpendapHelper {
   /**
    * Get the PrimitiveVector from an opendap query.
    *
-   * @param dConnect
+   * @param dConnect the dConnect
    * @param query For an entire variable that is a DArray, use, for example, "?lat", or for a
    *     portion: "?lat[0:1:5]". For a portion of a DGrid, use, for example,
    *     "?ssta.ssta[23:1:23][642:1:742][339:1:439]". This should be already percent encoded as
@@ -507,7 +507,7 @@ public class OpendapHelper {
   /**
    * Get the PrimitiveArrays from the first var from an opendap query.
    *
-   * @param dConnect
+   * @param dConnect the dConnect
    * @param query For an entire variable that is a DArray, use, for example, "?lat", or for a
    *     portion: "?lat[0:1:5]". For an entire dimension of a grid, use, for example, "?ssta.lat".
    *     For a portion of a DGrid, use, for example, "?ssta[23:1:23][642:1:742][339:1:439]", which
@@ -546,7 +546,7 @@ public class OpendapHelper {
   /**
    * Get the PrimitiveArrays from a BaseType.
    *
-   * @param baseType
+   * @param baseType the baseType
    * @return an array of PrimitiveArrays with the data from the baseType
    * @throws Exception if trouble
    */
@@ -595,7 +595,7 @@ public class OpendapHelper {
   /**
    * Get a PrimitiveArray result from an opendap query.
    *
-   * @param dConnect
+   * @param dConnect the dConnect
    * @param query For an entire variable that is a DArray, use, for example, "?lat", or for a
    *     portion: "?lat[0:1:5]". For a portion of a DGrid, use, for example,
    *     "?ssta.ssta[23:1:23][642:1:742][339:1:439]". This should be already percentEncoded as
@@ -610,7 +610,7 @@ public class OpendapHelper {
   /**
    * Get a PrimitiveArray result from an opendap query.
    *
-   * @param dConnect
+   * @param dConnect the dConnect
    * @param query For an entire variable that is a DArray, use, for example, "?lat", or for a
    *     portion: "?lat[0:1:5]". For a portion of a DGrid, use, for example,
    *     "?ssta.ssta[23:1:23][642:1:742][339:1:439]". This should be already percent encoded as
@@ -625,7 +625,7 @@ public class OpendapHelper {
   /**
    * This converts a PrimitiveVector to a PrimitiveArray.
    *
-   * @param pv
+   * @param pv the pv
    * @return the corresponding PrimitiveArray
    * @throws Exception if trouble (e.g., pv is null)
    */
@@ -720,8 +720,8 @@ public class OpendapHelper {
    * @param varName the variable's name. For global attributes, ncBrowse and netcdf-java treat
    *     "NC_GLOBAL" as special case. (I had used "GLOBAL".)
    * @param paType The PAType of the variable.
-   * @param attributes
-   * @param writer
+   * @param attributes the attributes
+   * @param writer the writer
    * @param encodeAsHTML if true, characters like &lt; are converted to their character entities and
    *     lines wrapped with \n if greater than 78 chars.
    * @throws Exception if trouble
@@ -750,7 +750,7 @@ public class OpendapHelper {
    *     include it and if strictDapMode=true, a new _Unsigned=true attribute will be added to the
    *     output. Attributes with unsigned data types will always be converted to signed when
    *     written.
-   * @param attributes
+   * @param attributes the attributes
    * @param encodeAsHTML if true, characters like &lt; are converted to their character entities.
    * @param strictDapMode if true, this sticks to DAP 2.0 standard. If false, all PATypes are
    *     supported (with names that look like DAP names).
@@ -855,7 +855,7 @@ public class OpendapHelper {
   /**
    * This converts a numeric primitiveVector to double[].
    *
-   * @param pv
+   * @param pv the pv
    * @return the corresponding double[]
    * @throws Exception if trouble
    */
@@ -890,7 +890,7 @@ public class OpendapHelper {
   /**
    * This returns the PrimitiveArray elementPAType of a BaseType.
    *
-   * @param pv
+   * @param pv the pv
    * @return the PrimitiveArray elementPAType of this BaseType. This treats all Bytes as signed (it
    *     doesn't look at _Unsigned attribute).
    * @throws Exception if trouble
@@ -902,7 +902,7 @@ public class OpendapHelper {
   /**
    * This returns the PrimitiveArray elementPAType of a PrimitiveVector.
    *
-   * @param pv
+   * @param pv the pv
    * @return the PrimitiveArray elementPAType of this BaseType. This treats all Bytes as signed (it
    *     doesn't look at _Unsigned attribute).
    * @throws Exception if trouble
@@ -933,7 +933,7 @@ public class OpendapHelper {
    *
    * <p>Currently, this won't find variables in a sequence.
    *
-   * @param dds
+   * @param dds the dds
    * @return String varNames[]
    * @throws Exception if trouble
    */
@@ -985,7 +985,7 @@ public class OpendapHelper {
    * This tests if baseType is an instanceof a scalar (DBoolean, DByte, DFloat32, DFloat64, DInt16,
    * DInt32, DString) and multidimensional (DGrid, DArray) variable.
    *
-   * @param baseType
+   * @param baseType the baseType
    * @return true or false
    */
   public static boolean instanceofScalarOrMultiDimVar(BaseType baseType) {
@@ -1009,7 +1009,7 @@ public class OpendapHelper {
    *
    * <p>Currently, this won't find variables in a sequence.
    *
-   * @param dds
+   * @param dds the dds
    * @return String varNames[]
    * @throws Exception if trouble
    */
@@ -1292,7 +1292,8 @@ public class OpendapHelper {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) {
+        // ignore
         }
         File2.delete(fullFileName + randomInt);
         ncWriter = null;
@@ -1744,7 +1745,8 @@ public class OpendapHelper {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) {
+        // ignore
         }
         File2.delete(fullFileName + randomInt);
         ncWriter = null;

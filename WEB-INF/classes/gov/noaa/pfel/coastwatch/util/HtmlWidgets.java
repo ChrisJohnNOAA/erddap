@@ -289,7 +289,7 @@ public class HtmlWidgets {
    *
    * @param itemHtml The html for the thing (e.g., "?"-image) that is always visible
    * @param spanOther other parameters (e.g., style) for the inner span
-   * @param tooltipHtml
+   * @param tooltipHtml the tooltipHtml
    * @return the HTML to add a cssTooltip to the specified item.
    */
   public static String cssTooltip(String itemHtml, String spanOther, String tooltipHtml) {
@@ -311,7 +311,7 @@ public class HtmlWidgets {
    *     in the images directory.
    * @param img1Alt alt text for the imgUrl, e.g., "?". It will be encoded as HTML attribute.
    * @param img1Other additional parameter=values for img1. It should end with a space.
-   * @param img2Url
+   * @param img2Url the img2Url
    * @param img2ID a unique (for the document) id, e.g., img1. Just simple chars -- it isn't further
    *     encoded.
    * @return the html for an image ('?') with a cssTooltip with a deferred-load second image.
@@ -569,7 +569,7 @@ public class HtmlWidgets {
   /**
    * This returns an HTML audio control.
    *
-   * @param htmlAttEncodedUrlFileName
+   * @param htmlAttEncodedUrlFileName the htmlAttEncodedUrlFileName
    * @return an HTML audio control (or "" if trouble)
    */
   public static String htmlAudioControl(String htmlAttEncodedUrlFileName) {
@@ -1856,9 +1856,9 @@ public class HtmlWidgets {
    * @param maxLonTF the maxLon textFieldName
    * @param minLatTF the minLat textFieldName
    * @param maxLatTF the maxLat textFieldName
-   * @param imageUrl
-   * @param imageWidth
-   * @param imageHeight
+   * @param imageUrl the imageUrl
+   * @param imageWidth the imageWidth
+   * @param imageHeight the imageHeight
    * @param mapX theLeftPixelNumber of the map in the image
    * @param mapY theTopPixelNumber of the map in the image
    * @param mapWidth theRightPixel# - theLeftPixelNumber

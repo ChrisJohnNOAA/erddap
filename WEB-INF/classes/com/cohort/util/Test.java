@@ -15,7 +15,7 @@ public class Test {
   /**
    * This throws a runtime exception with the specified error message.
    *
-   * @param message
+   * @param message the message
    */
   @SuppressWarnings("DoNotCallSuggester")
   public static void error(String message) throws RuntimeException {
@@ -26,9 +26,9 @@ public class Test {
    * If the two boolean values aren't equal, this throws a RuntimeException with the specified
    * message.
    *
-   * @param b1
-   * @param b2
-   * @param message
+   * @param b1 the b1
+   * @param b2 the b2
+   * @param message the message
    */
   public static void ensureEqual(boolean b1, boolean b2, String message) throws RuntimeException {
     if (b1 != b2)
@@ -46,8 +46,8 @@ public class Test {
   /**
    * If the boolean values isn't true, this throws a RuntimeException with the specified message.
    *
-   * @param b
-   * @param message
+   * @param b the b
+   * @param message the message
    */
   public static void ensureTrue(boolean b, String message) throws RuntimeException {
     if (!b) error("\n" + String2.ERROR + " in Test.ensureTrue:\n" + message);
@@ -56,9 +56,9 @@ public class Test {
   /**
    * If the two char values aren't equal, this throws a RuntimeException with the specified message.
    *
-   * @param c1
-   * @param c2
-   * @param message
+   * @param c1 the c1
+   * @param c2 the c2
+   * @param message the message
    */
   public static void ensureEqual(char c1, char c2, String message) throws RuntimeException {
     if (c1 != c2)
@@ -76,9 +76,9 @@ public class Test {
   /**
    * If the two long values aren't equal, this throws a RuntimeException with the specified message.
    *
-   * @param i1
-   * @param i2
-   * @param message
+   * @param i1 the i1
+   * @param i2 the i2
+   * @param message the message
    */
   public static void ensureEqual(long i1, long i2, String message) throws RuntimeException {
     if (i1 != i2)
@@ -97,9 +97,9 @@ public class Test {
    * If the two BigInteger values aren't equal, this throws a RuntimeException with the specified
    * message.
    *
-   * @param i1
-   * @param i2
-   * @param message
+   * @param i1 the i1
+   * @param i2 the i2
+   * @param message the message
    */
   public static void ensureEqual(BigInteger i1, BigInteger i2, String message)
       throws RuntimeException {
@@ -120,9 +120,9 @@ public class Test {
    * If the two PAOne values aren't equal, this throws a RuntimeException with the specified
    * message.
    *
-   * @param i1
-   * @param i2
-   * @param message
+   * @param i1 the i1
+   * @param i2 the i2
+   * @param message the message
    */
   public static void ensureEqual(PAOne i1, PAOne i2, String message) throws RuntimeException {
     if (i1 == null && i2 == null) return;
@@ -141,9 +141,9 @@ public class Test {
   /**
    * If the two long values are equal, this throws a RuntimeException with the specified message.
    *
-   * @param i1
-   * @param i2
-   * @param message
+   * @param i1 the i1
+   * @param i2 the i2
+   * @param message the message
    */
   public static void ensureNotEqual(long i1, long i2, String message) throws RuntimeException {
     if (i1 == i2)
@@ -162,8 +162,8 @@ public class Test {
    * This returns true if the two float values are almost equal (5 digits) or both NaN or both
    * infinite.
    *
-   * @param f1
-   * @param f2
+   * @param f1 the f1
+   * @param f2 the f2
    */
   public static boolean equal(float f1, float f2) {
     // special check if both are the same special value
@@ -176,8 +176,8 @@ public class Test {
    * This returns true if the two double values are almost equal (9 digits) or both NaN or both
    * infinite.
    *
-   * @param d1
-   * @param d2
+   * @param d1 the d1
+   * @param d2 the d2
    */
   public static boolean equal(double d1, double d2) {
     // special check if both are the same special value
@@ -189,8 +189,8 @@ public class Test {
   /**
    * This returns true if the two String values are equal (or both null).
    *
-   * @param s1
-   * @param s2
+   * @param s1 the s1
+   * @param s2 the s2
    */
   public static boolean equal(String s1, String s2) {
     if (s1 == null && s2 == null) return true;
@@ -202,9 +202,9 @@ public class Test {
    * If the two float values aren't almost equal, this throws a RuntimeException with the specified
    * message.
    *
-   * @param f1
-   * @param f2
-   * @param message
+   * @param f1 the f1
+   * @param f2 the f2
+   * @param message the message
    */
   public static void ensureEqual(float f1, float f2, String message) throws RuntimeException {
     if (!equal(f1, f2))
@@ -223,9 +223,9 @@ public class Test {
    * If the two double values aren't almost equal, this throws a RuntimeException with the specified
    * message.
    *
-   * @param d1
-   * @param d2
-   * @param message
+   * @param d1 the d1
+   * @param d2 the d2
+   * @param message the message
    */
   public static void ensureEqual(double d1, double d2, String message) throws RuntimeException {
     if (!equal(d1, d2))
@@ -243,9 +243,9 @@ public class Test {
   /**
    * If the two double values are equal, this throws a RuntimeException with the specified message.
    *
-   * @param d1
-   * @param d2
-   * @param message
+   * @param d1 the d1
+   * @param d2 the d2
+   * @param message the message
    */
   public static void ensureNotEqual(double d1, double d2, String message) throws RuntimeException {
     // special check if both are the same special value
@@ -267,10 +267,10 @@ public class Test {
    * If d is less than min or greater than max, this throws a RuntimeException with the specified
    * message.
    *
-   * @param d
-   * @param minAllowed
-   * @param maxAllowed
-   * @param message
+   * @param d the d
+   * @param minAllowed the minAllowed
+   * @param maxAllowed the maxAllowed
+   * @param message the message
    */
   public static void ensureBetween(double d, double minAllowed, double maxAllowed, String message)
       throws RuntimeException {
@@ -294,9 +294,9 @@ public class Test {
    * If the two String values aren't equal, this throws a RuntimeException with the specified
    * message.
    *
-   * @param s1
-   * @param s2
-   * @param message
+   * @param s1 the s1
+   * @param s2 the s2
+   * @param message the message
    */
   public static void ensureEqual(String s1, String s2, String message) throws RuntimeException {
     String result = testEqual(s1, s2, message);
@@ -308,8 +308,8 @@ public class Test {
    * This returns "" if the Strings are equal or an error message if not. This won't throw an
    * exception.
    *
-   * @param s1
-   * @param s2
+   * @param s1 the s1
+   * @param s2 the s2
    * @param message "" if they're non-null and equal
    */
   public static String testEqual(String s1, String s2, String message) {
@@ -416,7 +416,7 @@ public class Test {
    *
    * @param tText a newline-separated block of text. Carriage returns are ignored.
    * @param tRegex a newline-separated set of regexes. Carriage returns are ignored.
-   * @param message
+   * @param message the message
    * @return "" if no error or an error message.
    */
   public static String testLinesMatch(String tText, String tRegex, String message) {
@@ -469,7 +469,7 @@ public class Test {
    *
    * @param tText a newline-separated block of text
    * @param tRegex a newline-separated set of regexes
-   * @param message
+   * @param message the message
    * @throws RuntimeException if a line of tText doesn't match a regex in tRegex
    */
   public static void ensureLinesMatch(String tText, String tRegex, String message)
@@ -483,8 +483,8 @@ public class Test {
   /**
    * If the object is null, this throws a RuntimeException with the specified message.
    *
-   * @param o
-   * @param message
+   * @param o the o
+   * @param message the message
    */
   public static void ensureNotNull(Object o, String message) throws RuntimeException {
     if (o == null) error("\n" + String2.ERROR + " in Test.ensureNotNull:\n" + message);
@@ -493,8 +493,8 @@ public class Test {
   /**
    * If the string is null or "", this throws a RuntimeException with the specified message.
    *
-   * @param s
-   * @param message
+   * @param s the s
+   * @param message the message
    */
   public static void ensureNotNothing(String s, String message) throws RuntimeException {
     if (s == null || s.length() == 0)
@@ -505,9 +505,9 @@ public class Test {
    * If the toString values of the arrays aren't equal, this throws a RuntimeException with the
    * specified message.
    *
-   * @param ar1
-   * @param ar2
-   * @param message
+   * @param ar1 the ar1
+   * @param ar2 the ar2
+   * @param message the message
    */
   public static void ensureEqual(Object ar1[], Object ar2[], String message)
       throws RuntimeException {
@@ -535,9 +535,9 @@ public class Test {
   /**
    * If !a.equals(b), this throws a RuntimeException with the specified message.
    *
-   * @param a
-   * @param b
-   * @param message
+   * @param a the a
+   * @param b the b
+   * @param message the message
    */
   public static void ensureEqual(Object a, Object b, String message) {
     if (a == null && b == null) return;
@@ -826,7 +826,7 @@ public class Test {
    * This ensures s is something (not null or "") and is fileNameSave (see
    * String2.isFileNameSafe(s)).
    *
-   * @param s
+   * @param s the s
    * @param message ending with the item's name
    */
   public static void ensureFileNameSafe(String s, String message) throws RuntimeException {
@@ -847,7 +847,7 @@ public class Test {
    * This ensures s is something (not null or "") and is valid Unicode (see
    * String2.findInvalidUnicode(s, "\r\n\t")).
    *
-   * @param s
+   * @param s the s
    * @param message ending with the item's name
    */
   public static void ensureSomethingUnicode(String s, String message) throws RuntimeException {
@@ -880,8 +880,8 @@ public class Test {
    * "") and are valid Unicode (see String2.findInvalidUnicode(s, "\n\t")). 0 names+attributes is
    * valid.
    *
-   * @param atts
-   * @param message
+   * @param atts the atts
+   * @param message the message
    */
   public static void ensureSomethingUnicode(Attributes atts, String message)
       throws RuntimeException {

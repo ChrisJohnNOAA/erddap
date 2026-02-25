@@ -2506,9 +2506,9 @@ public class Calendar2 {
    * This converts an epochSeconds value into a unitsSince value. This properly handles 'special'
    * factorToGetSeconds values (for month and year).
    *
-   * @param baseSeconds
-   * @param factorToGetSeconds
-   * @param epochSeconds
+   * @param baseSeconds the baseSeconds
+   * @param factorToGetSeconds the factorToGetSeconds
+   * @param epochSeconds the epochSeconds
    * @return seconds since 1970-01-01 (or NaN if epochSeconds is NaN)
    */
   public static double epochSecondsToUnitsSince(
@@ -2769,8 +2769,8 @@ public class Calendar2 {
   /**
    * This is like nowStringToEpochSeconds, but returns troubleValue if trouble.
    *
-   * @param nowString
-   * @param troubleValue
+   * @param nowString the nowString
+   * @param troubleValue the troubleValue
    * @return epochSeconds (or troubleValue if trouble)
    */
   public static double safeNowStringToEpochSeconds(String nowString, double troubleValue) {
@@ -2859,7 +2859,7 @@ public class Calendar2 {
    * This returns true if the string appears to be an ISO date/time (matching yyyy-M... or
    * uuuu-M..., but a little more sophisticated than that).
    *
-   * @param s
+   * @param s the s
    * @return true if the string appears to be an ISO date/time (matching yyyy-M..., or uuuu-M...,
    *     but a little more sophisticated than that).
    */
@@ -2872,7 +2872,7 @@ public class Calendar2 {
    * This converts a ZonedDateTime to seconds since 1970-01-01T00:00:00Z. Note that
    * System.currentTimeMillis/1000 = epochSeconds(zulu).
    *
-   * @param dt
+   * @param dt the dt
    * @return seconds, including fractional seconds (Double.NaN if trouble)
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3066,7 +3066,7 @@ public class Calendar2 {
    * [-]uuuu-MM-ddTHH:mm:ss) using its current get() values (not influenced by the format's
    * timeZone). [was calendarToString]
    *
-   * @param dt
+   * @param dt the dt
    * @return the corresponding dateTime String (without timezone info).
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3082,7 +3082,7 @@ public class Calendar2 {
   /**
    * This is like formatAsISODateTimeT, but WITH time zone indicator.
    *
-   * @param gc
+   * @param gc the gc
    * @return the corresponding dateTime String (WITHh timezone info).
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3093,7 +3093,7 @@ public class Calendar2 {
   /**
    * Like formatAsISODateTimeTZ, but seconds will have 3 decimal digits.
    *
-   * @param dt
+   * @param dt the dt
    * @return the corresponding dateTime String (with the trailing Z).
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3104,7 +3104,7 @@ public class Calendar2 {
   /**
    * Like formatAsISODateTimeTZ, but seconds will have 6 decimal digits.
    *
-   * @param dt
+   * @param dt the dt
    * @return the corresponding dateTime String (with the trailing Z).
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3115,7 +3115,7 @@ public class Calendar2 {
   /**
    * Like formatAsISODateTimeTZ, but seconds will have 9 decimal digits.
    *
-   * @param dt
+   * @param dt the dt
    * @return the corresponding dateTime String (with the trailing Z).
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3256,7 +3256,7 @@ public class Calendar2 {
    * [-]uuuu-MM-dd HH:mm:ss) using its current get() values (not influenced by the format's
    * timeZone). [was calendarToString]
    *
-   * @param gc
+   * @param gc the gc
    * @return the corresponding dateTime String (without the trailing Z).
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -3271,7 +3271,7 @@ public class Calendar2 {
    * This converts a ZonedDateTime object into an ESRI dateTime string (YYYY/MM/DD HH:MM:SS UTC)
    * using its current get() values (not influenced by the format's timeZone).
    *
-   * @param dt
+   * @param dt the dt
    * @return the corresponding ESRI dateTime String.
    * @throws RuntimeException if trouble (e.g., gc is null)
    */
@@ -4478,7 +4478,7 @@ public class Calendar2 {
    * This converts the date, hour, minute, second so the return is at the exact center of its
    * current month.
    *
-   * @param gc
+   * @param gc the gc
    * @return the new dt
    * @throws Exception if trouble (e.g., gc is null)
    */
@@ -4495,7 +4495,7 @@ public class Calendar2 {
    * This clears the fields smaller than 'field' (e.g., HOUR_OF_DAY clears MINUTE, SECOND, and
    * MILLISECOND, but doesn't change HOUR_OF_DAY, MONTH, or YEAR).
    *
-   * @param gc
+   * @param gc the gc
    * @param field e.g., HOUR_OF_DAY
    * @return the same gc, but modified, for convenience
    * @throws Exception if trouble (e.g., gc is null or field is not supported)
@@ -4549,7 +4549,7 @@ public class Calendar2 {
   /**
    * This returns the start of a day, n days back from max (or from now if max=NaN).
    *
-   * @param nDays
+   * @param nDays the nDays
    * @param max seconds since epoch
    * @return seconds since epoch for the start of a day, n days back from max (or from now if
    *     max=NaN).
@@ -4692,7 +4692,7 @@ public class Calendar2 {
   /**
    * This rounds to the nearest idealN, idealUnits (e.g., 2 months) (starting at Jan 1, 0000).
    *
-   * @param epochSeconds
+   * @param epochSeconds the epochSeconds
    * @param idealN e.g., 1 to 100
    * @param idealUnits an index of one of the IDEAL_UNITS
    * @return epochSeconds, converted to Zulu GC and rounded to the nearest idealN, idealUnits (e.g.,
@@ -4725,7 +4725,7 @@ public class Calendar2 {
    * Given a date time string, this suggests a java.time.format.DateTimeFormatter (was Joda)
    * date/time format suitable for parsing and output formatting.
    *
-   * @param sample
+   * @param sample the sample
    * @return a digitRegexTimeFormat an appropriate java.time.format.DateTimeFormatter (was Joda)
    *     date/time format or "" if not matched. If the response starts with "yyyy-M", parse with
    *     Calendar2.parseISODateTimeZulu(); else parse with java.time.format.DateTimeFormatter (was
@@ -4906,7 +4906,7 @@ public class Calendar2 {
    * This tries to figure out the format of someDateTimeString then parse the value and convert it
    * to epochSeconds.
    *
-   * @param someDateTimeString
+   * @param someDateTimeString the someDateTimeString
    * @return epochSeconds (or Double.NaN if trouble);
    */
   public static double tryToEpochSeconds(String someDateTimeString) {
@@ -4968,7 +4968,7 @@ public class Calendar2 {
    * an ISO 8601 string with 'Z' at end. This is the most flexible approach to parsing a weird date
    * time string.
    *
-   * @param someDateTimeString
+   * @param someDateTimeString the someDateTimeString
    * @return an iso8601String as a date, a dateTime with T and Z, or "" if trouble;
    */
   public static String tryToIsoString(String someDateTimeString) {
@@ -5074,7 +5074,7 @@ public class Calendar2 {
    * This formats the epochSeconds time value using the pattern. WARNING: This may give incorrect
    * results with years before 0001.
    *
-   * @param epochSeconds
+   * @param epochSeconds the epochSeconds
    * @param pattern see
    *     https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
    * @param zone if "" or null, Zulu is used

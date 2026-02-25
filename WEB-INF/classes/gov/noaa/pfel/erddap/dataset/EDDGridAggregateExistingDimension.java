@@ -209,7 +209,7 @@ public class EDDGridAggregateExistingDimension extends EDDGrid {
    * The constructor. The axisVariables must be the same and in the same order for each
    * dataVariable.
    *
-   * @param tDatasetID
+   * @param tDatasetID the tDatasetID
    * @param tAccessibleTo is a space separated list of 0 or more roles which will have access to
    *     this dataset. <br>
    *     If null, everyone will have access to this dataset (even if not logged in). <br>
@@ -220,7 +220,7 @@ public class EDDGridAggregateExistingDimension extends EDDGrid {
    *     this dataset, or "" (to cause ERDDAP not to try to generate FGDC metadata for this
    *     dataset), or null (to allow ERDDAP to try to generate FGDC metadata for this dataset).
    * @param tIso19115 This is like tFgdcFile, but for the ISO 19119-2/19139 metadata.
-   * @param firstChild
+   * @param firstChild the firstChild
    * @param tLocalSourceUrls the sourceUrls for the other siblings
    * @param tMatchAxisNDigits 0=no checking, 1-18 checks n digits, &gt;18 does exact checking.
    *     Default is 20. This ensures that the axis sourceValues for axisVar 1+ are almostEqual.

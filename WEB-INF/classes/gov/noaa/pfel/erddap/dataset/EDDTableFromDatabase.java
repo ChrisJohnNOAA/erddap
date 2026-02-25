@@ -374,14 +374,14 @@ public class EDDTableFromDatabase extends EDDTable {
    *     See https://jdbc.postgresql.org/documentation/81/ssl-client.html .
    * @param tCatalogName use "" if not needed
    * @param tSchemaName use "" if not needed
-   * @param tTableName
+   * @param tTableName the tTableName
    * @param tColumnNameQuotes should be ", ', or empty string. This will be put before and after
    *     variable names in SQL statements.
    * @param tOrderBy is an array of sourceNames (use String[0] if not needed) which are used to
    *     construct an ORDER BY clause for a query. Only sourceNames which are relevant to a given
    *     query are used in the ORDER BY clause. The leftmost sourceName is most important;
    *     subsequent sourceNames are only used to break ties.
-   * @param tSourceNeedsExpandedFP_EQ
+   * @param tSourceNeedsExpandedFP_EQ the tSourceNeedsExpandedFP_EQ
    * @throws Throwable if trouble
    */
   // The lookup we're performing is from data trusted by the admin (datasets.xml).
@@ -722,7 +722,7 @@ public class EDDTableFromDatabase extends EDDTable {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -888,7 +888,8 @@ public class EDDTableFromDatabase extends EDDTable {
             String2.log("The existing connection isn't working. Closing it and creating a new one...");
             try {
                 connection.close();
-            } catch (Throwable t2) {
+            } catch (Throwable ignored) {
+            // ignore
             }
             connection = null; //so new one will be created below
         }
@@ -1179,11 +1180,13 @@ public class EDDTableFromDatabase extends EDDTable {
     } catch (Throwable t) {
       try {
         connection.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
       try {
         if (statement != null) statement.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
 
       EDStatic.rethrowClientAbortException(t); // first thing in catch{}
@@ -1223,7 +1226,7 @@ public class EDDTableFromDatabase extends EDDTable {
    *     get a list of schemas, then exit.
    * @param tableName use a specific table name; or use "!!!LIST!!!" to get a list of tables, then
    *     exit.
-   * @param sortColumnsByName
+   * @param sortColumnsByName the sortColumnsByName
    * @throws Throwable if trouble
    */
   public static String getDatabaseInfo(
@@ -1383,11 +1386,13 @@ public class EDDTableFromDatabase extends EDDTable {
       // free the database resources
       try {
         if (rs != null) rs.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
       try {
         if (con != null) con.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
     }
 
@@ -1602,11 +1607,13 @@ public class EDDTableFromDatabase extends EDDTable {
       // free the database resources
       try {
         if (rs != null) rs.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
       try {
         if (con != null) con.close();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
     }
 

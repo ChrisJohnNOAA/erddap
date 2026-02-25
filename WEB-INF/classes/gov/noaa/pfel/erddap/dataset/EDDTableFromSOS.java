@@ -439,7 +439,7 @@ public class EDDTableFromSOS extends EDDTable {
    * @param tResponseFormat Not yet percent-encoded. Use null or "" for the default.
    * @param tBBoxOffering the offering name to use with lon lat BBOX requests (or null or "")
    * @param tBBoxParameter the parameter prefix to use with lon lat BBOX request (or null or "")
-   * @param tSourceNeedsExpandedFP_EQ
+   * @param tSourceNeedsExpandedFP_EQ the tSourceNeedsExpandedFP_EQ
    * @throws Throwable if trouble
    */
   public EDDTableFromSOS(
@@ -717,7 +717,8 @@ public class EDDTableFromSOS extends EDDTable {
           try {
             String qrFile[] = File2.readFromFileUtf8(quickRestartFileName);
             String2.log(qrFile[1]);
-          } catch (Throwable t) {
+          } catch (Throwable ignored) {
+          // ignore
           }
         }
         throw new IllegalArgumentException(
@@ -2916,7 +2917,7 @@ public class EDDTableFromSOS extends EDDTable {
    *
    * @param useCachedInfo for testing purposes, this uses a cached GetCapabilities document if
    *     possible (else caches what it gets)
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @param sosVersion e.g., 1.0.0 (or null or "")
    * @param sosServerType may be "", or one of IOOS_52N, IOOS_NcSOS, IOOS_NDBC, IOOS_NOS, OOSTethys,
    *     WHOI (case insensitive)
@@ -3996,7 +3997,7 @@ public class EDDTableFromSOS extends EDDTable {
    * key=phenomenonURI, value=StringArray of non-composite phenomena (variables) that it is
    * comprised of.
    *
-   * @param url
+   * @param url the url
    * @param hashMap the hashMap to which with phenomena will be added
    * @throws Throwable if trouble
    */
@@ -4109,7 +4110,7 @@ public class EDDTableFromSOS extends EDDTable {
    * of the stations that have a certain observedProperty.
    * This was used (but not now) by EDDTableFromAsciiServiceNOS!
    *
-   * @param xml
+   * @param xml the xml
    * @param observedProperty e.g., http://mmisw.org/ont/cf/parameter/winds
    * @throws Exception if trouble
    */

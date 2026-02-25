@@ -796,7 +796,7 @@ public class EDStatic {
 
               } finally {
                   if (ncWriter != null) {
-                      try {ncWriter.abort(); } catch (Exception e9) {}
+                      try {ncWriter.abort(); } catch (Exception ignored) { /* ignore */ }
                       File2.delete(testNc4Name);
                       ncWriter = null;
                   }
@@ -970,7 +970,7 @@ public class EDStatic {
    * If loggedInAs is null, this returns erddapUrl, else erddapHttpsUrl (neither has slash at end).
    *
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @return If loggedInAs == null, this returns erddapUrl, else erddapHttpsUrl (neither has slash
    *     at end).
    */
@@ -1002,7 +1002,7 @@ public class EDStatic {
   /**
    * This determines if a URL points to this server (even in development).
    *
-   * @param tUrl
+   * @param tUrl the tUrl
    */
   public static boolean urlIsThisComputer(String tUrl) {
     return tUrl.startsWith(config.baseUrl)
@@ -1014,7 +1014,7 @@ public class EDStatic {
   /**
    * This determines if a URL points to this server (even in development).
    *
-   * @param tUrl
+   * @param tUrl the tUrl
    */
   public static boolean urlIsLocalhost(String tUrl) {
     if (!tUrl.startsWith("http")) return false;
@@ -1027,8 +1027,8 @@ public class EDStatic {
   /**
    * This returns the appropriate image directory URL (with slash at end).
    *
-   * @param loggedInAs
-   * @param language
+   * @param loggedInAs the loggedInAs
+   * @param language the language
    * @return returns the appropriate image directory URL (with slash at end).
    */
   public static String imageDirUrl(HttpServletRequest request, String loggedInAs, int language) {
@@ -1049,7 +1049,7 @@ public class EDStatic {
    * ERDDAP/protocol.
    *
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param protocol e.g., tabledap
    * @return the You Are Here html for this EDD subclass.
    */
@@ -1067,10 +1067,10 @@ public class EDStatic {
    * ERDDAP/protocol/sub .
    *
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param protocol e.g., subscriptions
    * @param protocolName Message.SUBSCRIPTIONS_TITLE
-   * @param current
+   * @param current the current
    * @return the You Are Here html for this EDD subclass.
    */
   public static String youAreHere(
@@ -1119,7 +1119,7 @@ public class EDStatic {
    * ERDDAP/protocol/datasetID.
    *
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param protocol e.g., tabledap (must be the same case as in the URL so the link will work)
    * @param datasetID e.g., erdGlobecBottle
    * @return the You Are Here html for this EDD subclass.
@@ -1149,9 +1149,9 @@ public class EDStatic {
    * ERDDAP/protocol with a helpful information.
    *
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param protocol e.g., tabledap
-   * @param htmlHelp
+   * @param htmlHelp the htmlHelp
    * @return the You Are Here html for this EDD subclass.
    */
   public static String youAreHereWithHelp(
@@ -1174,10 +1174,10 @@ public class EDStatic {
    * This is used by html web page generating methods to return the You Are Here html for
    * ERDDAP/protocol/datasetID with a helpful information.
    *
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param protocol e.g., tabledap
    * @param datasetID e.g., erdGlobecBottle
-   * @param htmlHelp
+   * @param htmlHelp the htmlHelp
    * @return the You Are Here html for this EDD subclass.
    */
   public static String youAreHereWithHelp(
@@ -1209,7 +1209,7 @@ public class EDStatic {
    * Here html for ERDDAP/{protocol}/{attribute}/{category}. IF REVIVED, append current
    * ?page=x&amp;itemsPerPage=y
    *
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param protocol e.g., categorize
    * @param attribute e.g., ioos_category
    * @param category e.g., Temperature
@@ -1268,7 +1268,7 @@ public class EDStatic {
    * variable.
    *
    * @param language the language code number
-   * @param edvga
+   * @param edvga the edvga
    */
   public static String htmlTooltipImageEDVGA(
       HttpServletRequest request, int language, String loggedInAs, EDVGridAxis edvga)
@@ -1310,11 +1310,11 @@ public class EDStatic {
    *
    * @param request the servlet request
    * @param language the language code number
-   * @param loggedInAs
-   * @param destinationDataPAType
+   * @param loggedInAs the loggedInAs
+   * @param destinationDataPAType the destinationDataPAType
    * @param destinationName perhaps with axis information appended (e.g.,
    *     [time][latitude][longitude]
-   * @param attributes
+   * @param attributes the attributes
    */
   public static String htmlTooltipImageLowEDV(
       HttpServletRequest request,
@@ -1422,7 +1422,8 @@ public class EDStatic {
         if (emailLogFile != null) {
           try {
             emailLogFile.close();
-          } catch (Throwable t) {
+          } catch (Throwable ignored) {
+          // ignore
           }
           emailLogFile = null;
         }
@@ -1457,12 +1458,14 @@ public class EDStatic {
     } catch (Throwable t) {
       try {
         String2.log(MustBe.throwable("Error: Writing to emailLog failed.", t));
-      } catch (Throwable t2) {
+      } catch (Throwable ignored) {
+      // ignore
       }
       if (emailLogFile != null) {
         try {
           emailLogFile.close();
-        } catch (Throwable t3) {
+        } catch (Throwable ignored) {
+        // ignore
         }
         emailLogFile = null;
       }
@@ -1722,7 +1725,8 @@ public class EDStatic {
                 + (uBean.getFreeSwapSpaceSize() / Math2.BytesPerMB)
                 + "MB\n");
       }
-    } catch (Exception e) {
+    } catch (Exception ignored) {
+    // ignore
     }
     sb.append("Number of active requests=" + activeRequests.size() + "\n");
   }
@@ -1849,7 +1853,7 @@ public class EDStatic {
    * <p>This is safe to use this after outputStream has been written to -- this won't make a session
    * if the user doesn't have one.
    *
-   * @param request
+   * @param request the request
    * @return null (using http), loggedInAsHttps (using https and not logged in), or userName (using
    *     https and logged in).
    */
@@ -1931,8 +1935,8 @@ public class EDStatic {
    * mostly used so that error messages can be bilingual.
    *
    * @param language the index of the selected language
-   * @param eng
-   * @param other
+   * @param eng the eng
+   * @param other the other
    * @return If language=0, this returns eng. If language&gt;0, this returns eng+newline+other.
    */
   public static String bilingual(int language, String eng, String other) {
@@ -2258,7 +2262,7 @@ public class EDStatic {
    * @param language the index of the selected language
    * @param tErddapUrl from EDStatic.erddapUrl(request, loggedInAs, language) (erddapUrl, or
    *     erddapHttpsUrl if user is logged in)
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    */
   public static String endBodyHtml(
       HttpServletRequest request, int language, String tErddapUrl, String loggedInAs) {
@@ -2474,7 +2478,8 @@ public class EDStatic {
       luceneIndexSearcher = null;
       try {
         if (luceneIndexReader != null) luceneIndexReader.close();
-      } catch (Throwable t) {
+      } catch (Throwable ignored) {
+      // ignore
       }
       luceneIndexReader = null;
       luceneDocNToDatasetID = null;
@@ -2483,7 +2488,8 @@ public class EDStatic {
         if (luceneIndexWriter != null)
           // indices will be thrown away, so don't make pending changes
           luceneIndexWriter.close();
-      } catch (Throwable t) {
+      } catch (Throwable ignored) {
+      // ignore
       }
       luceneIndexWriter = null;
 
@@ -3081,7 +3087,8 @@ public class EDStatic {
         if (luceneIndexReader != null) {
           try {
             luceneIndexReader.close();
-          } catch (Throwable t2) {
+          } catch (Throwable ignored) {
+          // ignore
           }
           luceneIndexReader = null;
         }
@@ -3129,7 +3136,8 @@ public class EDStatic {
           if (luceneIndexReader != null) {
             try {
               luceneIndexReader.close();
-            } catch (Throwable t2) {
+            } catch (Throwable ignored) {
+            // ignore
             }
             luceneIndexReader = null;
           }
@@ -3175,7 +3183,7 @@ public class EDStatic {
    * This gets the raw requested (or inferred) page number and itemsPerPage by checking the request
    * parameters.
    *
-   * @param request
+   * @param request the request
    * @return int[2] [0]=page (may be invalid, e.g., -5 or Integer.MAX_VALUE) [1]=itemsPerPage (may
    *     be invalid, e.g., -5 or Integer.MAX_VALUE)
    */
@@ -3191,7 +3199,7 @@ public class EDStatic {
    * This gets the requested (or inferred) page number and itemsPerPage by checking the request
    * parameters.
    *
-   * @param request
+   * @param request the request
    * @return int[2] [0]=page (will be 1..., but may be too big), [1]=itemsPerPage (will be 1...),
    */
   public static int[] getRequestedPIpp(HttpServletRequest request) {
@@ -3230,7 +3238,7 @@ public class EDStatic {
    * it will have "&" at the end.
    *
    * @param language the index of the selected language
-   * @param request
+   * @param request the request
    * @return the .jsonp=[functionName] part of the request (percent encoded) or "". If not "", it
    *     will have "&" at the end. If the query has a syntax error, this returns "". If the
    *     !String2.isJsonpNameSafe(functionName), this throws a SimpleException.
@@ -3251,7 +3259,7 @@ public class EDStatic {
    * This extracts the page= and itemsPerPage= parameters of the request (if any) and returns them
    * lightly validated and formatted for a URL (e.g., "page=1&amp;itemsPerPage=1000").
    *
-   * @param request
+   * @param request the request
    * @return e.g., "page=1&amp;itemsPerPage=1000" (encoded here for JavaDocs)
    */
   public static String passThroughPIppQuery(HttpServletRequest request) {
@@ -3262,7 +3270,7 @@ public class EDStatic {
   /**
    * This is like passThroughPIppQuery, but always sets page=1.
    *
-   * @param request
+   * @param request the request
    * @return e.g., "page=1&amp;itemsPerPage=1000" (encoded here for JavaDocs)
    */
   public static String passThroughPIppQueryPage1(HttpServletRequest request) {
@@ -3274,7 +3282,7 @@ public class EDStatic {
    * This is like passThroughPIppQuery, but the ampersand is XML encoded so it is ready to be put
    * into HTML.
    *
-   * @param request
+   * @param request the request
    * @return e.g., "page=1&amp;amp;itemsPerPage=1000" (doubly encoded here for JavaDocs)
    */
   public static String encodedPassThroughPIppQuery(HttpServletRequest request) {
@@ -3285,7 +3293,7 @@ public class EDStatic {
   /**
    * This is like encodedPassThroughPIppQuery, but always sets page=1.
    *
-   * @param request
+   * @param request the request
    * @return e.g., "page=1&amp;amp;itemsPerPage=1000" (doubly encoded here for JavaDocs)
    */
   public static String encodedPassThroughPIppQueryPage1(HttpServletRequest request) {
@@ -3297,7 +3305,7 @@ public class EDStatic {
    * This calculates the requested (or inferred) page number and itemsPerPage by checking the
    * request parameters.
    *
-   * @param request
+   * @param request the request
    * @param nItems e.g., total number of datasets from search results
    * @return int[4] [0]=page (will be 1..., but may be too big), [1]=itemsPerPage (will be 1...),
    *     [2]=startIndex (will be 0..., but may be too big), [3]=lastPage with items (will be 1...).
@@ -3332,8 +3340,8 @@ public class EDStatic {
    * This returns the error String[2] if page &gt; lastPage.
    *
    * @param language the index of the selected language
-   * @param page
-   * @param lastPage
+   * @param page the page
+   * @param lastPage the lastPage
    * @return String[2] with the two Strings
    */
   public static String[] noPage(int language, int page, int lastPage) {
@@ -3348,8 +3356,8 @@ public class EDStatic {
    *
    * @param language the index of the selected language
    * @param nMatches this must be 1 or more
-   * @param page
-   * @param lastPage
+   * @param page the page
+   * @param lastPage the lastPage
    * @param relevant true=most relevant first, false=sorted alphabetically
    * @param urlWithQuery percentEncoded, but not HTML/XML encoded, e.g.,
    *     https://coastwatch.pfeg.noaa.gov/erddap/search/index.html?page=1&itemsPerPage=1000&searchFor=temperature%20wind
@@ -3495,7 +3503,7 @@ public class EDStatic {
    *
    * @param maxTasks This let's you just see what would happen (0), or just make a limited or
    *     unlimited (Integer.MAX_VALUE) number of download tasks.
-   * @param tDatasetID
+   * @param tDatasetID the tDatasetID
    */
   public static int makeCopyFileTasks(
       String tClassName,
@@ -3811,7 +3819,7 @@ public class EDStatic {
    *
    * @param t the exception
    * @return true if t is a ClientAbortException.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   public static boolean isClientAbortException(Throwable t) {
     String tString = t.toString();
@@ -3826,7 +3834,7 @@ public class EDStatic {
    * <p>Normal use: Use this first thing in catch, before throwing WaitThenTryAgainException.
    *
    * @param t the exception which will be thrown again if it is a ClientAbortException
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   public static void rethrowClientAbortException(Throwable t) throws Throwable {
     if (isClientAbortException(t)) throw t;
@@ -3835,7 +3843,7 @@ public class EDStatic {
   /**
    * Set the standard DAP header information. Call this before getting outputStream.
    *
-   * @param response
+   * @param response the response
    * @throws Throwable if trouble
    */
   public static void standardDapHeader(HttpServletResponse response) throws Throwable {
@@ -4122,7 +4130,8 @@ public class EDStatic {
       try {
         // was if (!response.isCommitted())
         response.getOutputStream().close();
-      } catch (Exception e2) {
+      } catch (Exception ignored) {
+      // ignore
       }
     }
   }

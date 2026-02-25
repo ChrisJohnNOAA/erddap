@@ -197,7 +197,7 @@ public class UShortArray extends PrimitiveArray {
    * (short)ch[i]</tt>. Note that the cohort 'missingValue' of a CharArray is different from the
    * missingValue of a UShortArray. 'size' will equal anArray.length.
    *
-   * @param charArray
+   * @param charArray the charArray
    */
   public UShortArray(final char[] charArray) {
     size = charArray.length;
@@ -422,7 +422,7 @@ public class UShortArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {
@@ -1180,7 +1180,7 @@ public class UShortArray extends PrimitiveArray {
    * Test if o is an UShortArray with the same size and values, but returns a String describing the
    * difference (or "" if equal).
    *
-   * @param o
+   * @param o the o
    * @return a String describing the difference (or "" if equal). o=null doesn't throw an exception.
    */
   @Override
@@ -1367,7 +1367,7 @@ public class UShortArray extends PrimitiveArray {
    * DAP 2.0 standard, section 7.3.2.1). See also the XDR standard
    * (http://tools.ietf.org/html/rfc4506#section-4.11).
    *
-   * @param dos
+   * @param dos the dos
    * @throws Exception if trouble
    */
   @Override
@@ -1384,7 +1384,7 @@ public class UShortArray extends PrimitiveArray {
    * www.opendap.org DAP 2.0 standard, section 7.3.2). See also the XDR standard
    * (http://tools.ietf.org/html/rfc4506#section-4.11).
    *
-   * @param dos
+   * @param dos the dos
    * @param i the index of the element to be written
    * @throws Exception if trouble
    */
@@ -1397,7 +1397,7 @@ public class UShortArray extends PrimitiveArray {
    * This reads/appends short values to this PrimitiveArray from a DODS DataInputStream, and is thus
    * the complement of externalizeForDODS.
    *
-   * @param dis
+   * @param dis the dis
    * @throws IOException if trouble
    */
   @Override
@@ -1412,7 +1412,7 @@ public class UShortArray extends PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   @Override

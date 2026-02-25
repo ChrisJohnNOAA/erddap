@@ -58,7 +58,7 @@ public abstract class SeparatedValue extends TableWriterFileType {
    *     the results. At the end of this method the outputStream is flushed, not closed.
    * @param separator e.g., tab or comma (without space)
    * @param twoQuotes if true, internal double quotes are converted to 2 double quotes.
-   * @param writeColumnNames
+   * @param writeColumnNames the writeColumnNames
    * @param writeUnits '0'=no, '('=on the first line as "variableName (units)" (if present), 2=on
    *     the second line.
    * @throws Throwable if trouble.

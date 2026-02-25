@@ -1445,7 +1445,8 @@ public class LoadDatasets extends Thread {
       if (xmlReader != null)
         try {
           xmlReader.close();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
+        // ignore
         }
     }
   }
@@ -1769,7 +1770,7 @@ public class LoadDatasets extends Thread {
    *
    * @param add determines whether datasetID references will be ADDed or REMOVEd
    * @param catInfo the new categoryInfo
-   * @param edd
+   * @param edd the edd
    * @param id the edd.datasetID()
    */
   protected static void categorizeGlobalAtts(
@@ -1811,7 +1812,7 @@ public class LoadDatasets extends Thread {
    *
    * @param add determines whether datasetID references will be ADDed or REMOVEd
    * @param catInfo the new categoryInfo
-   * @param edv
+   * @param edv the edv
    * @param id the edd.datasetID()
    */
   protected static void categorizeVariableAtts(

@@ -479,7 +479,7 @@ public abstract class EDDTableFromAsciiService extends EDDTable {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -509,7 +509,7 @@ public abstract class EDDTableFromAsciiService extends EDDTable {
   /**
    * This finds the beforeData strings (if any are defined)
    *
-   * @param in
+   * @param in the in
    * @param s is the next line to be processed
    * @return the next line to be processed
    * @throws Throwable if trouble, e.g., a beforeData string wasn't found
@@ -531,7 +531,7 @@ public abstract class EDDTableFromAsciiService extends EDDTable {
   /**
    * This finds a string.
    *
-   * @param in
+   * @param in the in
    * @param s is the next line to be processed (right after 'find', even if at end of line)
    * @param find the string to be found
    * @param error the error to be thrown if 'find' isn't found

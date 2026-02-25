@@ -251,8 +251,8 @@ public class Boundaries {
    * @param requestMinX usually 0..360 or +/-180, but -720 to 720 is supported (e.g., 74 to 434, see
    *     EDDGridFromDap.testMap74to434() and SgtMap.testBathymetry() and SgtMap.testTopography() )
    * @param requestMaxX usually 0..360 or +/-180, but -720 to 720 is supported
-   * @param requestMinY
-   * @param requestMaxY
+   * @param requestMinY the requestMinY
+   * @param requestMaxY the requestMaxY
    * @return an SGTLine object
    * @throws Exception if trouble
    */

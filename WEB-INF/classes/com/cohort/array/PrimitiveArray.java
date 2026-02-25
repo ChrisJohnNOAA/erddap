@@ -677,7 +677,7 @@ public abstract class PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   public abstract void add(StructureData sd, String memberName);
 
@@ -1803,7 +1803,7 @@ public abstract class PrimitiveArray {
    * (http://tools.ietf.org/html/rfc4506#section-4.11). ByteArray, ShortArray, StringArray overwrite
    * this. ???Does CharArray need to overwrite this???
    *
-   * @param dos
+   * @param dos the dos
    */
   public void externalizeForDODS(DataOutputStream dos) throws Exception {
     dos.writeInt(size);
@@ -1817,7 +1817,7 @@ public abstract class PrimitiveArray {
    * (http://tools.ietf.org/html/rfc4506#section-4.11). ByteArray, ShortArray, StringArray overwrite
    * this. ???Does CharArray need to overwrite this???
    *
-   * @param dos
+   * @param dos the dos
    * @param i the index of the element to be written
    */
   public void externalizeForDODS(DataOutputStream dos, int i) throws Exception {
@@ -1828,7 +1828,7 @@ public abstract class PrimitiveArray {
    * This reads/appends same-type values to this PrimitiveArray from a DODS DataInputStream, and is
    * thus the complement of externalizeForDODS.
    *
-   * @param dis
+   * @param dis the dis
    * @throws IOException if trouble
    */
   public abstract void internalizeFromDODS(DataInputStream dis) throws java.io.IOException;
@@ -1837,7 +1837,7 @@ public abstract class PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   public abstract void writeToRAF(RandomAccessFile raf, int index) throws Exception;
@@ -1855,7 +1855,7 @@ public abstract class PrimitiveArray {
    * This tests if the other object is of the same type and has equal values. Note that for
    * integerTypes, the value of maxIsMV can be different if there are no relevant values.
    *
-   * @param other
+   * @param other the other
    * @return "" if equal, or message if not. o=null doesn't throw an exception.
    */
   public abstract String testEquals(Object other);
@@ -1866,7 +1866,7 @@ public abstract class PrimitiveArray {
    * this tests almostEqual5() (and says NaN==NaN is true). If either are double types, this tests
    * almostEqual9() (and says NaN==NaN is true).
    *
-   * @param other
+   * @param other the other
    * @return "" if almost equal, or message if not. other=null throws an exception.
    */
   public String almostEqual(PrimitiveArray other) {
@@ -1877,7 +1877,7 @@ public abstract class PrimitiveArray {
    * This tests if the other PrimitiveArray has almost equal values. If both are integer types or
    * String types, this is an exact test (and says null==null is true).
    *
-   * @param other
+   * @param other the other
    * @param matchNDigits This is used if this or other is DoubleArray or FloatArray. Otherwise, this
    *     is ignored. (&lt;=)0=no testing. 1 to 18 tests hidiv(nDigits,2) digits if either is
    *     FloatArray, or nDigits if either is DoubleArray. (Integer.MAX_VALUE is interpreted as 9.)
@@ -2159,7 +2159,7 @@ public abstract class PrimitiveArray {
    * Find the closest element to x in an ascending sorted array. If there are duplicates, any may be
    * returned.
    *
-   * @param x
+   * @param x the x
    * @return the index of the index of the element closest to x. If x is NaN, this returns -1.
    */
   public int binaryFindClosest(double x) {
@@ -2182,7 +2182,7 @@ public abstract class PrimitiveArray {
    * Find the closest element to x in an array (regardless of if sorted or not). If there are
    * duplicates, any may be returned (i.e., for now, not specified).
    *
-   * @param x
+   * @param x the x
    * @return the index of the index of the element closest to x. If x is NaN, this returns -1.
    */
   public int linearFindClosest(double x) {
@@ -2753,8 +2753,8 @@ public abstract class PrimitiveArray {
    * For all values, this unpacks the values by multipling by scale and then adding addOffset.
    * Calculations are done as doubles then, if necessary, rounded and stored.
    *
-   * @param scale
-   * @param addOffset
+   * @param scale the scale
+   * @param addOffset the addOffset
    */
   public void scaleAddOffset(double scale, double addOffset) {
     if (scale == 1 && addOffset == 0) return;
@@ -2766,8 +2766,8 @@ public abstract class PrimitiveArray {
    * For all values, this packs the values by adding addOffset then multipling by scale.
    * Calculations are done as doubles then, if necessary, rounded and stored.
    *
-   * @param scale
-   * @param addOffset
+   * @param scale the scale
+   * @param addOffset the addOffset
    */
   public void addOffsetScale(double addOffset, double scale) {
     if (scale == 1 && addOffset == 0) return;
@@ -2786,11 +2786,11 @@ public abstract class PrimitiveArray {
    * stored. The returned PrimitiveArray is new if the destination type does not match the source
    * type.
    *
-   * @param destElementPAType
+   * @param destElementPAType the destElementPAType
    * @param sourceIsUnsigned if true, integer-type source values will be interpreted as unsigned
    *     values.
-   * @param scale
-   * @param addOffset
+   * @param scale the scale
+   * @param addOffset the addOffset
    * @return a new (always) PrimitiveArray
    */
   public PrimitiveArray scaleAddOffset(
@@ -2815,9 +2815,9 @@ public abstract class PrimitiveArray {
    * values (addOffset then scale values applied). Calculations are done as doubles then, if
    * necessary, rounded and stored.
    *
-   * @param destElementPAType
-   * @param addOffset
-   * @param scale
+   * @param destElementPAType the destElementPAType
+   * @param addOffset the addOffset
+   * @param scale the scale
    * @return a new (always) PrimitiveArray
    */
   public PrimitiveArray addOffsetScale(PAType destElementPAType, double addOffset, double scale) {
@@ -2884,7 +2884,7 @@ public abstract class PrimitiveArray {
    * For any non-StringArray and non-CharArray, this changes all standard missing values (MAX_VALUE
    * or NaN's) to fakeMissingValues.
    *
-   * @param fakeMissingValue
+   * @param fakeMissingValue the fakeMissingValue
    * @return the number of values switched
    */
   public int switchNaNToFakeMissingValue(String fakeMissingValue) {
@@ -2911,7 +2911,7 @@ public abstract class PrimitiveArray {
    *
    * <p>2020-07-28 This always calls setMaxIsMv(true);
    *
-   * @param fakeMissingValue
+   * @param fakeMissingValue the fakeMissingValue
    * @return the number of missing values converted
    */
   public int switchFakeMissingValueToNaN(double fakeMissingValue) {
@@ -2998,7 +2998,7 @@ public abstract class PrimitiveArray {
    * representation, and returns the first index where different. this.get(i)=null and
    * other.get(i)==null is treated as same value.
    *
-   * @param other
+   * @param other the other
    * @return index where first different (or -1 if same). Note that the index may equal the size of
    *     this or the other primitiveArray.
    */
@@ -3181,7 +3181,7 @@ public abstract class PrimitiveArray {
    *
    * @param value1 Integer.MAX_VALUE is treated as NaN
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of "NaN = NaN" will evaluate to true. <br>
    *     Tests of "nonNaN != NaN" will evaluate to true. <br>
@@ -3213,7 +3213,7 @@ public abstract class PrimitiveArray {
    *
    * @param value1 Long.MAX_VALUE is treated as NaN
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of "NaN = NaN" will evaluate to true. <br>
    *     Tests of "nonNaN != NaN" will evaluate to true. <br>
@@ -3245,7 +3245,7 @@ public abstract class PrimitiveArray {
    *
    * @param value1 ULong.MAX_VALUE is treated as NaN
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of null == null will evaluate to true. <br>
    *     Tests of "nonNull!= null" will evaluate to true. <br>
@@ -3280,9 +3280,9 @@ public abstract class PrimitiveArray {
    * Math2.almostEqual9 so there is a little fudge factor. The =~ regex test must be tested with
    * String testValueOpValue, not here, because value2 is a regex (not a double).
    *
-   * @param value1
+   * @param value1 the value1
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of "NaN = NaN" will evaluate to true. <br>
    *     Tests of "nonNaN != NaN" will evaluate to true. <br>
@@ -3311,9 +3311,9 @@ public abstract class PrimitiveArray {
    * Math2.almostEqual9 so there is a little fudge factor. The =~ regex test must be tested with
    * String testValueOpValue, not here, because value2 is a regex (not a double).
    *
-   * @param value1
+   * @param value1 the value1
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of "NaN = NaN" will evaluate to true. <br>
    *     Tests of "nonNaN != NaN" will evaluate to true. <br>
@@ -3346,9 +3346,9 @@ public abstract class PrimitiveArray {
    * factor. The =~ regex test must be tested with String testValueOpValue, not here, because value2
    * is a regex (not a double).
    *
-   * @param value1
+   * @param value1 the value1
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of "NaN = NaN" will evaluate to true. <br>
    *     Tests of "nonNaN != NaN" will evaluate to true. <br>
@@ -3380,9 +3380,9 @@ public abstract class PrimitiveArray {
    * &lt;=, &gt;=, and = tests are raw so there is no fudge factor. The =~ regex test must be tested
    * with String testValueOpValue, not here, because value2 is a regex (not a double).
    *
-   * @param value1
+   * @param value1 the value1
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return true if 'value1 op value2' is true. <br>
    *     Tests of "NaN = NaN" will evaluate to true. <br>
    *     Tests of "nonNaN != NaN" will evaluate to true. <br>
@@ -3482,7 +3482,7 @@ public abstract class PrimitiveArray {
    * @param keep The test is only applied to keep=true elements. If the test is false, the keep
    *     element is set to false.
    * @param op one of EDDTable.OPERATORS
-   * @param value2
+   * @param value2 the value2
    * @return nStillGood
    * @throws RuntimeException if trouble (e.g., invalid op or invalid keep element)
    */

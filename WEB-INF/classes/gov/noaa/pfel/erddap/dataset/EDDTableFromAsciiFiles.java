@@ -329,7 +329,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
    * @param sampleFileName one of the files in the collection
    * @param columnNamesRow first row of file is called 1.
    * @param firstDataRow first row if file is called 1.
-   * @param tReloadEveryNMinutes
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tPreExtractRegex part of info for extracting e.g., stationName from file name. Set to ""
    *     if not needed.
    * @param tPostExtractRegex part of info for extracting e.g., stationName from file name. Set to
@@ -2061,10 +2061,10 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
   /**
    * This is a helper for generateDatasetsXmlFromBCODMO.
    *
-   * @param ds
-   * @param dsDir
+   * @param ds the ds
+   * @param dsDir the dsDir
    * @param name e.g., "parameters"
-   * @param useLocalFilesIfPossible
+   * @param useLocalFilesIfPossible the useLocalFilesIfPossible
    * @return a JSONArray (or null if 'name'_service) not defined
    */
   public static JSONArray getBCODMOSubArray(
@@ -2094,7 +2094,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
    * This makes chunks of datasets.xml for datasets from BCO-DMO. It gets info from a BCO-DMO JSON
    * service that Adam Shepherd (ashepherd at whoi.edu) set up for Bob Simons.
    *
-   * @param useLocalFilesIfPossible
+   * @param useLocalFilesIfPossible the useLocalFilesIfPossible
    * @param catalogUrl e.g., https://www.bco-dmo.org/erddap/datasets
    * @param baseDir e.g, /u00/data/points/bcodmo/
    * @param datasetNumberRegex .* for all or e.g., (549122|549123)

@@ -98,7 +98,7 @@ public class ContourLevels implements Cloneable {
     if (!sorted_) sort();
     // System.out.println("post ContourLevels.levelElements label(-4000)=" +
     // getContourLineAttribute(-4000).getLabelText());
-    // } catch (Exception e) {}
+    // } catch (Exception ignored) { /* ignore */ }
     return levels_.iterator();
   }
 

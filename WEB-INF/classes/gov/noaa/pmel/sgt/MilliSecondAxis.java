@@ -170,7 +170,8 @@ public class MilliSecondAxis implements TimeAxisStyle {
                 tRange.end.getGMTMillis() / intIncrement * intIncrement);
         if (!time.equals(tRange.end)) time.increment(intIncrement, GeoDate.MSEC);
       }
-    } catch (IllegalTimeValue e) {
+    } catch (IllegalTimeValue ignored) {
+    // ignore
     }
     return time;
   }

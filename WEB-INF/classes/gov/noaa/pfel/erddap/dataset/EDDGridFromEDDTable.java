@@ -257,7 +257,7 @@ public class EDDGridFromEDDTable extends EDDGrid {
    * @param tReloadEveryNMinutes indicates how often the source should be checked for new data (use
    *     Integer.MAX_VALUE for never). Use -1 to have ERDDAP suggest the value based on how recent
    *     the last time value is.
-   * @param tGapThreshold
+   * @param tGapThreshold the tGapThreshold
    * @param tEDDTable the source EDDTable. It must have a different datasetID. The destination
    *     information from the eddTable becomes the source information for the eddGrid.
    * @throws Throwable if trouble
@@ -791,11 +791,13 @@ public class EDDGridFromEDDTable extends EDDGrid {
       for (int col = 0; col < nCols; col++)
         try {
           twaDIS[col].close();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
+        // ignore
         }
       try {
         twa.releaseResources();
-      } catch (Exception e) {
+      } catch (Exception ignored) {
+      // ignore
       }
     }
 

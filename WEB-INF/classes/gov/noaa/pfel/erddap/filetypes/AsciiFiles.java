@@ -59,7 +59,7 @@ public class AsciiFiles extends TableWriterFileType {
    * .
    *
    * @param language the index of the selected language
-   * @param requestUrl
+   * @param requestUrl the requestUrl
    * @param userDapQuery an OPeNDAP DAP-style query string, still percentEncoded (shouldn't be
    *     null). e.g., ATssta[45:1:45][0:1:0][120:10:140][130:10:160]
    * @param outputStreamSource the source of an outputStream (usually already buffered) to receive

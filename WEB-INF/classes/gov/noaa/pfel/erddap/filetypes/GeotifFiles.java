@@ -81,7 +81,7 @@ public class GeotifFiles extends ImageTypes {
    * @param fileName The file name with out the extension (e.g., myFile). The extension ".tif" will
    *     be added to create the output file name.
    * @return true of written ok; false if exception occurred (and written on image)
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   private boolean saveAsGeotiff(
       int language,

@@ -38,7 +38,7 @@ public class ResourceBundle2 {
    *
    * @param primaryBaseName e.g., "com.cohort.util.TestResourceBundle2" for a file in the class path
    *     named "com/cohort/util/TestResourceBundle2.properties".
-   * @param locale
+   * @param locale the locale
    * @throws RuntimeException if properties file not found
    */
   public ResourceBundle2(String primaryBaseName, Locale locale) {
@@ -53,7 +53,7 @@ public class ResourceBundle2 {
    *     named "com/cohort/util/TestResourceBundle2.properties".
    * @param secondaryBaseName e.g., "com.cohort.util.DefaultResourceBundle2" for a file in the class
    *     path named "com/cohort/util/DefaultResourceBundle2.properties".
-   * @param locale
+   * @param locale the locale
    * @throws RuntimeException if properties files not found
    */
   public ResourceBundle2(String primaryBaseName, String secondaryBaseName, Locale locale) {
@@ -64,7 +64,7 @@ public class ResourceBundle2 {
   /**
    * A constructor that uses the one specified primary ResourceBundle.
    *
-   * @param primaryBaseName
+   * @param primaryBaseName the primaryBaseName
    * @throws RuntimeException if properties file not found
    */
   public ResourceBundle2(String primaryBaseName) {
@@ -75,8 +75,8 @@ public class ResourceBundle2 {
    * A constructor that uses the one specified primary ResourceBundle. For the getXxx methods, if no
    * value is found in primary, secondary is searched.
    *
-   * @param primaryBaseName
-   * @param secondaryBaseName
+   * @param primaryBaseName the primaryBaseName
+   * @param secondaryBaseName the secondaryBaseName
    * @throws RuntimeException if properties file not found
    */
   public ResourceBundle2(String primaryBaseName, String secondaryBaseName) {
@@ -87,7 +87,7 @@ public class ResourceBundle2 {
   /**
    * A constructor that uses the specified ConcurrentHashMap instead of a ResourceBundle.
    *
-   * @param concurrentHashMap
+   * @param concurrentHashMap the concurrentHashMap
    */
   public ResourceBundle2(ConcurrentHashMap<String, String> concurrentHashMap) {
     this.concurrentHashMap = concurrentHashMap;
@@ -238,7 +238,7 @@ public class ResourceBundle2 {
   /**
    * This gets a String from the resourceBundle(s) and ensures isn't null.
    *
-   * @param key
+   * @param key the key
    * @param errorInMethod the start of an Error message
    * @throws RuntimeException if there is no value for key
    */
@@ -251,7 +251,7 @@ public class ResourceBundle2 {
   /**
    * This gets a String from the resourceBundle(s) and ensures isn't null or ''.
    *
-   * @param key
+   * @param key the key
    * @param errorInMethod the start of an Error message
    * @throws RuntimeException if there is no value for key
    */
@@ -265,8 +265,8 @@ public class ResourceBundle2 {
    * This returns the initialValue (if something) or the value for the key from the
    * resourceBundle(s) (which must be something).
    *
-   * @param key
-   * @param initialValue
+   * @param key the key
+   * @param initialValue the initialValue
    * @throws RuntimeException if there is no value for key
    */
   public String getIfNotAlreadyString(String key, String initialValue, String errorInMethod) {

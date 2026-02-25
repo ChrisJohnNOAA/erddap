@@ -150,7 +150,7 @@ public class NcHelper {
    * unnecessarily encoded attributes in NcDump String starting with netcdf-java 4.0. This is like
    * replaceAll, but smarter. null is returned as null.
    *
-   * @param s
+   * @param s the s
    * @return the decoded string
    */
   public static String decodeNcDump(String s) {
@@ -230,8 +230,8 @@ public class NcHelper {
    * This mimics the old way of creating and adding a dimension. The implied isUnlimited and
    * variableLength are false.
    *
-   * @param name
-   * @param size
+   * @param name the name
+   * @param size the size
    * @return the new dimension
    */
   public static Dimension addDimension(Group.Builder group, String name, int size) {
@@ -243,11 +243,11 @@ public class NcHelper {
   /**
    * This mimics the pre-2021 way of creating and adding a dimension.
    *
-   * @param name
-   * @param size
+   * @param name the name
+   * @param size the size
    * @param isShared For me, usually true.
-   * @param isUnlimited
-   * @param isVariableLength
+   * @param isUnlimited the isUnlimited
+   * @param isVariableLength the isVariableLength
    * @return the new dimension
    */
   public static Dimension addDimension(
@@ -268,7 +268,7 @@ public class NcHelper {
    * @param group the Group.Builder
    * @param shortName the short name for the var
    * @param dataType the data type
-   * @param dim
+   * @param dim the dim
    * @return the Variable.Builder
    */
   public static Variable.Builder<?> addVariable(
@@ -300,7 +300,7 @@ public class NcHelper {
    * @param group the Group.Builder
    * @param shortName the short name for the var
    * @param dims the list of dimensions (not including a stringLength dim)
-   * @param maxStringLength
+   * @param maxStringLength the maxStringLength
    * @return the Variable.Builder
    */
   public static Variable.Builder<?> addNc3StringVariable(
@@ -350,7 +350,7 @@ public class NcHelper {
   /**
    * This mimics the pre-2021 way of creating an attribute from a ucar Array.
    *
-   * @param attName
+   * @param attName the attName
    * @param value WARNING: for nc3 files, Array MUSTN'T be an unsigned array.
    * @return the new attribute
    */
@@ -361,8 +361,8 @@ public class NcHelper {
   /**
    * This creates an netcdf Attribute from a PrimitiveArray.
    *
-   * @param name
-   * @param pa
+   * @param name the name
+   * @param pa the pa
    * @return an Attribute
    */
   public static Attribute newAttribute(boolean nc3Mode, String name, PrimitiveArray pa) {
@@ -516,7 +516,7 @@ public class NcHelper {
    * This reads all of the values from an nDimensional variable. The variable can be any shape. This
    * version uses buildStringsFromChars=true.
    *
-   * @param variable
+   * @param variable the variable
    * @return a suitable primitiveArray
    */
   public static PrimitiveArray getPrimitiveArray(Variable variable) throws Exception {
@@ -526,7 +526,7 @@ public class NcHelper {
   /**
    * This reads all of the values from an nDimensional variable. The variable can be any shape.
    *
-   * @param variable
+   * @param variable the variable
    * @param buildStringsFromChars only applies to source DataType=char variables.
    * @return a suitable primitiveArray
    */
@@ -723,7 +723,7 @@ public class NcHelper {
    * @param fullName This may be a local file name, an "http:" address of a .nc file, or an opendap
    *     url.
    * @return the string representation of a .nc file header
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public static String readCDL(String fullName) throws Exception {
 
@@ -760,7 +760,7 @@ public class NcHelper {
   /**
    * This converts a List&lt;variable&gt; to a Variable[].
    *
-   * @param list
+   * @param list the list
    * @return a Variable[] (or null if list is null)
    */
   public static Variable[] variableListToArray(List<Variable> list) {
@@ -770,7 +770,7 @@ public class NcHelper {
   /**
    * This converts a List of dimensions to a Dimension[].
    *
-   * @param list
+   * @param list the list
    * @return a Dimensione[] (or null if list is null)
    */
   public static Dimension[] dimensionListToArray(List<Dimension> list) {
@@ -781,7 +781,7 @@ public class NcHelper {
    * Get the list of variables from a netcdf file's Structure or, if there is no structure, a list
    * of variables using the largest dimension (a pseudo structure).
    *
-   * @param netcdfFile
+   * @param netcdfFile the netcdfFile
    * @param variableNames if null, this will search for the variables in a (pseudo)structure.
    * @return structure's variables
    */
@@ -998,7 +998,7 @@ public class NcHelper {
    * Get the list of 4D numeric (or 5D char) variables from a netcdf file. Currently this does no
    * verification that the dimensions are t,z,y,x, but it could in the future.
    *
-   * @param netcdfFile
+   * @param netcdfFile the netcdfFile
    * @param variableNames if null, this will search for a 4D variable, then also include all other
    *     variables using the same axes.
    * @return the variables (list length 0 if none found)
@@ -1052,7 +1052,7 @@ public class NcHelper {
   /**
    * Get the desired variable.
    *
-   * @param netcdfFile
+   * @param netcdfFile the netcdfFile
    * @param variableName (not null or "")
    * @return a Variable
    * @throws Exception if trouble, e.g., not found
@@ -1089,7 +1089,7 @@ public class NcHelper {
   /**
    * This adds attributes to a variable in preparation for writing a .nc file.
    *
-   * @param nc3Mode
+   * @param nc3Mode the nc3Mode
    * @param var e.g., from addVariable()
    * @param attributes the Attributes that will be set
    * @param unsigned If nc3Mode and unsigned, this method adds an _Unsigned=true attribute
@@ -1115,7 +1115,7 @@ public class NcHelper {
    * returns null. This is low level and isn't usually called directly.
    *
    * @param varName the variable's name (or "global"), used for diagnostic messages only
-   * @param att
+   * @param att the att
    * @return a PrimitiveArray or null if trouble
    */
   public static PrimitiveArray getAttributePA(String varName, ucar.nc2.Attribute att) {
@@ -1163,8 +1163,8 @@ public class NcHelper {
   /**
    * This gets one attribute from a netcdf variable.
    *
-   * @param variable
-   * @param attributeName
+   * @param variable the variable
+   * @param attributeName the attributeName
    * @return the attribute (or null if none)
    */
   public static PrimitiveArray getVariableAttribute(Variable variable, String attributeName) {
@@ -1174,8 +1174,8 @@ public class NcHelper {
   /**
    * This gets one attribute from a netcdf group.
    *
-   * @param group
-   * @param attributeName
+   * @param group the group
+   * @param attributeName the attributeName
    * @return the attribute (or null if none)
    */
   public static PrimitiveArray getGroupAttribute(Group group, String attributeName) {
@@ -1185,8 +1185,8 @@ public class NcHelper {
   /**
    * This gets the first element of one group attribute as a String.
    *
-   * @param group
-   * @param attributeName
+   * @param group the group
+   * @param attributeName the attributeName
    * @return the attribute (or null if none)
    */
   public static String getStringGroupAttribute(Group group, String attributeName) {
@@ -1214,7 +1214,7 @@ public class NcHelper {
    * @param varName use "Global" for global attributes. This is just used for diagnostic messages.
    * @param att an nc attribute
    * @param attributes the Attributes that will be added to.
-   * @param addIfAlreadyPresent
+   * @param addIfAlreadyPresent the addIfAlreadyPresent
    */
   public static void addAttribute(
       String varName, ucar.nc2.Attribute att, Attributes attributes, boolean addIfAlreadyPresent) {
@@ -1274,7 +1274,7 @@ public class NcHelper {
   /**
    * This adds to the attributes for a netcdf variable.
    *
-   * @param variable
+   * @param variable the variable
    * @param attributes the Attributes that will be added to.
    * @return the same attributes object, for convenience
    */
@@ -1311,7 +1311,7 @@ public class NcHelper {
    * https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#grid-mappings-and-projections
    * https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#rotated-pole-grid-ex
    *
-   * @param pseudoDataVariable
+   * @param pseudoDataVariable the pseudoDataVariable
    * @return gridMappingAttributes in a form suitable for addition to the global addAttributes (or
    *     null if trouble, e.g., variable is null).
    */
@@ -1328,7 +1328,7 @@ public class NcHelper {
    * https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#grid-mappings-and-projections
    * https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#rotated-pole-grid-ex
    *
-   * @param sourceAtts
+   * @param sourceAtts the sourceAtts
    * @return gridMappingAttributes in a form suitable for addition to the global addAttributes (or
    *     null if trouble, e.g., sourceAtts is null)
    */
@@ -1378,7 +1378,7 @@ public class NcHelper {
    * This returns the double value of an attribute. If the attribute DataType is DataType.FLOAT,
    * this nicely converts the float to a double.
    *
-   * @param attribute
+   * @param attribute the attribute
    * @return the double value of an attribute.
    */
   public static double getNiceDouble(Attribute attribute) {
@@ -1808,7 +1808,7 @@ public class NcHelper {
   /**
    * This opens the nc file and gets the names of the (pseudo)structure variables.
    *
-   * @param fullName
+   * @param fullName the fullName
    * @return StringArray variableNames
    * @throws Exception if trouble
    */
@@ -1832,8 +1832,8 @@ public class NcHelper {
    * pa = new LongArray(pa) or new ULongArray(pa), and <br>
    * CharArray is stored as chars (ISO-8859-1).
    *
-   * @param netcdfFileWriter
-   * @param variableName
+   * @param netcdfFileWriter the netcdfFileWriter
+   * @param variableName the variableName
    * @param firstRow This is the origin/where to write this chunk of data within the complete var in
    *     the nc file.
    * @param pa will be converted to the appropriate numeric type
@@ -1857,8 +1857,8 @@ public class NcHelper {
    * <p>This will convert CharArray to ShortArray and LongArray to StringArray, but it usually saves
    * memory if caller does it.
    *
-   * @param netcdfFileWriter
-   * @param var
+   * @param netcdfFileWriter the netcdfFileWriter
+   * @param var the var
    * @param origin The start of where the data will be written in the var. Don't include the
    *     StringLength dimension.
    * @param shape The shape that the data will be arranged into in the var. Don't include
@@ -2060,7 +2060,8 @@ public class NcHelper {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception e9) {
+        } catch (Exception ignored) {
+        // ignore
         }
         File2.delete(fullName + randomInt);
         ncWriter = null;

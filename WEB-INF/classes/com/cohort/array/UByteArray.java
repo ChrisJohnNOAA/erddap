@@ -488,7 +488,7 @@ public class UByteArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {
@@ -1509,7 +1509,7 @@ public class UByteArray extends PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   @Override

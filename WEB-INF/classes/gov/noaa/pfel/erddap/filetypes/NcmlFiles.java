@@ -51,8 +51,8 @@ public class NcmlFiles extends FileTypeInterface {
   /**
    * This writes attributes to an nc3 .ncml file. .ncml are XML files so UTF-8.
    *
-   * @param writer
-   * @param atts
+   * @param writer the writer
+   * @param atts the atts
    * @param indent e.g., " "
    */
   private void writeNcmlAttributes(Writer writer, Attributes atts, String indent)
@@ -86,7 +86,7 @@ public class NcmlFiles extends FileTypeInterface {
    * Annotated Schema for NcML
    * "https://www.unidata.ucar.edu/software/thredds/current/netcdf-java/ncml/AnnotatedSchema4.html"
    *
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param outputStreamSource the source of an outputStream (usually already buffered) to receive
    *     the results. At the end of this method the outputStream is flushed, not closed.
    * @throws Throwable if trouble.

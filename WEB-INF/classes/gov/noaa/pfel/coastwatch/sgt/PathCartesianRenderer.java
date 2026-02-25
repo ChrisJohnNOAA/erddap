@@ -57,7 +57,7 @@ public class PathCartesianRenderer extends CartesianRenderer {
   /**
    * The constructor.
    *
-   * @param graph
+   * @param graph the graph
    * @param path the path with lon (0..360 or +/-180, or 0..360e6 or +/-180e6, already as needed for
    *     this map) and lat values
    * @param scale the number that the path values need to be multiplied by to convert to degrees
@@ -78,7 +78,7 @@ public class PathCartesianRenderer extends CartesianRenderer {
   /**
    * This draws the filled area on the map. Required to extend CartesianRenderer.
    *
-   * @param g
+   * @param g the g
    */
   @Override
   public void draw(java.awt.Graphics g) {

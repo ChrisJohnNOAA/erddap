@@ -836,7 +836,7 @@ public class EDDTableFromFileNames extends EDDTable {
    * This gets the cached DNLS file table (last_mod and size are longs). Only call this if from ==
    * fromRemoteFiles.
    *
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public Table getCachedDNLSTable() throws Exception {
     Table table = new Table();
@@ -1266,7 +1266,7 @@ public class EDDTableFromFileNames extends EDDTable {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -1482,10 +1482,10 @@ public class EDDTableFromFileNames extends EDDTable {
   /**
    * This does its best to generate a read-to-use datasets.xml entry for an EDDTableFromFileNames.
    *
-   * @param tFileDir
-   * @param tFileNameRegex
-   * @param tRecursive
-   * @param tPathRegex
+   * @param tFileDir the tFileDir
+   * @param tFileNameRegex the tFileNameRegex
+   * @param tRecursive the tRecursive
+   * @param tPathRegex the tPathRegex
    * @param externalGlobalAttributes globalAttributes gleaned from external sources, e.g., a THREDDS
    *     catalog.xml file. These have priority over other sourceGlobalAttributes. Okay to use null
    *     if none.

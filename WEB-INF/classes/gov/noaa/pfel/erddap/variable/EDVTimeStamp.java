@@ -369,7 +369,7 @@ public class EDVTimeStamp extends EDV {
   /**
    * This converts a destination double value to an ISO string with "Z". NaN returns "".
    *
-   * @param destD
+   * @param destD the destD
    * @return destination String
    */
   public String destinationToString(double destD) {
@@ -525,7 +525,7 @@ public class EDVTimeStamp extends EDV {
    *
    * <p>This version currently doesn't support scaleAddOffset.
    *
-   * @param source
+   * @param source the source
    * @return a PrimitiveArray (the original if the data type wasn't changed) with source values
    *     converted to destinationValues. Here, destination will be double epochSecond values.
    */

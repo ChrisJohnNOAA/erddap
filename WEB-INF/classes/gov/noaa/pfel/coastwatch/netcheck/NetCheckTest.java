@@ -71,7 +71,7 @@ public abstract class NetCheckTest {
   /**
    * This adds an email address to emailStatusTo.
    *
-   * @param emailAddress
+   * @param emailAddress the emailAddress
    */
   public void addEmailStatusTo(String emailAddress) {
     String errorIn = String2.ERROR + " in NetCheckTest.addEmailStatusTo: ";
@@ -92,7 +92,7 @@ public abstract class NetCheckTest {
   /**
    * This adds an email address to emailStatusHeadlinesTo.
    *
-   * @param emailAddress
+   * @param emailAddress the emailAddress
    */
   public void addEmailStatusHeadlinesTo(String emailAddress) {
     String errorIn = String2.ERROR + " in NetCheckTest.addEmailStatusHeadlinesTo: ";
@@ -113,7 +113,7 @@ public abstract class NetCheckTest {
   /**
    * This adds an email address to emailChangesTo.
    *
-   * @param emailAddress
+   * @param emailAddress the emailAddress
    */
   public void addEmailChangesTo(String emailAddress) {
     String errorIn = String2.ERROR + " in NetCheckTest.addEmailChangesTo: ";
@@ -134,7 +134,7 @@ public abstract class NetCheckTest {
   /**
    * This adds an email address to emailChangeHeadlinesTo.
    *
-   * @param emailAddress
+   * @param emailAddress the emailAddress
    */
   public void addEmailChangeHeadlinesTo(String emailAddress) {
     String errorIn = String2.ERROR + " in NetCheckTest.addEmailChangeHeadlinesTo: ";

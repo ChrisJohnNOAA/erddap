@@ -362,7 +362,8 @@ public class Layer extends Component implements Cloneable, LayerControl {
         if (!(child instanceof Draggable)) {
           try {
             child.draw(g);
-          } catch (LayerNotFoundException e) {
+          } catch (LayerNotFoundException ignored) {
+          // ignore
           }
         }
       }
@@ -380,7 +381,8 @@ public class Layer extends Component implements Cloneable, LayerControl {
         if (child instanceof Draggable) {
           try {
             child.draw(g);
-          } catch (LayerNotFoundException e) {
+          } catch (LayerNotFoundException ignored) {
+          // ignore
           }
         }
       }

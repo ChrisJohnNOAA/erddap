@@ -371,7 +371,7 @@ public class Matlab {
    * This makes 2D NDimensionalIndex from the 1D data (pa.size,1). Special case: for StringArray,
    * make as if 2D charArray: (pa.size(), maxStringLength).
    *
-   * @param pa
+   * @param pa the pa
    * @return an NDimensionalIndex
    */
   public static NDimensionalIndex make2DNDIndex(PrimitiveArray pa) {
@@ -387,7 +387,7 @@ public class Matlab {
   /**
    * This makes 2D NDimensionalIndex for a PrimitiveArray other than a StringArray.
    *
-   * @param size
+   * @param size the size
    * @return an NDimensionalIndex
    */
   public static NDimensionalIndex make2DNDIndex(int size) {
@@ -398,8 +398,8 @@ public class Matlab {
   /**
    * This makes 2D NDimensionalIndex for a StringArray as if char[][].
    *
-   * @param nStrings
-   * @param maxStringLength
+   * @param nStrings the nStrings
+   * @param maxStringLength the maxStringLength
    * @return an NDimensionalIndex
    */
   public static NDimensionalIndex make2DNDIndex(int nStrings, int maxStringLength) {

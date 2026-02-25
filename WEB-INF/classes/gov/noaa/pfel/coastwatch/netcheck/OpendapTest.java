@@ -43,7 +43,7 @@ public class OpendapTest extends NetCheckTest {
    * method will read information until xmlReader.getNextTag() returns the close tag for the
    * reference to this class.
    *
-   * @param xmlReader
+   * @param xmlReader the xmlReader
    * @throws Exception if trouble
    */
   public OpendapTest(SimpleXMLReader xmlReader) throws Exception {

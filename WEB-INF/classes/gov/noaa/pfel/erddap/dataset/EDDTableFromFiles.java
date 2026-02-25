@@ -1267,8 +1267,8 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    *     the second name is used if there is a tie for the first column; <br>
    *     the third is used if there is a tie for the first and second columns; ... <br>
    *     It is optional (the default is fileDir+fileName order).
-   * @param tSourceNeedsExpandedFP_EQ
-   * @param tRemoveMVRows
+   * @param tSourceNeedsExpandedFP_EQ the tSourceNeedsExpandedFP_EQ
+   * @param tRemoveMVRows the tRemoveMVRows
    * @param tStandardizeWhat Use -1 or MAX_VALUE to indicate that you want the subclasses default
    *     value.
    * @param tNThreads Use -1 or MAX_VALUE to indicate that you want the default ERDDAP value from
@@ -2780,7 +2780,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
   /**
    * This extracts data from the fileName.
    *
-   * @param fileName
+   * @param fileName the fileName
    * @return the extracted String
    */
   protected String extractFromFileName(String fileName) {
@@ -2861,7 +2861,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    * @param fullDir the directory
    * @param fileName the file name
    * @return A Map linking variable names to their extracted metadata.
-   * @throws Throwable
+   * @throws Throwable if an error occurs
    */
   protected Map<String, FileVariableMetadata> getFileMetadata(String fullDir, String fileName)
       throws Throwable {
@@ -3634,7 +3634,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    * Update the var destinationMinMax and related (e.g., geospatial_lat...) based on up-to-date
    * minMaxTable.
    *
-   * @param tMinMaxTable
+   * @param tMinMaxTable the tMinMaxTable
    */
   protected void updateDestinationMinMax(Table tMinMaxTable) {
     int ndv = sourceDataTypes.length;
@@ -3906,7 +3906,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    *
    * <p>EDDGrid overwrites this to also check the axis variables.
    *
-   * @param old
+   * @param old the old
    * @return "" if same or message if not.
    */
   @Override
@@ -3982,8 +3982,8 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    * 2) sourceConVars, sourceConOps, sourceConValues - a comprehensive system <br>
    * Each subclass can use either, both, or neither.
    *
-   * @param tFileDir
-   * @param tFileName
+   * @param tFileDir the tFileDir
+   * @param tFileName the tFileName
    * @param sourceDataNames the names of the desired source columns. All constraintVariables (except
    *     columnNameForExtract) will be included in this list. !!!This will not include
    *     columnNameForExtract.
@@ -4443,7 +4443,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -5113,7 +5113,8 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
       if (workManager != null) {
         try {
           workManager.forceShutdown();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
+        // ignore
         }
         workManager = null;
       }
@@ -5206,9 +5207,9 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    * test (given that .subset generates "=" constraints).
    *
    * @param min exclusive of "". If no valid values, min and max should be ""
-   * @param max
+   * @param max the max
    * @param hasNaN 0=false 1=true (has "" values)
-   * @param conOp
+   * @param conOp the conOp
    * @param conValue the constaintValue
    */
   public static boolean isOK(String min, String max, int hasNaN, String conOp, String conValue) {

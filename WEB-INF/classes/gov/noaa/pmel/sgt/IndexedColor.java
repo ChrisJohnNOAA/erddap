@@ -24,8 +24,8 @@ import java.awt.Color;
 public interface IndexedColor {
 
   /**
-   * @param index
-   * @return
+   * @param index the index
+   * @return the result
    * @since 3.0
    */
   Color getColorByIndex(int index);

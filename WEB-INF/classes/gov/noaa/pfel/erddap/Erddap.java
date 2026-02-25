@@ -469,8 +469,8 @@ public class Erddap extends HttpServlet {
    * This responds to a "post" request from the user by extending HttpServlet's doPost and passing
    * the request to doGet.
    *
-   * @param request
-   * @param response
+   * @param request the request
+   * @param response the response
    */
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -504,8 +504,8 @@ public class Erddap extends HttpServlet {
    * calls doGet&lt;Protocol&gt; to handle the request. That allows Erddap to work like a DAP
    * server, or a WCS server, or a ....
    *
-   * @param request
-   * @param response
+   * @param request the request
+   * @param response the response
    * @throws ServletException, IOException
    */
   @Override
@@ -1010,7 +1010,8 @@ public class Erddap extends HttpServlet {
         }
         try {
           EDStatic.sendError(requestNumber, request, response, t);
-        } catch (Throwable t3) {
+        } catch (Throwable ignored) {
+        // ignore
         }
         recordRequestResponseTime(response.getStatus(), request.getRequestURI(), responseTime);
         if (verbose) {
@@ -15754,7 +15755,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    *
    * @param request the request
    * @param language the index of the selected language
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param paramString the param string (after "?") (starting point for advanced search, already
    *     percent encoded, but not XML/HTML encoded) (or "" or null) but should at least have page=
    *     and itemsPerPage= (PIppQuery).
@@ -21756,7 +21757,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    * param) to facilitate testing.
    *
    * @param language the index of the selected language
-   * @param tGridDatasetHashMap
+   * @param tGridDatasetHashMap the tGridDatasetHashMap
    * @param TLLTable ASCII text with table with latitude,longitude,time columns
    * @param requestCSV the CSV list of desired datasetID/variable/algorithm/nearby settings
    * @return a table with latitude,longitude,time and requested datasetID/variable columns
@@ -23709,8 +23710,8 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
   /**
    * Get a writer for a json file.
    *
-   * @param request
-   * @param response
+   * @param request the request
+   * @param response the response
    * @param fileName without the extension, e.g., "error"
    * @param fileType ".json" (contentType=application/json) or ".jsonText" (contentType=text/plain)
    * @return a BufferedWriter
@@ -23728,8 +23729,8 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
   /**
    * Get an outputStream for an html file
    *
-   * @param request
-   * @param response
+   * @param request the request
+   * @param response the response
    * @return an outputStream
    * @throws Throwable if trouble
    */
@@ -23753,7 +23754,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    *     2022-11-22 This is not used for security reasons (and it is not practical to ensure it's
    *     valid and not malicious).
    * @param addToTitle a string, not yet XML encoded
-   * @param out
+   * @param out the out
    * @return writer
    * @throws Throwable if trouble
    */
@@ -23783,7 +23784,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    *     valid and not malicious).
    * @param addToTitle a string, not yet XML encoded
    * @param addToHead additional info for the &lt;head&gt;
-   * @param out
+   * @param out the out
    * @return writer
    * @throws Throwable if trouble
    */
@@ -23818,12 +23819,12 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    *
    * @param request the request
    * @param language the index of the selected language
-   * @param out
-   * @param writer
+   * @param out the out
+   * @param writer the writer
    * @param tErddapUrl from EDStatic.erddapUrl(request, loggedInAs, language) (erddapUrl, or
    *     erddapHttpsUrl if user is logged in)
-   * @param loggedInAs
-   * @param forceWriteDiagnostics
+   * @param loggedInAs the loggedInAs
+   * @param forceWriteDiagnostics the forceWriteDiagnostics
    * @throws Throwable if trouble
    */
   void endHtmlWriter(
@@ -23851,8 +23852,8 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    * This writes the error (if not null or "") to the html writer.
    *
    * @param language the index of the selected language
-   * @param writer
-   * @param request
+   * @param writer the writer
+   * @param request the request
    * @param error plain text, will be html-encoded here
    * @throws Throwable if trouble
    */
@@ -23899,8 +23900,8 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    * This gets the html for the search form.
    *
    * @param language the index of the selected language
-   * @param request
-   * @param loggedInAs
+   * @param request the request
+   * @param loggedInAs the loggedInAs
    * @param pretext e.g., &lt;h2&gt; Or use "" for none.
    * @param posttext e.g., &lt;/h2&gt; Or use "" for none.
    * @param searchFor the default text to be searched for
@@ -24037,11 +24038,11 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    * This writes the categorize options table
    *
    * @param language the index of the selected language
-   * @param request
-   * @param loggedInAs
-   * @param writer
+   * @param request the request
+   * @param loggedInAs the loggedInAs
+   * @param writer the writer
    * @param attributeInURL e.g., institution (it may be null or invalid)
-   * @param homePage
+   * @param homePage the homePage
    */
   public void writeCategorizeOptionsHtml1(
       int language,
@@ -24110,9 +24111,9 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    * This writes the html with the category options to the writer (in a table with lots of columns).
    *
    * @param language the index of the selected language
-   * @param request
-   * @param loggedInAs
-   * @param writer
+   * @param request the request
+   * @param loggedInAs the loggedInAs
+   * @param writer the writer
    * @param attribute must be valid (e.g., ioos_category)
    * @param attributeInURL must be valid
    * @param value may be null or invalid (e.g., Location)
@@ -24730,7 +24731,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    *
    * @param language the index of the selected language
    * @param requestNumber The requestNumber assigned to this request by doGet().
-   * @param loggedInAs
+   * @param loggedInAs the loggedInAs
    * @param request The user's request.
    * @param response The response to be written to.
    * @param fileName e.g., Time
@@ -25178,7 +25179,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
    * thredds work with the same datasetID at the same time (if one adding and one removing) because
    * of race conditions.
    *
-   * @param datasetIDs
+   * @param datasetIDs the datasetIDs
    */
   protected void updateLucene(StringArray datasetIDs) {
 

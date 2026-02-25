@@ -427,7 +427,7 @@ public class ByteArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {

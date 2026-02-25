@@ -112,7 +112,7 @@ public class Opendap {
    *
    * @param url the url of the OPeNDAP data set, e.g.,
    *     "http://las.pfeg.noaa.gov/cgi-bin/nph-dods/data/oceanwatch/nrt/gac/AG1day.nc".
-   * @param acceptDeflate
+   * @param acceptDeflate the acceptDeflate
    * @param flagDirectory If flagDirectory is not null and this dataset needs to be reindexed
    *     (because the time values have changed), a file will be put in flagDirectory to signal the
    *     need for a new index.
@@ -332,7 +332,7 @@ public class Opendap {
   /**
    * If getGridInfo ran successfully, this returns one of the lon values.
    *
-   * @param index
+   * @param index the index
    * @return the lon value for the specified index
    * @throws Exception if trouble
    */
@@ -343,7 +343,7 @@ public class Opendap {
   /**
    * If getGridInfo ran successfully, this returns one of the lat values.
    *
-   * @param index
+   * @param index the index
    * @return the lat value for the specified index
    * @throws Exception if trouble
    */
@@ -363,7 +363,7 @@ public class Opendap {
    * @param baseSeconds the seconds since 1970-01-01 that is the offset for the time values in the
    *     files; usually this.gridTimeBaseSeconds.
    * @param timePeriodNHours one of the TimePeriod.N_HOURS
-   * @throws Exception
+   * @throws Exception if an error occurs
    */
   public void getTimeOptions(
       boolean formatAsDate, double factorToGetSeconds, double baseSeconds, int timePeriodNHours)

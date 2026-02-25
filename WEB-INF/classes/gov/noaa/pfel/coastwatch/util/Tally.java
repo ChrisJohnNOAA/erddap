@@ -139,7 +139,7 @@ public class Tally {
   /**
    * This returns a String with the information for one category (or "" if not found).
    *
-   * @param categoryName
+   * @param categoryName the categoryName
    * @param maxAttributeNames the maximum number of attribute names printed per category
    */
   public String toString(String categoryName, int maxAttributeNames) {

@@ -157,7 +157,7 @@ public class CharArray extends PrimitiveArray {
    * cohort 'missingValue' of a CharArray is different from the missingValue of a ShortArray. 'size'
    * will equal anArray.length.
    *
-   * @param shortArray
+   * @param shortArray the shortArray
    */
   public CharArray(final short[] shortArray) {
     size = shortArray.length;
@@ -340,7 +340,7 @@ public class CharArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {
@@ -1144,7 +1144,7 @@ public class CharArray extends PrimitiveArray {
    * Test if o is an CharArray with the same size and values, but returns a String describing the
    * difference (or "" if equal).
    *
-   * @param o
+   * @param o the o
    * @return a String describing the difference (or "" if equal). o=null doesn't throw an exception.
    */
   @Override
@@ -1347,8 +1347,8 @@ public class CharArray extends PrimitiveArray {
    * compatible common 8bit. Ah: dods.dap.DString reader assumes ISO-8859-1, which is first page of
    * unicode (is it?!).
    *
-   * @param dos
-   * @param c
+   * @param dos the dos
+   * @param c the c
    * @throws Exception if trouble
    */
   public static void externalizeForDODS(final DataOutputStream dos, final char c) throws Exception {
@@ -1367,7 +1367,7 @@ public class CharArray extends PrimitiveArray {
    * DAP 2.0 standard, section 7.3.2.1). See also the XDR standard
    * (http://tools.ietf.org/html/rfc4506#section-4.11).
    *
-   * @param dos
+   * @param dos the dos
    * @throws Exception if trouble
    */
   @Override
@@ -1382,7 +1382,7 @@ public class CharArray extends PrimitiveArray {
    * www.opendap.org DAP 2.0 standard, section 7.3.2). See also the XDR standard
    * (http://tools.ietf.org/html/rfc4506#section-4.11).
    *
-   * @param dos
+   * @param dos the dos
    * @param i the index of the element to be written
    * @throws Exception if trouble
    */
@@ -1395,7 +1395,7 @@ public class CharArray extends PrimitiveArray {
    * This reads/appends String values from a StringArray from a DODS DataInputStream, and is thus
    * the complement of externalizeForDODS.
    *
-   * @param dis
+   * @param dis the dis
    * @throws IOException if trouble
    */
   @Override
@@ -1418,7 +1418,7 @@ public class CharArray extends PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   @Override

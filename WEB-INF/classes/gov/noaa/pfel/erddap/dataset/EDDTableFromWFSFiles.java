@@ -217,8 +217,8 @@ public class EDDTableFromWFSFiles extends EDDTableFromAsciiFiles {
    *     https://kgs.uky.edu/usgin/services/aasggeothermal/WVBoreholeTemperatures/MapServer/WFSServer?
    *     request=GetFeature&service=WFS&typename=aasg:BoreholeTemperature&format="text/xml;
    *     subType=gml/3.1.1/profiles/gmlsf/1.0.0/0" See Bob's sample files in c:/data/mapserver
-   * @param tRowElementXPath
-   * @param tReloadEveryNMinutes
+   * @param tRowElementXPath the tRowElementXPath
+   * @param tReloadEveryNMinutes the tReloadEveryNMinutes
    * @param tInfoUrl or "" if in externalAddGlobalAttributes or if not available (but try hard!)
    * @param tInstitution or "" if in externalAddGlobalAttributes or if not available (but try hard!)
    * @param tSummary or "" if in externalAddGlobalAttributes or if not available (but try hard!)

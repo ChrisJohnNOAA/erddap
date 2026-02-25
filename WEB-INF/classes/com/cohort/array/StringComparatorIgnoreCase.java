@@ -17,8 +17,8 @@ public class StringComparatorIgnoreCase implements Comparator<Object> {
   /**
    * This is required for the Comparator interface.
    *
-   * @param o1
-   * @param o2
+   * @param o1 the o1
+   * @param o2 the o2
    * @return returns a negative integer, zero, or a positive integer if the value at index1 is less
    *     than, equal to, or greater than the value at index2. Think "o1 - o2".
    */

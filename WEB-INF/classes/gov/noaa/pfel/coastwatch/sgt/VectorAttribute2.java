@@ -93,7 +93,7 @@ public class VectorAttribute2 implements Attribute, Cloneable {
    * <code>VectorAttribute</code> constructor. Default vector style is HEAD.
    *
    * @param scale vector scale
-   * @param colorMap
+   * @param colorMap the colorMap
    * @param tSourceID identifies the source of the data (e.g., -1 for pointVectorScreen, -2 for
    *     pointScreen)
    */
@@ -110,7 +110,7 @@ public class VectorAttribute2 implements Attribute, Cloneable {
    *
    * @param style vector style
    * @param scale vector scale
-   * @param colorMap
+   * @param colorMap the colorMap
    * @param head_scale scale of vector head
    * @param tSourceID identifies the source of the data (e.g., -1 for pointVectorScreen, -2 for
    *     pointScreen)

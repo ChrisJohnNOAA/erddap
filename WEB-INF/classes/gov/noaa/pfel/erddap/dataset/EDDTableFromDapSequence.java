@@ -262,9 +262,9 @@ public class EDDTableFromDapSequence extends EDDTable {
    *
    * @param tReloadEveryNMinutes indicates how often the source should be checked for new data.
    * @param tLocalSourceUrl the url to which .das or .dds or ... can be added
-   * @param tOuterSequenceName
+   * @param tOuterSequenceName the tOuterSequenceName
    * @param tInnerSequenceName or null or "" if only 1-level sequence
-   * @param tSourceNeedsExpandedFP_EQ
+   * @param tSourceNeedsExpandedFP_EQ the tSourceNeedsExpandedFP_EQ
    * @param tSourceCanConstrainStringEQNE if true, the source accepts constraints on outer sequence
    *     String variables with the = and != operators.
    * @param tSourceCanConstrainStringGTLT if true, the source accepts constraints on outer sequence
@@ -667,7 +667,7 @@ public class EDDTableFromDapSequence extends EDDTable {
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery the part of the user's request after the '?', still percentEncoded, may be
    *     null.
-   * @param tableWriter
+   * @param tableWriter the tableWriter
    * @throws Throwable if trouble (notably, WaitThenTryAgainException)
    */
   @Override
@@ -814,7 +814,7 @@ public class EDDTableFromDapSequence extends EDDTable {
    * This uses the first outerSequence (and if present, first innerSequence) found. <br>
    * Other sequences are skipped.
    *
-   * @param tLocalSourceUrl
+   * @param tLocalSourceUrl the tLocalSourceUrl
    * @param tReloadEveryNMinutes must be a valid value, e.g., 1440 for once per day. Use, e.g.,
    *     1000000000, for never reload.
    * @param externalGlobalAttributes globalAttributes gleaned from external sources, e.g., a THREDDS

@@ -121,13 +121,13 @@
                 <version>3.15.0</version>
                 <configuration>
                     <failOnError>true</failOnError>
-                    <source>25</source>   <!-- java version -->
-                    <target>25</target>
+                    <source>21</source>   <!-- java version -->
+                    <target>21</target>
                     <encoding>UTF-8</encoding>
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
-                        <arg>-Xplugin:ErrorProne -Xep:StatementSwitchToExpressionSwitch:OFF -Xep:StringCaseLocaleUsage:OFF -Xep:EmptyCatch:OFF -Xep:StringSplitter:OFF -Xep:JavaLangClash:OFF -Xep:CatchAndPrintStackTrace:OFF -Xep:NotJavadoc:OFF -Xep:InvalidBlockTag:OFF -Xep:MissingSummary:OFF -Xep:EmptyBlockTag:OFF -Xep:InvalidParam:OFF -Xep:InvalidThrows:OFF -Xep:ReturnFromVoid:OFF -Xep:MisleadingEscapedSpace:OFF</arg>
+                        <arg>-Xplugin:ErrorProne -Xep:StatementSwitchToExpressionSwitch:OFF -Xep:StringCaseLocaleUsage:OFF -Xep:EmptyCatch:WARN -Xep:StringSplitter:OFF -Xep:JavaLangClash:OFF -Xep:CatchAndPrintStackTrace:OFF -Xep:NotJavadoc:OFF -Xep:InvalidBlockTag:OFF -Xep:MissingSummary:OFF -Xep:EmptyBlockTag:WARN -Xep:InvalidParam:OFF -Xep:InvalidThrows:OFF -Xep:ReturnFromVoid:OFF -Xep:MisleadingEscapedSpace:OFF</arg>
                     </compilerArgs>
                     <excludes>
                         <exclude>gov/noaa/pfel/coastwatch/sgt/LandMask.javaINACTIVE</exclude>
@@ -565,7 +565,7 @@
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/Units2.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/XML.java</file>
                     </suppressedFiles>
-                    <jdkVersion>25</jdkVersion>
+                    <jdkVersion>21</jdkVersion>
                     <noStdlibLink>true</noStdlibLink> <!-- This is the Kotlin stdlib -->
                     <dokkaPlugins>
                         <plugin>

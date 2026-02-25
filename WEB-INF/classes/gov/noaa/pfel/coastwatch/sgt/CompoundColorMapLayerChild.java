@@ -58,7 +58,7 @@ public class CompoundColorMapLayerChild implements LayerChild {
    * The constructor.
    *
    * @param id an identifying string
-   * @param compoundColorMap
+   * @param compoundColorMap the compoundColorMap
    */
   public CompoundColorMapLayerChild(String id, CompoundColorMap compoundColorMap) {
     this.id = id;
@@ -70,9 +70,9 @@ public class CompoundColorMapLayerChild implements LayerChild {
    * width &gt; height. For a vertical colorbar, make height &gt; width.
    *
    * @param lowerX in pixels
-   * @param leftY
-   * @param width
-   * @param height
+   * @param leftY the leftY
+   * @param width the width
+   * @param height the height
    */
   public void setRectangle(double leftX, double lowerY, double width, double height) {
     this.leftX = leftX;
@@ -84,7 +84,7 @@ public class CompoundColorMapLayerChild implements LayerChild {
   /**
    * Set the label font.
    *
-   * @param font
+   * @param font the font
    */
   public void setLabelFont(Font font) {
     this.labelFont = font;
@@ -93,7 +93,7 @@ public class CompoundColorMapLayerChild implements LayerChild {
   /**
    * Set the label font.
    *
-   * @param font
+   * @param font the font
    */
   public void setLabelHeightP(double labelHeight) {
     this.labelHeight = labelHeight;

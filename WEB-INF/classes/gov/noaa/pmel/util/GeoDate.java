@@ -119,7 +119,7 @@ public class GeoDate implements java.io.Serializable, Comparable<GeoDate> {
   /**
    * Sets the time to be milliseconds since epoch of time.
    *
-   * @param time
+   * @param time the time
    */
   public void setTime(long time) {
     instant = Instant.ofEpochMilli(time);

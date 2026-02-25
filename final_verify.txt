@@ -1,0 +1,351 @@
+WARNING: java.io.tmpdir directory does not exist
+/app/./target/temp/jansi-2.4.2-da68357ae11ec27e-libjansi.so.lck (No such file or directory)
+[INFO] Scanning for projects...
+[INFO]
+[INFO] --------------------< gov.noaa.pfel.erddap:ERDDAP >---------------------
+[INFO] Building erddap 2.30.0-alpha
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO]
+[INFO] --- clean:3.5.0:clean (default-clean) @ ERDDAP ---
+[INFO] Deleting /app/target
+[INFO] Deleting /app/WEB-INF/lib
+[INFO]
+[INFO] --- dependency:3.10.0:copy-dependencies (default) @ ERDDAP ---
+[INFO]
+[INFO] --- dependency:3.10.0:properties (default) @ ERDDAP ---
+[INFO]
+[INFO] --- enforcer:3.6.2:enforce (enforce-maven) @ ERDDAP ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO]
+[INFO] --- enforcer:3.6.2:enforce (no-test-data-in-src-test-resources) @ ERDDAP ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.files.RequireFilesDontExist passed
+[INFO]
+[INFO] --- antrun:3.2.0:run (make-data-dir) @ ERDDAP ---
+[INFO] Executing tasks
+[INFO]     [mkdir] Created dir: /app/target/data
+[INFO] Executed tasks
+[INFO]
+[INFO] --- download:1.13.0:wget (download-content) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- download:1.13.0:wget (download-etopo) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- download:1.13.0:wget (download-ref) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- jacoco:0.8.14:prepare-agent (before-unit-test-execution) @ ERDDAP ---
+[INFO] surefire.jacoco.args set to -javaagent:/home/jules/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/app/target/jacoco-output/jacoco-unit-tests.exec
+[INFO]
+[INFO] --- git-code-format:5.4:install-hooks (install-formatter-hook) @ ERDDAP ---
+[INFO] Installing git hooks
+[INFO] Installed git hooks
+[INFO]
+[INFO] --- resources:3.4.0:resources (default-resources) @ ERDDAP ---
+[INFO] Copying 113 resources from src/main/resources to target/classes
+[INFO]
+[INFO] --- compiler:3.15.0:compile (default-compile) @ ERDDAP ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 487 source files with javac [debug target 21] to target/classes
+[WARNING] /app/WEB-INF/classes/gov/noaa/pfel/erddap/util/EDStatic.java:[2443,23] stop() in java.lang.Thread has been deprecated and marked for removal
+[WARNING] /app/WEB-INF/classes/gov/noaa/pfel/erddap/util/EDStatic.java:[2540,15] stop() in java.lang.Thread has been deprecated and marked for removal
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UIntArray.java:[1378,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UIntArray.java:[1393,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UIntArray.java:[1416,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UIntArray.java:[1428,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/ULongArray.java:[424,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/ULongArray.java:[1175,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/ULongArray.java:[1369,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/ULongArray.java:[1384,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[200,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[425,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[1183,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[1370,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[1387,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[1400,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/array/UShortArray.java:[1415,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2509,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2510,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2511,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2772,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2773,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2862,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[2875,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3069,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3085,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3096,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3107,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3118,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3259,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[3274,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4481,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4498,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4552,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4695,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4728,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4909,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[4971,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Calendar2.java:[5077,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[450,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[710,13] [EmptyCatch] Caught exceptions should not be ignored
+    (see https://google.github.io/styleguide/javaguide.html#s6.2-caught-exceptions)
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[739,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[857,7] [EmptyCatch] Caught exceptions should not be ignored
+    (see https://google.github.io/styleguide/javaguide.html#s6.2-caught-exceptions)
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[896,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[918,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[1161,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[1558,9] [EmptyCatch] Caught exceptions should not be ignored
+    (see https://google.github.io/styleguide/javaguide.html#s6.2-caught-exceptions)
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[1709,9] [EmptyCatch] Caught exceptions should not be ignored
+    (see https://google.github.io/styleguide/javaguide.html#s6.2-caught-exceptions)
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[1994,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[1995,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[2012,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/File2.java:[2076,7] [EmptyCatch] Caught exceptions should not be ignored
+    (see https://google.github.io/styleguide/javaguide.html#s6.2-caught-exceptions)
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Image2.java:[108,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Image2.java:[128,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Image2.java:[162,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[590,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1220,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1231,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1395,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1419,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1615,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1882,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1907,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1937,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1962,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[1990,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[2013,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[2035,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[2036,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[2049,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/Math2.java:[2050,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[41,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[56,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[67,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[78,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[79,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[90,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[241,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[254,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[268,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ResourceBundle2.java:[269,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptCalendar2.java:[142,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptCalendar2.java:[152,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptCalendar2.java:[186,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[681,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[692,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[773,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[783,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[927,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1055,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1071,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1088,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1105,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1120,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1131,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1152,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1153,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1164,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptMath2.java:[1165,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[WARNING] /app/WEB-INF/classes/com/cohort/util/ScriptString2.java:[22,6] [EmptyBlockTag] A block tag (@param, @return, @throws, @deprecated) has an empty description. Block tags without descriptions don't add much value for future readers of the code; consider removing the tag entirely or adding a description.
+    (see https://google.github.io/styleguide/javaguide.html#s7.1.3-javadoc-block-tags)
+  Did you mean '*'?
+[INFO] /app/WEB-INF/classes/dods/dap/DConnect.java: Some input files use or override a deprecated API.
+[INFO] /app/WEB-INF/classes/dods/dap/DConnect.java: Recompile with -Xlint:deprecation for details.
+[INFO] /app/WEB-INF/classes/com/cohort/util/String2.java: Some input files use unchecked or unsafe operations.
+[INFO] /app/WEB-INF/classes/com/cohort/util/String2.java: Recompile with -Xlint:unchecked for details.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:04 min
+[INFO] Finished at: 2026-02-25T05:17:29Z
+[INFO] ------------------------------------------------------------------------

@@ -192,7 +192,7 @@ public class TimePeriods {
   /**
    * Find the closest time period in a list.
    *
-   * @param nHours
+   * @param nHours the nHours
    * @param list is a String[] with the valid options, all of which must be in OPTIONS.
    * @return index in list for the closest time period. If value is NaN, this returns the index of
    *     the option in list closest to "1 day".

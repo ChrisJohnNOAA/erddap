@@ -181,7 +181,7 @@ public class DConnect {
   /**
    * This allows you to change openConnectionMaxRetry from the default of 3.
    *
-   * @param maxRetry
+   * @param maxRetry the maxRetry
    */
   public void setOpenConnectionMaxRetry(int maxRetry) {
     // Bob Simons added this method
@@ -191,7 +191,7 @@ public class DConnect {
   /**
    * This allows you to change getDataMaxRetry from the default of 5.
    *
-   * @param maxRetry
+   * @param maxRetry the maxRetry
    */
   public void setGetDataMaxRetry(int maxRetry) {
     // Bob Simons added this method
@@ -294,17 +294,17 @@ public class DConnect {
             //  break;
             //System.out.println("DConnect available==0; retry open ("+retry+") "+url);
             //try { Thread.currentThread().sleep(backoff); }
-            //catch (InterruptedException ie) {}
+            //catch (InterruptedException ignored) { /* ignore */ }
 
           } catch (NullPointerException e) {
             String2.log("DConnect NullPointer; retry open ("+retry+") "+url);
             try { Thread.sleep(backoff); }
-            catch (InterruptedException ie) {}
+            catch (InterruptedException ignored) { /* ignore */ }
 
           } catch (FileNotFoundException e) {
             String2.log("DConnect FileNotFound; retry open ("+retry+") "+url);
             try { Thread.sleep(backoff); }
-            catch (InterruptedException ie) {}
+            catch (InterruptedException ignored) { /* ignore */ }
           }
 
           if (retry == openConnectionMaxRetry)
@@ -466,7 +466,8 @@ public class DConnect {
 
         try {
           Thread.sleep(backoff);
-        } catch (InterruptedException ie) {
+        } catch (InterruptedException ignored) {
+        // ignore
         }
       }
 
@@ -570,7 +571,8 @@ public class DConnect {
         if (bytesRead == -1) break;
         out.write(buffer, 0, bytesRead);
       }
-    } catch (IOException e) {
+    } catch (IOException ignored) {
+    // ignore
     }
   }
 
@@ -589,7 +591,8 @@ public class DConnect {
       String2.log("dump bytes avail=" + is.available());
       dumpBytes(is, 20);
 
-    } catch (java.io.EOFException e) {
+    } catch (java.io.EOFException ignored) {
+    // ignore
     }
   }
 
@@ -601,7 +604,8 @@ public class DConnect {
         String2.log(count + " " + d.readByte());
         count++;
       }
-    } catch (java.io.IOException e) {
+    } catch (java.io.IOException ignored) {
+    // ignore
     }
   }
 

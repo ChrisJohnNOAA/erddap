@@ -309,7 +309,7 @@ public class DoubleArray extends PrimitiveArray {
    * This reads one value from the StrutureData and adds it to this PA.
    *
    * @param sd from an .nc file
-   * @param memberName
+   * @param memberName the memberName
    */
   @Override
   public void add(final StructureData sd, final String memberName) {
@@ -967,7 +967,7 @@ public class DoubleArray extends PrimitiveArray {
    * difference (or "" if equal). Here NaN in one array equals NaN in another array (whereas Java
    * would say false).
    *
-   * @param o
+   * @param o the o
    * @return a String describing the difference (or "" if equal). o=null doesn't throw an exception.
    */
   @Override
@@ -1134,7 +1134,7 @@ public class DoubleArray extends PrimitiveArray {
    * This reads/appends double values to this PrimitiveArray from a DODS DataInputStream, and is
    * thus the complement of externalizeForDODS.
    *
-   * @param dis
+   * @param dis the dis
    * @throws IOException if trouble
    */
   @Override
@@ -1149,7 +1149,7 @@ public class DoubleArray extends PrimitiveArray {
    * This writes array[index] to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
-   * @param index
+   * @param index the index
    * @throws Exception if trouble
    */
   @Override
