@@ -5041,8 +5041,7 @@ public class String2 {
         }
         buf[offset++] = (char) c;
       }
-    } catch (Exception ignored) {
-    // ignore
+    } catch (Exception ignored) { // ignore
     }
     maskingthread.stopMasking();
     if (offset == 0) {

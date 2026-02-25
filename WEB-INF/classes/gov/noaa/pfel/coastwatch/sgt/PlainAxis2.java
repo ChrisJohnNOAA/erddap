@@ -156,8 +156,7 @@ public class PlainAxis2 extends PlainAxis {
         label.setLayer(graph_.getLayer());
         try {
           label.draw(g);
-        } catch (LayerNotFoundException ignored) {
-        // ignore
+        } catch (LayerNotFoundException ignored) { // ignore
         }
         x = x + delta * labelInterval_;
       }
@@ -170,8 +169,7 @@ public class PlainAxis2 extends PlainAxis {
         title.setOrientation(SGLabel.HORIZONTAL);
         try {
           title.draw(g);
-        } catch (LayerNotFoundException ignored) {
-        // ignore
+        } catch (LayerNotFoundException ignored) { // ignore
         }
       }
     } else { // orientation is vertical
@@ -245,8 +243,7 @@ public class PlainAxis2 extends PlainAxis {
         label.setLayer(graph_.getLayer());
         try {
           label.draw(g);
-        } catch (LayerNotFoundException ignored) {
-        // ignore
+        } catch (LayerNotFoundException ignored) { // ignore
         }
         y = y + delta * labelInterval_;
       }
@@ -259,8 +256,7 @@ public class PlainAxis2 extends PlainAxis {
         title.setOrientation(SGLabel.VERTICAL);
         try {
           title.draw(g);
-        } catch (LayerNotFoundException ignored) {
-        // ignore
+        } catch (LayerNotFoundException ignored) { // ignore
         }
       }
     }

@@ -1445,8 +1445,7 @@ public class LoadDatasets extends Thread {
       if (xmlReader != null)
         try {
           xmlReader.close();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
     }
   }

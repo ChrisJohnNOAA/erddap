@@ -888,8 +888,7 @@ public class EDDTableFromDatabase extends EDDTable {
             String2.log("The existing connection isn't working. Closing it and creating a new one...");
             try {
                 connection.close();
-            } catch (Throwable ignored) {
-            // ignore
+            } catch (Throwable ignored) { // ignore
             }
             connection = null; //so new one will be created below
         }
@@ -1180,13 +1179,11 @@ public class EDDTableFromDatabase extends EDDTable {
     } catch (Throwable t) {
       try {
         connection.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       try {
         if (statement != null) statement.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
 
       EDStatic.rethrowClientAbortException(t); // first thing in catch{}
@@ -1386,13 +1383,11 @@ public class EDDTableFromDatabase extends EDDTable {
       // free the database resources
       try {
         if (rs != null) rs.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       try {
         if (con != null) con.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
     }
 
@@ -1607,13 +1602,11 @@ public class EDDTableFromDatabase extends EDDTable {
       // free the database resources
       try {
         if (rs != null) rs.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       try {
         if (con != null) con.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
     }
 

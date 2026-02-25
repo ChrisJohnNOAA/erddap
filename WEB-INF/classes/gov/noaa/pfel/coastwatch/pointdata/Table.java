@@ -3270,16 +3270,14 @@ public class Table {
 
       try {
         reader.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       reader = null;
 
     } catch (Exception e) {
       try {
         reader.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       if (!reallyVerbose) String2.log(msg + " failed.");
       throw e;
@@ -3594,8 +3592,7 @@ public class Table {
       if (bw != null) {
         try {
           bw.close();
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
       }
       File2.delete(fullFileName + randomInt);
@@ -4698,8 +4695,7 @@ public class Table {
     } catch (Exception e) {
       try {
         if (bos != null) bos.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       File2.delete(fullFileName + randomInt);
       File2.delete(fullFileName);
@@ -9526,13 +9522,11 @@ public class Table {
           dis = null;
           audioInputStream = null;
         }
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       try {
         if (audioInputStream != null) audioInputStream.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
 
       // clear()?
@@ -12966,8 +12960,7 @@ public class Table {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullName + randomInt);
       }
@@ -13503,8 +13496,7 @@ public class Table {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
       }
 
@@ -14072,8 +14064,7 @@ public class Table {
       if (os != null) {
         try {
           os.close();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
       }
 
@@ -14132,8 +14123,7 @@ public class Table {
     } catch (Exception e) {
       try {
         if (os != null) os.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
 
       File2.delete(fullFileName + randomInt);
@@ -14910,8 +14900,7 @@ public class Table {
       if (bw != null) {
         try {
           bw.close();
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
       }
       File2.delete(fullFileName + randomInt);
@@ -15427,8 +15416,7 @@ public class Table {
       if (writer != null)
         try {
           writer.close();
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
 
       throw t;
@@ -15636,8 +15624,7 @@ public class Table {
             long tl = modifiedPA.getLong(row);
             newMod = tl == Long.MAX_VALUE? "" : //show hh:mm, not more
                 Calendar2.formatAsDDMonYYYY(Calendar2.newGCalendarZulu(tl)).substring(0, 17);
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
         newModifiedPA.add(newMod);
     }
@@ -15660,8 +15647,7 @@ public class Table {
                  tl >= lim * Math2.BytesPerGB? (tl / Math2.BytesPerGB) + "G" :
                  tl >= lim * Math2.BytesPerMB? (tl / Math2.BytesPerMB) + "M" :
                  tl >= lim * Math2.BytesPerKB? (tl / Math2.BytesPerKB) + "K" : tl + "");
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
         newSizePA.add(newSize);
     }

@@ -1197,8 +1197,7 @@ public class Grid {
               sa.add(Calendar2.epochSecondsToIsoStringTZ(pa.getDouble(i)));
           String2.log("time values=" + sa);
 
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       */
       // get the dataVariable
@@ -2322,8 +2321,7 @@ public class Grid {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(directory + randomInt);
         ncWriter = null;
@@ -2472,8 +2470,7 @@ public class Grid {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(directory + randomInt);
         ncWriter = null;

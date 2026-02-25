@@ -1645,8 +1645,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
     } finally {
       try {
         if (in != null) in.close();
-      } catch (Throwable ignored) {
-      // ignore
+      } catch (Throwable ignored) { // ignore
       }
     }
     return completelySuccessful.toString();

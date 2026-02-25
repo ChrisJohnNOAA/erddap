@@ -1422,8 +1422,7 @@ public class EDStatic {
         if (emailLogFile != null) {
           try {
             emailLogFile.close();
-          } catch (Throwable ignored) {
-          // ignore
+          } catch (Throwable ignored) { // ignore
           }
           emailLogFile = null;
         }
@@ -1458,14 +1457,12 @@ public class EDStatic {
     } catch (Throwable t) {
       try {
         String2.log(MustBe.throwable("Error: Writing to emailLog failed.", t));
-      } catch (Throwable ignored) {
-      // ignore
+      } catch (Throwable ignored) { // ignore
       }
       if (emailLogFile != null) {
         try {
           emailLogFile.close();
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
         emailLogFile = null;
       }
@@ -1725,8 +1722,7 @@ public class EDStatic {
                 + (uBean.getFreeSwapSpaceSize() / Math2.BytesPerMB)
                 + "MB\n");
       }
-    } catch (Exception ignored) {
-    // ignore
+    } catch (Exception ignored) { // ignore
     }
     sb.append("Number of active requests=" + activeRequests.size() + "\n");
   }
@@ -2478,8 +2474,7 @@ public class EDStatic {
       luceneIndexSearcher = null;
       try {
         if (luceneIndexReader != null) luceneIndexReader.close();
-      } catch (Throwable ignored) {
-      // ignore
+      } catch (Throwable ignored) { // ignore
       }
       luceneIndexReader = null;
       luceneDocNToDatasetID = null;
@@ -2488,8 +2483,7 @@ public class EDStatic {
         if (luceneIndexWriter != null)
           // indices will be thrown away, so don't make pending changes
           luceneIndexWriter.close();
-      } catch (Throwable ignored) {
-      // ignore
+      } catch (Throwable ignored) { // ignore
       }
       luceneIndexWriter = null;
 
@@ -3087,8 +3081,7 @@ public class EDStatic {
         if (luceneIndexReader != null) {
           try {
             luceneIndexReader.close();
-          } catch (Throwable ignored) {
-          // ignore
+          } catch (Throwable ignored) { // ignore
           }
           luceneIndexReader = null;
         }
@@ -3136,8 +3129,7 @@ public class EDStatic {
           if (luceneIndexReader != null) {
             try {
               luceneIndexReader.close();
-            } catch (Throwable ignored) {
-            // ignore
+            } catch (Throwable ignored) { // ignore
             }
             luceneIndexReader = null;
           }
@@ -4130,8 +4122,7 @@ public class EDStatic {
       try {
         // was if (!response.isCommitted())
         response.getOutputStream().close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
     }
   }

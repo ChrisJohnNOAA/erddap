@@ -148,13 +148,11 @@ public class PersistentTable implements AutoCloseable {
         if (raf != null) {
           try {
             raf.getChannel().force(true);
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
           try {
             raf.close();
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
           raf = null;
         }
@@ -173,13 +171,11 @@ public class PersistentTable implements AutoCloseable {
     if (raf != null) {
       try {
         flush();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       try {
         raf.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       raf = null;
     }

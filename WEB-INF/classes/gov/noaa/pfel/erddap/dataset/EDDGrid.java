@@ -6058,8 +6058,7 @@ public abstract class EDDGrid extends EDD {
         if (ncWriter != null) {
           try {
             ncWriter.abort();
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
           File2.delete(fullFileName + randomInt);
           ncWriter = null;
@@ -6253,8 +6252,7 @@ public abstract class EDDGrid extends EDD {
         if (ncWriter != null) {
           try {
             ncWriter.abort();
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
           File2.delete(fullFileName + randomInt);
           ncWriter = null;
@@ -9177,8 +9175,7 @@ public abstract class EDDGrid extends EDD {
       OutputStream out = outputStreamSource.outputStream("");
       if (out instanceof ZipOutputStream zos) zos.closeEntry();
       out.close();
-    } catch (Exception ignored) {
-    // ignore
+    } catch (Exception ignored) { // ignore
     }
   }
 

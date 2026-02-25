@@ -294,7 +294,7 @@ public class DConnect {
             //  break;
             //System.out.println("DConnect available==0; retry open ("+retry+") "+url);
             //try { Thread.currentThread().sleep(backoff); }
-            //catch (InterruptedException ignored) { /* ignore */ }
+            //catch (InterruptedException ie) {}
 
           } catch (NullPointerException e) {
             String2.log("DConnect NullPointer; retry open ("+retry+") "+url);
@@ -466,8 +466,7 @@ public class DConnect {
 
         try {
           Thread.sleep(backoff);
-        } catch (InterruptedException ignored) {
-        // ignore
+        } catch (InterruptedException ignored) { // ignore
         }
       }
 
@@ -571,8 +570,7 @@ public class DConnect {
         if (bytesRead == -1) break;
         out.write(buffer, 0, bytesRead);
       }
-    } catch (IOException ignored) {
-    // ignore
+    } catch (IOException ignored) { // ignore
     }
   }
 
@@ -591,8 +589,7 @@ public class DConnect {
       String2.log("dump bytes avail=" + is.available());
       dumpBytes(is, 20);
 
-    } catch (java.io.EOFException ignored) {
-    // ignore
+    } catch (java.io.EOFException ignored) { // ignore
     }
   }
 
@@ -604,8 +601,7 @@ public class DConnect {
         String2.log(count + " " + d.readByte());
         count++;
       }
-    } catch (java.io.IOException ignored) {
-    // ignore
+    } catch (java.io.IOException ignored) { // ignore
     }
   }
 

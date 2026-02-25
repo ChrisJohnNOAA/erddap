@@ -87,8 +87,7 @@ public class SimpleXMLReader {
     } catch (Exception e) {
       try {
         inputStream.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       reader = null;
       throw e;
@@ -554,8 +553,7 @@ public class SimpleXMLReader {
         reader.close();
         reader = null;
       }
-    } catch (Exception ignored) {
-    // ignore
+    } catch (Exception ignored) { // ignore
     }
   }
 

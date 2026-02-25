@@ -116,8 +116,7 @@ public class PaneProxy { // Bob Simons made public
           layerControl.draw(g);
         }
         // printing support removed; keep drawing focused on layers and controls
-      } catch (PaneNotFoundException ignored) {
-      // ignore
+      } catch (PaneNotFoundException ignored) { // ignore
       }
     }
   }
@@ -134,8 +133,7 @@ public class PaneProxy { // Bob Simons made public
         if (comp instanceof LayerControl layerControl) {
           layerControl.drawDraggableItems(g);
         }
-      } catch (PaneNotFoundException ignored) {
-      // ignore
+      } catch (PaneNotFoundException ignored) { // ignore
       }
     }
   }

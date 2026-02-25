@@ -89,8 +89,7 @@ public class GridDataAllAccessor implements AutoCloseable {
         for (int dv = 0; dv < nDv; dv++)
           try {
             if (dos[dv] != null) dos[dv].close();
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
       }
       gridDataAccessor.close();
@@ -135,8 +134,7 @@ public class GridDataAllAccessor implements AutoCloseable {
   public void releaseGetResources() {
     try {
       if (gridDataAccessor != null) gridDataAccessor.close();
-    } catch (Throwable ignored) {
-    // ignore
+    } catch (Throwable ignored) { // ignore
     }
   }
 
@@ -161,8 +159,7 @@ public class GridDataAllAccessor implements AutoCloseable {
         }
         dataPAType = null;
       }
-    } catch (Throwable ignored) {
-    // ignore
+    } catch (Throwable ignored) { // ignore
     }
   }
 }

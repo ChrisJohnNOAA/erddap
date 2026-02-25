@@ -8897,8 +8897,7 @@ public abstract class EDD {
       if (Calendar2.isNumericTimeUnits(tUnits)) {
         try {
           tUnits = Calendar2.cleanUpNumericTimeUnits(tUnits);
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
       }
 

@@ -122,8 +122,7 @@ class HeaderInputStream extends FilterInputStream {
         }
         b[off + i] = (byte) c;
       }
-    } catch (IOException ignored) {
-    // ignore
+    } catch (IOException ignored) { // ignore
     }
     return i;
   }

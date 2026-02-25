@@ -293,8 +293,7 @@ public class TimeAxis extends Axis implements Cloneable {
     label.setLayer(graph_.getLayer());
     try {
       label.draw(g);
-    } catch (LayerNotFoundException ignored) {
-    // ignore
+    } catch (LayerNotFoundException ignored) { // ignore
     }
     g.setColor(saved);
   }
@@ -318,8 +317,7 @@ public class TimeAxis extends Axis implements Cloneable {
     label.setLayer(graph_.getLayer());
     try {
       label.draw(g);
-    } catch (LayerNotFoundException ignored) {
-    // ignore
+    } catch (LayerNotFoundException ignored) { // ignore
     }
     g.setColor(saved);
   }

@@ -1292,8 +1292,7 @@ public class OpendapHelper {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullFileName + randomInt);
         ncWriter = null;
@@ -1745,8 +1744,7 @@ public class OpendapHelper {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullFileName + randomInt);
         ncWriter = null;

@@ -494,8 +494,7 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
                   String2.replaceAll(localSourceUrl, "/tabledap/", "/files/") + "/.csv");
           try {
             is.close();
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
         } catch (Exception e) {
           String2.log(

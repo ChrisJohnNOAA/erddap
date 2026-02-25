@@ -5113,8 +5113,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
       if (workManager != null) {
         try {
           workManager.forceShutdown();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         workManager = null;
       }

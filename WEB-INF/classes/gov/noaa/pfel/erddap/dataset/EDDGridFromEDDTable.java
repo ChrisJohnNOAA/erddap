@@ -791,13 +791,11 @@ public class EDDGridFromEDDTable extends EDDGrid {
       for (int col = 0; col < nCols; col++)
         try {
           twaDIS[col].close();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
       try {
         twa.releaseResources();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
     }
 

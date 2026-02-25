@@ -152,8 +152,7 @@ public class Subscriptions implements AutoCloseable {
     if (persistentTable != null) {
       try {
         persistentTable.close();
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
       persistentTable = null;
     }

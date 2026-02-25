@@ -139,8 +139,7 @@ public class GridDataRandomAccessor implements AutoCloseable {
           }
         }
       }
-    } catch (Throwable ignored) {
-    // ignore
+    } catch (Throwable ignored) { // ignore
     }
 
     try {
@@ -155,8 +154,7 @@ public class GridDataRandomAccessor implements AutoCloseable {
         }
         dataRaf = null;
       }
-    } catch (Throwable ignored) {
-    // ignore
+    } catch (Throwable ignored) { // ignore
     }
   }
 }

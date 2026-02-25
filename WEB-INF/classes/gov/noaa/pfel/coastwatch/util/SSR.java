@@ -731,8 +731,7 @@ public class SSR {
     } finally {
       try {
         if (smtpTransport != null) smtpTransport.close();
-      } catch (Throwable ignored) {
-      // ignore
+      } catch (Throwable ignored) { // ignore
       }
       emailLock.unlock();
     }

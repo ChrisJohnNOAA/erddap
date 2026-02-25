@@ -1010,8 +1010,7 @@ public class Erddap extends HttpServlet {
         }
         try {
           EDStatic.sendError(requestNumber, request, response, t);
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
         recordRequestResponseTime(response.getStatus(), request.getRequestURI(), responseTime);
         if (verbose) {

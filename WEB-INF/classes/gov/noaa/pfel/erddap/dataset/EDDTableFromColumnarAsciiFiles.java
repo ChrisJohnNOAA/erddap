@@ -1619,8 +1619,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
     } finally {
       try {
         if (xmlReader != null) xmlReader.close();
-      } catch (Throwable ignored) {
-      // ignore
+      } catch (Throwable ignored) { // ignore
       }
     }
 

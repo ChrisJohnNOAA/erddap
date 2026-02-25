@@ -3796,8 +3796,7 @@ public abstract class EDDTable extends EDD {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullName + randomInt);
         ncWriter = null;
@@ -4254,8 +4253,7 @@ public abstract class EDDTable extends EDD {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(ncCFName + randomInt);
         ncWriter = null;
@@ -4764,8 +4762,7 @@ public abstract class EDDTable extends EDD {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(ncCFName + randomInt);
         ncWriter = null;
@@ -14751,8 +14748,7 @@ public abstract class EDDTable extends EDD {
           try {
             twawm.releaseResources();
             twawm.close();
-          } catch (Exception ignored) {
-          // ignore
+          } catch (Exception ignored) { // ignore
           }
         }
       } else {
@@ -14780,8 +14776,7 @@ public abstract class EDDTable extends EDD {
           if (out instanceof ZipOutputStream zos) zos.closeEntry();
           out.close();
         }
-      } catch (Exception ignored) {
-      // ignore
+      } catch (Exception ignored) { // ignore
       }
     }
   }

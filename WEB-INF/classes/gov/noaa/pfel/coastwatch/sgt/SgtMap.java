@@ -1822,8 +1822,7 @@ public class SgtMap {
       if (JPane.debug) {
         try {
           String2.pressEnterToContinue();
-        } catch (Throwable ignored) {
-        // ignore
+        } catch (Throwable ignored) { // ignore
         }
       }
     }

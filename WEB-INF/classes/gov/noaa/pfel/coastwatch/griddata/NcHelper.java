@@ -2060,8 +2060,7 @@ public class NcHelper {
       if (ncWriter != null) {
         try {
           ncWriter.abort();
-        } catch (Exception ignored) {
-        // ignore
+        } catch (Exception ignored) { // ignore
         }
         File2.delete(fullName + randomInt);
         ncWriter = null;

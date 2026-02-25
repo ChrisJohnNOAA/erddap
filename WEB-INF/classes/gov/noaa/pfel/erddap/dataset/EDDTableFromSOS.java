@@ -717,8 +717,7 @@ public class EDDTableFromSOS extends EDDTable {
           try {
             String qrFile[] = File2.readFromFileUtf8(quickRestartFileName);
             String2.log(qrFile[1]);
-          } catch (Throwable ignored) {
-          // ignore
+          } catch (Throwable ignored) { // ignore
           }
         }
         throw new IllegalArgumentException(
