@@ -341,24 +341,6 @@ public class SSR {
   }
 
   /**
-   * Put the specified files in a zip file (without directory info). See
-   * http://javaalmanac.com/egs/java.util.zip/CreateZip.html . If a file named zipDirName already
-   * exists, it is overwritten.
-   *
-   * @param zipDirName the full name for the .zip file (path + name + ".zip")
-   * @param dirNames the full names of the files to be put in the zip file. These can use forward or
-   *     backslashes as directory separators. If a dirName is a directory, all the files in the
-   *     directory (recursively) will be included.
-   * @param timeOutSeconds (use -1 for no time out)
-   * @throws Exception if trouble
-   */
-  public static void zip(String zipDirName, String dirNames[], int timeOutSeconds)
-      throws Exception {
-
-    zip(zipDirName, dirNames, timeOutSeconds, false, "");
-  }
-
-  /**
    * Put the specified files in a zip file (with some directory info). See
    * http://javaalmanac.com/egs/java.util.zip/CreateZip.html . If a file named zipDirName already
    * exists, it is overwritten.
@@ -1742,9 +1724,10 @@ public class SSR {
             po < 0 ? urlString : urlString.substring(0, po),
             "application/x-www-form-urlencoded; charset=UTF-8",
             po < 0 ? "" : urlString.substring(po + 1));
-    BufferedReader bufReader =
-        new BufferedReader(new InputStreamReader((InputStream) ob3[1], (String) ob3[2]));
-    return readerToString(urlString, bufReader);
+    try (BufferedReader bufReader =
+        new BufferedReader(new InputStreamReader((InputStream) ob3[1], (String) ob3[2]))) {
+      return readerToString(urlString, bufReader);
+    }
   }
 
   /**

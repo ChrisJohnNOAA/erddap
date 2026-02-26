@@ -71,6 +71,7 @@ import gov.noaa.pfel.erddap.variable.EDVLatGridAxis;
 import gov.noaa.pfel.erddap.variable.EDVLonGridAxis;
 import gov.noaa.pfel.erddap.variable.EDVTimeGridAxis;
 import io.prometheus.metrics.model.snapshots.Unit;
+import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -389,6 +390,14 @@ public class Erddap extends HttpServlet {
     public void run() {
       EDStatic.destroy();
     }
+  }
+
+  public static final String ERDDAP_CONTEXT_ATTRIBUTE = "ERDDAP";
+
+  @Override
+  public void init(ServletConfig servletConfig) {
+    // add servlet to context so other servlets can access ERDDAP datasets directly
+    servletConfig.getServletContext().setAttribute(ERDDAP_CONTEXT_ATTRIBUTE, this);
   }
 
   /**
@@ -24973,9 +24982,11 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
     // add new info to categoryInfo
     addRemoveDatasetInfo(true, this.categoryInfo, dataset);
 
-    // clear the dataset's cache
-    // since axis values may have changed and "last" may have changed
-    File2.deleteAllFiles(dataset.cacheDirectory());
+    if (!dataset.isProcessingSubset()) {
+      // clear the dataset's cache
+      // since axis values may have changed and "last" may have changed
+      File2.deleteAllFiles(dataset.cacheDirectory());
+    }
 
     String change = dataset.changed(oldDataset);
     if (change.isEmpty() && dataset instanceof EDDTable) {

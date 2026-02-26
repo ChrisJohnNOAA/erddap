@@ -48,10 +48,10 @@
         <error-prone.version>2.41.0</error-prone.version>
         <prometheusVersion>1.5.0</prometheusVersion>
         <parquetVersion>1.17.0</parquetVersion>
-        <awssdkVersion>2.41.31</awssdkVersion>
-        <luceneVersion>10.3.2</luceneVersion>
+        <awssdkVersion>2.42.2</awssdkVersion>
+        <luceneVersion>10.4.0</luceneVersion>
         <nettyVersion>4.2.10.Final</nettyVersion>
-        <mavenTestPluginVersion>3.5.4</mavenTestPluginVersion>
+        <mavenTestPluginVersion>3.5.5</mavenTestPluginVersion>
         <jacocoMavenVersion>0.8.14</jacocoMavenVersion>
         <download.unpackWhenChanged>true</download.unpackWhenChanged>
     </properties>
@@ -64,9 +64,9 @@
               Browse either https://artifacts.unidata.ucar.edu/#browse/browse
              -->
         <repository>
-            <id>unidata-all</id>   
-            <name>UNIDATA All</name>
-            <url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
+            <id>unidata-releases</id>
+            <name>NSF Unidata</name>
+            <url>https://artifacts.unidata.ucar.edu/releases</url>
         </repository>
     </repositories>
 
@@ -216,7 +216,7 @@
                 <configuration>
                     <attachClasses>true</attachClasses>
                     <warSourceDirectory>${project.basedir}</warSourceDirectory>
-                    <warSourceExcludes>**/*.java, **/*.javaINACTIVE, **/*.javaInactive, **/*.java_NOT_YET, **/*.javaNOT_FINISHED, **/*.javaOLD, content/**, data/**, development/**, test-data/**, /src/test/**, target/**, src/**, WEB-INF/classes/gov/noaa/pfel/coastwatch/log.*, WEB-INF/lib/**, WEB-INF/NetCheck.*, WEB-INF/*.web.xml, WEB-INF/DoubleCenterGrids.sh, WEB-INF/FileVisitorDNLS.sh, WEB-INF/FindDuplicateTime.*, WEB-INF/GenerateO*, WEB-INF/GenerateT*, WEB-INF/GridSaveAs*, WEB-INF/incompleteMainCatalog.xml, WEB-INF/iobis.m, WEB-INF/obis.m, WEB-INF/MapViewer.*, WEB-INF/QN2005193*, WEB-INF/ValidateDataSetProperties*, WEB-INF/fonts/**, WEB-INF/temp/**, WEB-INF/ref/*.zip, *.*, translation/**, .mvn/**, .settings/**, .github/**, .vscode/**</warSourceExcludes>
+                    <warSourceExcludes>**/*.java, **/*.javaINACTIVE, **/*.javaInactive, **/*.java_NOT_YET, **/*.javaNOT_FINISHED, **/*.javaOLD, content/**, data/**, development/**, test-data/**, /src/test/**, target/**, src/**, WEB-INF/classes/gov/noaa/pfel/coastwatch/log.*, WEB-INF/lib/**, WEB-INF/NetCheck.*, WEB-INF/*.web.xml, WEB-INF/FileVisitorDNLS.sh, WEB-INF/incompleteMainCatalog.xml, WEB-INF/iobis.m, WEB-INF/obis.m, WEB-INF/QN2005193*, WEB-INF/ValidateDataSetProperties*, WEB-INF/fonts/**, WEB-INF/temp/**, WEB-INF/ref/*.zip, *.*, translation/**, .mvn/**, .settings/**, .github/**, .vscode/**</warSourceExcludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -547,7 +547,6 @@
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/Calendar2.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/DoubleObject.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/File2.java</file>
-                        <file>${project.basedir}/WEB-INF/classes/com/cohort/util/HashDigest.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/Image2.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/LRUCache.java</file>
                         <file>${project.basedir}/WEB-INF/classes/com/cohort/util/LICENSE.txt</file>
@@ -802,13 +801,18 @@
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>10.7</version>
+                <version>10.8</version>
             </dependency>
             <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
                 <version>1.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>aircompressor</artifactId>
+                <version>2.0.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -870,11 +874,19 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.awaitility/awaitility -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.3.0</version>
+            <scope>test</scope>
+        </dependency>
+
        <!-- https://mvnrepository.com/artifact/com.github.librepdf/openpdf -->
         <dependency>
             <groupId>com.github.librepdf</groupId>
             <artifactId>openpdf</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-core 
@@ -1217,7 +1229,7 @@
          <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
-            <version>3.4.2</version>
+            <version>3.4.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>
