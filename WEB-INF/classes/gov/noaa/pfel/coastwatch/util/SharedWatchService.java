@@ -61,7 +61,7 @@ public class SharedWatchService {
     if (fs == null)
       throw new RuntimeException("getFileSystem returned null for the " + watchDir + " path.");
 
-    String fsId = SharedWatchService.systemToId(fs);
+    String fsId = SharedWatchService.systemToID(fs);
 
     WatchService watchService = null;
     if (fileSystemToService.containsKey(fsId)) {
