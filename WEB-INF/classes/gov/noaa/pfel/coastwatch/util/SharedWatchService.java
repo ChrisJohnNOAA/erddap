@@ -61,7 +61,7 @@ public class SharedWatchService {
     if (fs == null)
       throw new RuntimeException("getFileSystem returned null for the " + watchDir + " path.");
 
-    String fsId = SharedWatchService.systemToID(fs);
+    String fsId = SharedWatchService.getFileStoreId(watchPath);
 
     WatchService watchService = null;
     if (fileSystemToService.containsKey(fsId)) {
@@ -93,12 +93,20 @@ public class SharedWatchService {
     keyToHandlerId.put(key, handler);
   }
 
-  private static String systemToID(FileSystem system) {
-    StringBuilder id = new StringBuilder();
-    for (FileStore store : system.getFileStores()) {
-      id.append(store.name()).append(store.type());
+  private static String getFileStoreId(Path path) throws IOException {
+    FileStore store = Files.getFileStore(path);
+    // On Linux/Unix, 'unix:dev' is the most unique identifier for a partition.
+    // It is much safer than store.name() which can be duplicated.
+    try {
+        Object devId = store.getAttribute("unix:dev");
+        if (devId != null) {
+            return store.type() + ":" + devId.toString();
+        }
+    } catch (IllegalArgumentException e) {
+        // Fallback for non-Unix systems or if the attribute isn't supported
     }
-    return id.toString();
+    // Secondary fallback: use name and type of ONLY this specific store
+    return store.name() + store.type();
   }
 
   /**
