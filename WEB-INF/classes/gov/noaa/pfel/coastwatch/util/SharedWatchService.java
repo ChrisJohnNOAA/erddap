@@ -95,14 +95,23 @@ public class SharedWatchService {
   }
 
   private static String systemToID(FileSystem system) {
-    if (system == FileSystems.getDefault()) {
-        // Restore the "one service for the machine" behavior 
-        // without calling the dangerous getFileStores()
-        return "default";
+    // 1. Use the Provider name to group by OS implementation (e.g., Linux vs. Jimfs).
+    String provider = system.provider().getClass().getName();
+
+    // 2. Get the primary root (e.g., "/" on Linux).
+    // This is fast and non-blocking.
+    String rootStr = "";
+    try {
+        Iterable<Path> roots = system.getRootDirectories();
+        if (roots != null && roots.iterator().hasNext()) {
+            rootStr = roots.iterator().next().toString();
+        }
+    } catch (Exception e) {
+        // Fallback to identity if roots can't be accessed
+        rootStr = Integer.toHexString(System.identityHashCode(system));
     }
-    // For non-default file systems (like Jimfs in tests), 
-    // use the hash code to keep it unique but safe.
-    return "fs:" + system.hashCode();
+
+    return provider + ":" + rootStr;
   }
 
   /**
