@@ -6,6 +6,7 @@ import com.cohort.util.String2;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
@@ -94,11 +95,23 @@ public class SharedWatchService {
   }
 
   private static String systemToID(FileSystem system) {
-    StringBuilder id = new StringBuilder();
-    for (FileStore store : system.getFileStores()) {
-      id.append(store.name()).append(store.type());
+    // 1. Use the Provider name to group by OS implementation (e.g., Linux vs. Jimfs).
+    String provider = system.provider().getClass().getName();
+
+    // 2. Get the primary root (e.g., "/" on Linux).
+    // This is fast and non-blocking.
+    String rootStr = "";
+    try {
+        Iterable<Path> roots = system.getRootDirectories();
+        if (roots != null && roots.iterator().hasNext()) {
+            rootStr = roots.iterator().next().toString();
+        }
+    } catch (Exception e) {
+        // Fallback to identity if roots can't be accessed
+        rootStr = Integer.toHexString(System.identityHashCode(system));
     }
-    return id.toString();
+
+    return provider + ":" + rootStr;
   }
 
   /**
