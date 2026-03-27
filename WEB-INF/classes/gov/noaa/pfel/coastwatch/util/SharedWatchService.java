@@ -6,7 +6,6 @@ import com.cohort.util.String2;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
@@ -62,7 +61,7 @@ public class SharedWatchService {
     if (fs == null)
       throw new RuntimeException("getFileSystem returned null for the " + watchDir + " path.");
 
-    String fsId = SharedWatchService.getFileStoreId(watchPath);
+    String fsId = SharedWatchService.systemToId(fs);
 
     WatchService watchService = null;
     if (fileSystemToService.containsKey(fsId)) {
@@ -94,20 +93,15 @@ public class SharedWatchService {
     keyToHandlerId.put(key, handler);
   }
 
-  private static String getFileStoreId(Path path) throws IOException {
-    FileStore store = Files.getFileStore(path);
-    // On Linux/Unix, 'unix:dev' is the most unique identifier for a partition.
-    // It is much safer than store.name() which can be duplicated.
-    try {
-        Object devId = store.getAttribute("unix:dev");
-        if (devId != null) {
-            return store.type() + ":" + devId.toString();
-        }
-    } catch (IllegalArgumentException e) {
-        // Fallback for non-Unix systems or if the attribute isn't supported
+  private static String systemToID(FileSystem system) {
+    if (system == FileSystems.getDefault()) {
+        // Restore the "one service for the machine" behavior 
+        // without calling the dangerous getFileStores()
+        return "default";
     }
-    // Secondary fallback: use name and type of ONLY this specific store
-    return store.name() + store.type();
+    // For non-default file systems (like Jimfs in tests), 
+    // use the hash code to keep it unique but safe.
+    return "fs:" + system.hashCode();
   }
 
   /**
