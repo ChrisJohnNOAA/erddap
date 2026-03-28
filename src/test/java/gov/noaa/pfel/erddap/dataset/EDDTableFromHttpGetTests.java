@@ -305,6 +305,9 @@ class EDDTableFromHttpGetTests {
             + ",bsimons,0\n";
     Test.ensureEqual(results, expected, "results=" + results);
 
+    // Ensure timestamp2 > timestamp1
+    Math2.sleep(2);
+
     // *** add 2 rows via array
     String2.log("\n>> insertOrDelete #2: insert 2 rows via array");
     results =
@@ -359,6 +362,9 @@ class EDDTableFromHttpGetTests {
             + ",bsimons,0\n";
     Test.ensureEqual(results, expected, "results=" + results);
 
+    // Ensure we can distinguish timestamp1 from later timestamps
+    Math2.sleep(2);
+
     // read the data with timestamp from first insert
     table =
         EDDTableFromHttpGet.readFile(
@@ -376,6 +382,9 @@ class EDDTableFromHttpGetTests {
             + timestamp1
             + ",bsimons,0\n";
     Test.ensureEqual(results, expected, "results=" + results);
+
+    // Ensure timestamp3 > timestamp2
+    Math2.sleep(2);
 
     // *** change all values in a row
     String2.log("\n>> insertOrDelete #3: change all values in a row");
@@ -430,6 +439,9 @@ class EDDTableFromHttpGetTests {
             + ",bsimons,0\n";
     Test.ensureEqual(results, expected, "results=" + results);
 
+    // Ensure timestamp4 > timestamp3
+    Math2.sleep(2);
+
     // *** change values in a row but only specify a few
     String2.log("\n>> insertOrDelete #4: change a few values in a row");
     results =
@@ -478,6 +490,9 @@ class EDDTableFromHttpGetTests {
             + timestamp2
             + ",bsimons,0\n";
     Test.ensureEqual(results, expected, "results=" + results);
+
+    // Ensure timestamp5 > timestamp4
+    Math2.sleep(2);
 
     // *** delete a row
     String2.log("\n>> EDDTableFromHttpGet.insertOrDelete #4: delete a row");
@@ -1401,7 +1416,8 @@ class EDDTableFromHttpGetTests {
     results = File2.directReadFrom88591File(dir + tName);
     String2.log(results);
     long versioningTime = System.currentTimeMillis();
-    Math2.sleep(1);
+    // Ensure later inserts have a strictly later timestamp than versioningTime
+    Math2.sleep(2);
     String versioningExpected =
         "stationID,time,latitude,longitude,airTemp,waterTemp,timestamp,author,command\n"
             + ",UTC,degrees_north,degrees_east,degree_C,degree_C,UTC,,\n"
@@ -1459,6 +1475,8 @@ class EDDTableFromHttpGetTests {
     EDStatic.config.developmentMode = true;
     // overwrite and delete a bunch of data
     for (int i = 0; i < 2; i++) {
+      // Ensure each step has a unique timestamp for rollback tests
+      Math2.sleep(2);
       // overwrite the first 2
       tName =
           eddTable.makeNewFileForDapQuery(
@@ -1476,6 +1494,7 @@ class EDDTableFromHttpGetTests {
               dir,
               eddTable.className() + "_insert5_" + i,
               ".insert");
+      Math2.sleep(2);
       // delete the first 2
       tName =
           eddTable.makeNewFileForDapQuery(
@@ -1490,6 +1509,7 @@ class EDDTableFromHttpGetTests {
               eddTable.className() + "_delete6_" + i,
               ".delete");
 
+      Math2.sleep(2);
       // overwrite the first 2
       tName =
           eddTable.makeNewFileForDapQuery(
@@ -1507,6 +1527,7 @@ class EDDTableFromHttpGetTests {
               dir,
               eddTable.className() + "_insert7_" + i,
               ".insert");
+      Math2.sleep(2);
       // delete the first 2
       tName =
           eddTable.makeNewFileForDapQuery(
