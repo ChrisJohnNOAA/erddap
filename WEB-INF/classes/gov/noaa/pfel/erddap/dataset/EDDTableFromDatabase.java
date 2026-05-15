@@ -734,8 +734,8 @@ public class EDDTableFromDatabase extends EDDTable {
       TableWriter tableWriter)
       throws Throwable {
 
-    if (handleViaFixedOrSubsetVariables(language, loggedInAs, requestUrl, userDapQuery, tableWriter))
-      return;
+    if (handleViaFixedOrSubsetVariables(
+        language, loggedInAs, requestUrl, userDapQuery, tableWriter)) return;
 
     // good summary of using statements, queries, resultSets, ...
     //  https://docs.oracle.com/javase/7/docs/api/java/sql/ResultSet.html
@@ -870,12 +870,11 @@ public class EDDTableFromDatabase extends EDDTable {
       // then ensure needOtherSourceNames are in resultsVariables
       for (String sourceName : needOtherSourceNames) {
         if (sourceNamesSet.add(sourceName)) // if not already present
-          resultsVariables.add(sourceName);
+        resultsVariables.add(sourceName);
       }
     }
 
     // no need to further prune constraints
-
 
     // make the connection
     Connection connection = null;
@@ -1094,12 +1093,12 @@ public class EDDTableFromDatabase extends EDDTable {
         tableColToRsCol[rv] =
             rs.findColumn(tName); // stored as 1..    throws Throwable if not found
       }
-      int triggerNRows =
-          EDStatic.config.partialRequestMaxCells / Math.max(1, resultsEDVs.length);
+      int triggerNRows = EDStatic.config.partialRequestMaxCells / Math.max(1, resultsEDVs.length);
       Table table = makeEmptySourceTable(resultsEDVs, triggerNRows);
       PrimitiveArray paArray[] = new PrimitiveArray[nRv];
       for (int rv = 0; rv < nRv; rv++) paArray[rv] = table.getColumn(rv);
-      PrimitiveArray dummyPa = nRv == 0 ? PrimitiveArray.factory(PAType.INT, triggerNRows, false) : null;
+      PrimitiveArray dummyPa =
+          nRv == 0 ? PrimitiveArray.factory(PAType.INT, triggerNRows, false) : null;
 
       // process the resultSet rows of data
       while (true) {
