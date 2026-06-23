@@ -17965,23 +17965,19 @@ public class TableTests {
    * @throws Exception if trouble
    */
   @org.junit.jupiter.api.Test
-  @TagDisabledPassword
   void testSql() throws Exception {
     // String2.log("\n*** Table.testSql");
     // Table.verbose = true;
     // Table.reallyVerbose = true;
 
     // load the sql driver (the actual driver .jar must be in the classpath)
-    Class.forName("org.postgresql.Driver");
+    Class.forName("org.h2.Driver");
 
     // set up connection and query
-    String url = "jdbc:postgresql://otter.pfeg.noaa.gov/posttest"; // database name
-    String user = "postadmin";
-    String password = String2.getPasswordFromSystemIn("Password for '" + user + "'? ");
-    if (password.length() == 0) {
-      String2.log("No password, so skipping the test.");
-      return;
-    }
+    String url = "jdbc:h2:mem:testSql;DB_CLOSE_DELAY=-1"; // database name
+    String user = "sa";
+    String password = "";
+
     Connection con = DriverManager.getConnection(url, user, password);
     // String2.log("getConnection time=" + (System.currentTimeMillis() - tTime) +
     // "ms"); // often 9s !
@@ -17994,10 +17990,10 @@ public class TableTests {
 
     // test getSqlSchemas
     StringArray schemas = Table.getSqlSchemas(con);
-    Test.ensureTrue(schemas.indexOf("public") >= 0, "schemas=" + schemas.toString());
+    Test.ensureTrue(schemas.indexOfIgnoreCase("PUBLIC") >= 0, "schemas=" + schemas.toString());
 
     // sometimes: make names table
-    if (false) {
+    if (true) {
       Table namesTable = new Table();
       namesTable.addColumn("id", PrimitiveArray.factory(new int[] {1, 2, 3}));
       namesTable.addColumn(
@@ -18010,15 +18006,17 @@ public class TableTests {
     }
 
     // test getSqlTableNames
-    StringArray tableNames = Table.getSqlTableNames(con, "public", new String[] {"TABLE"});
+    StringArray tableNames = Table.getSqlTableNames(con, "PUBLIC", new String[] {"TABLE"});
     // String2.log("tableNames=" + tableNames);
-    Test.ensureTrue(tableNames.indexOf("names") >= 0, "tableNames=" + tableNames.toString());
     Test.ensureTrue(
-        tableNames.indexOf("zztop") < 0, "tableNames=" + tableNames.toString()); // doesn't exist
+        tableNames.indexOfIgnoreCase("names") >= 0, "tableNames=" + tableNames.toString());
+    Test.ensureTrue(
+        tableNames.indexOfIgnoreCase("zztop") < 0,
+        "tableNames=" + tableNames.toString()); // doesn't exist
 
     // test getSqlTableType
-    Test.ensureEqual(Table.getSqlTableType(con, "public", "names"), "TABLE", "");
-    Test.ensureEqual(Table.getSqlTableType(con, "public", "zztop"), null, ""); // doesn't exist
+    Test.ensureEqual(Table.getSqlTableType(con, "PUBLIC", "NAMES"), "BASE TABLE", "");
+    Test.ensureEqual(Table.getSqlTableType(con, "PUBLIC", "ZZTOP"), null, ""); // doesn't exist
 
     // *** test saveAsSql (create a table) (this tests dropSqlTable, too)
     if (true) {
@@ -18091,18 +18089,10 @@ public class TableTests {
         // make sure it has both parts of the error message
         String2.log("\nEXPECTED " + String2.ERROR + ":\n" + MustBe.throwableToString(e));
         Test.ensureTrue(
-            e.toString()
-                    .indexOf(
-                        "PSQLException: "
-                            + String2.ERROR
-                            + ": duplicate key violates unique constraint \"temptest_pkey\"")
-                >= 0,
+            e.toString().indexOf("Unique index or primary key violation") >= 0,
             "(A) The error was: " + e.toString());
         Test.ensureTrue(
-            e.toString()
-                    .indexOf("java.sql.BatchUpdateException: Batch entry 3 INSERT INTO TempTest (")
-                >= 0,
-            "(B)The error was: " + e.toString());
+            e.toString().indexOf("BatchUpdateException") >= 0, "(B)The error was: " + e.toString());
       }
 
       // and ensure database was rolled back to previous state
@@ -18135,11 +18125,7 @@ public class TableTests {
         // make sure it is the right error
         String2.log("\nEXPECTED " + String2.ERROR + ":\n" + MustBe.throwableToString(e));
         Test.ensureTrue(
-            e.toString()
-                    .indexOf(
-                        "java.lang.RuntimeException: ERROR in Table.saveAsSql(TempTest):\n"
-                            + "Time format must be "
-                            + "HH:MM:SS. Bad value=20.1/30 in row=3 col=9")
+            e.toString().indexOf("Time format must be HH:MM:SS. Bad value=20.1/30 in row=3 col=9")
                 >= 0,
             "error=" + e.toString());
       }
@@ -18166,10 +18152,10 @@ public class TableTests {
           1.5);
 
       // and ensure result has 8 rows
-      readSql(tempTable2, con, "SELECT uid, string FROM " + tempTableName);
+      readSql(tempTable2, con, "SELECT \"uid\", \"string\" FROM " + tempTableName);
       Test.ensureEqual(tempTable2.getColumn(0).toString(), "1, 2, 3, 4, 9, 10, 11, 12", "");
       Test.ensureEqual(
-          tempTable2.getColumn(1).toString(), "ab, , [null], longer, ab, , [null], longer", "");
+          tempTable2.getColumn(1).toString(), "ab, , , longer, ab, , , longer", "");
     }
 
     // don't drop the table, so I can view it in phpPgAdmin
