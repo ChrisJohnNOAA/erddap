@@ -47,7 +47,6 @@ import tags.TagDisabledExternalOther;
 import tags.TagDisabledIncompleteTest;
 import tags.TagDisabledLargeFiles;
 import tags.TagDisabledMissingFile;
-import tags.TagDisabledPassword;
 import tags.TagSlowTests;
 import testDataset.Initialization;
 import ucar.nc2.NetcdfFile;
@@ -17992,18 +17991,16 @@ public class TableTests {
     StringArray schemas = Table.getSqlSchemas(con);
     Test.ensureTrue(schemas.indexOfIgnoreCase("PUBLIC") >= 0, "schemas=" + schemas.toString());
 
-    // sometimes: make names table
-    if (true) {
-      Table namesTable = new Table();
-      namesTable.addColumn("id", PrimitiveArray.factory(new int[] {1, 2, 3}));
-      namesTable.addColumn(
-          "first_name", PrimitiveArray.factory(new String[] {"Bob", "Nate", "Nancy"}));
-      namesTable.addColumn(
-          "last_name", PrimitiveArray.factory(new String[] {"Smith", "Smith", "Jones"}));
-      namesTable.saveAsSql(
-          con, true, // 'true' tests dropSqlTable, too
-          "names", 0, null, null, null, 2);
-    }
+    // make names table
+    Table namesTable = new Table();
+    namesTable.addColumn("id", PrimitiveArray.factory(new int[] {1, 2, 3}));
+    namesTable.addColumn(
+        "first_name", PrimitiveArray.factory(new String[] {"Bob", "Nate", "Nancy"}));
+    namesTable.addColumn(
+        "last_name", PrimitiveArray.factory(new String[] {"Smith", "Smith", "Jones"}));
+    namesTable.saveAsSql(
+        con, true, // 'true' tests dropSqlTable, too
+        "names", 0, null, null, null, 2);
 
     // test getSqlTableNames
     StringArray tableNames = Table.getSqlTableNames(con, "PUBLIC", new String[] {"TABLE"});
@@ -18154,8 +18151,7 @@ public class TableTests {
       // and ensure result has 8 rows
       readSql(tempTable2, con, "SELECT \"uid\", \"string\" FROM " + tempTableName);
       Test.ensureEqual(tempTable2.getColumn(0).toString(), "1, 2, 3, 4, 9, 10, 11, 12", "");
-      Test.ensureEqual(
-          tempTable2.getColumn(1).toString(), "ab, , , longer, ab, , , longer", "");
+      Test.ensureEqual(tempTable2.getColumn(1).toString(), "ab, , , longer, ab, , , longer", "");
     }
 
     // don't drop the table, so I can view it in phpPgAdmin
