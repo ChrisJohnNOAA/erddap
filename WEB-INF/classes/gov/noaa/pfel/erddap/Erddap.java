@@ -1946,7 +1946,8 @@ public class Erddap extends HttpServlet {
       String json =
           SSR.postFormGetResponseString(
               // SSR.getUrlResponseStringUnchanged( //throws Exception
-              "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=" + idtoken);
+              "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=" + idtoken,
+              30 * 1000); // 30 second timeout
       // String2.log("json=" + json); //it is as expected
       JSONTokener tokener = new JSONTokener(json);
       JSONObject jo = new JSONObject(tokener);
@@ -1982,17 +1983,23 @@ public class Erddap extends HttpServlet {
       session.setAttribute("loggedInAs:" + EDStatic.config.warName, email);
       Math2.sleep(500); // give session changes time to take effect
       loginSucceeded(email);
-      // sendRedirect(response, loginUrl + "?message=" +
-      //    SSR.minimalPercentEncode(EDStatic.messages.get(Message.LOGIN_SUCCEEDED, language)));
+
+      // Return success message so client-side JS can display it
+      response.setContentType("text/plain;charset=UTF-8");
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().write(email);
       return;
 
     } catch (Throwable t) {
       EDStatic.rethrowClientAbortException(t); // first thing in catch{}
-      String2.log("Caught: " + MustBe.throwableToString(t));
+      String errorMsg = MustBe.throwableToString(t);
+      String2.log("doLoginGoogle Caught: " + errorMsg);
       loginFailed(email == null ? "(unknown)" : email);
-      // sendRedirect(response, loginUrl + "?message=" +
-      //    SSR.minimalPercentEncode(EDStatic.messages.get(Message.LOGIN_FAILED, language) + ": " +
-      //        MustBe.getShortErrorMessage(t)));
+
+      // Return error message so client-side JS can display it
+      response.setContentType("text/plain;charset=UTF-8");
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.getWriter().write(MustBe.getShortErrorMessage(t));
       return;
     }
   }
@@ -2685,11 +2692,25 @@ public class Erddap extends HttpServlet {
                           + EDStatic.erddapHttpsUrl(request, language)
                           + "/loginGoogle.html');\n"
                           + "    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\n"
+                          + "    xhr.timeout = 30000;\n"
                           + "    xhr.onload = function() {\n"
-                          + "      console.log('Signed in as: ' + xhr.responseText);\n"
-                          + "      window.location.assign(\""
+                          + "      if (xhr.status >= 200 && xhr.status < 300) {\n"
+                          + "        console.log('Signed in as: ' + xhr.responseText);\n"
+                          + "        window.location.assign(\""
                           + loginUrl
                           + "\");\n"
+                          + "      } else {\n"
+                          + "        console.error('Sign in failed: ' + xhr.responseText);\n"
+                          + "        alert('Sign in failed: ' + xhr.responseText);\n"
+                          + "      }\n"
+                          + "    };\n"
+                          + "    xhr.onerror = function() {\n"
+                          + "      console.error('Sign in failed: Network error');\n"
+                          + "      alert('Sign in failed: Network error');\n"
+                          + "    };\n"
+                          + "    xhr.ontimeout = function() {\n"
+                          + "      console.error('Sign in failed: Timeout');\n"
+                          + "      alert('Sign in failed: Timeout');\n"
                           + "    };\n"
                           + "    xhr.send('idtoken=' + googleUser.credential);\n"
                           + "  }\n"

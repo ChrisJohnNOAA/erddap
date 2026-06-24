@@ -26,6 +26,7 @@ import java.util.zip.GZIPOutputStream;
 import tags.TagDisabledAWS;
 import tags.TagDisabledIncompleteTest;
 import tags.TagDisabledPassword;
+import testSupport.WireMockStarter;
 
 /**
  * This is a Java program to test all of the methods in SSR.
@@ -355,6 +356,50 @@ public class TestSSR {
 
     // done
     String2.log("\nDone. All non-Unix tests passed!");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testPostFormGetResponseString() throws Throwable {
+    String2.log("\n*** TestSSR.testPostFormGetResponseString()");
+    WireMockStarter.start();
+    try {
+      String url = "http://localhost:" + WireMockStarter.port() + "/testPost";
+      com.github.tomakehurst.wiremock.client.WireMock.stubFor(
+          com.github.tomakehurst.wiremock.client.WireMock.post(
+                  com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo("/testPost"))
+              .willReturn(
+                  com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                      .withStatus(200)
+                      .withHeader("Content-Type", "text/plain")
+                      .withBody("Post Success")));
+
+      String results = SSR.postFormGetResponseString(url + "?param1=val1", 1000);
+      Test.ensureEqual(results, "Post Success", "");
+
+      // test timeout
+      com.github.tomakehurst.wiremock.client.WireMock.stubFor(
+          com.github.tomakehurst.wiremock.client.WireMock.post(
+                  com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo("/testTimeout"))
+              .willReturn(
+                  com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                      .withStatus(200)
+                      .withFixedDelay(2000)
+                      .withBody("Should Timeout")));
+
+      try {
+        SSR.postFormGetResponseString(
+            "http://localhost:" + WireMockStarter.port() + "/testTimeout", 500);
+        Test.error("Should have timed out");
+      } catch (Exception e) {
+        String2.log("Caught expected timeout: " + e.toString());
+        Test.ensureTrue(
+            e.toString().contains("java.net.SocketTimeoutException"),
+            "Exception should be timeout");
+      }
+
+    } finally {
+      WireMockStarter.stop();
+    }
   }
 
   /**
