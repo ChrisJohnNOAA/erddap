@@ -307,6 +307,7 @@ class EDDTableFromHttpGetTests {
 
     // *** add 2 rows via array
     String2.log("\n>> insertOrDelete #2: insert 2 rows via array");
+    Math2.sleep(2);
     results =
         EDDTableFromHttpGet.insertOrDelete(
             language,
@@ -379,6 +380,7 @@ class EDDTableFromHttpGetTests {
 
     // *** change all values in a row
     String2.log("\n>> insertOrDelete #3: change all values in a row");
+    Math2.sleep(2);
     results =
         EDDTableFromHttpGet.insertOrDelete(
             language,
