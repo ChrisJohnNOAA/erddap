@@ -17989,7 +17989,7 @@ public class TableTests {
 
     // test getSqlSchemas
     StringArray schemas = Table.getSqlSchemas(con);
-    Test.ensureTrue(schemas.indexOfIgnoreCase("PUBLIC") >= 0, "schemas=" + schemas.toString());
+    Test.ensureTrue(schemas.indexOfIgnoreCase("public") >= 0, "schemas=" + schemas.toString());
 
     // make names table
     Table namesTable = new Table();
@@ -17998,12 +17998,10 @@ public class TableTests {
         "first_name", PrimitiveArray.factory(new String[] {"Bob", "Nate", "Nancy"}));
     namesTable.addColumn(
         "last_name", PrimitiveArray.factory(new String[] {"Smith", "Smith", "Jones"}));
-    namesTable.saveAsSql(
-        con, true, // 'true' tests dropSqlTable, too
-        "names", 0, null, null, null, 2);
+    namesTable.saveAsSql(con, true, "names", 0, null, null, null, 2);
 
     // test getSqlTableNames
-    StringArray tableNames = Table.getSqlTableNames(con, "PUBLIC", new String[] {"TABLE"});
+    StringArray tableNames = Table.getSqlTableNames(con, "public", new String[] {"TABLE"});
     // String2.log("tableNames=" + tableNames);
     Test.ensureTrue(
         tableNames.indexOfIgnoreCase("names") >= 0, "tableNames=" + tableNames.toString());
@@ -18012,8 +18010,8 @@ public class TableTests {
         "tableNames=" + tableNames.toString()); // doesn't exist
 
     // test getSqlTableType
-    Test.ensureEqual(Table.getSqlTableType(con, "PUBLIC", "NAMES"), "BASE TABLE", "");
-    Test.ensureEqual(Table.getSqlTableType(con, "PUBLIC", "ZZTOP"), null, ""); // doesn't exist
+    Test.ensureEqual(Table.getSqlTableType(con, "public", "names"), "BASE TABLE", "");
+    Test.ensureEqual(Table.getSqlTableType(con, "public", "zztop"), null, ""); // doesn't exist
 
     // *** test saveAsSql (create a table) (this tests dropSqlTable, too)
     if (true) {

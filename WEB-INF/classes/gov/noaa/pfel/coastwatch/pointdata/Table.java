@@ -13127,6 +13127,8 @@ public class Table {
     // If a search pattern argument is set to null, that argument's criterion will be dropped from
     // the search.
     DatabaseMetaData dm = con.getMetaData();
+    if (dm.storesUpperCaseIdentifiers()) schema = schema.toUpperCase();
+    else if (dm.storesLowerCaseIdentifiers()) schema = schema.toLowerCase();
     Table tables = new Table(); // works with "posttest", "public", "names", null
     tables.readSqlResultSet(dm.getTables(null, schema, null, types));
     return (StringArray) tables.getColumn(2); // table name is always col (0..) 2
@@ -13155,6 +13157,13 @@ public class Table {
     // If a search pattern argument is set to null, that argument's criterion will be dropped from
     // the search.
     DatabaseMetaData dm = con.getMetaData();
+    if (dm.storesUpperCaseIdentifiers()) {
+      schema = schema.toUpperCase();
+      tableName = tableName.toUpperCase();
+    } else if (dm.storesLowerCaseIdentifiers()) {
+      schema = schema.toLowerCase();
+      tableName = tableName.toLowerCase();
+    }
     Table tables = new Table(); // works with "posttest", "public", "names", null
     tables.readSqlResultSet(dm.getTables(null, schema, tableName, null));
     if (tables.nRows() == 0) return null;
