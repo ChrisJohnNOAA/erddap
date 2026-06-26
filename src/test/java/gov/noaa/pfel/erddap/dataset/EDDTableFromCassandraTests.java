@@ -5,17 +5,532 @@ import com.cohort.util.File2;
 import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 import gov.noaa.pfel.erddap.util.EDStatic;
+import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import tags.TagDisabledMissingDataset;
 import testDataset.Initialization;
 
 class EDDTableFromCassandraTests {
+  private static int cassandraPort = 9042;
+
   @BeforeAll
-  static void init() {
+  static void init() throws Exception {
+    String2.log("EDDTableFromCassandraTests.init() starting...");
     Initialization.edStatic();
+    System.setProperty("cassandra.jmx.local.port", "7199");
+    // Start embedded Cassandra
+    String2.log("Starting Embedded Cassandra...");
+    EmbeddedCassandraServerHelper.startEmbeddedCassandra(120000L);
+    cassandraPort = EmbeddedCassandraServerHelper.getNativeTransportPort();
+    String2.log("Embedded Cassandra started on port " + cassandraPort);
+
+    // Initialize schema and data
+    String2.log("Initializing schema and data...");
+    try (Cluster cluster =
+            Cluster.builder().addContactPoints("127.0.0.1").withPort(cassandraPort).build();
+        Session session = cluster.connect()) {
+      String2.log("Connected to cluster. Creating keyspace...");
+      session.execute(
+          "CREATE KEYSPACE bobkeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
+      session.execute("USE bobkeyspace;");
+      session.execute(
+          "CREATE TABLE bobkeyspace.bobtable ("
+              + "    deviceid int,"
+              + "    date timestamp,"
+              + "    sampletime timestamp,"
+              + "    cascii ascii,"
+              + "    cboolean boolean,"
+              + "    cbyte int,"
+              + "    cdecimal double,"
+              + "    cdouble double,"
+              + "    cfloat float,"
+              + "    cint int,"
+              + "    clong bigint,"
+              + "    cmap map<text, double>,"
+              + "    cset set<text>,"
+              + "    cshort int,"
+              + "    ctext text,"
+              + "    cvarchar text,"
+              + "    depth list<float>,"
+              + "    u list<float>,"
+              + "    v list<float>,"
+              + "    w list<float>,"
+              + "    PRIMARY KEY ((deviceid, date), sampletime)"
+              + ");");
+      session.execute("CREATE INDEX ctext_index ON bobkeyspace.bobtable (ctext);");
+      session.execute(
+          "CREATE TABLE bobkeyspace.statictest ("
+              + "    deviceid int,"
+              + "    date timestamp,"
+              + "    sampletime timestamp,"
+              + "    depth list<float>,"
+              + "    lat float static,"
+              + "    lon float static,"
+              + "    u list<float>,"
+              + "    v list<float>,"
+              + "    PRIMARY KEY ((deviceid, date), sampletime)"
+              + ");");
+
+      // Insert data
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1001,'2014-11-01T00:00:00Z','2014-11-01T01:02:03Z','ascii1',FALSE,1,1.00001,1.001,1.1,1000000,"
+              + "1000000000000,{'map11':1.1, 'map12':1.2, 'map13':1.3, 'map14':1.4},"
+              + "{'set11', 'set12', 'set13', 'set14', 'set15'},1000,'text1','varchar1',"
+              + "[10.1,20.1,30.1],[-0.11,0,0.11],[-0.12,0,0.12],[-0.13,0,0.13]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1001,'2014-11-01T00:00:00Z','2014-11-01T02:02:03Z','ascii2',FALSE,2,2.00001,2.001,2.1,2000000,"
+              + "2000000000000,{'map21':2.1, 'map22':2.2, 'map23':2.3, 'map24':2.4},"
+              + "{'set21', 'set22', 'set23', 'set24', 'set25'},2000,'text2','varchar2',"
+              + "[10.2,20.2,30.2],[-2.11,0,2.11],[-2.12,0,2.12],[-2.13,0,2.13]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1001,'2014-11-01T00:00:00Z','2014-11-01T03:02:03Z','ascii3',FALSE,3,3.00001,3.001,3.1,3000000,"
+              + "3000000000000,{'map31':3.1, 'map32':3.2, 'map33':3.3, 'map34':3.4},"
+              + "{'set31', 'set32', 'set33', 'set34', 'set35'},3000,'text3','varchar3',"
+              + "[10.3,20.3,30.3],[-3.11,0,3.11],[-3.12,0,3.12],[-3.13,0,3.13]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1001,'2014-11-02T00:00:00Z','2014-11-02T01:02:03Z','ascii1',FALSE,1,1.00001,1.001,1.1,1000000,"
+              + "1000000000000,{'map11':1.1, 'map12':1.2, 'map13':1.3, 'map14':1.4},"
+              + "{'set11', 'set12', 'set13', 'set14', 'set15'},1000,'text1','varchar1',"
+              + "[10.1,20.1,30.1],[-0.11,0,0.11],[-0.12,0,0.12],[-0.13,0,0.13]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1001,'2014-11-02T00:00:00Z','2014-11-02T02:02:03Z',null,TRUE,null,NaN,NaN,NaN,null,"
+              + "null,{'map11':-99.0, '':1.2, 'map13':1.3, 'map14':1.4},"
+              + "{'set11', '', 'set13', 'set14', 'set15'},null,null,null,"
+              + "[10.2,20.2,-99.0],[-99.0,0,0.11],[-0.12,0,0.12],[-0.13,0,-99.0]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1007,'2014-11-07T00:00:00Z','2014-11-07T01:02:03Z','ascii7',FALSE,7,7.00001,7.001,7.1,7000000,"
+              + "7000000000000,{'map71':7.1, 'map72':7.2, 'map73':7.3, 'map74':7.4},"
+              + "{'set71', 'set72', 'set73', 'set74', 'set75'},7000,'text7','varchar7',"
+              + "[10.7,20.7,30.7],[-7.11,0,7.11],[-7.12,NaN,7.12],[-7.13,0,7.13]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1008,'2014-11-08T00:00:00Z','2014-11-08T01:02:03Z','ascii8',FALSE,8,8.00001,8.001,8.1,8000000,"
+              + "8000000000000,{'map81':8.1, 'map82':8.2, 'map83':8.3, 'map84':8.4},"
+              + "{'set81', 'set82', 'set83', 'set84', 'set85'},8000,'text8','varchar8',"
+              + "[10.8,20.8,30.8],[-8.11,0,8.11],[-8.12,NaN,8.12],[-8.13,0,8.13]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.bobtable "
+              + "(deviceid,date,sampletime,cascii,cboolean,cbyte,cdecimal,cdouble,cfloat,cint,"
+              + "clong,cmap,cset,cshort,ctext,cvarchar,depth,u,v,w) "
+              + "VALUES "
+              + "(1009,'2014-11-09T00:00:00Z','2014-11-09T01:02:03Z',null,null,null,NaN,NaN,NaN,null,"
+              + "null,null, null,null, null, null, null, null, null, null);");
+
+      session.execute(
+          "INSERT INTO bobkeyspace.statictest (deviceid,date,lat,lon) VALUES "
+              + "(1001,'2014-11-01T00:00:00Z',33.0,-123.0);");
+      session.execute(
+          "INSERT INTO bobkeyspace.statictest (deviceid,date,lat,lon) VALUES "
+              + "(1001,'2014-11-02T00:00:00Z',34.0,-124.0);");
+      session.execute(
+          "INSERT INTO bobkeyspace.statictest (deviceid,date,sampletime,depth,u,v) VALUES "
+              + "(1001,'2014-11-01T00:00:00Z','2014-11-01T01:02:03Z',[10.1,20.1,30.1],[-0.11,0.0,0.11],[-0.12,0.0,0.12]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.statictest (deviceid,date,sampletime,depth,u,v) VALUES "
+              + "(1001,'2014-11-01T00:00:00Z','2014-11-01T02:02:03Z',[10.1,20.1,30.1],[-0.11,0.0,0.11],[-0.12,0.0,0.12]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.statictest (deviceid,date,sampletime,depth,u,v) VALUES "
+              + "(1001,'2014-11-01T00:00:00Z','2014-11-01T03:03:03Z',[10.1,20.1,30.1],[-0.31,0.0,0.31],[-0.32,0.0,0.32]);");
+      session.execute(
+          "INSERT INTO bobkeyspace.statictest (deviceid,date,sampletime,depth,u,v) VALUES "
+              + "(1001,'2014-11-02T00:00:00Z','2014-11-02T01:02:03Z',[10.1,20.1,30.1],[-0.41,0.0,0.41],[-0.42,0.0,0.42]);");
+      String2.log("Schema and data initialization complete.");
+    } catch (Exception e) {
+      String2.log("Error during Cassandra initialization: " + e.toString());
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
+  @AfterAll
+  static void destroy() {
+    EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
+  }
+
+  private static String getDatasetXml(String datasetID) {
+    if ("cass_bobkeyspace_bobtable".equals(datasetID)) {
+      return "<dataset type=\"EDDTableFromCassandra\" datasetID=\"cass_bobkeyspace_bobtable\" active=\"true\">\n"
+          + "    <sourceUrl>127.0.0.1</sourceUrl>\n"
+          + "    <connectionProperty name=\"port\">"
+          + cassandraPort
+          + "</connectionProperty>\n"
+          + "    <keyspace>bobkeyspace</keyspace>\n"
+          + "    <tableName>bobtable</tableName>\n"
+          + "    <partitionKeySourceNames>deviceid, date</partitionKeySourceNames>\n"
+          + "    <clusterColumnSourceNames>sampletime</clusterColumnSourceNames>\n"
+          + "    <indexColumnSourceNames>ctext</indexColumnSourceNames>\n"
+          + "    <maxRequestFraction>1</maxRequestFraction>\n"
+          + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
+          + "    <addAttributes>\n"
+          + "        <att name=\"cdm_data_type\">Other</att>\n"
+          + "        <att name=\"Conventions\">COARDS, CF-1.6, ACDD-1.3</att>\n"
+          + "        <att name=\"creator_name\">Ocean Networks Canada</att>\n"
+          + "        <att name=\"creator_url\">http://www.oceannetworks.ca/</att>\n"
+          + "        <att name=\"infoUrl\">http://www.oceannetworks.ca/</att>\n"
+          + "        <att name=\"institution\">Ocean Networks Canada</att>\n"
+          + "        <att name=\"keywords\">bob, canada, cascii, cboolean, cbyte, cdecimal, cdouble, cfloat, cint, clong, cmap, cset, cshort, ctext, cvarchar, data, date, depth, deviceid, networks, ocean, sampletime, test, time</att>\n"
+          + "        <att name=\"license\">The data may be used and redistributed for free but is not intended\\nfor legal use, since it may contain inaccuracies. Neither the data\\nContributor, ERD, NOAA, nor the United States Government, nor any\\nof their employees or contractors, makes any warranty, express or\\nimplied, including warranties of merchantability and fitness for a\\nparticular purpose, or assumes any legal liability for the accuracy,\\ncompleteness, or usefulness, of this information.</att>\n"
+          + "        <att name=\"sourceUrl\">(Cassandra)</att>\n"
+          + "        <att name=\"standard_name_vocabulary\">CF Standard Name Table v70</att>\n"
+          + "        <att name=\"subsetVariables\">deviceid, date</att>\n"
+          + "        <att name=\"summary\">The summary for Bob&#39;s Cassandra test data.</att>\n"
+          + "        <att name=\"title\">Bob&#39;s Cassandra Test Data</att>\n"
+          + "    </addAttributes>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>deviceid</sourceName>\n"
+          + "        <destinationName>deviceid</destinationName>\n"
+          + "        <dataType>int</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"_FillValue\" type=\"int\">2147483647</att>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Deviceid</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>date</sourceName>\n"
+          + "        <destinationName>date</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Time</att>\n"
+          + "            <att name=\"long_name\">Date</att>\n"
+          + "            <att name=\"source_name\">date</att>\n"
+          + "            <att name=\"units\">seconds since 1970-01-01T00:00:00Z</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>sampletime</sourceName>\n"
+          + "        <destinationName>sampletime</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Time</att>\n"
+          + "            <att name=\"long_name\">Sampletime</att>\n"
+          + "            <att name=\"units\">seconds since 1970-01-01T00:00:00Z</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cascii</sourceName>\n"
+          + "        <destinationName>cascii</destinationName>\n"
+          + "        <dataType>String</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cascii</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cboolean</sourceName>\n"
+          + "        <destinationName>cboolean</destinationName>\n"
+          + "        <dataType>boolean</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cboolean</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cbyte</sourceName>\n"
+          + "        <destinationName>cbyte</destinationName>\n"
+          + "        <dataType>int</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"_FillValue\" type=\"int\">2147483647</att>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cbyte</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cdecimal</sourceName>\n"
+          + "        <destinationName>cdecimal</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cdecimal</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cdouble</sourceName>\n"
+          + "        <destinationName>cdouble</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cdouble</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cfloat</sourceName>\n"
+          + "        <destinationName>cfloat</destinationName>\n"
+          + "        <dataType>float</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cfloat</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cint</sourceName>\n"
+          + "        <destinationName>cint</destinationName>\n"
+          + "        <dataType>int</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"_FillValue\" type=\"int\">2147483647</att>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cint</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>clong</sourceName>\n"
+          + "        <destinationName>clong</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"_FillValue\" type=\"double\">9.223372036854776E18</att>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Clong</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cmap</sourceName>\n"
+          + "        <destinationName>cmap</destinationName>\n"
+          + "        <dataType>String</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cmap</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cset</sourceName>\n"
+          + "        <destinationName>cset</destinationName>\n"
+          + "        <dataType>String</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cset</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cshort</sourceName>\n"
+          + "        <destinationName>cshort</destinationName>\n"
+          + "        <dataType>int</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"_FillValue\" type=\"int\">2147483647</att>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cshort</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>ctext</sourceName>\n"
+          + "        <destinationName>ctext</destinationName>\n"
+          + "        <dataType>String</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Ctext</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>cvarchar</sourceName>\n"
+          + "        <destinationName>cvarchar</destinationName>\n"
+          + "        <dataType>String</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Cvarchar</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>depth</sourceName>\n"
+          + "        <destinationName>depth</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"colorBarMaximum\" type=\"double\">8000.0</att>\n"
+          + "            <att name=\"colorBarMinimum\" type=\"double\">-8000.0</att>\n"
+          + "            <att name=\"colorBarPalette\">TopographyDepth</att>\n"
+          + "            <att name=\"ioos_category\">Location</att>\n"
+          + "            <att name=\"long_name\">Depth</att>\n"
+          + "            <att name=\"standard_name\">depth</att>\n"
+          + "            <att name=\"units\">m</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>u</sourceName>\n"
+          + "        <destinationName>u</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">U</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>v</sourceName>\n"
+          + "        <destinationName>v</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">V</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>w</sourceName>\n"
+          + "        <destinationName>w</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">W</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "</dataset>\n";
+    } else if ("cassTestFraction".equals(datasetID)) {
+      return getDatasetXml("cass_bobkeyspace_bobtable")
+          .replace("datasetID=\"cass_bobkeyspace_bobtable\"", "datasetID=\"cassTestFraction\"")
+          .replace("<maxRequestFraction>1</maxRequestFraction>", "<maxRequestFraction>0.55</maxRequestFraction>");
+    } else if ("cass1Device".equals(datasetID)) {
+      return getDatasetXml("cass_bobkeyspace_bobtable")
+          .replace("datasetID=\"cass_bobkeyspace_bobtable\"", "datasetID=\"cass1Device\"")
+          .replace("<partitionKeySourceNames>deviceid, date</partitionKeySourceNames>",
+                   "<partitionKeySourceNames>deviceid=1001, date</partitionKeySourceNames>");
+    } else if ("cass_bobkeyspace_statictest".equals(datasetID)) {
+      return "<dataset type=\"EDDTableFromCassandra\" datasetID=\"cass_bobkeyspace_statictest\" active=\"true\">\n"
+          + "    <sourceUrl>127.0.0.1</sourceUrl>\n"
+          + "    <connectionProperty name=\"port\">"
+          + cassandraPort
+          + "</connectionProperty>\n"
+          + "    <keyspace>bobkeyspace</keyspace>\n"
+          + "    <tableName>statictest</tableName>\n"
+          + "    <partitionKeySourceNames>deviceid, date</partitionKeySourceNames>\n"
+          + "    <clusterColumnSourceNames>sampletime</clusterColumnSourceNames>\n"
+          + "    <maxRequestFraction>1</maxRequestFraction>\n"
+          + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
+          + "    <addAttributes>\n"
+          + "        <att name=\"cdm_data_type\">Point</att>\n"
+          + "        <att name=\"Conventions\">COARDS, CF-1.6, ACDD-1.3</att>\n"
+          + "        <att name=\"creator_name\">Ocean Networks Canada</att>\n"
+          + "        <att name=\"creator_url\">http://www.oceannetworks.ca/</att>\n"
+          + "        <att name=\"infoUrl\">http://www.oceannetworks.ca/</att>\n"
+          + "        <att name=\"institution\">Ocean Networks Canada</att>\n"
+          + "        <att name=\"keywords\">canada, cassandra, date, depth, deviceid, networks, ocean, sampletime, static, test, time</att>\n"
+          + "        <att name=\"license\">The data may be used and redistributed for free but is not intended\\nfor legal use, since it may contain inaccuracies. Neither the data\\nContributor, ERD, NOAA, nor the United States Government, nor any\\nof their employees or contractors, makes any warranty, express or\\nimplied, including warranties of merchantability and fitness for a\\nparticular purpose, or assumes any legal liability for the accuracy,\\ncompleteness, or usefulness, of this information.</att>\n"
+          + "        <att name=\"sourceUrl\">(Cassandra)</att>\n"
+          + "        <att name=\"standard_name_vocabulary\">CF Standard Name Table v70</att>\n"
+          + "        <att name=\"subsetVariables\">deviceid, date, latitude, longitude</att>\n"
+          + "        <att name=\"summary\">The summary for Bob&#39;s Cassandra test data.</att>\n"
+          + "        <att name=\"title\">Cassandra Static Test</att>\n"
+          + "    </addAttributes>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>deviceid</sourceName>\n"
+          + "        <destinationName>deviceid</destinationName>\n"
+          + "        <dataType>int</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"_FillValue\" type=\"int\">2147483647</att>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">Deviceid</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>date</sourceName>\n"
+          + "        <destinationName>date</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Time</att>\n"
+          + "            <att name=\"long_name\">Date</att>\n"
+          + "            <att name=\"source_name\">date</att>\n"
+          + "            <att name=\"units\">seconds since 1970-01-01T00:00:00Z</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>sampletime</sourceName>\n"
+          + "        <destinationName>time</destinationName>\n"
+          + "        <dataType>double</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Time</att>\n"
+          + "            <att name=\"long_name\">Sample Time</att>\n"
+          + "            <att name=\"standard_name\">time</att>\n"
+          + "            <att name=\"units\">seconds since 1970-01-01T00:00:00Z</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>depth</sourceName>\n"
+          + "        <destinationName>depth</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"colorBarMaximum\" type=\"double\">8000.0</att>\n"
+          + "            <att name=\"colorBarMinimum\" type=\"double\">-8000.0</att>\n"
+          + "            <att name=\"colorBarPalette\">TopographyDepth</att>\n"
+          + "            <att name=\"ioos_category\">Location</att>\n"
+          + "            <att name=\"long_name\">Depth</att>\n"
+          + "            <att name=\"standard_name\">depth</att>\n"
+          + "            <att name=\"units\">m</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>lat</sourceName>\n"
+          + "        <destinationName>latitude</destinationName>\n"
+          + "        <dataType>float</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"colorBarMaximum\" type=\"double\">90.0</att>\n"
+          + "            <att name=\"colorBarMinimum\" type=\"double\">-90.0</att>\n"
+          + "            <att name=\"ioos_category\">Location</att>\n"
+          + "            <att name=\"long_name\">Latitude</att>\n"
+          + "            <att name=\"standard_name\">latitude</att>\n"
+          + "            <att name=\"units\">degrees_north</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>lon</sourceName>\n"
+          + "        <destinationName>longitude</destinationName>\n"
+          + "        <dataType>float</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"colorBarMaximum\" type=\"double\">180.0</att>\n"
+          + "            <att name=\"colorBarMinimum\" type=\"double\">-180.0</att>\n"
+          + "            <att name=\"ioos_category\">Location</att>\n"
+          + "            <att name=\"long_name\">Longitude</att>\n"
+          + "            <att name=\"standard_name\">longitude</att>\n"
+          + "            <att name=\"units\">degrees_east</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>u</sourceName>\n"
+          + "        <destinationName>u</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">U</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "    <dataVariable>\n"
+          + "        <sourceName>v</sourceName>\n"
+          + "        <destinationName>v</destinationName>\n"
+          + "        <dataType>floatList</dataType>\n"
+          + "        <addAttributes>\n"
+          + "            <att name=\"ioos_category\">Unknown</att>\n"
+          + "            <att name=\"long_name\">V</att>\n"
+          + "        </addAttributes>\n"
+          + "    </dataVariable>\n"
+          + "</dataset>\n";
+    }
+    return null;
   }
 
   /**
@@ -25,15 +540,14 @@ class EDDTableFromCassandraTests {
    * @throws Throwable if trouble
    */
   @ParameterizedTest
-  @ValueSource(ints = {2, 3})
-  @TagDisabledMissingDataset
+  @ValueSource(ints = {3})
   void testGenerateDatasetsXml(int version) throws Throwable {
     // String2.log("\n*** EDDTableFromCassandra.testGenerateDatasetsXml");
     // testVerboseOn();
     String url = "127.0.0.1"; // implied: v3 :9042, v2 :9160
-    String props[] = {};
-    String keyspace = "bobKeyspace";
-    String tableName = "bobTable";
+    String props[] = {"port", String.valueOf(cassandraPort)};
+    String keyspace = "bobkeyspace";
+    String tableName = "bobtable";
     int tReloadEveryNMinutes = -1;
     String tInfoUrl = "http://www.oceannetworks.ca/";
     String tInstitution = "Ocean Networks Canada";
@@ -58,14 +572,14 @@ class EDDTableFromCassandraTests {
               tTitle,
               new Attributes());
       expected =
-          "CREATE KEYSPACE bobkeyspace WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '2' } AND DURABLE_WRITES = true;\n"
-              + "CREATE KEYSPACE system_traces WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '2' } AND DURABLE_WRITES = true;\n"
+          "CREATE KEYSPACE bobkeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '2' } AND DURABLE_WRITES = true;\n"
+              + "CREATE KEYSPACE system_traces WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '2' } AND DURABLE_WRITES = true;\n"
               + "CREATE KEYSPACE system WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.LocalStrategy' } AND DURABLE_WRITES = true;\n"
               + (version == 2
                   ? ""
-                  : "CREATE KEYSPACE system_distributed WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '3' } AND DURABLE_WRITES = true;\n"
+                  : "CREATE KEYSPACE system_distributed WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '3' } AND DURABLE_WRITES = true;\n"
                       + "CREATE KEYSPACE system_schema WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.LocalStrategy' } AND DURABLE_WRITES = true;\n"
-                      + "CREATE KEYSPACE system_auth WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' } AND DURABLE_WRITES = true;\n");
+                      + "CREATE KEYSPACE system_auth WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '1' } AND DURABLE_WRITES = true;\n");
       Test.ensureEqual(results, expected, "results=\n" + results);
 
       // get the metadata for all tables in a keyspace
@@ -82,7 +596,7 @@ class EDDTableFromCassandraTests {
               tTitle,
               new Attributes());
       expected =
-          "CREATE KEYSPACE bobkeyspace WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '2' } AND DURABLE_WRITES = true;\n"
+          "CREATE KEYSPACE bobkeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '2' } AND DURABLE_WRITES = true;\n"
               + "\n"
               + "CREATE TABLE bobkeyspace.bobtable (\n"
               + "    deviceid int,\n"
@@ -175,10 +689,10 @@ class EDDTableFromCassandraTests {
       expected =
           "<!-- NOTE! Since Cassandra tables don't have any metadata, you must add metadata\n"
               + "  below, notably 'units' for each of the dataVariables. -->\n"
-              + "<dataset type=\"EDDTableFromCassandra\" datasetID=\"cass_bobKeyspace_bobTable\" active=\"true\">\n"
+              + "<dataset type=\"EDDTableFromCassandra\" datasetID=\"cass_bobkeyspace_bobtable\" active=\"true\">\n"
               + "    <sourceUrl>127.0.0.1</sourceUrl>\n"
-              + "    <keyspace>bobKeyspace</keyspace>\n"
-              + "    <tableName>bobTable</tableName>\n"
+              + "    <keyspace>bobkeyspace</keyspace>\n"
+              + "    <tableName>bobtable</tableName>\n"
               + "    <partitionKeySourceNames>deviceid, date</partitionKeySourceNames>\n"
               + "    <clusterColumnSourceNames>sampletime</clusterColumnSourceNames>\n"
               + "    <indexColumnSourceNames></indexColumnSourceNames>\n"
@@ -206,7 +720,7 @@ class EDDTableFromCassandraTests {
               + "        <att name=\"standard_name_vocabulary\">CF Standard Name Table v70</att>\n"
               + "        <att name=\"subsetVariables\">deviceid, time</att>\n"
               + "        <att name=\"summary\">The summary for Bob&#39;s great Cassandra test data.</att>\n"
-              + "        <att name=\"title\">The Title for Bob&#39;s Cassandra Test Data (bobTable)</att>\n"
+              + "        <att name=\"title\">The Title for Bob&#39;s Cassandra Test Data (bobtable)</att>\n"
               + "    </addAttributes>\n"
               + "    <dataVariable>\n"
               + "        <sourceName>deviceid</sourceName>\n"
@@ -458,7 +972,7 @@ class EDDTableFromCassandraTests {
               url,
               props,
               keyspace,
-              "staticTest",
+              "statictest",
               tReloadEveryNMinutes,
               tInfoUrl,
               tInstitution,
@@ -468,10 +982,10 @@ class EDDTableFromCassandraTests {
       expected =
           "<!-- NOTE! Since Cassandra tables don't have any metadata, you must add metadata\n"
               + "  below, notably 'units' for each of the dataVariables. -->\n"
-              + "<dataset type=\"EDDTableFromCassandra\" datasetID=\"cass_bobKeyspace_staticTest\" active=\"true\">\n"
+              + "<dataset type=\"EDDTableFromCassandra\" datasetID=\"cass_bobkeyspace_statictest\" active=\"true\">\n"
               + "    <sourceUrl>127.0.0.1</sourceUrl>\n"
-              + "    <keyspace>bobKeyspace</keyspace>\n"
-              + "    <tableName>staticTest</tableName>\n"
+              + "    <keyspace>bobkeyspace</keyspace>\n"
+              + "    <tableName>statictest</tableName>\n"
               + "    <partitionKeySourceNames>deviceid, date</partitionKeySourceNames>\n"
               + "    <clusterColumnSourceNames>sampletime</clusterColumnSourceNames>\n"
               + "    <indexColumnSourceNames></indexColumnSourceNames>\n"
@@ -622,7 +1136,6 @@ class EDDTableFromCassandraTests {
    * @throws Throwable if trouble
    */
   @org.junit.jupiter.api.Test
-  @TagDisabledMissingDataset
   void testBasic() throws Throwable {
     // String2.log("\n*** EDDTableFromCassandra.testBasic");
     // testVerboseOn();
@@ -632,11 +1145,11 @@ class EDDTableFromCassandraTests {
     String dir = EDStatic.config.fullTestCacheDirectory;
     String tName, results, expected;
     int po;
-    String tDatasetID = "cass_bobKeyspace_bobTable";
+    String tDatasetID = "cass_bobkeyspace_bobtable";
 
     try {
       EDDTableFromCassandra tedd =
-          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromDatasetsXml(null, tDatasetID);
+          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromXmlFragment(null, getDatasetXml(tDatasetID));
       cumTime = System.currentTimeMillis();
       // if (pauseBetweenTests)
       // String2.pressEnterToContinue(
@@ -798,7 +1311,7 @@ class EDDTableFromCassandraTests {
 
       // \"2014-11-15T15:05:05Z (Cassandra)
       // 2014-11-15T15:05:05Z
-      // http://localhost:8080/cwexperimental/tabledap/cass_bobKeyspace_bobTable.das\";
+      // http://localhost:8080/cwexperimental/tabledap/cass_bobkeyspace_bobtable.das\";
       expected =
           "String infoUrl \"http://www.oceannetworks.ca/\";\n"
               + "    String institution \"Ocean Networks Canada\";\n"
@@ -1200,7 +1713,6 @@ class EDDTableFromCassandraTests {
    * @throws Throwable if trouble
    */
   @org.junit.jupiter.api.Test
-  @TagDisabledMissingDataset
   void testMaxRequestFraction() throws Throwable {
     // String2.log("\n*** EDDTableFromCassandra.testMaxRequestFraction");
     // testVerboseOn();
@@ -1213,7 +1725,7 @@ class EDDTableFromCassandraTests {
 
     try {
       EDDTableFromCassandra tedd =
-          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromDatasetsXml(null, tDatasetID);
+          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromXmlFragment(null, getDatasetXml(tDatasetID));
       cumTime = System.currentTimeMillis();
       // if (pauseBetweenTests)
       // String2.pressEnterToContinue("\nDataset constructed.");
@@ -1303,7 +1815,6 @@ class EDDTableFromCassandraTests {
    * @throws Throwable if trouble
    */
   @org.junit.jupiter.api.Test
-  @TagDisabledMissingDataset
   void testCass1Device() throws Throwable {
     // String2.log("\n*** EDDTableFromCassandra.testCass1Device");
     // testVerboseOn();
@@ -1317,7 +1828,7 @@ class EDDTableFromCassandraTests {
 
     try {
       EDDTableFromCassandra tedd =
-          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromDatasetsXml(null, tDatasetID);
+          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromXmlFragment(null, getDatasetXml(tDatasetID));
       cumTime = System.currentTimeMillis();
       // if (pauseBetweenTests)
       // String2.pressEnterToContinue(
@@ -1473,7 +1984,7 @@ class EDDTableFromCassandraTests {
 
       // \"2014-11-15T15:05:05Z (Cassandra)
       // 2014-11-15T15:05:05Z
-      // http://localhost:8080/cwexperimental/tabledap/cass_bobKeyspace_bobTable.das\";
+      // http://localhost:8080/cwexperimental/tabledap/cass_bobkeyspace_bobtable.das\";
       expected =
           "String infoUrl \"http://www.oceannetworks.ca/\";\n"
               + "    String institution \"Ocean Networks Canada\";\n"
@@ -1709,7 +2220,6 @@ class EDDTableFromCassandraTests {
    * @throws Throwable if trouble
    */
   @org.junit.jupiter.api.Test
-  @TagDisabledMissingDataset
   void testStatic() throws Throwable {
     // String2.log("\n*** EDDTableFromCassandra.testStatic");
     // testVerboseOn();
@@ -1721,11 +2231,11 @@ class EDDTableFromCassandraTests {
     String dir = EDStatic.config.fullTestCacheDirectory;
     String tName, results, expected;
     int po;
-    String tDatasetID = "cass_bobKeyspace_staticTest";
+    String tDatasetID = "cass_bobkeyspace_statictest";
 
     try {
       EDDTableFromCassandra tedd =
-          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromDatasetsXml(null, tDatasetID);
+          (EDDTableFromCassandra) EDDTableFromCassandra.oneFromXmlFragment(null, getDatasetXml(tDatasetID));
       cumTime = System.currentTimeMillis();
       // if (pauseBetweenTests)
       // String2.pressEnterToContinue(
@@ -1846,7 +2356,7 @@ class EDDTableFromCassandraTests {
 
       // \"2014-11-15T15:05:05Z (Cassandra)
       // 2014-11-15T15:05:05Z
-      // http://localhost:8080/cwexperimental/tabledap/cass_bobKeyspace_bobTable.das\";
+      // http://localhost:8080/cwexperimental/tabledap/cass_bobkeyspace_bobtable.das\";
       expected =
           "String infoUrl \"http://www.oceannetworks.ca/\";\n"
               + "    String institution \"Ocean Networks Canada\";\n"

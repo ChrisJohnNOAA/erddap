@@ -1,0 +1,760 @@
+[INFO] Scanning for projects...
+[INFO]
+[INFO] --------------------< gov.noaa.pfel.erddap:ERDDAP >---------------------
+[INFO] Building erddap 2.31.0-alpha
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO]
+[INFO] --- dependency:3.11.0:copy-dependencies (default) @ ERDDAP ---
+[INFO] org.wiremock:wiremock-standalone:jar:3.13.2 already exists in destination.
+[INFO] jakarta.servlet:jakarta.servlet-api:jar:6.1.0 already exists in destination.
+[INFO] org.junit.jupiter:junit-jupiter:jar:6.1.0 already exists in destination.
+[INFO] org.junit.jupiter:junit-jupiter-api:jar:6.1.0 already exists in destination.
+[INFO] org.opentest4j:opentest4j:jar:1.3.0 already exists in destination.
+[INFO] org.junit.platform:junit-platform-commons:jar:6.1.0 already exists in destination.
+[INFO] org.apiguardian:apiguardian-api:jar:1.1.2 already exists in destination.
+[INFO] org.junit.jupiter:junit-jupiter-params:jar:6.1.0 already exists in destination.
+[INFO] org.junit.jupiter:junit-jupiter-engine:jar:6.1.0 already exists in destination.
+[INFO] org.junit.platform:junit-platform-engine:jar:6.1.0 already exists in destination.
+[INFO] com.h2database:h2:jar:2.2.224 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-server:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-http:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-util:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-io:jar:12.1.10 already exists in destination.
+[INFO] org.slf4j:slf4j-api:jar:2.0.17 already exists in destination.
+[INFO] org.eclipse.jetty.ee10:jetty-ee10-servlet:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-security:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-session:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty.ee10:jetty-ee10-webapp:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-xml:jar:12.1.10 already exists in destination.
+[INFO] org.eclipse.jetty.ee:jetty-ee-webapp:jar:12.1.10 already exists in destination.
+[INFO] org.mockito:mockito-core:jar:5.23.0 already exists in destination.
+[INFO] net.bytebuddy:byte-buddy:jar:1.17.7 already exists in destination.
+[INFO] net.bytebuddy:byte-buddy-agent:jar:1.17.7 already exists in destination.
+[INFO] org.objenesis:objenesis:jar:3.3 already exists in destination.
+[INFO] org.awaitility:awaitility:jar:4.3.0 already exists in destination.
+[INFO] org.hamcrest:hamcrest:jar:2.1 already exists in destination.
+[INFO] org.cassandraunit:cassandra-unit:jar:3.11.2.0 already exists in destination.
+[INFO] junit:junit:jar:4.12 already exists in destination.
+[INFO] org.apache.cassandra:cassandra-all:jar:3.11.4 already exists in destination.
+[INFO] net.jpountz.lz4:lz4:jar:1.3.0 already exists in destination.
+[INFO] com.ning:compress-lzf:jar:0.8.4 already exists in destination.
+[INFO] commons-cli:commons-cli:jar:1.1 already exists in destination.
+[INFO] com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru:jar:1.4 already exists in destination.
+[INFO] org.antlr:antlr:jar:3.5.2 already exists in destination.
+[INFO] org.antlr:ST4:jar:4.0.8 already exists in destination.
+[INFO] org.antlr:antlr-runtime:jar:3.5.2 already exists in destination.
+[INFO] org.slf4j:jcl-over-slf4j:jar:1.7.7 already exists in destination.
+[INFO] org.codehaus.jackson:jackson-core-asl:jar:1.9.2 already exists in destination.
+[INFO] org.codehaus.jackson:jackson-mapper-asl:jar:1.9.2 already exists in destination.
+[INFO] com.googlecode.json-simple:json-simple:jar:1.1 already exists in destination.
+[INFO] com.boundary:high-scale-lib:jar:1.0.6 already exists in destination.
+[INFO] org.yaml:snakeyaml:jar:1.11 already exists in destination.
+[INFO] org.mindrot:jbcrypt:jar:0.3m already exists in destination.
+[INFO] io.airlift:airline:jar:0.6 already exists in destination.
+[INFO] io.dropwizard.metrics:metrics-jvm:jar:3.1.5 already exists in destination.
+[INFO] com.addthis.metrics:reporter-config3:jar:3.0.3 already exists in destination.
+[INFO] com.addthis.metrics:reporter-config-base:jar:3.0.3 already exists in destination.
+[INFO] com.thinkaurelius.thrift:thrift-server:jar:0.3.7 already exists in destination.
+[INFO] com.lmax:disruptor:jar:3.0.1 already exists in destination.
+[INFO] com.clearspring.analytics:stream:jar:2.5.2 already exists in destination.
+[INFO] it.unimi.dsi:fastutil:jar:6.5.7 already exists in destination.
+[INFO] ch.qos.logback:logback-core:jar:1.5.34 already exists in destination.
+[INFO] org.apache.cassandra:cassandra-thrift:jar:3.11.4 already exists in destination.
+[INFO] com.carrotsearch:hppc:jar:0.5.4 already exists in destination.
+[INFO] de.jflex:jflex:jar:1.6.0 already exists in destination.
+[INFO] org.apache.ant:ant:jar:1.7.0 already exists in destination.
+[INFO] org.apache.ant:ant-launcher:jar:1.7.0 already exists in destination.
+[INFO] com.github.rholder:snowball-stemmer:jar:1.3.0.581.1 already exists in destination.
+[INFO] com.googlecode.concurrent-trees:concurrent-trees:jar:2.4.0 already exists in destination.
+[INFO] com.github.jbellis:jamm:jar:0.3.0 already exists in destination.
+[INFO] org.fusesource:sigar:jar:1.6.4 already exists in destination.
+[INFO] org.eclipse.jdt.core.compiler:ecj:jar:4.4.2 already exists in destination.
+[INFO] org.caffinitas.ohc:ohc-core:jar:0.4.4 already exists in destination.
+[INFO] org.caffinitas.ohc:ohc-core-j8:jar:0.4.4 already exists in destination.
+[INFO] com.github.ben-manes.caffeine:caffeine:jar:2.2.6 already exists in destination.
+[INFO] org.ow2.asm:asm:jar:5.0.4 already exists in destination.
+[INFO] org.apache.commons:commons-lang3:jar:3.4 already exists in destination.
+[INFO] org.apache.thrift:libthrift:jar:0.9.2 already exists in destination.
+[INFO] org.apache.httpcomponents:httpclient:jar:4.2.5 already exists in destination.
+[INFO] org.apache.httpcomponents:httpcore:jar:4.2.4 already exists in destination.
+[INFO] net.java.dev.jna:jna:jar:4.1.0 already exists in destination.
+[INFO] org.hamcrest:hamcrest-core:jar:1.3 already exists in destination.
+[INFO] org.hamcrest:hamcrest-library:jar:1.3 already exists in destination.
+[INFO] com.github.librepdf:openpdf:jar:3.0.5 already exists in destination.
+[INFO] com.aayushatharva.brotli4j:brotli4j:jar:1.23.0 already exists in destination.
+[INFO] com.aayushatharva.brotli4j:service:jar:1.23.0 already exists in destination.
+[INFO] com.aayushatharva.brotli4j:native-linux-x86_64:jar:1.23.0 already exists in destination.
+[INFO] org.apache.lucene:lucene-core:jar:10.4.0 already exists in destination.
+[INFO] org.apache.lucene:lucene-queryparser:jar:10.4.0 already exists in destination.
+[INFO] org.apache.lucene:lucene-queries:jar:10.4.0 already exists in destination.
+[INFO] org.apache.lucene:lucene-sandbox:jar:10.4.0 already exists in destination.
+[INFO] org.apache.lucene:lucene-facet:jar:10.4.0 already exists in destination.
+[INFO] org.json:json:jar:20260522 already exists in destination.
+[INFO] com.sun.mail:jakarta.mail:jar:2.0.2 already exists in destination.
+[INFO] com.sun.activation:jakarta.activation:jar:2.0.1 already exists in destination.
+[INFO] org.apache.commons:commons-compress:jar:1.28.0 already exists in destination.
+[INFO] commons-codec:commons-codec:jar:1.19.0 already exists in destination.
+[INFO] commons-io:commons-io:jar:2.20.0 already exists in destination.
+[INFO] org.slf4j:slf4j-jdk14:jar:2.0.18 already exists in destination.
+[INFO] edu.ucar:cdm-core:jar:5.9.1 already exists in destination.
+[INFO] org.apache.commons:commons-math3:jar:3.6.1 already exists in destination.
+[INFO] edu.ucar:httpservices:jar:5.9.1 already exists in destination.
+[INFO] org.apache.httpcomponents:httpmime:jar:4.5.13 already exists in destination.
+[INFO] com.beust:jcommander:jar:1.78 already exists in destination.
+[INFO] com.google.protobuf:protobuf-java:jar:4.35.1 already exists in destination.
+[INFO] com.google.re2j:re2j:jar:1.3 already exists in destination.
+[INFO] joda-time:joda-time:jar:2.12.7 already exists in destination.
+[INFO] org.jdom:jdom2:jar:2.0.6.1 already exists in destination.
+[INFO] com.google.code.findbugs:jsr305:jar:3.0.2 already exists in destination.
+[INFO] edu.ucar:cdm-misc:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:udunits:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:netcdf4:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:grib:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:libaec-jna:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:jj2000:jar:5.4 already exists in destination.
+[INFO] edu.ucar:bufr:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:opendap:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:cdm-radial:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:cdm-image:jar:5.9.1 already exists in destination.
+[INFO] edu.ucar:cdm-mcidas:jar:5.9.1 already exists in destination.
+[INFO] edu.wisc.ssec:visad-mcidas-slim-ucar-ns:jar:20231121 already exists in destination.
+[INFO] edu.ucar:cdm-s3:jar:5.9.1 already exists in destination.
+[INFO] software.amazon.awssdk:apache-client:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:sts:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:aws-query-protocol:jar:2.46.13 already exists in destination.
+[INFO] edu.ucar:cdm-zarr:jar:5.9.1 already exists in destination.
+[INFO] com.fasterxml.jackson.core:jackson-core:jar:2.19.1 already exists in destination.
+[INFO] com.fasterxml.jackson.core:jackson-databind:jar:2.19.1 already exists in destination.
+[INFO] com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1 already exists in destination.
+[INFO] org.apache.sis.core:sis-metadata:jar:1.6 already exists in destination.
+[INFO] org.apache.sis.core:sis-utility:jar:1.6 already exists in destination.
+[INFO] javax.measure:unit-api:jar:2.1.3 already exists in destination.
+[INFO] org.opengis:geoapi:jar:3.0.2 already exists in destination.
+[INFO] jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.2 already exists in destination.
+[INFO] jakarta.activation:jakarta.activation-api:jar:2.1.3 already exists in destination.
+[INFO] org.apache.sis.storage:sis-storage:jar:1.6 already exists in destination.
+[INFO] org.apache.sis.core:sis-feature:jar:1.6 already exists in destination.
+[INFO] org.apache.sis.core:sis-referencing:jar:1.6 already exists in destination.
+[INFO] org.glassfish.jaxb:jaxb-runtime:jar:4.0.9 already exists in destination.
+[INFO] org.glassfish.jaxb:jaxb-core:jar:4.0.9 already exists in destination.
+[INFO] org.eclipse.angus:angus-activation:jar:2.0.3 already exists in destination.
+[INFO] org.glassfish.jaxb:txw2:jar:4.0.9 already exists in destination.
+[INFO] com.sun.istack:istack-commons-runtime:jar:4.1.2 already exists in destination.
+[INFO] org.apache.commons:commons-jexl3:jar:3.6.2 already exists in destination.
+[INFO] commons-logging:commons-logging:jar:1.3.5 already exists in destination.
+[INFO] org.postgresql:postgresql:jar:42.7.11 already exists in destination.
+[INFO] com.datastax.cassandra:cassandra-driver-core:jar:3.11.5 already exists in destination.
+[INFO] com.github.jnr:jnr-ffi:jar:2.1.7 already exists in destination.
+[INFO] com.github.jnr:jffi:jar:1.2.16 already exists in destination.
+[INFO] com.github.jnr:jffi:jar:native:1.2.16 already exists in destination.
+[INFO] org.ow2.asm:asm-commons:jar:5.0.3 already exists in destination.
+[INFO] org.ow2.asm:asm-analysis:jar:5.0.3 already exists in destination.
+[INFO] org.ow2.asm:asm-tree:jar:5.0.3 already exists in destination.
+[INFO] org.ow2.asm:asm-util:jar:5.0.3 already exists in destination.
+[INFO] com.github.jnr:jnr-x86asm:jar:1.0.2 already exists in destination.
+[INFO] com.github.jnr:jnr-posix:jar:3.0.44 already exists in destination.
+[INFO] com.github.jnr:jnr-constants:jar:0.9.9 already exists in destination.
+[INFO] com.google.guava:guava:jar:33.6.0-jre already exists in destination.
+[INFO] com.google.guava:failureaccess:jar:1.0.3 already exists in destination.
+[INFO] com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava already exists in destination.
+[INFO] org.jspecify:jspecify:jar:1.0.0 already exists in destination.
+[INFO] com.google.errorprone:error_prone_annotations:jar:2.47.0 already exists in destination.
+[INFO] com.google.j2objc:j2objc-annotations:jar:3.1 already exists in destination.
+[INFO] at.yawk.lz4:lz4-java:jar:1.11.0 already exists in destination.
+[INFO] io.dropwizard.metrics:metrics-core:jar:4.2.39 already exists in destination.
+[INFO] io.netty:netty-all:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-buffer:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-base:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-dns:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-haproxy:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-compression:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-http:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-http2:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-http3:jar:4.2.15.Final already exists in destination.
+[INFO] org.jctools:jctools-core:jar:4.0.6 already exists in destination.
+[INFO] io.netty:netty-transport-native-unix-common:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-memcache:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-mqtt:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-redis:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-smtp:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-socks:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-stomp:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-xml:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-protobuf:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-marshalling:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-common:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-handler-proxy:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-handler-ssl-ocsp:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-resolver:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-resolver-dns:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-rxtx:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-sctp:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-udt:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-classes-epoll:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-classes-kqueue:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-resolver-dns-classes-macos:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-classes-io_uring:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-classes-quic:jar:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-epoll:jar:linux-riscv64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-io_uring:jar:linux-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-io_uring:jar:linux-aarch_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-io_uring:jar:linux-riscv64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-native-quic:jar:linux-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-native-quic:jar:linux-aarch_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-native-quic:jar:osx-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-native-quic:jar:osx-aarch_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-codec-native-quic:jar:windows-x86_64:4.2.15.Final already exists in destination.
+[INFO] io.netty:netty-handler:jar:4.2.15.Final already exists in destination.
+[INFO] org.xerial.snappy:snappy-java:jar:1.1.10.8 already exists in destination.
+[INFO] software.amazon.awssdk:s3:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:aws-xml-protocol:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:protocol-core:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:arns:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:profiles:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:crt-core:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:http-auth:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:identity-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:http-auth-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:http-auth-aws:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:checksums:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:checksums-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:retries-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:sdk-core:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:retries:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:auth:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:http-auth-aws-eventstream:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.eventstream:eventstream:jar:1.0.1 already exists in destination.
+[INFO] software.amazon.awssdk:http-client-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:annotations:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:utils:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:aws-core:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:utils-lite:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:metrics-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:json-utils:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:third-party-jackson-core:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:endpoints-spi:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:apache5-client:jar:2.46.13 already exists in destination.
+[INFO] org.apache.httpcomponents.client5:httpclient5:jar:5.6.1 already exists in destination.
+[INFO] org.apache.httpcomponents.core5:httpcore5-h2:jar:5.4 already exists in destination.
+[INFO] org.apache.httpcomponents.core5:httpcore5:jar:5.4.2 already exists in destination.
+[INFO] software.amazon.awssdk:netty-nio-client:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:regions:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk:s3-transfer-manager:jar:2.46.13 already exists in destination.
+[INFO] software.amazon.awssdk.crt:aws-crt:jar:0.47.1 already exists in destination.
+[INFO] com.google.auth:google-auth-library-oauth2-http:jar:1.48.0 already exists in destination.
+[INFO] com.google.auto.value:auto-value-annotations:jar:1.11.0 already exists in destination.
+[INFO] com.google.auth:google-auth-library-credentials:jar:1.48.0 already exists in destination.
+[INFO] com.google.http-client:google-http-client:jar:2.1.0 already exists in destination.
+[INFO] io.grpc:grpc-context:jar:1.70.0 already exists in destination.
+[INFO] io.grpc:grpc-api:jar:1.70.0 already exists in destination.
+[INFO] io.opencensus:opencensus-api:jar:0.31.1 already exists in destination.
+[INFO] io.opencensus:opencensus-contrib-http-util:jar:0.31.1 already exists in destination.
+[INFO] com.google.http-client:google-http-client-gson:jar:2.1.0 already exists in destination.
+[INFO] com.google.api:api-common:jar:2.64.0 already exists in destination.
+[INFO] com.google.code.gson:gson:jar:2.13.2 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-core:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-config:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-tracer-initializer:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-tracer-common:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-tracer-otel:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-tracer-otel-agent:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-model:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-instrumentation-jvm:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-exporter-servlet-jakarta:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-exporter-common:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-exposition-textformats:jar:1.8.0 already exists in destination.
+[INFO] io.prometheus:prometheus-metrics-exposition-formats:jar:1.8.0 already exists in destination.
+[INFO] io.github.classgraph:classgraph:jar:4.8.184 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-client:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-common:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop.thirdparty:hadoop-shaded-protobuf_3_25:jar:1.5.0 already exists in destination.
+[INFO] org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.5.0 already exists in destination.
+[INFO] commons-net:commons-net:jar:3.9.0 already exists in destination.
+[INFO] org.apache.commons:commons-collections4:jar:4.4 already exists in destination.
+[INFO] jakarta.servlet.jsp:jakarta.servlet.jsp-api:jar:2.3.6 already exists in destination.
+[INFO] jakarta.ws.rs:jakarta.ws.rs-api:jar:2.1.6 already exists in destination.
+[INFO] org.glassfish.jersey.core:jersey-server:jar:2.46 already exists in destination.
+[INFO] org.glassfish.jersey.core:jersey-common:jar:2.46 already exists in destination.
+[INFO] org.glassfish.hk2:osgi-resource-locator:jar:1.0.3 already exists in destination.
+[INFO] org.glassfish.jersey.core:jersey-client:jar:2.46 already exists in destination.
+[INFO] jakarta.annotation:jakarta.annotation-api:jar:1.3.5 already exists in destination.
+[INFO] org.glassfish.hk2.external:jakarta.inject:jar:2.6.1 already exists in destination.
+[INFO] jakarta.validation:jakarta.validation-api:jar:2.0.2 already exists in destination.
+[INFO] org.glassfish.jersey.containers:jersey-container-servlet:jar:2.46 already exists in destination.
+[INFO] org.glassfish.jersey.containers:jersey-container-servlet-core:jar:2.46 already exists in destination.
+[INFO] org.glassfish.jersey.inject:jersey-hk2:jar:2.46 already exists in destination.
+[INFO] org.glassfish.hk2:hk2-locator:jar:2.6.1 already exists in destination.
+[INFO] org.glassfish.hk2.external:aopalliance-repackaged:jar:2.6.1 already exists in destination.
+[INFO] org.glassfish.hk2:hk2-api:jar:2.6.1 already exists in destination.
+[INFO] org.glassfish.hk2:hk2-utils:jar:2.6.1 already exists in destination.
+[INFO] org.javassist:javassist:jar:3.30.2-GA already exists in destination.
+[INFO] org.eclipse.jetty:jetty-servlet:jar:9.4.58.v20250814 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-util-ajax:jar:9.4.58.v20250814 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-webapp:jar:9.4.58.v20250814 already exists in destination.
+[INFO] ch.qos.reload4j:reload4j:jar:1.2.22 already exists in destination.
+[INFO] org.apache.commons:commons-configuration2:jar:2.15.1 already exists in destination.
+[INFO] org.apache.commons:commons-text:jar:1.14.0 already exists in destination.
+[INFO] org.slf4j:slf4j-reload4j:jar:1.7.36 already exists in destination.
+[INFO] org.apache.avro:avro:jar:1.12.1 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-auth:jar:3.5.0 already exists in destination.
+[INFO] com.nimbusds:nimbus-jose-jwt:jar:10.9.1 already exists in destination.
+[INFO] org.apache.curator:curator-framework:jar:5.2.0 already exists in destination.
+[INFO] org.apache.kerby:kerb-util:jar:2.0.3 already exists in destination.
+[INFO] org.apache.kerby:kerby-config:jar:2.0.3 already exists in destination.
+[INFO] org.apache.kerby:kerb-crypto:jar:2.0.3 already exists in destination.
+[INFO] org.apache.curator:curator-client:jar:5.2.0 already exists in destination.
+[INFO] org.apache.curator:curator-recipes:jar:5.2.0 already exists in destination.
+[INFO] io.netty:netty-transport-native-epoll:jar:4.1.130.Final already exists in destination.
+[INFO] org.apache.kerby:kerb-core:jar:2.0.3 already exists in destination.
+[INFO] org.apache.kerby:kerby-pkix:jar:2.0.3 already exists in destination.
+[INFO] org.apache.kerby:kerby-asn1:jar:2.0.3 already exists in destination.
+[INFO] org.apache.kerby:kerby-util:jar:2.0.3 already exists in destination.
+[INFO] org.codehaus.woodstox:stax2-api:jar:4.2.1 already exists in destination.
+[INFO] com.fasterxml.woodstox:woodstox-core:jar:5.4.0 already exists in destination.
+[INFO] dnsjava:dnsjava:jar:3.6.5 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-hdfs-client:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-yarn-api:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-yarn-client:jar:3.5.0 already exists in destination.
+[INFO] org.eclipse.jetty.websocket:websocket-client:jar:9.4.58.v20250814 already exists in destination.
+[INFO] org.eclipse.jetty:jetty-client:jar:9.4.58.v20250814 already exists in destination.
+[INFO] org.eclipse.jetty.websocket:websocket-common:jar:9.4.58.v20250814 already exists in destination.
+[INFO] org.eclipse.jetty.websocket:websocket-api:jar:9.4.58.v20250814 already exists in destination.
+[INFO] org.jline:jline:jar:3.9.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-mapreduce-client-core:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-yarn-common:jar:3.5.0 already exists in destination.
+[INFO] com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.18.6 already exists in destination.
+[INFO] com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.18.6 already exists in destination.
+[INFO] com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.18.6 already exists in destination.
+[INFO] net.jodah:failsafe:jar:2.4.4 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-mapreduce-client-jobclient:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-mapreduce-client-common:jar:3.5.0 already exists in destination.
+[INFO] org.apache.hadoop:hadoop-annotations:jar:3.5.0 already exists in destination.
+[INFO] org.apache.parquet:parquet-common:jar:1.17.1 already exists in destination.
+[INFO] org.apache.parquet:parquet-format-structures:jar:1.17.1 already exists in destination.
+[INFO] org.apache.parquet:parquet-encoding:jar:1.17.1 already exists in destination.
+[INFO] org.apache.parquet:parquet-hadoop:jar:1.17.1 already exists in destination.
+[INFO] org.apache.parquet:parquet-column:jar:1.17.1 already exists in destination.
+[INFO] org.locationtech.jts:jts-core:jar:1.20.0 already exists in destination.
+[INFO] org.apache.parquet:parquet-jackson:jar:1.17.1 already exists in destination.
+[INFO] io.airlift:aircompressor:jar:2.0.3 already exists in destination.
+[INFO] commons-pool:commons-pool:jar:1.6 already exists in destination.
+[INFO] com.github.luben:zstd-jni:jar:1.5.7-3 already exists in destination.
+[INFO] org.semver4j:semver4j:jar:6.0.0 already exists in destination.
+[INFO] com.hivemq:hivemq-community-edition-embedded:jar:2026.5 already exists in destination.
+[INFO] com.hivemq:hivemq-extension-sdk:jar:4.52.0 already exists in destination.
+[INFO] org.slf4j:jul-to-slf4j:jar:2.0.18 already exists in destination.
+[INFO] ch.qos.logback:logback-classic:jar:1.5.32 already exists in destination.
+[INFO] org.bouncycastle:bcprov-jdk18on:jar:1.84 already exists in destination.
+[INFO] org.bouncycastle:bcpkix-jdk18on:jar:1.84 already exists in destination.
+[INFO] org.bouncycastle:bcutil-jdk18on:jar:1.84 already exists in destination.
+[INFO] org.rocksdb:rocksdbjni:jar:8.3.3 already exists in destination.
+[INFO] org.jetbrains.xodus:xodus-openAPI:jar:1.2.3 already exists in destination.
+[INFO] org.jetbrains.kotlin:kotlin-stdlib:jar:2.4.0 already exists in destination.
+[INFO] io.github.microutils:kotlin-logging:jar:1.4.1 already exists in destination.
+[INFO] org.jetbrains.xodus:xodus-utils:jar:1.2.3 already exists in destination.
+[INFO] org.jetbrains.xodus:xodus-environment:jar:1.2.3 already exists in destination.
+[INFO] org.jetbrains.xodus:xodus-compress:jar:1.2.3 already exists in destination.
+[INFO] io.dropwizard.metrics:metrics-jmx:jar:4.2.39 already exists in destination.
+[INFO] com.github.oshi:oshi-core:jar:6.12.0 already exists in destination.
+[INFO] com.github.oshi:oshi-common:jar:6.12.0 already exists in destination.
+[INFO] net.java.dev.jna:jna-platform:jar:5.18.1 already exists in destination.
+[INFO] com.google.inject:guice:jar:5.1.0 already exists in destination.
+[INFO] javax.inject:javax.inject:jar:1 already exists in destination.
+[INFO] aopalliance:aopalliance:jar:1.0 already exists in destination.
+[INFO] javax.annotation:javax.annotation-api:jar:1.3.2 already exists in destination.
+[INFO] net.openhft:zero-allocation-hashing:jar:0.27ea1 already exists in destination.
+[INFO] org.eclipse.collections:eclipse-collections:jar:11.1.0 already exists in destination.
+[INFO] org.eclipse.collections:eclipse-collections-api:jar:11.1.0 already exists in destination.
+[INFO] io.dropwizard.metrics:metrics-logback:jar:4.2.39 already exists in destination.
+[INFO] com.hivemq:hivemq-mqtt-client:jar:1.3.15 already exists in destination.
+[INFO] io.reactivex.rxjava2:rxjava:jar:2.2.21 already exists in destination.
+[INFO] org.reactivestreams:reactive-streams:jar:1.0.4 already exists in destination.
+[INFO] org.jetbrains:annotations:jar:26.1.0 already exists in destination.
+[INFO] com.google.dagger:dagger:jar:2.42 already exists in destination.
+[INFO]
+[INFO] --- dependency:3.11.0:properties (default) @ ERDDAP ---
+[INFO]
+[INFO] --- enforcer:3.6.3:enforce (enforce-maven) @ ERDDAP ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO]
+[INFO] --- enforcer:3.6.3:enforce (no-test-data-in-src-test-resources) @ ERDDAP ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.files.RequireFilesDontExist passed
+[INFO]
+[INFO] --- antrun:3.2.0:run (make-data-dir) @ ERDDAP ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] --- download:1.13.0:wget (download-content) @ ERDDAP ---
+[INFO] Skipping unpacking as the file has not changed
+[INFO]
+[INFO] --- download:1.13.0:wget (download-etopo) @ ERDDAP ---
+[INFO] Skipping unpacking as the file has not changed
+[INFO]
+[INFO] --- download:1.13.0:wget (download-ref) @ ERDDAP ---
+[INFO] Skipping unpacking as the file has not changed
+[INFO]
+[INFO] --- jacoco:0.8.15:prepare-agent (before-unit-test-execution) @ ERDDAP ---
+[INFO] surefire.jacoco.args set to -javaagent:/home/jules/.m2/repository/org/jacoco/org.jacoco.agent/0.8.15/org.jacoco.agent-0.8.15-runtime.jar=destfile=/app/target/jacoco-output/jacoco-unit-tests.exec
+[INFO]
+[INFO] --- git-code-format:6.0:install-hooks (install-formatter-hook) @ ERDDAP ---
+[INFO] Installing git hooks
+[INFO] Installed git hooks
+[INFO]
+[INFO] --- resources:3.5.0:resources (default-resources) @ ERDDAP ---
+[INFO] Copying 112 resources from src/main/resources to target/classes
+[INFO]
+[INFO] --- compiler:3.15.0:compile (default-compile) @ ERDDAP ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] --- download:1.13.0:wget (download-test-resources-data) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- download:1.13.0:wget (download-test-resources-largeFiles) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- download:1.13.0:wget (download-test-resources-largePoints) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- download:1.13.0:wget (download-test-resources-largeSatellite) @ ERDDAP ---
+[INFO] download-maven-plugin:wget skipped
+[INFO]
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ ERDDAP ---
+[INFO] Copying 48 resources from src/test/resources to target/test-classes
+[INFO]
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ ERDDAP ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 139 source files with javac [debug target 21] to target/test-classes
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[129,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[249,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[269,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[302,39] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'Test.ensureEqual(atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[313,39] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'Test.ensureEqual(atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[325,26] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[336,26] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[346,39] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'Test.ensureEqual(atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[357,39] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'Test.ensureEqual(atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[382,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[395,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[406,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[457,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[472,26] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[481,39] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'Test.ensureEqual(atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/AttributesTests.java:[488,39] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 'Test.ensureEqual(atts.toString(), """'?
+[WARNING] /app/src/test/java/com/cohort/array/DoubleArrayTests.java:[510,34] [IntLiteralCast] Consider using a literal of the desired type instead of casting an int literal
+    (see https://errorprone.info/bugpattern/IntLiteralCast)
+  Did you mean 'anArray.atInsert(0, 2.0);'?
+[WARNING] /app/src/test/java/com/cohort/array/FloatArrayTests.java:[487,33] [IntLiteralCast] Consider using a literal of the desired type instead of casting an int literal
+    (see https://errorprone.info/bugpattern/IntLiteralCast)
+  Did you mean 'anArray.atInsert(0, 2.0f);'?
+[WARNING] /app/src/test/java/com/cohort/array/IntArrayTests.java:[557,9] [UnusedVariable] The local variable 'count' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/array/NDimensionalIndexTests.java:[46,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/NDimensionalIndexTests.java:[72,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/array/PrimitiveArrayTests.java:[684,9] [UnusedVariable] The local variable 'sum' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/array/PrimitiveArrayTests.java:[867,10] [UnusedVariable] The local variable 'SarStart' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[259,12] [UnusedVariable] The local variable 'da' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1216,19] [UnusedVariable] This assignment to the local variable 'sb' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'new StringBuilder();'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[6256,16] [UnusedVariable] The local variable 'dar' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'Calendar2.parseNumberTimeUnits(willFail[i]);'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[7774,9] [UnusedVariable] The local variable 'canSHSize' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[7668,9] [UnusedVariable] The local variable 'result2' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[7658,9] [UnusedVariable] The local variable 'result1' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1136,10] [UnusedVariable] The local variable 'sum' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[3126,23] [UnusedVariable] The local variable 'gc' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1230,10] [UnusedVariable] The local variable 't1' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1236,10] [UnusedVariable] The local variable 't2' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[72,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1428,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1483,12] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 's, """'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1488,12] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 's, """'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1493,12] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean 's, """'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1499,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[1863,30] [JavaTimeDefaultTimeZone] ZonedDateTime.now() is not allowed because it silently uses the system default time-zone. You must pass an explicit time-zone (e.g., ZoneId.of("America/Los_Angeles")) to this method.
+    (see https://errorprone.info/bugpattern/JavaTimeDefaultTimeZone)
+  Did you mean 'ZonedDateTime.now(ZoneId.systemDefault())'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2313,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2611,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2655,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2821,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2822,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2825,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2826,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2829,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2830,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2833,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2834,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2837,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2838,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2841,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2842,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2845,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2846,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2849,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2850,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2853,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2854,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2857,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2858,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2861,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2862,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2865,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2866,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2869,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2870,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2873,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2874,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2877,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2878,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2881,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2882,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2885,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2886,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2889,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2890,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2893,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2894,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2897,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2898,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2901,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[2902,14] [AssignmentExpression] The use of an assignment expression can be surprising and hard to read; consider factoring out the assignment to a separate statement.
+    (see https://errorprone.info/bugpattern/AssignmentExpression)
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[7349,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/com/cohort/util/TestUtil.java:[7634,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/GridTests.java:[155,5] [UnusedVariable] This assignment to the local variable 'nData' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/GridTests.java:[385,5] [UnusedVariable] This assignment to the local variable 'time' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'System.currentTimeMillis();'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/GridTests.java:[558,5] [UnusedVariable] This assignment to the local variable 'nLon' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/GridTests.java:[559,5] [UnusedVariable] This assignment to the local variable 'nLat' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/GridTests.java:[89,10] [UnusedVariable] This assignment to the local variable 'grid' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'new Grid();'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/GridTests.java:[309,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[580,27] [UnusedVariable] The local variable 'commentVar' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'NcHelper.addNc3StringVariable(rootGroup, "comment", dims, strlen);'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[477,33] [UnusedVariable] The local variable 'smmb' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'sm.findMember("b_name");'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[484,27] [UnusedVariable] The local variable 'sd' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'it.next();'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[478,33] [UnusedVariable] The local variable 'smmc' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'sm.findMember("c_name");'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[476,33] [UnusedVariable] The local variable 'smma' is never read.
+    (see https://errorprone.info/bugpattern/UnusedVariable)
+  Did you mean to remove this line or 'sm.findMember("a_name");'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[287,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[WARNING] /app/src/test/java/gov/noaa/pfel/coastwatch/griddata/NcHelperTests.java:[353,9] [StringConcatToTextBlock] This string literal can be written more clearly as a text block
+    (see https://errorprone.info/bugpattern/StringConcatToTextBlock)
+  Did you mean '"""'?
+[INFO] /app/src/test/java/com/cohort/util/TestUtil.java: Some input files use or override a deprecated API.
+[INFO] /app/src/test/java/com/cohort/util/TestUtil.java: Recompile with -Xlint:deprecation for details.
+[INFO] /app/src/test/java/com/cohort/util/LRUCacheTests.java: Some input files use unchecked or unsafe operations.
+[INFO] /app/src/test/java/com/cohort/util/LRUCacheTests.java: Recompile with -Xlint:unchecked for details.
+[INFO]
+[INFO] --- surefire:3.5.6:test (default-test) @ ERDDAP ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+WARNING: package com.sun.jmx.remote.internal not in java.management.rmi
+[INFO] Running gov.noaa.pfel.erddap.dataset.EDDTableFromCassandraTests
+EDDTableFromCassandraTests.init() starting...
+
+////**** EDStatic Low Level Startup
+localTime=2026-06-26T04:38:57+00:00
+erddapVersion=2.31.0-alpha
+Java 21.0.10 (64 bit, Ubuntu) on Linux (6.8.0).
+MemoryInUse=    61 MB (highWaterMark=    61 MB) (Xmx ~= 1990 MB)
+Scanning FileType classes in package gov.noaa.pfel.erddap.filetypes
+Scanning EDD classes in package gov.noaa.pfel.erddap.dataset
+SLF4J(W): Class path contains multiple SLF4J providers.
+SLF4J(W): Found provider [org.slf4j.jul.JULServiceProvider@562a4bac]
+SLF4J(W): Found provider [ch.qos.logback.classic.spi.LogbackServiceProvider@56c45636]
+SLF4J(W): See https://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J(I): Actual provider is of type [org.slf4j.jul.JULServiceProvider@562a4bac]
+logLevel=info: verbose=true reallyVerbose=false
+bigParentDirectory=target/data/
+webInfParentDirectory=/app/
+contentDirectory: /app/development/test/
+copying file: /app/development/test/images/QuestionMarkTest.png
+copying file: /app/development/test/images/nlogo2.gif
+copying file: /app/development/test/images/noaa2000.gif
+copying file: /app/development/test/images/noaa_otherName.gif
+bufferedImage isAccelerated=[java.awt.HeadlessException:
+No X11 DISPLAY variable was set,
+or no headful library support was found,
+but this program performed an operation which requires it.]
+Subscriptions.removeOldPending nPending=0 nRemoved=0
+Subscriptions loaded successfully. nValid=0
+Custom messages.xml not found at /app/development/test/messages.xml
+Using default messages.xml from  /app/development/test/messages.xml
+CfToFromGcmd static loading file:/app/target/classes/gov/noaa/pfel/erddap/util/CfToGcmd.txt
+*** EDStatic Low Level Startup finished successfully.
+
+Starting Embedded Cassandra...
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.YamlConfigurationLoader getStorageConfigURL
+INFO: Configuration location: file:/app/target/embeddedCassandra/cu-cassandra.yaml
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.Config log
+INFO: Node configuration:[allocate_tokens_for_keyspace=null; authenticator=AllowAllAuthenticator; authorizer=AllowAllAuthorizer; auto_bootstrap=true; auto_snapshot=false; back_pressure_enabled=false; back_pressure_strategy=null; batch_size_fail_threshold_in_kb=50; batch_size_warn_threshold_in_kb=5; batchlog_replay_throttle_in_kb=1024; broadcast_address=null; broadcast_rpc_address=null; buffer_pool_use_heap_if_exhausted=true; cas_contention_timeout_in_ms=1000; cdc_enabled=false; cdc_free_space_check_interval_ms=250; cdc_raw_directory=target/embeddedCassandra/cdc; cdc_total_space_in_mb=0; client_encryption_options=<REDACTED>; cluster_name=Test Cluster; column_index_cache_size_in_kb=2; column_index_size_in_kb=64; commit_failure_policy=stop; commitlog_compression=null; commitlog_directory=target/embeddedCassandra/commitlog; commitlog_max_compression_buffers_in_pool=3; commitlog_periodic_queue_size=-1; commitlog_segment_size_in_mb=32; commitlog_sync=periodic; commitlog_sync_batch_window_in_ms=NaN; commitlog_sync_period_in_ms=10000; commitlog_total_space_in_mb=null; compaction_large_partition_warning_threshold_mb=100; compaction_throughput_mb_per_sec=16; concurrent_compactors=null; concurrent_counter_writes=32; concurrent_materialized_view_writes=32; concurrent_reads=32; concurrent_replicates=null; concurrent_writes=32; counter_cache_keys_to_save=2147483647; counter_cache_save_period=7200; counter_cache_size_in_mb=null; counter_write_request_timeout_in_ms=5000; credentials_cache_max_entries=1000; credentials_update_interval_in_ms=-1; credentials_validity_in_ms=2000; cross_node_timeout=false; data_file_directories=[Ljava.lang.String;@6c8057d1; disk_access_mode=auto; disk_failure_policy=stop; disk_optimization_estimate_percentile=0.95; disk_optimization_page_cross_chance=0.1; disk_optimization_strategy=ssd; dynamic_snitch=true; dynamic_snitch_badness_threshold=0.1; dynamic_snitch_reset_interval_in_ms=600000; dynamic_snitch_update_interval_in_ms=100; enable_materialized_views=true; enable_scripted_user_defined_functions=false; enable_user_defined_functions=false; enable_user_defined_functions_threads=true; encryption_options=org.apache.cassandra.config.EncryptionOptions$ServerEncryptionOptions@3703bc7e; endpoint_snitch=SimpleSnitch; file_cache_round_up=null; file_cache_size_in_mb=null; gc_log_threshold_in_ms=200; gc_warn_threshold_in_ms=0; hinted_handoff_disabled_datacenters=[]; hinted_handoff_enabled=true; hinted_handoff_throttle_in_kb=1024; hints_compression=null; hints_directory=target/embeddedCassandra/hints; hints_flush_period_in_ms=10000; incremental_backups=false; index_interval=128; index_summary_capacity_in_mb=null; index_summary_resize_interval_in_minutes=60; initial_token=null; inter_dc_stream_throughput_outbound_megabits_per_sec=200; inter_dc_tcp_nodelay=true; internode_authenticator=null; internode_compression=none; internode_recv_buff_size_in_bytes=0; internode_send_buff_size_in_bytes=0; key_cache_keys_to_save=2147483647; key_cache_save_period=14400; key_cache_size_in_mb=null; listen_address=127.0.0.1; listen_interface=null; listen_interface_prefer_ipv6=false; listen_on_broadcast_address=false; max_hint_window_in_ms=10800000; max_hints_delivery_threads=2; max_hints_file_size_in_mb=128; max_mutation_size_in_kb=null; max_streaming_retries=3; max_value_size_in_mb=256; memtable_allocation_type=heap_buffers; memtable_cleanup_threshold=null; memtable_flush_writers=0; memtable_heap_space_in_mb=null; memtable_offheap_space_in_mb=null; min_free_space_per_drive_in_mb=50; native_transport_flush_in_batches_legacy=true; native_transport_max_concurrent_connections=-1; native_transport_max_concurrent_connections_per_ip=-1; native_transport_max_frame_size_in_mb=256; native_transport_max_threads=128; native_transport_port=9142; native_transport_port_ssl=null; num_tokens=1; otc_backlog_expiration_interval_ms=200; otc_coalescing_enough_coalesced_messages=8; otc_coalescing_strategy=DISABLED; otc_coalescing_window_us=200; partitioner=org.apache.cassandra.dht.Murmur3Partitioner; permissions_cache_max_entries=1000; permissions_update_interval_in_ms=-1; permissions_validity_in_ms=2000; phi_convict_threshold=8.0; prepared_statements_cache_size_mb=null; range_request_timeout_in_ms=10000; read_request_timeout_in_ms=5000; request_scheduler=org.apache.cassandra.scheduler.NoScheduler; request_scheduler_id=null; request_scheduler_options=null; request_timeout_in_ms=10000; role_manager=null; roles_cache_max_entries=1000; roles_update_interval_in_ms=-1; roles_validity_in_ms=2000; row_cache_class_name=org.apache.cassandra.cache.OHCProvider; row_cache_keys_to_save=2147483647; row_cache_save_period=0; row_cache_size_in_mb=0; rpc_address=localhost; rpc_interface=null; rpc_interface_prefer_ipv6=false; rpc_keepalive=true; rpc_listen_backlog=50; rpc_max_threads=2147483647; rpc_min_threads=16; rpc_port=9171; rpc_recv_buff_size_in_bytes=null; rpc_send_buff_size_in_bytes=null; rpc_server_type=sync; saved_caches_directory=target/embeddedCassandra/saved_caches; seed_provider=org.apache.cassandra.locator.SimpleSeedProvider{seeds=127.0.0.1}; server_encryption_options=<REDACTED>; slow_query_log_timeout_in_ms=500; snapshot_before_compaction=false; ssl_storage_port=7011; sstable_preemptive_open_interval_in_mb=50; start_native_transport=true; start_rpc=true; storage_port=7010; stream_throughput_outbound_megabits_per_sec=200; streaming_keep_alive_period_in_secs=300; streaming_socket_timeout_in_ms=86400000; thrift_framed_transport_size_in_mb=15; thrift_max_message_length_in_mb=16; thrift_prepared_statements_cache_size_mb=null; tombstone_failure_threshold=100000; tombstone_warn_threshold=1000; tracetype_query_ttl=86400; tracetype_repair_ttl=604800; transparent_data_encryption_options=org.apache.cassandra.config.TransparentDataEncryptionOptions@414dc3ca; trickle_fsync=false; trickle_fsync_interval_in_kb=10240; truncate_request_timeout_in_ms=60000; unlogged_batch_across_partitions_warn_threshold=10; user_defined_function_fail_timeout=1500; user_defined_function_warn_timeout=500; user_function_timeout_policy=die; windows_timer_interval=0; write_request_timeout_in_ms=2000]
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.DatabaseDescriptor applySimpleConfig
+INFO: DiskAccessMode 'auto' determined to be mmap, indexAccessMode is mmap
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.DatabaseDescriptor applySimpleConfig
+INFO: Global memtable on-heap threshold is enabled at 497MB
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.DatabaseDescriptor applySimpleConfig
+INFO: Global memtable off-heap threshold is enabled at 497MB
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.io.util.FileUtils <clinit>
+INFO: Cannot initialize un-mmaper.  (Are you using a non-Oracle JVM?)  Compacted data files will not be removed promptly.  Consider using an Oracle JVM or using standard disk access mode
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.DatabaseDescriptor applySimpleConfig
+WARNING: index_interval has been deprecated and should be removed from cassandra.yaml
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.DatabaseDescriptor applySimpleConfig
+WARNING: Please rename encryption_options as server_encryption_options in the yaml
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.net.RateBasedBackPressure <init>
+INFO: Initialized back-pressure with high ratio: 0.9, factor: 5, flow: FAST, window size: 2000.
+Jun 26, 2026 4:39:04 AM org.apache.cassandra.config.DatabaseDescriptor applySimpleConfig
+INFO: Back-pressure is disabled with strategy null.
