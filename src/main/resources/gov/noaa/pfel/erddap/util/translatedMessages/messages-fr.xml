@@ -2952,6 +2952,7 @@ Par exemple:
 <fileHelp_nc4Header>Affichez l&#39;en-tête UTF-8 (les métadonnées) du fichier NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Affichez les métadonnées de l&#39;ensemble de données dans la moitié supérieure d&#39;un fichier .csv ASCII NCCSV 7 bits.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Téléchargez un fichier JSON UTF-8 NCO lvl=2 avec les métadonnées COARDS/CF/ACDD.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Téléchargez un fichier NetCDF-3 CF Discrete Sampling Geometries (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Affichez l&#39;en-tête UTF-8 (les métadonnées) du fichier .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Téléchargez un fichier NetCDF-3 CF Discrete Sampling Geometries (Matrice multidimensionnelle).</fileHelp_ncCFMA>

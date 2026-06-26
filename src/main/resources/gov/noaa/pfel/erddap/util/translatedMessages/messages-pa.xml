@@ -2710,6 +2710,7 @@ ERDDAP ਇੱਕ ਡੇਟਾ ਸਰਵਰ ਹੈ ਜੋ ਤੁਹਾਨੂੰ �
 <fileHelp_nc4Header>NetCDF-4 .nc ਫਾਈਲ ਲਈ UTF-8 ਸਿਰਲੇਖ (ਮੈਟਾਡੇਟਾ) ਦੇਖੋ।</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>7-ਬਿੱਟ ASCII NCCSV .csv ਫਾਈਲ ਦੇ ਉੱਪਰਲੇ ਅੱਧ ਦੇ ਰੂਪ ਵਿੱਚ ਡੇਟਾਸੈਟ ਦੇ ਮੈਟਾਡੇਟਾ ਨੂੰ ਵੇਖੋ।</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>COARDS/CF/ACDD ਮੈਟਾਡੇਟਾ ਨਾਲ ਇੱਕ UTF-8 NCO lvl=2 JSON ਫ਼ਾਈਲ ਡਾਊਨਲੋਡ ਕਰੋ।</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>ਇੱਕ NetCDF-3 CF ਡਿਸਕਰੀਟ ਸੈਂਪਲਿੰਗ ਜਿਓਮੈਟਰੀਜ਼ ਫਾਈਲ (ਕੰਟੀਗੁਅਸ ਰੈਗਡ ਐਰੇ) ਡਾਊਨਲੋਡ ਕਰੋ।</fileHelp_ncCF>
 <fileHelp_ncCFHeader>.ncCF ਫਾਈਲ ਲਈ UTF-8 ਸਿਰਲੇਖ (ਮੈਟਾਡੇਟਾ) ਦੇਖੋ।</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>ਇੱਕ NetCDF-3 CF ਡਿਸਕਰੀਟ ਸੈਂਪਲਿੰਗ ਜਿਓਮੈਟਰੀਜ਼ ਫਾਈਲ (ਬਹੁ-ਆਯਾਮੀ ਐਰੇ) ਨੂੰ ਡਾਊਨਲੋਡ ਕਰੋ।</fileHelp_ncCFMA>

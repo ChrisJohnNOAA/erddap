@@ -3021,6 +3021,7 @@ ERDDAP हा डेटा सर्व्हर आहे जो तुम्�
 <fileHelp_nc4Header>NetCDF-4 .nc फाइलसाठी UTF-8 शीर्षलेख (मेटाडेटा) पहा.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>डेटासेटचा मेटाडेटा 7-बिट ASCII NCCSV .csv फाईलचा अर्धा भाग म्हणून पहा.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>COARDS/CF/ACDD मेटाडेटासह UTF-8 NCO lvl=2 JSON फाइल डाउनलोड करा.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>NetCDF-3 CF डिस्क्रिट सॅम्पलिंग जिओमेट्रीज फाइल डाउनलोड करा (कंटिगुअस रॅग्ड ॲरे).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>.ncCF फाइलसाठी UTF-8 शीर्षलेख (मेटाडेटा) पहा.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>NetCDF-3 CF डिस्क्रिट सॅम्पलिंग जिओमेट्रीज फाइल डाउनलोड करा (बहुआयामी ॲरे).</fileHelp_ncCFMA>

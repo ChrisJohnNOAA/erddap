@@ -3089,6 +3089,7 @@ ERDDAP 는 일반 파일 형식으로 과학 데이터 세트의 하위 집합�
 <fileHelp_nc4Header>NetCDF-4 .nc 파일의 UTF-8 헤더(메타데이터)를 확인하세요.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>데이터 세트의 메타데이터를 7비트 ASCII NCCSV .csv 파일의 위쪽 절반으로 봅니다.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>COARDS/CF/ACDD 메타데이터가 포함된 UTF-8 NCO lvl=2 JSON 파일을 다운로드합니다.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>NetCDF-3 CF 이산 샘플링 형상 파일(연속 비정형 배열)을 다운로드합니다.</fileHelp_ncCF>
 <fileHelp_ncCFHeader>.ncCF 파일의 UTF-8 헤더(메타데이터)를 확인하세요.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>NetCDF-3 CF 이산 샘플링 형상 파일(다차원 배열)을 다운로드합니다.</fileHelp_ncCFMA>

@@ -50,7 +50,7 @@ public class NcoJsonFiles extends TableWriterFileType {
       throws Throwable {
     if (tableWriter instanceof TableWriterAllWithMetadata twalwm) {
       String jsonp = EDStatic.getJsonpFromQuery(requestInfo.language(), requestInfo.userDapQuery());
-      saveAsNcoJson(requestInfo.outputStream(), twalwm, jsonp);
+      saveAsNcoJson(requestInfo.outputStream(), twalwm, jsonp, true);
     }
   }
 
@@ -61,7 +61,8 @@ public class NcoJsonFiles extends TableWriterFileType {
         requestInfo.requestUrl(),
         requestInfo.userDapQuery(),
         requestInfo.outputStream(),
-        requestInfo.getEDDGrid());
+        requestInfo.getEDDGrid(),
+        true);
   }
 
   @Override
@@ -114,10 +115,14 @@ public class NcoJsonFiles extends TableWriterFileType {
    *     https://www.raymondcamden.com/2014/03/12/Reprint-What-in-the-heck-is-JSONP-and-why-would-you-use-it/
    *     . A SimpleException will be thrown if tJsonp is not null but isn't
    *     String2.isVariableNameSafe.
+   * @param writeValues true if you want the data values to be written.
    * @throws Throwable
    */
-  private void saveAsNcoJson(
-      OutputStreamSource outputStreamSource, TableWriterAllWithMetadata twawm, String jsonp)
+  protected void saveAsNcoJson(
+      OutputStreamSource outputStreamSource,
+      TableWriterAllWithMetadata twawm,
+      String jsonp,
+      boolean writeValues)
       throws Throwable {
     if (EDDTable.reallyVerbose) String2.log("EDDTable.saveAsNcoJson");
     long time = System.currentTimeMillis();
@@ -202,66 +207,65 @@ public class NcoJsonFiles extends TableWriterFileType {
                 + "      \"type\": \""
                 + tType
                 + "\",\n");
-        writer.write(atts.toNcoJsonString("      "));
-        writer.write("      \"data\": [");
-        try (DataInputStream dis = twawm.dataInputStream(col)) {
-          // create the bufferPA
-          PrimitiveArray pa = null;
-          long nRowsRead = 0;
-          while (nRowsRead < nRows) {
-            int nToRead = (int) Math.min(bufferSize, nRows - nRowsRead);
-            if (pa == null) {
-              pa = twawm.columnEmptyPA(col);
-              pa.ensureCapacity(nToRead);
+        writer.write(atts.toNcoJsonString("      ", writeValues));
+        if (writeValues) {
+          writer.write("      \"data\": [");
+          try (DataInputStream dis = twawm.dataInputStream(col)) {
+            // create the bufferPA
+            PrimitiveArray pa = null;
+            long nRowsRead = 0;
+            while (nRowsRead < nRows) {
+              int nToRead = (int) Math.min(bufferSize, nRows - nRowsRead);
+              if (pa == null) {
+                pa = twawm.columnEmptyPA(col);
+                pa.ensureCapacity(nToRead);
+              }
+              pa.clear();
+              pa.setMaxIsMV(twawm.columnMaxIsMV(col)); // reset after clear()
+              pa.readDis(dis, nToRead);
+              if (isChar) {
+                // write it as one string with chars concatenated
+                // see "md5_abc" in in http://dust.ess.uci.edu/tmp/in.json.fmt2
+                //  "shape": ["lev"],          //dim lev size=3
+                //  ...
+                //  "data": ["abc"]
+                // here: write it in buffersize chunks
+                if (nRowsRead == 0) writer.write("\""); // start the string
+                String s = String2.toJson(new String(((CharArray) pa).toArray()));
+                writer.write(s.substring(1, s.length() - 1)); // remove start and end "
+              } else if (isString) {
+                // Arrays of Strings are written oddly: (example from
+                // http://dust.ess.uci.edu/tmp/in.json.fmt2)
+                //    "date_rec": {
+                //      "shape": ["time", "char_dmn_lng26"],
+                //      "type": "char",
+                //      "attributes": ...,
+                //      "data": [["2010-11-01T00:00:00.000000"], ["2010-11-01T01:00:00.000000"],
+                // ["2010-11-01T02:00:00.000000"], ["2010-11-01T03:00:00.000000"],
+                // ["2010-11-01T04:00:00.000000"], ["2010-11-01T05:00:00.000000"],
+                // ["2010-11-01T06:00:00.000000"], ["2010-11-01T07:00:00.000000"],
+                // ["2010-11-01T08:00:00.000000"], ["2010-11-01T09:00:00.000000"]]
+                //    },
+                if (nRowsRead > 0) writer.write(",\n    "); // separate and write on next line
+                ssb.setLength(0);
+                for (int row = 0; row < nToRead; row++)
+                  ssb.append(
+                      (row == 0 ? "" : ", ")
+                          + stringOpenBracket
+                          + String2.toJson(pa.getString(row))
+                          + stringCloseBracket);
+                writer.write(ssb.toString());
+              } else {
+                if (nRowsRead > 0) writer.write(",\n    "); // separate and write on next line
+                writer.write(pa.toJsonCsvString());
+              }
+              nRowsRead += nToRead;
             }
-            pa.clear();
-            pa.setMaxIsMV(twawm.columnMaxIsMV(col)); // reset after clear()
-            pa.readDis(dis, nToRead);
-            if (isChar) {
-              // write it as one string with chars concatenated
-              // see "md5_abc" in in http://dust.ess.uci.edu/tmp/in.json.fmt2
-              //  "shape": ["lev"],          //dim lev size=3
-              //  ...
-              //  "data": ["abc"]
-              // here: write it in buffersize chunks
-              if (nRowsRead == 0) writer.write("\""); // start the string
-              String s = String2.toJson(new String(((CharArray) pa).toArray()));
-              writer.write(s.substring(1, s.length() - 1)); // remove start and end "
-            } else if (isString) {
-              // Arrays of Strings are written oddly: (example from
-              // http://dust.ess.uci.edu/tmp/in.json.fmt2)
-              //    "date_rec": {
-              //      "shape": ["time", "char_dmn_lng26"],
-              //      "type": "char",
-              //      "attributes": ...,
-              //      "data": [["2010-11-01T00:00:00.000000"], ["2010-11-01T01:00:00.000000"],
-              // ["2010-11-01T02:00:00.000000"], ["2010-11-01T03:00:00.000000"],
-              // ["2010-11-01T04:00:00.000000"], ["2010-11-01T05:00:00.000000"],
-              // ["2010-11-01T06:00:00.000000"], ["2010-11-01T07:00:00.000000"],
-              // ["2010-11-01T08:00:00.000000"], ["2010-11-01T09:00:00.000000"]]
-              //    },
-              if (nRowsRead > 0) writer.write(",\n    "); // separate and write on next line
-              ssb.setLength(0);
-              for (int row = 0; row < nToRead; row++)
-                ssb.append(
-                    (row == 0 ? "" : ", ")
-                        + stringOpenBracket
-                        + String2.toJson(pa.getString(row))
-                        + stringCloseBracket);
-              writer.write(ssb.toString());
-            } else {
-              if (nRowsRead > 0) writer.write(",\n    "); // separate and write on next line
-              writer.write(pa.toJsonCsvString());
-            }
-            nRowsRead += nToRead;
           }
+          if (isChar) writer.write('\"'); // terminate the string
+          writer.write("]\n"); // end of data
         }
-        if (isChar) writer.write('\"'); // terminate the string
-        writer.write(
-            "]\n"
-                + // end of data
-                "    }"
-                + (col < nCols - 1 ? ",\n" : "\n")); // end of variable
+        writer.write("    }" + (col < nCols - 1 ? ",\n" : "\n")); // end of variable
       }
       writer.write(
           "  }\n" + // end of variables object
@@ -285,18 +289,19 @@ public class NcoJsonFiles extends TableWriterFileType {
    * (not write file then transfer file).
    *
    * @param language the index of the selected language
-   * @param ncVersion either NetcdfFileFormat.NETCDF3 or NETCDF4.
    * @param requestUrl the part of the user's request, after EDStatic.config.baseUrl, before '?'.
    * @param userDapQuery an OPeNDAP DAP-style query string, still percentEncoded (shouldn't be
    *     null). e.g., ATssta[45:1:45][0:1:0][120:10:140][130:10:160]
+   * @param writeValues true if you want the data values to be written.
    * @throws Throwable
    */
-  private void saveAsNcoJson(
+  protected void saveAsNcoJson(
       int language,
       String requestUrl,
       String userDapQuery,
       OutputStreamSource outputStreamSource,
-      EDDGrid grid)
+      EDDGrid grid,
+      boolean writeValues)
       throws Throwable {
     if (EDDGrid.reallyVerbose) String2.log("  EDDGrid.saveAsNc");
 
@@ -376,14 +381,13 @@ public class NcoJsonFiles extends TableWriterFileType {
                   + "      \"type\": \""
                   + tType
                   + "\",\n");
-          writer.write(ada.axisAttributes(avi).toNcoJsonString("      "));
-          writer.write("      \"data\": [");
-          writer.write(ada.axisValues(avi).toJsonCsvString());
-          writer.write(
-              "]\n"
-                  + // end of data
-                  "    }"
-                  + (avi < nRAV - 1 ? ",\n" : "\n")); // end of variable
+          writer.write(ada.axisAttributes(avi).toNcoJsonString("      ", writeValues));
+          if (writeValues) {
+            writer.write("      \"data\": [");
+            writer.write(ada.axisValues(avi).toJsonCsvString());
+            writer.write("]\n"); // end of data
+          }
+          writer.write("    }" + (avi < nRAV - 1 ? ",\n" : "\n")); // end of variable
         }
         writer.write(
             "  }\n" + // end of variables object
@@ -438,6 +442,7 @@ public class NcoJsonFiles extends TableWriterFileType {
           if (dv.destinationDataPAType() == PAType.STRING) {
             int max = 1;
             long n = gda.totalIndex().size();
+            // To provide accurate strlen dimensions, we must load and process all of the data.
             try (DataInputStream dis = gdaa.getDataInputStream(dvi)) {
               for (int i = 0; i < n; i++) max = Math.max(max, dis.readUTF().length());
             }
@@ -484,14 +489,14 @@ public class NcoJsonFiles extends TableWriterFileType {
                 + "      \"type\": \""
                 + tType
                 + "\",\n");
-        writer.write(gda.axisAttributes(avi).toNcoJsonString("      "));
+        writer.write(gda.axisAttributes(avi).toNcoJsonString("      ", writeValues));
 
-        writer.write("      \"data\": [");
-        writer.write(gda.axisValues(avi).toJsonCsvString());
-        writer.write(
-            "]\n"
-                + // end of data
-                "    },\n"); // end of variable
+        if (writeValues) {
+          writer.write("      \"data\": [");
+          writer.write(gda.axisValues(avi).toJsonCsvString());
+          writer.write("]\n"); // end of data
+        }
+        writer.write("    },\n"); // end of variable
       }
 
       // dataVariables
@@ -536,76 +541,79 @@ public class NcoJsonFiles extends TableWriterFileType {
                 + "      \"type\": \""
                 + tType
                 + "\",\n");
-        writer.write(atts.toNcoJsonString("      "));
+        writer.write(atts.toNcoJsonString("      ", writeValues));
 
-        writer.write("      \"data\":\n");
-        for (int avi = 0; avi < nAV; avi++) writer.write("[ ");
-        try (DataInputStream dis = gdaa.getDataInputStream(dvi)) {
+        if (writeValues) {
+          writer.write("      \"data\":\n");
+          for (int avi = 0; avi < nAV; avi++) writer.write("[ ");
+          try (DataInputStream dis = gdaa.getDataInputStream(dvi)) {
 
-          // create the bufferPA
-          PrimitiveArray pa =
-              PrimitiveArray.factory(
-                  dv.destinationDataPAType(), 1, false); // safe since checked above
-          CharArray ca = isChar ? (CharArray) pa : null;
-          if (isChar) writer.write("\""); // start the string
-          tIndex.reset();
-          tIndex.increment(); // so we're at 1st datum
-          for (long nRowsRead = 0; nRowsRead < nRows; nRowsRead++) {
+            // create the bufferPA
+            PrimitiveArray pa =
+                PrimitiveArray.factory(
+                    dv.destinationDataPAType(), 1, false); // safe since checked above
+            CharArray ca = isChar ? (CharArray) pa : null;
+            if (isChar) writer.write("\""); // start the string
+            tIndex.reset();
+            tIndex.increment(); // so we're at 1st datum
+            for (long nRowsRead = 0; nRowsRead < nRows; nRowsRead++) {
 
-            // String2.log(">> preCurrent=" + String2.toCSSVString(preCurrent));
-            pa.clear();
-            pa.readDis(dis, 1);
+              // String2.log(">> preCurrent=" + String2.toCSSVString(preCurrent));
+              pa.clear();
+              pa.readDis(dis, 1);
 
-            // write one data value
-            if (isChar) {
-              // write it as one string with chars concatenated
-              // see "md5_abc" in in http://dust.ess.uci.edu/tmp/in.json.fmt2
-              //  "shape": ["lev"],          //dim lev size=3
-              //  ...
-              //  "data": ["abc"]
-              writer.write(String2.charToJsonString(ca.get(0), 127, true)); // encodeNewline
-            } else if (isString) {
-              // Arrays of Strings are written oddly: (example from
-              // http://dust.ess.uci.edu/tmp/in.json.fmt2)
-              //    "date_rec": {
-              //      "shape": ["time", "char_dmn_lng26"],
-              //      "type": "char",
-              //      "attributes": ...,
-              //      "data": [["2010-11-01T00:00:00.000000"], ["2010-11-01T01:00:00.000000"],
-              // ["2010-11-01T02:00:00.000000"], ["2010-11-01T03:00:00.000000"],
-              // ["2010-11-01T04:00:00.000000"], ["2010-11-01T05:00:00.000000"],
-              // ["2010-11-01T06:00:00.000000"], ["2010-11-01T07:00:00.000000"],
-              // ["2010-11-01T08:00:00.000000"], ["2010-11-01T09:00:00.000000"]]
-              //    },
-              writer.write(
-                  stringOpenBracket + String2.toJson(pa.getString(0)) + stringCloseBracket);
-            } else {
-              writer.write(pa.toJsonCsvString());
-            }
-
-            // write commas and brackets
-            // This was difficult for me: It took me a while to figure out:
-            // Given n (tIndex.nDimensionschanged()),
-            //  the proper separators between data items are
-            //  n-1 close brackets, 1 comma, n-1 open brackets.
-            if (tIndex.increment()) {
-              int nDimChanged = tIndex.nDimensionsChanged();
-              if (nDimChanged == 1) {
-                // easier to deal with this specially
-                if (!isChar) writer.write(", ");
+              // write one data value
+              if (isChar) {
+                // write it as one string with chars concatenated
+                // see "md5_abc" in in http://dust.ess.uci.edu/tmp/in.json.fmt2
+                //  "shape": ["lev"],          //dim lev size=3
+                //  ...
+                //  "data": ["abc"]
+                writer.write(String2.charToJsonString(ca.get(0), 127, true)); // encodeNewline
+              } else if (isString) {
+                // Arrays of Strings are written oddly: (example from
+                // http://dust.ess.uci.edu/tmp/in.json.fmt2)
+                //    "date_rec": {
+                //      "shape": ["time", "char_dmn_lng26"],
+                //      "type": "char",
+                //      "attributes": ...,
+                //      "data": [["2010-11-01T00:00:00.000000"], ["2010-11-01T01:00:00.000000"],
+                // ["2010-11-01T02:00:00.000000"], ["2010-11-01T03:00:00.000000"],
+                // ["2010-11-01T04:00:00.000000"], ["2010-11-01T05:00:00.000000"],
+                // ["2010-11-01T06:00:00.000000"], ["2010-11-01T07:00:00.000000"],
+                // ["2010-11-01T08:00:00.000000"], ["2010-11-01T09:00:00.000000"]]
+                //    },
+                writer.write(
+                    stringOpenBracket + String2.toJson(pa.getString(0)) + stringCloseBracket);
               } else {
-                if (isChar) writer.write('\"'); // close the quote
-                for (int dim = 0; dim < nDimChanged - 1; dim++) writer.write(" ]");
-                writer.write(",\n");
-                for (int dim = 0; dim < nDimChanged - 1; dim++) writer.write("[ ");
-                if (isChar) writer.write('\"'); // open the quote
+                writer.write(pa.toJsonCsvString());
               }
-            } // else it is the end of the data. Handle brackets specially below...
-          } // end of data
+
+              // write commas and brackets
+              // This was difficult for me: It took me a while to figure out:
+              // Given n (tIndex.nDimensionschanged()),
+              //  the proper separators between data items are
+              //  n-1 close brackets, 1 comma, n-1 open brackets.
+              if (tIndex.increment()) {
+                int nDimChanged = tIndex.nDimensionsChanged();
+                if (nDimChanged == 1) {
+                  // easier to deal with this specially
+                  if (!isChar) writer.write(", ");
+                } else {
+                  if (isChar) writer.write('\"'); // close the quote
+                  for (int dim = 0; dim < nDimChanged - 1; dim++) writer.write(" ]");
+                  writer.write(",\n");
+                  for (int dim = 0; dim < nDimChanged - 1; dim++) writer.write("[ ");
+                  if (isChar) writer.write('\"'); // open the quote
+                }
+              } // else it is the end of the data. Handle brackets specially below...
+            } // end of data
+          }
+          if (isChar) writer.write("\""); // start the string
+          for (int avi = 0; avi < nAV; avi++) writer.write(" ]");
+          writer.write("\n"); // end of data
         }
-        if (isChar) writer.write("\""); // start the string
-        for (int avi = 0; avi < nAV; avi++) writer.write(" ]");
-        writer.write("\n" + "    }" + (dvi < nRDV - 1 ? "," : "") + "\n"); // end of variable
+        writer.write("    }" + (dvi < nRDV - 1 ? "," : "") + "\n"); // end of variable
       }
       writer.write(
           "  }\n" + // end of variables object

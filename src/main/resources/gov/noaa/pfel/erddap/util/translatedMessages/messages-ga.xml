@@ -2929,6 +2929,7 @@ Mar shampla:
 <fileHelp_nc4Header>Féach ar an gceanntásc UTF-8 (na meiteashonraí) don chomhad NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Féach ar mheiteashonraí an tacair sonraí mar an leath uachtarach de chomhad 7-giotán ASCII NCCSV .csv.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Íoslódáil comhad UTF-8 NCO lvl=2 JSON le meiteashonraí COARDS/CF/ACDD.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Íoslódáil comhad Geoiméadracht Samplála Scoite NetCDF-3 CF (Eagar Garbh Tadhlach).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Féach ar an gceanntásc UTF-8 (na meiteashonraí) don chomhad .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Íoslódáil comhad Geoiméadracht Samplála Scoite NetCDF-3 CF (Eagar Iltoiseach).</fileHelp_ncCFMA>

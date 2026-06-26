@@ -2811,6 +2811,7 @@ For eksempel:
 <fileHelp_nc4Header>Se UTF-8-headeren (metadataene) for NetCDF-4 .nc-filen.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Se datasættets metadata som den øverste halvdel af en 7-bit ASCII NCCSV .csv-fil.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Download en UTF-8 NCO lvl=2 JSON-fil med COARDS/CF/ACDD-metadata.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Download en NetCDF-3 CF Discrete Sampling Geometries-fil (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Se UTF-8-headeren (metadataene) for .ncCF-filen.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Download en NetCDF-3 CF Discrete Sampling Geometries-fil (Multidimensional Array).</fileHelp_ncCFMA>

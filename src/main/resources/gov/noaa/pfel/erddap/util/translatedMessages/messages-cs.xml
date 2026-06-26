@@ -2816,6 +2816,7 @@ Například:
 <fileHelp_nc4Header>Zobrazte záhlaví UTF-8 (metadata) pro soubor NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Zobrazte metadata datové sady jako horní polovinu 7bitového souboru ASCII NCCSV .csv.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Stáhněte si soubor JSON UTF-8 NCO lvl=2 s metadaty COARDS/CF/ACDD.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Stáhněte si soubor NetCDF-3 CF Discrete Sampling Geometries (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Zobrazte záhlaví UTF-8 (metadata) pro soubor .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Stáhněte si soubor NetCDF-3 CF Discrete Sampling Geometries (Multidimenzionální pole).</fileHelp_ncCFMA>

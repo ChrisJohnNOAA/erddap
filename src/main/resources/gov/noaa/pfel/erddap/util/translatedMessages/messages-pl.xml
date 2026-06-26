@@ -2965,6 +2965,7 @@ Na przykład:
 <fileHelp_nc4Header>Wyświetl nagłówek UTF-8 (metadane) pliku NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Wyświetl metadane zestawu danych jako górną połowę 7-bitowego pliku ASCII NCCSV .csv.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Pobierz plik JSON w formacie UTF-8 NCO lvl=2 z metadanymi COARDS/CF/ACDD.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Pobierz plik dyskretnych geometrii próbkowania NetCDF-3 CF (ciągła nierówna tablica).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Wyświetl nagłówek UTF-8 (metadane) pliku .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Pobierz plik dyskretnych geometrii próbkowania NetCDF-3 CF (tablica wielowymiarowa).</fileHelp_ncCFMA>

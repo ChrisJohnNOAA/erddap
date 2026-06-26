@@ -2935,6 +2935,7 @@ Misalnya:
 <fileHelp_nc4Header>Lihat header UTF-8 (metadata) untuk file .nc NetCDF-4.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Lihat metadata himpunan data sebagai bagian atas file .csv ASCII NCCSV 7-bit.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Unduh file JSON UTF-8 NCO lvl=2 dengan metadata COARDS/CF/ACDD.</fileHelp_ncoJson>
+<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Unduh file Geometri Pengambilan Sampel Diskrit NetCDF-3 CF (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Lihat header UTF-8 (metadata) untuk file .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Unduh file Geometri Pengambilan Sampel Diskrit NetCDF-3 CF (Array Multidimensi).</fileHelp_ncCFMA>
