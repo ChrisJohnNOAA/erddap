@@ -2962,7 +2962,8 @@ ERDDAP — це сервер даних, який дає вам простий �
 <fileHelp_nc4Header>Перегляньте заголовок UTF-8 (метадані) для файлу NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Перегляньте метадані набору даних як верхню половину 7-розрядного файлу ASCII NCCSV .csv.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Завантажте файл JSON UTF-8 NCO lvl=2 із метаданими COARDS/CF/ACDD.</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>Перегляд конструктора UTF-8 для метаданихNCOlvl=2 JSON файл.
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Завантажте файл NetCDF-3 CF Geometries Discrete Sampling Geometries (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Перегляньте заголовок UTF-8 (метадані) для файлу .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Завантажте файл геометрії дискретної вибірки NetCDF-3 CF (багатовимірний масив).</fileHelp_ncCFMA>

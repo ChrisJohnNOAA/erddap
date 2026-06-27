@@ -9,7 +9,7 @@ import gov.noaa.pfel.erddap.util.EDStatic;
     fileTypeExtension = ".json",
     fileTypeName = ".ncoJsonHeader",
     infoUrl = "https://nco.sourceforge.net/nco.html#json",
-    versionAdded = "2.25",
+    versionAdded = "2.31",
     contentType = "application/json",
     addContentDispositionHeader = false)
 public class NcoJsonHeaderFiles extends NcoJsonFiles {

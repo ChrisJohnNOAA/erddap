@@ -2640,7 +2640,8 @@ ERDDAP เป็นเซิร์ฟเวอร์ข้อมูลที่�
 <fileHelp_nc4Header>ดูส่วนหัว UTF-8 (ข้อมูลเมตา) สำหรับไฟล์ NetCDF-4 .nc</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>ดูข้อมูลเมตาของชุดข้อมูลเป็นครึ่งบนของไฟล์ ASCII NCCSV .csv 7 บิต</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>ดาวน์โหลดไฟล์ UTF-8 NCO lvl=2 JSON พร้อมข้อมูลเมตา COARDS/CF/ACDD</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>แสดงส่วนหัวแบบ UTF- 8 (ข้อมูลกํากับภาพ) สําหรับใช้เป็นNCOVI=2 แฟ้ม Json
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>ดาวน์โหลดไฟล์ NetCDF-3 CF Discrete Sampling Geometries (Contiguous Ragged Array)</fileHelp_ncCF>
 <fileHelp_ncCFHeader>ดูส่วนหัว UTF-8 (ข้อมูลเมตา) สำหรับไฟล์ .ncCF</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>ดาวน์โหลดไฟล์ NetCDF-3 CF Discrete Sampling Geometries (อาร์เรย์หลายมิติ)</fileHelp_ncCFMA>

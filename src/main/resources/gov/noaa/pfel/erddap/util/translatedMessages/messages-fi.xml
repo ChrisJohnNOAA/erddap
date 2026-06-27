@@ -2974,7 +2974,8 @@ Esimerkiksi:
 <fileHelp_nc4Header>Tarkastele NetCDF-4 .nc-tiedoston UTF-8-otsikkoa (metatiedot).</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Näytä tietojoukon metatiedot 7-bittisen ASCII NCCSV .csv-tiedoston yläosana.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Lataa UTF-8 NCO lvl=2 JSON-tiedosto COARDS/CF/ACDD-metatiedoilla.</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>UTF-8-otsikko (metadata)NCOlvl=2 JSON-tiedosto.
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Lataa NetCDF-3 CF Discrete Sampling Geometries -tiedosto (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Näytä .ncCF-tiedoston UTF-8-otsikko (metatiedot).</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Lataa NetCDF-3 CF Discrete Sampling Geometries -tiedosto (Multidimensional Array).</fileHelp_ncCFMA>

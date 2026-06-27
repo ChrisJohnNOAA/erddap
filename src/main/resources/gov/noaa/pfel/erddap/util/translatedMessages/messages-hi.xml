@@ -2629,7 +2629,8 @@ ERDDAP एक डेटा सर्वर है जो आपको साम�
 <fileHelp_nc4Header>NetCDF-4 .nc फ़ाइल के लिए UTF-8 हेडर (मेटाडेटा) देखें।</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>डेटासेट के मेटाडेटा को 7-बिट ASCII NCCSV .csv फ़ाइल के ऊपरी आधे भाग के रूप में देखें।</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>COARDS/CF/ACDD मेटाडेटा के साथ UTF-8 NCO lvl=2 JSON फ़ाइल डाउनलोड करें।</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>एक के लिए UTF-8 हेडर (the मेटाडाटा) देखेंNCOlvl=2 JSON फ़ाइल।
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>NetCDF-3 CF डिस्क्रीट सैम्पलिंग जियोमेट्रीज़ फ़ाइल (कंटिग्यूअस रैग्ड ऐरे) डाउनलोड करें।</fileHelp_ncCF>
 <fileHelp_ncCFHeader>.ncCF फ़ाइल के लिए UTF-8 हेडर (मेटाडेटा) देखें।</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>NetCDF-3 CF डिस्क्रीट सैम्पलिंग जियोमेट्रीज़ फ़ाइल (बहुआयामी सारणी) डाउनलोड करें।</fileHelp_ncCFMA>

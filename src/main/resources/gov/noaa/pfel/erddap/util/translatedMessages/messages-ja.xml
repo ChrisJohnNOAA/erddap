@@ -2615,7 +2615,8 @@ ERDDAPは、科学データセットのサブセットを一般的なファイ�
 <fileHelp_nc4Header>NetCDF-4 .nc ファイルの UTF-8 ヘッダー (メタデータ) を表示します。</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>データセットのメタデータを 7 ビット ASCII NCCSV .csv ファイルの上位半分として表示します。</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>COARDS/CF/ACDD メタデータを含む UTF-8 NCO lvl=2 JSON ファイルをダウンロードします。</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>UTF-8 ヘッダー (メタデータ) をビューNCOlvl=2 JSON ファイル。
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>NetCDF-3 CF 離散サンプリング ジオメトリ ファイル (連続不規則配列) をダウンロードします。</fileHelp_ncCF>
 <fileHelp_ncCFHeader>.ncCF ファイルの UTF-8 ヘッダー (メタデータ) を表示します。</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>NetCDF-3 CF 離散サンプリング ジオメトリ ファイル (多次元配列) をダウンロードします。</fileHelp_ncCFMA>

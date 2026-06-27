@@ -2438,7 +2438,8 @@ ERDDAP是一个数据服务器，它为您提供一种简单、一致的方式�
 <fileHelp_nc4Header>查看 NetCDF-4 .nc 文件的 UTF-8 标头（元数据）。</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>将数据集的元数据视为 7 位 ASCII NCCSV .csv 文件的上半部分。</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>下载带有 COARDS/CF/ACDD 元数据的 UTF-8 NCO lvl=2 JSON 文件。</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>查看 UTF-8 标题( 元数据) 。NCOlvl=2 JSON文件.
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>下载 NetCDF-3 CF 离散采样几何文件（连续不规则阵列）。</fileHelp_ncCF>
 <fileHelp_ncCFHeader>查看 .ncCF 文件的 UTF-8 标头（元数据）。</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>下载 NetCDF-3 CF 离散采样几何文件（多维数组）。</fileHelp_ncCFMA>

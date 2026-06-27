@@ -2778,7 +2778,8 @@ De exemplu:
 <fileHelp_nc4Header>Vizualizați antetul UTF-8 (metadatele) pentru fișierul NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Vedeți metadatele setului de date ca jumătatea superioară a unui fișier .csv ASCII NCCSV pe 7 biți.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Descărcați un fișier JSON UTF-8 NCO lvl=2 cu metadate COARDS/CF/ACDD.</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>Vizualizați antetul UTF-8 (metadatele) pentru oNCODosarul JSON.
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Descărcați un fișier NetCDF-3 CF Discrete Sampling Geometries (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Vizualizați antetul UTF-8 (metadatele) pentru fișierul .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Descărcați un fișier NetCDF-3 CF Discrete Sampling Geometries (Multidimensional Array).</fileHelp_ncCFMA>

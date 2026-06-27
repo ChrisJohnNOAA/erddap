@@ -2964,7 +2964,8 @@ Bijvoorbeeld:
 <fileHelp_nc4Header>Bekijk de UTF-8-header (de metadata) voor het NetCDF-4 .nc-bestand.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Bekijk de metagegevens van de dataset als de bovenste helft van een 7-bits ASCII NCCSV .csv-bestand.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Download een UTF-8 NCO lvl=2 JSON-bestand met COARDS/CF/ACDD-metagegevens.</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>Bekijk de UTF-8 header (de metagegevens) voor eenNCOlvl=2 JSON-bestand.
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Download een NetCDF-3 CF Discrete Sampling Geometries-bestand (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Bekijk de UTF-8-header (de metadata) voor het .ncCF-bestand.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Download een NetCDF-3 CF Discrete Sampling Geometries-bestand (multidimensionale array).</fileHelp_ncCFMA>

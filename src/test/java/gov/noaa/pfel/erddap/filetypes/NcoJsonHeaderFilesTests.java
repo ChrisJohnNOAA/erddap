@@ -1,7 +1,6 @@
 package gov.noaa.pfel.erddap.filetypes;
 
 import com.cohort.util.File2;
-import com.cohort.util.String2;
 import gov.noaa.pfel.erddap.dataset.EDD;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import org.json.JSONObject;
@@ -41,12 +40,19 @@ public class NcoJsonHeaderFilesTests extends WireMockLifecycle {
 
     // Verify metadata is present
     com.cohort.util.Test.ensureTrue(json.has("attributes"), "Attributes missing");
-    com.cohort.util.Test.ensureEqual(json.getJSONObject("attributes").getJSONObject("title").getString("data"), "Test of JSON Lines CSV", "Title attribute incorrect");
+    com.cohort.util.Test.ensureEqual(
+        json.getJSONObject("attributes").getJSONObject("title").getString("data"),
+        "Test of JSON Lines CSV",
+        "Title attribute incorrect");
 
     // Verify dimensions are present and accurate
     com.cohort.util.Test.ensureTrue(json.has("dimensions"), "Dimensions missing");
-    com.cohort.util.Test.ensureEqual(json.getJSONObject("dimensions").getInt("row"), 6, "Row dimension incorrect");
-    com.cohort.util.Test.ensureEqual(json.getJSONObject("dimensions").getInt("ship_strlen"), 15, "ship_strlen dimension incorrect");
+    com.cohort.util.Test.ensureEqual(
+        json.getJSONObject("dimensions").getInt("row"), 6, "Row dimension incorrect");
+    com.cohort.util.Test.ensureEqual(
+        json.getJSONObject("dimensions").getInt("ship_strlen"),
+        15,
+        "ship_strlen dimension incorrect");
 
     // Verify variables are present
     com.cohort.util.Test.ensureTrue(json.has("variables"), "Variables missing");
@@ -54,8 +60,10 @@ public class NcoJsonHeaderFilesTests extends WireMockLifecycle {
     com.cohort.util.Test.ensureTrue(variables.has("ship"), "Variable 'ship' missing");
 
     // Verify data is NOT present in variables
-    com.cohort.util.Test.ensureTrue(!variables.getJSONObject("ship").has("data"), "Variable 'ship' should not have data");
-    com.cohort.util.Test.ensureTrue(!variables.getJSONObject("time").has("data"), "Variable 'time' should not have data");
+    com.cohort.util.Test.ensureTrue(
+        !variables.getJSONObject("ship").has("data"), "Variable 'ship' should not have data");
+    com.cohort.util.Test.ensureTrue(
+        !variables.getJSONObject("time").has("data"), "Variable 'time' should not have data");
   }
 
   @Test
@@ -83,21 +91,30 @@ public class NcoJsonHeaderFilesTests extends WireMockLifecycle {
     JSONObject json = new JSONObject(results);
 
     // Verify metadata
-    com.cohort.util.Test.ensureEqual(json.getJSONObject("attributes").getJSONObject("title").getString("data"), "Wind, QuikSCAT, Global, Science Quality (1 Day Composite)", "Title incorrect");
+    com.cohort.util.Test.ensureEqual(
+        json.getJSONObject("attributes").getJSONObject("title").getString("data"),
+        "Wind, QuikSCAT, Global, Science Quality (1 Day Composite)",
+        "Title incorrect");
 
     // Verify dimensions
     JSONObject dimensions = json.getJSONObject("dimensions");
     com.cohort.util.Test.ensureEqual(dimensions.getInt("time"), 1, "time dimension incorrect");
-    com.cohort.util.Test.ensureEqual(dimensions.getInt("altitude"), 1, "altitude dimension incorrect");
-    com.cohort.util.Test.ensureEqual(dimensions.getInt("latitude"), 1, "latitude dimension incorrect");
-    com.cohort.util.Test.ensureEqual(dimensions.getInt("longitude"), 3, "longitude dimension incorrect");
+    com.cohort.util.Test.ensureEqual(
+        dimensions.getInt("altitude"), 1, "altitude dimension incorrect");
+    com.cohort.util.Test.ensureEqual(
+        dimensions.getInt("latitude"), 1, "latitude dimension incorrect");
+    com.cohort.util.Test.ensureEqual(
+        dimensions.getInt("longitude"), 3, "longitude dimension incorrect");
 
     // Verify variables
     JSONObject variables = json.getJSONObject("variables");
     com.cohort.util.Test.ensureTrue(variables.has("y_wind"), "Variable 'y_wind' missing");
 
     // Verify no data for variables
-    com.cohort.util.Test.ensureTrue(!variables.getJSONObject("y_wind").has("data"), "Variable 'y_wind' should not have data");
-    com.cohort.util.Test.ensureTrue(!variables.getJSONObject("latitude").has("data"), "Variable 'latitude' should not have data");
+    com.cohort.util.Test.ensureTrue(
+        !variables.getJSONObject("y_wind").has("data"), "Variable 'y_wind' should not have data");
+    com.cohort.util.Test.ensureTrue(
+        !variables.getJSONObject("latitude").has("data"),
+        "Variable 'latitude' should not have data");
   }
 }

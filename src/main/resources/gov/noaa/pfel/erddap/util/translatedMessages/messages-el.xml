@@ -2945,7 +2945,8 @@ ERDDAP είναι ένας διακομιστής δεδομένων που σα
 <fileHelp_nc4Header>Προβάλετε την κεφαλίδα UTF-8 (τα μεταδεδομένα) για το αρχείο NetCDF-4 .nc.</fileHelp_nc4Header>
 <fileHelp_nccsvMetadata>Προβάλετε τα μεταδεδομένα του συνόλου δεδομένων ως το επάνω μισό ενός αρχείου ASCII NCCSV .csv 7-bit.</fileHelp_nccsvMetadata>
 <fileHelp_ncoJson>Κάντε λήψη ενός αρχείου UTF-8 NCO lvl=2 JSON με μεταδεδομένα COARDS/CF/ACDD.</fileHelp_ncoJson>
-<fileHelp_ncoJsonHeader>View the UTF-8 header (the metadata) for an NCO lvl=2 JSON file.</fileHelp_ncoJsonHeader>
+<fileHelp_ncoJsonHeader>Προβολή της επικεφαλίδας UTF-8 (τα μεταδεδομένα) για έναNCOLvl=2 αρχείο JSON.
+</fileHelp_ncoJsonHeader>
 <fileHelp_ncCF>Πραγματοποιήστε λήψη ενός αρχείου NetCDF-3 CF Discrete Sampling Geometries (Contiguous Ragged Array).</fileHelp_ncCF>
 <fileHelp_ncCFHeader>Προβάλετε την κεφαλίδα UTF-8 (τα μεταδεδομένα) για το αρχείο .ncCF.</fileHelp_ncCFHeader>
 <fileHelp_ncCFMA>Κάντε λήψη ενός αρχείου NetCDF-3 CF Discrete Sampling Geometries (Πολυδιάστατος Πίνακας).</fileHelp_ncCFMA>
