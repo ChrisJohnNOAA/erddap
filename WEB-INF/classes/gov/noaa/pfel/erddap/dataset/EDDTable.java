@@ -3447,6 +3447,121 @@ public abstract class EDDTable extends EDD {
    * @return an empty table (with columns, but without rows) corresponding to the request
    * @throws Throwable if trouble
    */
+
+  /**
+   * This is used by EDDTableFromFiles and EDDTableAggregateRows to convert global attributes to
+   * data columns.
+   *
+   * @param globalAtts the source global attributes
+   * @param table the table to which the columns will be added
+   * @param globalNames the names of the global attributes (without "global:")
+   * @param globalTypes the dataTypes for the new columns
+   * @param mustGetData if true, the caller must get the actual data
+   */
+  public static void convertGlobalAttributeColumnsToDataColumns(
+      Attributes globalAtts,
+      Table table,
+      StringArray globalNames,
+      StringArray globalTypes,
+      boolean mustGetData) {
+
+    if (globalNames == null || globalNames.size() == 0) return;
+    int nRows = table.nRows();
+    int nGlobalNames = globalNames.size();
+    for (int gni = 0; gni < nGlobalNames; gni++) {
+      String gName = globalNames.get(gni);
+      PrimitiveArray pa = globalAtts.get(gName);
+      if (pa != null && pa.size() > 0) {
+        // make pa size=1
+        pa = PrimitiveArray.copyFactory(pa.elementType(), pa);
+        if (pa.size() > 1) pa.removeRange(1, pa.size()); // just the first value
+
+        // force column to be specified type
+        PrimitiveArray newPa =
+            PrimitiveArray.factory(PAType.fromCohortString(globalTypes.get(gni)), 1, false);
+        newPa.append(pa);
+        pa = newPa;
+
+        int count = nRows - 1;
+        if (nRows == 0) {
+          count = 1;
+        }
+        // duplicate the value
+        if (nRows == 0 && !mustGetData) {
+          // e.g., when just getting metadata
+          pa.clear();
+        } else if (pa instanceof StringArray) {
+          String ts = pa.getString(0);
+          pa.addNStrings(count, ts == null ? "" : ts);
+        } else {
+          pa.addNDoubles(count, pa.getDouble(0));
+        }
+
+        // add pa to the table
+        table.addColumn("global:" + gName, pa);
+      }
+    }
+  }
+
+  /**
+   * This is used by EDDTableFromFiles and EDDTableAggregateRows to convert variable attributes to
+   * data columns.
+   *
+   * @param table the table to which the columns will be added. The variables must already be in the
+   *     table.
+   * @param variableNames the names of the variables
+   * @param variableAttNames the names of the attributes (for the corresponding variable)
+   * @param variableTypes the dataTypes for the new columns
+   */
+  public static void convertVariableAttributeColumnsToDataColumns(
+      Table table,
+      StringArray variableNames,
+      StringArray variableAttNames,
+      StringArray variableTypes) {
+
+    if (variableNames == null || variableNames.size() == 0) return;
+    int nRows = table.nRows();
+    int nVariableNames = variableNames.size();
+    for (int vni = 0; vni < nVariableNames; vni++) {
+      String vName = variableNames.get(vni);
+      String attName = variableAttNames.get(vni);
+      int col = table.findColumnNumber(vName);
+      if (col >= 0) {
+        // var is in table. Try to get attribute
+        PrimitiveArray sourcePa = table.columnAttributes(col).get(attName);
+        if (sourcePa != null && sourcePa.size() > 0) {
+          // We force a copy of the pa because there are destructive operations below.
+          PrimitiveArray pa =
+              PrimitiveArray.copyFactory(PAType.fromCohortString(variableTypes.get(vni)), sourcePa);
+
+          // make pa size=1
+          if (pa.size() > 1) {
+            if (pa instanceof StringArray) {
+              String ts = pa.toString(); // eg actual_range as stringArray -> "0.0, 94.0"
+              pa.setString(0, ts);
+            }
+            pa.removeRange(1, pa.size()); // just the first value
+          }
+
+          // duplicate the value
+          if (nRows == 0) {
+            pa.clear();
+          } else {
+            if (pa instanceof StringArray) {
+              String ts = pa.getString(0);
+              pa.addNStrings(nRows - 1, ts == null ? "" : ts);
+            } else {
+              pa.addNDoubles(nRows - 1, pa.getDouble(0));
+            }
+          }
+
+          // add pa to the table
+          table.addColumn("variable:" + vName + ":" + attName, pa);
+        }
+      }
+    }
+  }
+
   public Table makeEmptyDestinationTable(
       int language, String requestUrl, String userDapQuery, boolean withAttributes)
       throws Throwable {
