@@ -6,44 +6,36 @@ extensions:
       # ========================================================================
       # 1. LEGACY PATHWAY (SimpleXmlReader & EDD Factory)
       # ========================================================================
-      - ["gov.noaa.pfel.erddap.dataset", "EDD", "true", "fromXml", "", "", "ReturnValue", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.dataset", "EDD", "true", "fromXml", "", "", "ReturnValue", "sql-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.dataset", "EDD", "true", "fromXml", "", "", "ReturnValue", "command-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.dataset", "EDD", true, "fromXml", "", "", "ReturnValue", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.dataset", "EDD", true, "fromXml", "", "", "ReturnValue", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.dataset", "EDD", true, "fromXml", "", "", "ReturnValue", "command-injection", "manual"]
       
-      - ["gov.noaa.pfel.erddap", "LoadDatasets", "false", "parseUsingSimpleXmlReader", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "LoadDatasets", "false", "parseUsingSimpleXmlReader", "", "", "Argument[0]", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "LoadDatasets", false, "parseUsingSimpleXmlReader", "", "", "Argument[0]", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "LoadDatasets", false, "parseUsingSimpleXmlReader", "", "", "Argument[0]", "sql-injection", "manual"]
 
       # ========================================================================
       # 2. MODERN PATHWAY (Global SAX Interface Interceptor)
       # ========================================================================
-      # Setting subtypes to "true" forces CodeQL to sanitize these inputs across 
-      # ALL custom ERDDAP handlers (DatasetHandler, TopLevelHandler, etc.)
+      - ["org.xml.sax", "ContentHandler", true, "characters", "", "", "Argument[0]", "path-injection", "manual"]
+      - ["org.xml.sax", "ContentHandler", true, "characters", "", "", "Argument[0]", "sql-injection", "manual"]
+      - ["org.xml.sax", "ContentHandler", true, "characters", "", "", "Argument[0]", "command-injection", "manual"]
       
-      # Sanitize raw text content extracted between XML tags
-      - ["org.xml.sax", "ContentHandler", "true", "characters", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", "true", "characters", "", "", "Argument[0]", "sql-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", "true", "characters", "", "", "Argument[0]", "command-injection", "manual"]
-      
-      # Sanitize attributes parsed inside XML opening tags
-      - ["org.xml.sax", "ContentHandler", "true", "startElement", "", "", "Argument[3]", "path-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", "true", "startElement", "", "", "Argument[3]", "sql-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", "true", "startElement", "", "", "Argument[3]", "command-injection", "manual"]
+      - ["org.xml.sax", "ContentHandler", true, "startElement", "", "", "Argument[3]", "path-injection", "manual"]
+      - ["org.xml.sax", "ContentHandler", true, "startElement", "", "", "Argument[3]", "sql-injection", "manual"]
+      - ["org.xml.sax", "ContentHandler", true, "startElement", "", "", "Argument[3]", "command-injection", "manual"]
 
       # ========================================================================
       # 3. ERDDAP SPECIFIC SAX HANDLERS (Defensive Fallback)
       # ========================================================================
-      # Targets the dedicated state-handlers directly if taint sneaks past the interface
-      - ["gov.noaa.pfel.erddap", "DatasetHandler", "true", "", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "DatasetHandler", "true", "", "", "", "Argument[0]", "sql-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "TopLevelHandler", "true", "", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "TopLevelHandler", "true", "", "", "", "Argument[0]", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "", "", "", "Argument[0]", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "", "", "", "Argument[0]", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "TopLevelHandler", true, "", "", "", "Argument[0]", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "TopLevelHandler", true, "", "", "", "Argument[0]", "sql-injection", "manual"]
+
       # ========================================================================
-      # 4. SETUP.XML PATHWAY (EDStatic Global Trust)
+      # 4. SETUP.XML PATHWAY (EDStatic Global Trust - for setup.xml)
       # ========================================================================
-      # Leaving the method name field as an empty string ("") acts as a wildcard.
-      # This tells CodeQL to immediately sanitize the ReturnValue of ANY method 
-      # or property called on the EDStatic class across the entire application.
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", "false", "", "", "", "ReturnValue", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", "false", "", "", "", "ReturnValue", "sql-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", "false", "", "", "", "ReturnValue", "command-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", "false", "", "", "", "ReturnValue", "request-ssrf", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "command-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "request-ssrf", "manual"]
