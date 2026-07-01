@@ -49,7 +49,7 @@ jobs:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
         # Append your local configuration directory to CodeQL's standard analysis suite
-        packs: +${{ github.workspace }}/.github/codeql/extensions
+        packs: erddap/vulnerability-barriers
 
     # Intercept the Java compilation process to map the Abstract Syntax Tree
     - name: Run manual build steps
