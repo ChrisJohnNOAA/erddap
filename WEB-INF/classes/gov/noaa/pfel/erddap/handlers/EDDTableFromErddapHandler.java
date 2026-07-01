@@ -17,7 +17,6 @@ public class EDDTableFromErddapHandler extends BaseTableHandler {
   private boolean tSubscribeToRemoteErddapDataset = EDStatic.config.subscribeToRemoteErddapDataset;
   private boolean tRedirect = true;
 
-
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes)
       throws SAXException {}

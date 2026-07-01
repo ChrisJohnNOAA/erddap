@@ -15,7 +15,6 @@ public class EDDTableFromAsciiServiceHandler extends BaseTableHandler {
     this.datasetType = datasetType;
   }
 
-
   private final String[] tBeforeData = new String[11];
   private String tAfterData = null;
   private String tNoData = null;

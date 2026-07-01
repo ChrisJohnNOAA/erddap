@@ -13,7 +13,6 @@ public class EDDTableFromDapSequenceHandler extends BaseTableHandler {
     super(saxHandler, datasetID, completeState);
   }
 
-
   private String tOuterSequenceName = null;
   private String tInnerSequenceName = null;
   private boolean tSourceNeedsExpandedFP_EQ = true;

@@ -14,7 +14,6 @@ public class EDDGridFromDapHandler extends BaseGridHandler {
 
   private int tUpdateEveryNMillis = 0;
 
-
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) {
     handleAttributes(localName);

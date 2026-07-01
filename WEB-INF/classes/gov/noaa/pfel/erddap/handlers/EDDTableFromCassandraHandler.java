@@ -13,7 +13,6 @@ public class EDDTableFromCassandraHandler extends BaseTableHandler {
     super(saxHandler, datasetID, completeState);
   }
 
-
   private String tKeyspace = null;
   private String tTableName = null;
   private String tPartitionKeySourceNames = null;
