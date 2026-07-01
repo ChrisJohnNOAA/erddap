@@ -4,7 +4,7 @@ extensions:
       extensible: barrierModel
     data:
       # ========================================================================
-      # 1. LEGACY PATHWAY (SimpleXmlReader & EDD Factory)
+      # 1. LEGACY INITIALIZATION PATHWAY
       # ========================================================================
       - ["gov.noaa.pfel.erddap.dataset", "EDD", true, "fromXml", "", "", "ReturnValue", "path-injection", "manual"]
       - ["gov.noaa.pfel.erddap.dataset", "EDD", true, "fromXml", "", "", "ReturnValue", "sql-injection", "manual"]
@@ -14,28 +14,22 @@ extensions:
       - ["gov.noaa.pfel.erddap", "LoadDatasets", false, "parseUsingSimpleXmlReader", "", "", "Argument[0]", "sql-injection", "manual"]
 
       # ========================================================================
-      # 2. MODERN PATHWAY (Global SAX Interface Interceptor)
+      # 2. MODERN INITIALIZATION PATHWAY (Concrete Handlers Only)
       # ========================================================================
-      - ["org.xml.sax", "ContentHandler", true, "characters", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", true, "characters", "", "", "Argument[0]", "sql-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", true, "characters", "", "", "Argument[0]", "command-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "characters", "", "", "Argument[0]", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "characters", "", "", "Argument[0]", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "startElement", "", "", "Argument[3]", "path-injection", "manual"]
       
-      - ["org.xml.sax", "ContentHandler", true, "startElement", "", "", "Argument[3]", "path-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", true, "startElement", "", "", "Argument[3]", "sql-injection", "manual"]
-      - ["org.xml.sax", "ContentHandler", true, "startElement", "", "", "Argument[3]", "command-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "TopLevelHandler", true, "characters", "", "", "Argument[0]", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap", "TopLevelHandler", true, "characters", "", "", "Argument[0]", "sql-injection", "manual"]
 
       # ========================================================================
-      # 3. ERDDAP SPECIFIC SAX HANDLERS (Defensive Fallback)
+      # 3. EDCONFIG PATHWAY (Trusted Configuration Container)
       # ========================================================================
-      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "DatasetHandler", true, "", "", "", "Argument[0]", "sql-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "TopLevelHandler", true, "", "", "", "Argument[0]", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap", "TopLevelHandler", true, "", "", "", "Argument[0]", "sql-injection", "manual"]
-
-      # ========================================================================
-      # 4. SETUP.XML PATHWAY (EDStatic Global Trust - for setup.xml)
-      # ========================================================================
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "path-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "sql-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "command-injection", "manual"]
-      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "", "", "", "ReturnValue", "request-ssrf", "manual"]
+      # Leaving the method name blank ("") acts as a wildcard. CodeQL will 
+      # automatically consider any data returning from ANY getter or method 
+      # inside EDConfig as entirely safe and untainted.
+      - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "path-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "sql-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "command-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "request-ssrf", "manual"]
