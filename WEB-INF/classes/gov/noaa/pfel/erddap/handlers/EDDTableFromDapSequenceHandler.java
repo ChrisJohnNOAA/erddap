@@ -13,7 +13,7 @@ public class EDDTableFromDapSequenceHandler extends BaseTableHandler {
     super(saxHandler, datasetID, completeState);
   }
 
-  private String tLocalSourceUrl = null;
+
   private String tOuterSequenceName = null;
   private String tInnerSequenceName = null;
   private boolean tSourceNeedsExpandedFP_EQ = true;
@@ -35,7 +35,7 @@ public class EDDTableFromDapSequenceHandler extends BaseTableHandler {
       return true;
     }
     switch (localName) {
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "outerSequenceName" -> tOuterSequenceName = contentStr;
       case "innerSequenceName" -> tInnerSequenceName = contentStr;
       case "sourceNeedsExpandedFP_EQ" ->
@@ -69,7 +69,7 @@ public class EDDTableFromDapSequenceHandler extends BaseTableHandler {
         tGlobalAttributes,
         tDataVariables,
         tReloadEveryNMinutes,
-        tLocalSourceUrl,
+        tSourceUrl,
         tOuterSequenceName,
         tInnerSequenceName,
         tSourceNeedsExpandedFP_EQ,

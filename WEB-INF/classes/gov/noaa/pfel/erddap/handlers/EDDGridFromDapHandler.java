@@ -13,7 +13,7 @@ public class EDDGridFromDapHandler extends BaseGridHandler {
   }
 
   private int tUpdateEveryNMillis = 0;
-  private String tLocalSourceUrl = null;
+
 
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) {
@@ -32,7 +32,7 @@ public class EDDGridFromDapHandler extends BaseGridHandler {
     }
     switch (localName) {
       case "updateEveryNMillis" -> tUpdateEveryNMillis = String2.parseInt(contentStr);
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler but this is EDDGrid
       default -> {
         return false;
       }
@@ -57,7 +57,7 @@ public class EDDGridFromDapHandler extends BaseGridHandler {
         tDataVariables,
         tReloadEveryNMinutes,
         tUpdateEveryNMillis,
-        tLocalSourceUrl,
+        tSourceUrl,
         tnThreads,
         tDimensionValuesInMemory);
   }

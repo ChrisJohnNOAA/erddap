@@ -13,7 +13,7 @@ public class EDDTableFromCassandraHandler extends BaseTableHandler {
     super(saxHandler, datasetID, completeState);
   }
 
-  private String tLocalSourceUrl = null;
+
   private String tKeyspace = null;
   private String tTableName = null;
   private String tPartitionKeySourceNames = null;
@@ -38,7 +38,7 @@ public class EDDTableFromCassandraHandler extends BaseTableHandler {
       return true;
     }
     switch (localName) {
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "connectionProperty" -> tConnectionProperties.add(contentStr);
       case "keyspace" -> tKeyspace = contentStr;
       case "tableName" -> tTableName = contentStr;
@@ -73,7 +73,7 @@ public class EDDTableFromCassandraHandler extends BaseTableHandler {
         tGlobalAttributes,
         tDataVariables,
         tReloadEveryNMinutes,
-        tLocalSourceUrl,
+        tSourceUrl,
         tConnectionProperties.toArray(),
         tKeyspace,
         tTableName,
