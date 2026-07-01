@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Writer;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -46,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,6 +75,13 @@ class EDDTableFromNcFilesTests {
   @BeforeAll
   static void init() {
     Initialization.edStatic();
+  }
+
+  @AfterEach
+  void cleanup() {
+    // Wait for all background tasks to finish to avoid interference between tests
+    // e.g. TASK_CREATE_SUBSET_TABLE
+    Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> EDStatic.nUnfinishedTasks() <= 0);
   }
 
   /** testGenerateDatasetsXml */

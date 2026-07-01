@@ -12,8 +12,8 @@ import gov.noaa.pfel.erddap.util.EDMessages;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.variable.EDV;
 import java.nio.file.Path;
-import org.awaitility.Awaitility;
 import java.time.Duration;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,9 +38,7 @@ class EDDTableFromFileNamesTests {
     EDStatic.config.generateCroissantSchema = initialCroissantSetting;
     // Wait for all background tasks to finish to avoid interference between tests
     // e.g. TASK_CREATE_SUBSET_TABLE
-    Awaitility.await()
-        .atMost(Duration.ofSeconds(30))
-        .until(() -> EDStatic.nUnfinishedTasks() <= 0);
+    Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> EDStatic.nUnfinishedTasks() <= 0);
   }
 
   /** testGenerateDatasetsXml */
