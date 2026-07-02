@@ -12,8 +12,6 @@ import gov.noaa.pfel.erddap.util.EDMessages;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.variable.EDV;
 import java.nio.file.Path;
-import java.time.Duration;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,9 +34,6 @@ class EDDTableFromFileNamesTests {
   @AfterEach
   void cleanup() {
     EDStatic.config.generateCroissantSchema = initialCroissantSetting;
-    // Wait for all background tasks to finish to avoid interference between tests
-    // e.g. TASK_CREATE_SUBSET_TABLE
-    Awaitility.await().atMost(Duration.ofSeconds(30)).until(() -> EDStatic.nUnfinishedTasks() <= 0);
   }
 
   /** testGenerateDatasetsXml */
@@ -214,13 +209,6 @@ class EDDTableFromFileNamesTests {
     String2.log("results=\n" + results);
     EDD.deleteCachedDatasetInfo(tDatasetID);
     EDD edd = EDDTableFromFileNames.oneFromXmlFragment(null, results);
-    if (edd == null) {
-      throw new RuntimeException(
-          "edd is null! results=\n"
-              + results
-              + "\nFailed datasets: "
-              + EDStatic.failedDatasetsWithErrors);
-    }
     Test.ensureEqual(edd.datasetID(), tDatasetID, "");
     Test.ensureEqual(edd.title(language), tTitle, "");
     Test.ensureEqual(
