@@ -1020,7 +1020,9 @@ public class SSR {
     // is it an AWS S3 URL?
     long time = System.currentTimeMillis();
     int random = Math2.random(Integer.MAX_VALUE);
-    final String safeRandomFileName = File2.getSafePath(fullFileName + random);
+    final String dir = File2.getDirectory(fullFileName);
+    final String name = File2.getNameAndExtension(fullFileName);
+    final String safeRandomFileName = File2.getSafePath(dir, name + random);
     String bro[] = String2.parseAwsS3Url(urlString); // bucket, region, object key
     if (bro != null) {
       // sample code and javadoc:

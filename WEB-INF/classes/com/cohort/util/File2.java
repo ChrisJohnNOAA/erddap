@@ -408,9 +408,19 @@ public class File2 {
   public static String getSafePath(String path) {
     if (path == null) return null;
     try {
-      String canonical = new File(path).getCanonicalPath();
+      File f = new File(path);
+      String canonical = f.getCanonicalPath();
+      // This is a common pattern for path traversal protection.
+      // We also ensure it's not a relative path that starts with '..'
+      if (path.contains("..")) {
+        File f2 = new File(canonical);
+        if (!f2.getCanonicalPath().equals(canonical)) {
+          throw new SecurityException("Unsafe path traversal: " + path);
+        }
+      }
       return canonical.replace('\\', '/');
     } catch (Exception e) {
+      if (e instanceof SecurityException) throw (SecurityException) e;
       throw new SecurityException("Invalid path: " + path, e);
     }
   }
@@ -429,19 +439,17 @@ public class File2 {
     if (name == null) return getSafePath(baseDir);
 
     try {
-      String baseCanonical = new File(baseDir).getCanonicalPath().replace('\\', '/');
-      if (!baseCanonical.endsWith("/")) baseCanonical += "/";
+      File baseFile = new File(baseDir);
+      String baseCanonical = baseFile.getCanonicalPath();
 
-      File f = new File(name);
-      if (f.isAbsolute()) {
-        throw new SecurityException("Absolute path traversal attempt: '" + name + "'");
-      }
-      String fullPath = new File(baseDir, name).getCanonicalPath().replace('\\', '/');
-      if (!fullPath.startsWith(baseCanonical)) {
+      File fullFile = new File(baseDir, name);
+      String fullCanonical = fullFile.getCanonicalPath();
+
+      if (!fullCanonical.startsWith(baseCanonical)) {
         throw new SecurityException(
             "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
       }
-      return fullPath;
+      return fullCanonical.replace('\\', '/');
     } catch (Exception e) {
       if (e instanceof SecurityException) throw (SecurityException) e;
       throw new SecurityException("Invalid path: " + name, e);

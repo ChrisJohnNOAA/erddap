@@ -3769,7 +3769,7 @@ public abstract class EDD {
     // do work on unique temp files names using randomInt, then rename to proper file name.
     // If procedure fails half way through, there won't be a half-finished file.
     int randomInt = Math2.random(Integer.MAX_VALUE);
-    final String randomFullName = File2.getSafePath(fullName + randomInt);
+    final String randomFullName = File2.getSafePath(dir, fileName + fileTypeExtension + randomInt);
 
     OutputStreamSource outputStreamSource =
         new OutputStreamSourceSimple(

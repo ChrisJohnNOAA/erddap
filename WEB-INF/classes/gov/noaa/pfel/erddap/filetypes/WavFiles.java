@@ -185,7 +185,9 @@ public class WavFiles extends CacheLockFiles {
       }
 
       // write data to dos
-      final String safeDosName = File2.getSafePath(fullDosName);
+      final String dir = File2.getDirectory(fullOutName);
+      final String name = File2.getNameAndExtension(fullOutName);
+      final String safeDosName = File2.getSafePath(dir, name + ".dos" + randomInt);
       dos =
           new DataOutputStream(
               new BufferedOutputStream(Files.newOutputStream(Paths.get(safeDosName))));
