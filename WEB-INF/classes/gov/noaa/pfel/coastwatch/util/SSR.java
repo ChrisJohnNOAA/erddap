@@ -942,7 +942,10 @@ public class SSR {
               .contentLength(File2.length(localFileName));
       if (contentType != null) request.contentType(contentType);
       FileUpload upload =
-          tm.uploadFile(u -> u.source(Paths.get(localFileName)).putObjectRequest(request.build()));
+          tm.uploadFile(
+              u ->
+                  u.source(Paths.get(File2.getSafePath(localFileName)))
+                      .putObjectRequest(request.build()));
       upload.completionFuture().join(); // wait for completion. exception if trouble
 
       if (verbose)
@@ -1027,7 +1030,7 @@ public class SSR {
             tm.downloadFile(
                 d ->
                     d.getObjectRequest(g -> g.bucket(bro[0]).key(bro[2]))
-                        .destination(Paths.get(fullFileName + random)));
+                        .destination(Paths.get(File2.getSafePath(fullFileName + random))));
         download.completionFuture().join(); // exception if trouble
         File2.rename(fullFileName + random, fullFileName); // exception if trouble
 
@@ -1064,7 +1067,8 @@ public class SSR {
               : getUncompressedUrlBufferedInputStream(urlString)) {
 
         try (OutputStream out =
-            new BufferedOutputStream(Files.newOutputStream(Paths.get(fullFileName + random)))) {
+            new BufferedOutputStream(
+                Files.newOutputStream(Paths.get(File2.getSafePath(fullFileName + random))))) {
           byte buffer[] = new byte[8192]; // best if smaller than java buffered..stream sizes
           int nBytes;
           while ((nBytes = in.read(buffer)) > 0) out.write(buffer, 0, nBytes);

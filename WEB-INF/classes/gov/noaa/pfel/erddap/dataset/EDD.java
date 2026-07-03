@@ -3772,7 +3772,8 @@ public abstract class EDD {
 
     OutputStreamSource outputStreamSource =
         new OutputStreamSourceSimple(
-            new BufferedOutputStream(Files.newOutputStream(Paths.get(fullName + randomInt))));
+            new BufferedOutputStream(
+                Files.newOutputStream(Paths.get(File2.getSafePath(fullName + randomInt)))));
 
     try {
 

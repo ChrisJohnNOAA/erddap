@@ -327,6 +327,21 @@ public class File2 {
   }
 
   /**
+   * This indicates if the path is safe (no ".." traversal).
+   *
+   * @param path the path to be checked
+   * @return true if the path is safe
+   */
+  public static boolean isSafePath(String path) {
+    try {
+      getSafePath(path);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  /**
    * This returns the directory that is the tomcat application's root (with forward slashes and a
    * trailing slash, e.g., c:/programs/_tomcat/webapps/cwexperimental/). Tomcat calls this the
    * ContextDirectory. This only works if these classes are installed underneath Tomcat (with
@@ -384,6 +399,61 @@ public class File2 {
   }
 
   /**
+   * This provides a "safe" path by normalizing it and checking for path traversal.
+   *
+   * @param path the path to be checked
+   * @return the normalized path
+   * @throws SecurityException if the path is deemed unsafe
+   */
+  public static String getSafePath(String path) {
+    if (path == null) return null;
+    if (!path.contains("..")) return path;
+
+    try {
+      Path p = Paths.get(path);
+      Path normalized = p.normalize();
+      String normalizedStr = normalized.toString().replace('\\', '/');
+      if (normalizedStr.contains("..") || normalizedStr.startsWith("..")) {
+        throw new SecurityException("Unsafe path traversal: " + path);
+      }
+      return normalized.toString().replace('\\', '/');
+    } catch (Exception e) {
+      if (e instanceof SecurityException) throw (SecurityException) e;
+      throw new SecurityException("Invalid path: " + path, e);
+    }
+  }
+
+  /**
+   * This provides a "safe" path by resolving the name against a base directory and ensuring it
+   * doesn't escape the base directory.
+   *
+   * @param baseDir the trusted base directory
+   * @param name the uncontrolled name or relative path
+   * @return the normalized path
+   * @throws SecurityException if the path is deemed unsafe (escapes baseDir)
+   */
+  public static String getSafePath(String baseDir, String name) {
+    if (baseDir == null || baseDir.length() == 0) return getSafePath(name);
+    if (name == null) return baseDir;
+
+    // Suspect path: use Path API to normalize and check
+    try {
+      Path base = Paths.get(baseDir).toAbsolutePath().normalize();
+      Path p = base.resolve(name).normalize();
+      String baseStr = base.toString().replace('\\', '/');
+      String pStr = p.toString().replace('\\', '/');
+      if (!pStr.startsWith(baseStr)) {
+        throw new SecurityException(
+            "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
+      }
+      return p.toString().replace('\\', '/');
+    } catch (Exception e) {
+      if (e instanceof SecurityException) throw (SecurityException) e;
+      throw new SecurityException("Invalid path: " + name, e);
+    }
+  }
+
+  /**
    * This indicates if the named file is indeed an existing local file. AWS S3 files don't count as
    * local here. If dir="", it just says it isn't a file.
    *
@@ -393,6 +463,7 @@ public class File2 {
   public static boolean isFile(String fullName) {
     try {
       // String2.log("File2.isFile: " + fullName);
+      fullName = getSafePath(fullName);
       File file = new File(fullName);
       return file.isFile();
     } catch (Exception e) {
@@ -492,6 +563,7 @@ public class File2 {
   public static boolean isFile(String fullName, int nTimes) {
     try {
       // String2.log("File2.isFile: " + fullName);
+      fullName = getSafePath(fullName);
       File file = new File(fullName);
       boolean b = false;
       nTimes = Math.max(1, nTimes);
@@ -520,6 +592,7 @@ public class File2 {
   public static boolean isDirectory(String dir) {
     try {
       // String2.log("File2.isFile: " + dir);
+      dir = getSafePath(dir);
       File d = new File(dir);
       return d.isDirectory();
     } catch (Exception e) {
@@ -537,6 +610,7 @@ public class File2 {
    */
   public static boolean delete(String fullName) {
     int maxAttempts = String2.OSIsWindows ? 11 : 4;
+    fullName = getSafePath(fullName);
     Path path = Paths.get(fullName);
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -608,6 +682,7 @@ public class File2 {
     // Unlike other places, this is often part of delete/rename,
     //  so we want to know when it is done ASAP.
     try {
+      fullName = getSafePath(fullName);
       File file = new File(fullName);
       if (!file.exists()) return false; // it didn't exist
       return file.delete();
@@ -658,6 +733,7 @@ public class File2 {
   public static int deleteIfOld(
       String dir, long time, boolean recursive, boolean deleteEmptySubdirectories) {
     try {
+      dir = getSafePath(dir);
       String msg = String2.ERROR + ": File2.deleteIfOld is " + UNABLE_TO_DELETE + " ";
       File file = new File(dir);
 
@@ -776,6 +852,8 @@ public class File2 {
    * @throws RuntimeException if the rename operation fails
    */
   public static void rename(String fullOldName, String fullNewName) throws RuntimeException {
+    fullOldName = getSafePath(fullOldName);
+    fullNewName = getSafePath(fullNewName);
     Path sourcePath = Paths.get(fullOldName);
     Path targetPath = Paths.get(fullNewName);
 
@@ -898,6 +976,7 @@ public class File2 {
    */
   public static boolean touch(String fullName, long millisInPast) {
     try {
+      fullName = getSafePath(fullName);
       File file = new File(fullName);
       // The Java documentation for setLastModified doesn't state
       // if the method returns false if the file doesn't exist
@@ -920,6 +999,7 @@ public class File2 {
    */
   public static boolean setLastModified(String fullName, long millis) {
     try {
+      fullName = getSafePath(fullName);
       File file = new File(fullName);
       // The Java documentation for setLastModified doesn't state
       // if the method returns false if the file doesn't exist
@@ -944,6 +1024,7 @@ public class File2 {
       String bro[] = String2.parseAwsS3Url(fullName);
       if (bro == null) {
         // String2.log("File2.isFile: " + fullName);
+        fullName = getSafePath(fullName);
         File file = new File(fullName);
         if (!file.isFile()) return -1;
         return file.length();
@@ -974,6 +1055,7 @@ public class File2 {
     try {
       String bro[] = String2.parseAwsS3Url(fullName);
       if (bro == null) {
+        fullName = getSafePath(fullName);
         File file = new File(fullName);
         return file.lastModified();
       } else {
@@ -1201,6 +1283,7 @@ public class File2 {
     InputStream is = null;
     if (bro == null) {
       // no, it's a regular file
+      fullFileName = getSafePath(fullFileName);
       is = Files.newInputStream(Paths.get(fullFileName));
       skipFully(is, firstByte);
     } else {
@@ -1350,6 +1433,8 @@ public class File2 {
   }
 
   public static void decompressAllFiles(String sourceFullName, String destDir) throws IOException {
+    sourceFullName = getSafePath(sourceFullName);
+    destDir = getSafePath(destDir);
     String ext = getExtension(sourceFullName); // if e.g., .tar.gz, this returns .gz
     // !!!!! IF CHANGE SUPPORTED COMPRESSION TYPES, CHANGE isDecompressible ABOVE
     // !!!
@@ -1830,6 +1915,7 @@ public class File2 {
    */
   public static BufferedWriter getBufferedFileWriter(String fullFileName, Charset charset)
       throws IOException {
+    fullFileName = getSafePath(fullFileName);
     return getBufferedWriter(Files.newOutputStream(Paths.get(fullFileName)), charset);
   }
 
@@ -1948,6 +2034,7 @@ public class File2 {
       // open the file
       // This uses a BufferedWriter wrapped around a FileWriter
       // to write the information to the file.
+      fileName = getSafePath(fileName);
       if (charset == null) charset = StandardCharsets.ISO_8859_1;
       bufferedWriter =
           Files.newBufferedWriter(
@@ -2013,6 +2100,7 @@ public class File2 {
    * @throws RuntimeException if unable to comply.
    */
   public static void makeDirectory(String name) throws RuntimeException {
+    name = getSafePath(name);
     File dir = new File(name);
     if (dir.isFile()) {
       throw new RuntimeException(

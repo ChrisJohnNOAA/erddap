@@ -324,7 +324,7 @@ public class EDDTableFromHyraxFiles extends EDDTableFromFiles {
         }
 
         // see if up-to-date localFile exists  (keep name identical; don't add .nc)
-        String localFile = baseDir + sourceName.substring(lookForLength);
+        String localFile = File2.getSafePath(baseDir, sourceName.substring(lookForLength));
         String reason = "";
         try {
           // don't use File2 so more efficient for current purpose

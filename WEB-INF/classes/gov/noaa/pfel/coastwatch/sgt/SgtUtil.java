@@ -461,7 +461,7 @@ public class SgtUtil {
     // create fileOutputStream
     try (BufferedOutputStream bos =
         new BufferedOutputStream(
-            Files.newOutputStream(Paths.get(fullPngName + randomInt + ".png")))) {
+            Files.newOutputStream(Paths.get(File2.getSafePath(fullPngName + randomInt + ".png"))))) {
       // save the image
       saveAsTransparentPng(bi, transparent, bos);
     }

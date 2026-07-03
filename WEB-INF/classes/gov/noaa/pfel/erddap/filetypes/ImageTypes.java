@@ -34,7 +34,8 @@ public abstract class ImageTypes extends CacheLockFiles {
     // create random file; and if error, only partial random file will be created
     int random = Math2.random(Integer.MAX_VALUE);
     OutputStream fos =
-        new BufferedOutputStream(Files.newOutputStream(Paths.get(cacheFullName + random)));
+        new BufferedOutputStream(
+            Files.newOutputStream(Paths.get(File2.getSafePath(cacheFullName + random))));
     boolean ok;
     try {
       OutputStreamSourceSimple osss = new OutputStreamSourceSimple(fos);

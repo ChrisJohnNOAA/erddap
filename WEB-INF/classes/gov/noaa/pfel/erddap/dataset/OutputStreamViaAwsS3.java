@@ -4,6 +4,7 @@
  */
 package gov.noaa.pfel.erddap.dataset;
 
+import com.cohort.util.File2;
 import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import java.io.BufferedOutputStream;
@@ -36,7 +37,9 @@ public class OutputStreamViaAwsS3 extends BufferedOutputStream {
 
     // make the superclass's BufferedOutputStream from an OutputStream
     super(
-        Files.newOutputStream(Paths.get(tParent.localDir + tParent.fileName + tParent.extension)));
+        Files.newOutputStream(
+            Paths.get(
+                File2.getSafePath(tParent.localDir + tParent.fileName + tParent.extension))));
     parent = tParent;
     fullLocalFileName = tParent.localDir + tParent.fileName + tParent.extension;
   }

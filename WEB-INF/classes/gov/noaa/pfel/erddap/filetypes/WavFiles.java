@@ -187,7 +187,8 @@ public class WavFiles extends CacheLockFiles {
       // write data to dos
       dos =
           new DataOutputStream(
-              new BufferedOutputStream(Files.newOutputStream(Paths.get(fullDosName))));
+              new BufferedOutputStream(
+                  Files.newOutputStream(Paths.get(File2.getSafePath(fullDosName)))));
 
       // send the data to dos
       PrimitiveArray[] pdv = gda.getPartialDataValues();
