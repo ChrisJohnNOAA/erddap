@@ -408,8 +408,7 @@ public class File2 {
   public static String getSafePath(String path) {
     if (path == null) return null;
     try {
-      String safePath = new File(path).getCanonicalPath();
-      return safePath.replace('\\', '/');
+      return new File(path).getCanonicalPath().replace('\\', '/');
     } catch (Exception e) {
       throw new SecurityException("Invalid path: " + path, e);
     }
@@ -429,19 +428,18 @@ public class File2 {
     if (name == null) return getSafePath(baseDir);
 
     try {
-      File baseFile = new File(baseDir);
-      String baseCanonical = baseFile.getCanonicalPath();
-      String baseCanonicalWithSep =
-          baseCanonical.endsWith(File.separator) ? baseCanonical : baseCanonical + File.separator;
+      File baseFile = new File(baseDir).getCanonicalFile();
+      File fullFile = new File(baseFile, name).getCanonicalFile();
 
-      File fullFile = new File(baseDir, name);
-      String fullCanonical = fullFile.getCanonicalPath();
+      String basePath = baseFile.getPath();
+      String fullPath = fullFile.getPath();
 
-      if (!fullCanonical.startsWith(baseCanonicalWithSep) && !fullCanonical.equals(baseCanonical)) {
-        throw new SecurityException(
-            "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
+      // Standard CodeQL-friendly pattern for path traversal protection
+      if (fullPath.startsWith(basePath + File.separator) || fullPath.equals(basePath)) {
+        return fullPath.replace('\\', '/');
       }
-      return fullCanonical.replace('\\', '/');
+      throw new SecurityException(
+          "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
     } catch (Exception e) {
       if (e instanceof SecurityException) throw (SecurityException) e;
       throw new SecurityException("Invalid path: " + name, e);
