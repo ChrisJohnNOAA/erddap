@@ -1020,6 +1020,7 @@ public class SSR {
     // is it an AWS S3 URL?
     long time = System.currentTimeMillis();
     int random = Math2.random(Integer.MAX_VALUE);
+    final String safeRandomFileName = File2.getSafePath(fullFileName + random);
     String bro[] = String2.parseAwsS3Url(urlString); // bucket, region, object key
     if (bro != null) {
       // sample code and javadoc:
@@ -1029,9 +1030,9 @@ public class SSR {
             tm.downloadFile(
                 d ->
                     d.getObjectRequest(g -> g.bucket(bro[0]).key(bro[2]))
-                        .destination(Paths.get(fullFileName + random)));
+                        .destination(Paths.get(safeRandomFileName)));
         download.completionFuture().join(); // exception if trouble
-        File2.rename(fullFileName + random, fullFileName); // exception if trouble
+        File2.rename(safeRandomFileName, fullFileName); // exception if trouble
 
         if (verbose)
           String2.log(
@@ -1066,13 +1067,13 @@ public class SSR {
               : getUncompressedUrlBufferedInputStream(urlString)) {
 
         try (OutputStream out =
-            new BufferedOutputStream(Files.newOutputStream(Paths.get(fullFileName + random)))) {
+            new BufferedOutputStream(Files.newOutputStream(Paths.get(safeRandomFileName)))) {
           byte buffer[] = new byte[8192]; // best if smaller than java buffered..stream sizes
           int nBytes;
           while ((nBytes = in.read(buffer)) > 0) out.write(buffer, 0, nBytes);
         }
       }
-      File2.rename(fullFileName + random, fullFileName); // exception if trouble
+      File2.rename(safeRandomFileName, fullFileName); // exception if trouble
       if (verbose)
         String2.log(
             attributeTo

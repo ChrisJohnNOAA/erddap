@@ -34,11 +34,13 @@ public class OutputStreamViaAwsS3 extends BufferedOutputStream {
    * @param tParent the OutputStreamFromHttpResponseViaAwsS3 that created this
    */
   public OutputStreamViaAwsS3(OutputStreamFromHttpResponseViaAwsS3 tParent) throws IOException {
+    this(tParent, File2.getSafePath(tParent.localDir, tParent.fileName + tParent.extension));
+  }
 
+  private OutputStreamViaAwsS3(OutputStreamFromHttpResponseViaAwsS3 tParent, String safePath)
+      throws IOException {
     // make the superclass's BufferedOutputStream from an OutputStream
-    super(
-        Files.newOutputStream(
-            Paths.get(File2.getSafePath(tParent.localDir, tParent.fileName + tParent.extension))));
+    super(Files.newOutputStream(Paths.get(safePath)));
     parent = tParent;
     fullLocalFileName = tParent.localDir + tParent.fileName + tParent.extension;
   }
