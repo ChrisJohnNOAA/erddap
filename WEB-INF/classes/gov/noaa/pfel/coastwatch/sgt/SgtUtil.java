@@ -13,6 +13,7 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 import gov.noaa.pfel.coastwatch.util.AttributedString2;
+import gov.noaa.pfel.erddap.util.EDStatic;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -452,7 +453,7 @@ public class SgtUtil {
    */
   public static void saveAsTransparentPng(BufferedImage bi, Color transparent, String tFullPngName)
       throws Exception {
-    final String fullPngName = File2.getSafePath(tFullPngName);
+    final String fullPngName = File2.getSafePath(EDStatic.config.bigParentDirectory, tFullPngName);
     final String dir = File2.getDirectory(fullPngName);
     final String name = File2.getNameAndExtension(fullPngName);
 

@@ -408,19 +408,9 @@ public class File2 {
   public static String getSafePath(String path) {
     if (path == null) return null;
     try {
-      File f = new File(path);
-      String canonical = f.getCanonicalPath();
-      // This is a common pattern for path traversal protection.
-      // We also ensure it's not a relative path that starts with '..'
-      if (path.contains("..")) {
-        File f2 = new File(canonical);
-        if (!f2.getCanonicalPath().equals(canonical)) {
-          throw new SecurityException("Unsafe path traversal: " + path);
-        }
-      }
-      return canonical.replace('\\', '/');
+      String safePath = new File(path).getCanonicalPath();
+      return safePath.replace('\\', '/');
     } catch (Exception e) {
-      if (e instanceof SecurityException) throw (SecurityException) e;
       throw new SecurityException("Invalid path: " + path, e);
     }
   }
@@ -441,11 +431,13 @@ public class File2 {
     try {
       File baseFile = new File(baseDir);
       String baseCanonical = baseFile.getCanonicalPath();
+      String baseCanonicalWithSep =
+          baseCanonical.endsWith(File.separator) ? baseCanonical : baseCanonical + File.separator;
 
       File fullFile = new File(baseDir, name);
       String fullCanonical = fullFile.getCanonicalPath();
 
-      if (!fullCanonical.startsWith(baseCanonical)) {
+      if (!fullCanonical.startsWith(baseCanonicalWithSep) && !fullCanonical.equals(baseCanonical)) {
         throw new SecurityException(
             "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
       }

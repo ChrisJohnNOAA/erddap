@@ -150,7 +150,8 @@ public class WavFiles extends CacheLockFiles {
     if (EDDGrid.reallyVerbose) String2.log("  EDDGrid.saveAsWav");
     long time = System.currentTimeMillis();
     int randomInt = Math2.random(Integer.MAX_VALUE);
-    String fullDosName = fullOutName + ".dos" + randomInt;
+    String fullDosName =
+        File2.getSafePath(EDStatic.config.bigParentDirectory, fullOutName + ".dos" + randomInt);
     String errorWhile =
         EDStatic.simpleBilingual(language, Message.QUERY_ERROR) + " while writing .wav file: ";
 
@@ -185,9 +186,8 @@ public class WavFiles extends CacheLockFiles {
       }
 
       // write data to dos
-      final String dir = File2.getDirectory(fullOutName);
-      final String name = File2.getNameAndExtension(fullOutName);
-      final String safeDosName = File2.getSafePath(dir, name + ".dos" + randomInt);
+      final String safeDosName =
+          File2.getSafePath(EDStatic.config.bigParentDirectory, fullOutName + ".dos" + randomInt);
       dos =
           new DataOutputStream(
               new BufferedOutputStream(Files.newOutputStream(Paths.get(safeDosName))));
