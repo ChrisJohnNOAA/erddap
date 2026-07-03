@@ -452,6 +452,7 @@ public class SgtUtil {
    */
   public static void saveAsTransparentPng(BufferedImage bi, Color transparent, String fullPngName)
       throws Exception {
+    fullPngName = File2.getSafePath(fullPngName);
 
     // POLICY: because this procedure may be used in more than one thread,
     // do work on unique temp files names using randomInt, then rename to proper file name.

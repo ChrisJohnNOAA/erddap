@@ -407,18 +407,10 @@ public class File2 {
    */
   public static String getSafePath(String path) {
     if (path == null) return null;
-    if (!path.contains("..")) return path;
-
     try {
-      Path p = Paths.get(path);
-      Path normalized = p.normalize();
-      String normalizedStr = normalized.toString().replace('\\', '/');
-      if (normalizedStr.contains("..") || normalizedStr.startsWith("..")) {
-        throw new SecurityException("Unsafe path traversal: " + path);
-      }
-      return normalized.toString().replace('\\', '/');
+      String canonical = new File(path).getCanonicalPath();
+      return canonical.replace('\\', '/');
     } catch (Exception e) {
-      if (e instanceof SecurityException) throw (SecurityException) e;
       throw new SecurityException("Invalid path: " + path, e);
     }
   }
@@ -434,19 +426,22 @@ public class File2 {
    */
   public static String getSafePath(String baseDir, String name) {
     if (baseDir == null || baseDir.length() == 0) return getSafePath(name);
-    if (name == null) return baseDir;
+    if (name == null) return getSafePath(baseDir);
 
-    // Suspect path: use Path API to normalize and check
     try {
-      Path base = Paths.get(baseDir).toAbsolutePath().normalize();
-      Path p = base.resolve(name).normalize();
-      String baseStr = base.toString().replace('\\', '/');
-      String pStr = p.toString().replace('\\', '/');
-      if (!pStr.startsWith(baseStr)) {
+      String baseCanonical = new File(baseDir).getCanonicalPath().replace('\\', '/');
+      if (!baseCanonical.endsWith("/")) baseCanonical += "/";
+
+      File f = new File(name);
+      if (f.isAbsolute()) {
+        throw new SecurityException("Absolute path traversal attempt: '" + name + "'");
+      }
+      String fullPath = new File(baseDir, name).getCanonicalPath().replace('\\', '/');
+      if (!fullPath.startsWith(baseCanonical)) {
         throw new SecurityException(
             "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
       }
-      return p.toString().replace('\\', '/');
+      return fullPath;
     } catch (Exception e) {
       if (e instanceof SecurityException) throw (SecurityException) e;
       throw new SecurityException("Invalid path: " + name, e);

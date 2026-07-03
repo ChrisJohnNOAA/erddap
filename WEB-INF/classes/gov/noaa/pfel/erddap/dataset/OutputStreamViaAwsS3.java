@@ -38,8 +38,7 @@ public class OutputStreamViaAwsS3 extends BufferedOutputStream {
     // make the superclass's BufferedOutputStream from an OutputStream
     super(
         Files.newOutputStream(
-            Paths.get(
-                File2.getSafePath(tParent.localDir + tParent.fileName + tParent.extension))));
+            Paths.get(File2.getSafePath(tParent.localDir, tParent.fileName + tParent.extension))));
     parent = tParent;
     fullLocalFileName = tParent.localDir + tParent.fileName + tParent.extension;
   }

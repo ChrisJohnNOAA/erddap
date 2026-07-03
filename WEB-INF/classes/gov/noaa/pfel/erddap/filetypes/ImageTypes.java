@@ -31,11 +31,11 @@ public abstract class ImageTypes extends CacheLockFiles {
 
   private void generateFile(DapRequestInfo requestInfo, String cacheFullName, boolean isGrid)
       throws Throwable {
+    cacheFullName = File2.getSafePath(cacheFullName);
     // create random file; and if error, only partial random file will be created
     int random = Math2.random(Integer.MAX_VALUE);
     OutputStream fos =
-        new BufferedOutputStream(
-            Files.newOutputStream(Paths.get(File2.getSafePath(cacheFullName + random))));
+        new BufferedOutputStream(Files.newOutputStream(Paths.get(cacheFullName + random)));
     boolean ok;
     try {
       OutputStreamSourceSimple osss = new OutputStreamSourceSimple(fos);

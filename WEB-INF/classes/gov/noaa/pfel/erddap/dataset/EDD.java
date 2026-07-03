@@ -3763,7 +3763,7 @@ public abstract class EDD {
       throws Throwable {
 
     String fileTypeExtension = fileTypeExtension(language, fileTypeName);
-    String fullName = dir + fileName + fileTypeExtension;
+    String fullName = File2.getSafePath(dir, fileName + fileTypeExtension);
 
     // POLICY: because this procedure may be used in more than one thread,
     // do work on unique temp files names using randomInt, then rename to proper file name.

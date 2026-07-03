@@ -914,8 +914,9 @@ public class SSR {
    * @throws IOException if touble
    */
   public static void uploadFileToAwsS3(
-      S3TransferManager tm, String localFileName, String awsUrl, String contentType)
+      S3TransferManager tm, String tLocalFileName, String awsUrl, String contentType)
       throws IOException {
+    final String localFileName = File2.getSafePath(tLocalFileName);
 
     String bro[] = String2.parseAwsS3Url(awsUrl); // bucket, region, object key
     if (bro == null)
@@ -942,10 +943,7 @@ public class SSR {
               .contentLength(File2.length(localFileName));
       if (contentType != null) request.contentType(contentType);
       FileUpload upload =
-          tm.uploadFile(
-              u ->
-                  u.source(Paths.get(File2.getSafePath(localFileName)))
-                      .putObjectRequest(request.build()));
+          tm.uploadFile(u -> u.source(Paths.get(localFileName)).putObjectRequest(request.build()));
       upload.completionFuture().join(); // wait for completion. exception if trouble
 
       if (verbose)
@@ -997,8 +995,9 @@ public class SSR {
    *     fullFileName, if any, will still exist).
    */
   public static void downloadFile(
-      String attributeTo, String urlString, String fullFileName, boolean tryToUseCompression)
+      String attributeTo, String urlString, String tFullFileName, boolean tryToUseCompression)
       throws Exception {
+    final String fullFileName = File2.getSafePath(tFullFileName);
 
     // first, ensure destination dir exists
     File2.makeDirectory(File2.getDirectory(fullFileName));
@@ -1030,7 +1029,7 @@ public class SSR {
             tm.downloadFile(
                 d ->
                     d.getObjectRequest(g -> g.bucket(bro[0]).key(bro[2]))
-                        .destination(Paths.get(File2.getSafePath(fullFileName + random))));
+                        .destination(Paths.get(fullFileName + random)));
         download.completionFuture().join(); // exception if trouble
         File2.rename(fullFileName + random, fullFileName); // exception if trouble
 
@@ -1067,8 +1066,7 @@ public class SSR {
               : getUncompressedUrlBufferedInputStream(urlString)) {
 
         try (OutputStream out =
-            new BufferedOutputStream(
-                Files.newOutputStream(Paths.get(File2.getSafePath(fullFileName + random))))) {
+            new BufferedOutputStream(Files.newOutputStream(Paths.get(fullFileName + random)))) {
           byte buffer[] = new byte[8192]; // best if smaller than java buffered..stream sizes
           int nBytes;
           while ((nBytes = in.read(buffer)) > 0) out.write(buffer, 0, nBytes);
