@@ -1183,7 +1183,7 @@ public class String2 {
   // will match ?a="q1" instead of the whole string.
   private static Pattern queryPattern =
       Pattern.compile(
-          "^\\?(?:[^\\s#\"%.,?!#]++|\"(?>[^\"\\\\\\n]*+(?:\\\\.[^\"\\\\\\n]*+)*+\"|)|%22(?>(?:(?!%22).)*%22|)|[.,?!#]|%(?!22))*(?<![.,?!#])");
+          "^\\?(?:[^\\s#\"%.,?!#]++|(?>\"(?:[^\"\\\\\\n]*+(?:\\\\.[^\"\\\\\\n]*+)*+\"|))|(?>%(?:22(?:(?!%22).)*+%22|22|(?!22)))|[.,?!#])*(?<![.,?!#])");
   private static Pattern fragmentPattern = Pattern.compile("^#[^.,!#)\\s]*(?<![.,?!#])");
 
   public static int[] findUrl(String input) {
