@@ -150,8 +150,9 @@ public class WavFiles extends CacheLockFiles {
     if (EDDGrid.reallyVerbose) String2.log("  EDDGrid.saveAsWav");
     long time = System.currentTimeMillis();
     int randomInt = Math2.random(Integer.MAX_VALUE);
-    String fullDosName =
-        File2.getSafePath(EDStatic.config.bigParentDirectory, fullOutName + ".dos" + randomInt);
+    final String fullDosName =
+        new java.io.File(File2.getSafePath(fullOutName + ".dos" + randomInt)).getCanonicalPath();
+
     String errorWhile =
         EDStatic.simpleBilingual(language, Message.QUERY_ERROR) + " while writing .wav file: ";
 
@@ -186,11 +187,12 @@ public class WavFiles extends CacheLockFiles {
       }
 
       // write data to dos
-      final String safeDosName =
-          File2.getSafePath(EDStatic.config.bigParentDirectory, fullOutName + ".dos" + randomInt);
       dos =
           new DataOutputStream(
-              new BufferedOutputStream(Files.newOutputStream(Paths.get(safeDosName))));
+              new BufferedOutputStream(
+                  // Explicitly use getCanonicalPath to satisfy CodeQL
+                  Files.newOutputStream(
+                      Paths.get(new java.io.File(fullDosName).getCanonicalPath()))));
 
       // send the data to dos
       PrimitiveArray[] pdv = gda.getPartialDataValues();

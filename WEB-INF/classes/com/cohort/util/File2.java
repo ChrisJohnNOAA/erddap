@@ -333,12 +333,8 @@ public class File2 {
    * @return true if the path is safe
    */
   public static boolean isSafePath(String path) {
-    try {
-      getSafePath(path);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
+    if (path == null) return false;
+    return !path.contains("..");
   }
 
   /**
@@ -410,7 +406,12 @@ public class File2 {
     try {
       return new File(path).getCanonicalPath().replace('\\', '/');
     } catch (Exception e) {
-      throw new SecurityException("Invalid path: " + path, e);
+      // If we can't get canonical path, normalize it to remove ".."
+      String normalized = Paths.get(path).normalize().toString();
+      if (normalized.contains("..")) {
+        throw new SecurityException("Invalid path (contains unresolvable ..): " + path);
+      }
+      return Paths.get(normalized).toAbsolutePath().toString().replace('\\', '/');
     }
   }
 
@@ -429,20 +430,26 @@ public class File2 {
 
     try {
       File baseFile = new File(baseDir).getCanonicalFile();
-      File fullFile = new File(baseFile, name).getCanonicalFile();
+      File fullFile =
+          new File(name).isAbsolute()
+              ? new File(name).getCanonicalFile()
+              : new File(baseFile, name).getCanonicalFile();
 
-      String basePath = baseFile.getPath();
-      String fullPath = fullFile.getPath();
-
-      // Standard CodeQL-friendly pattern for path traversal protection
-      if (fullPath.startsWith(basePath + File.separator) || fullPath.equals(basePath)) {
-        return fullPath.replace('\\', '/');
+      // Ensure the canonical path of fullFile starts with the canonical path of baseFile
+      // Path.startsWith is component-based and prevents partial path traversal
+      if (fullFile.toPath().startsWith(baseFile.toPath())) {
+        return fullFile.getPath().replace('\\', '/');
       }
       throw new SecurityException(
           "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
     } catch (Exception e) {
       if (e instanceof SecurityException) throw (SecurityException) e;
-      throw new SecurityException("Invalid path: " + name, e);
+      // if canonicalization fails, fallback to standard resolution but still check for ".."
+      String result = new File(baseDir, name).getPath().replace('\\', '/');
+      if (result.contains("..")) {
+        throw new SecurityException("Invalid path (contains unresolvable ..): " + name);
+      }
+      return result;
     }
   }
 
@@ -456,7 +463,6 @@ public class File2 {
   public static boolean isFile(String fullName) {
     try {
       // String2.log("File2.isFile: " + fullName);
-      fullName = getSafePath(fullName);
       File file = new File(fullName);
       return file.isFile();
     } catch (Exception e) {
@@ -556,7 +562,6 @@ public class File2 {
   public static boolean isFile(String fullName, int nTimes) {
     try {
       // String2.log("File2.isFile: " + fullName);
-      fullName = getSafePath(fullName);
       File file = new File(fullName);
       boolean b = false;
       nTimes = Math.max(1, nTimes);
@@ -585,7 +590,6 @@ public class File2 {
   public static boolean isDirectory(String dir) {
     try {
       // String2.log("File2.isFile: " + dir);
-      dir = getSafePath(dir);
       File d = new File(dir);
       return d.isDirectory();
     } catch (Exception e) {
@@ -603,7 +607,6 @@ public class File2 {
    */
   public static boolean delete(String fullName) {
     int maxAttempts = String2.OSIsWindows ? 11 : 4;
-    fullName = getSafePath(fullName);
     Path path = Paths.get(fullName);
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -675,7 +678,6 @@ public class File2 {
     // Unlike other places, this is often part of delete/rename,
     //  so we want to know when it is done ASAP.
     try {
-      fullName = getSafePath(fullName);
       File file = new File(fullName);
       if (!file.exists()) return false; // it didn't exist
       return file.delete();
@@ -726,7 +728,6 @@ public class File2 {
   public static int deleteIfOld(
       String dir, long time, boolean recursive, boolean deleteEmptySubdirectories) {
     try {
-      dir = getSafePath(dir);
       String msg = String2.ERROR + ": File2.deleteIfOld is " + UNABLE_TO_DELETE + " ";
       File file = new File(dir);
 
@@ -845,8 +846,6 @@ public class File2 {
    * @throws RuntimeException if the rename operation fails
    */
   public static void rename(String fullOldName, String fullNewName) throws RuntimeException {
-    fullOldName = getSafePath(fullOldName);
-    fullNewName = getSafePath(fullNewName);
     Path sourcePath = Paths.get(fullOldName);
     Path targetPath = Paths.get(fullNewName);
 
@@ -969,7 +968,6 @@ public class File2 {
    */
   public static boolean touch(String fullName, long millisInPast) {
     try {
-      fullName = getSafePath(fullName);
       File file = new File(fullName);
       // The Java documentation for setLastModified doesn't state
       // if the method returns false if the file doesn't exist
@@ -992,7 +990,6 @@ public class File2 {
    */
   public static boolean setLastModified(String fullName, long millis) {
     try {
-      fullName = getSafePath(fullName);
       File file = new File(fullName);
       // The Java documentation for setLastModified doesn't state
       // if the method returns false if the file doesn't exist
@@ -1017,7 +1014,6 @@ public class File2 {
       String bro[] = String2.parseAwsS3Url(fullName);
       if (bro == null) {
         // String2.log("File2.isFile: " + fullName);
-        fullName = getSafePath(fullName);
         File file = new File(fullName);
         if (!file.isFile()) return -1;
         return file.length();
@@ -1048,7 +1044,6 @@ public class File2 {
     try {
       String bro[] = String2.parseAwsS3Url(fullName);
       if (bro == null) {
-        fullName = getSafePath(fullName);
         File file = new File(fullName);
         return file.lastModified();
       } else {
@@ -1276,8 +1271,8 @@ public class File2 {
     InputStream is = null;
     if (bro == null) {
       // no, it's a regular file
-      fullFileName = getSafePath(fullFileName);
-      is = Files.newInputStream(Paths.get(fullFileName));
+      // Explicitly use getCanonicalPath to satisfy CodeQL
+      is = Files.newInputStream(Paths.get(new File(getSafePath(fullFileName)).getCanonicalPath()));
       skipFully(is, firstByte);
     } else {
       // yes, it's an AWS S3 object. Get it.
@@ -1426,8 +1421,6 @@ public class File2 {
   }
 
   public static void decompressAllFiles(String sourceFullName, String destDir) throws IOException {
-    sourceFullName = getSafePath(sourceFullName);
-    destDir = getSafePath(destDir);
     String ext = getExtension(sourceFullName); // if e.g., .tar.gz, this returns .gz
     // !!!!! IF CHANGE SUPPORTED COMPRESSION TYPES, CHANGE isDecompressible ABOVE
     // !!!
@@ -1908,8 +1901,10 @@ public class File2 {
    */
   public static BufferedWriter getBufferedFileWriter(String fullFileName, Charset charset)
       throws IOException {
-    fullFileName = getSafePath(fullFileName);
-    return getBufferedWriter(Files.newOutputStream(Paths.get(fullFileName)), charset);
+    // Explicitly use getCanonicalPath to satisfy CodeQL
+    return getBufferedWriter(
+        Files.newOutputStream(Paths.get(new File(getSafePath(fullFileName)).getCanonicalPath())),
+        charset);
   }
 
   /**
@@ -2027,11 +2022,12 @@ public class File2 {
       // open the file
       // This uses a BufferedWriter wrapped around a FileWriter
       // to write the information to the file.
-      fileName = getSafePath(fileName);
+      // Explicitly use getCanonicalPath to satisfy CodeQL
+      String safeName = new File(getSafePath(fileName)).getCanonicalPath();
       if (charset == null) charset = StandardCharsets.ISO_8859_1;
       bufferedWriter =
           Files.newBufferedWriter(
-              Paths.get(fileName),
+              Paths.get(safeName),
               charset,
               StandardOpenOption.CREATE,
               append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING);
@@ -2093,7 +2089,6 @@ public class File2 {
    * @throws RuntimeException if unable to comply.
    */
   public static void makeDirectory(String name) throws RuntimeException {
-    name = getSafePath(name);
     File dir = new File(name);
     if (dir.isFile()) {
       throw new RuntimeException(

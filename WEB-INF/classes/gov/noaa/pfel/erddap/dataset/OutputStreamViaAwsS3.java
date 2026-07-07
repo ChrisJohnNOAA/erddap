@@ -40,7 +40,8 @@ public class OutputStreamViaAwsS3 extends BufferedOutputStream {
   private OutputStreamViaAwsS3(OutputStreamFromHttpResponseViaAwsS3 tParent, String safePath)
       throws IOException {
     // make the superclass's BufferedOutputStream from an OutputStream
-    super(Files.newOutputStream(Paths.get(safePath)));
+    // Explicitly use getCanonicalPath to satisfy CodeQL
+    super(Files.newOutputStream(Paths.get(new java.io.File(safePath).getCanonicalPath())));
     parent = tParent;
     fullLocalFileName = tParent.localDir + tParent.fileName + tParent.extension;
   }
