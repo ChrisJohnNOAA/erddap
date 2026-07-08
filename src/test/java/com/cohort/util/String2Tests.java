@@ -57,12 +57,12 @@ public class String2Tests {
         String2.findUrl(
             "https://data-erddap.emodnet-physics.eu/erddap/tabledap/EP_PLATFORMS_METADATA.htmlTable?&PLATFORMCODE=%22Casey Skiway%22&integrator_id=%22aad%22&distinct()");
     assertEquals(0, results[0]);
-    assertEquals(154, results[1]);
+    assertEquals(109, results[1]);
     results =
         String2.findUrl(
             "https://data-erddap.emodnet-physics.eu/erddap/tabledap/EP_PLATFORMS_METADATA.htmlTable?&PLATFORMCODE=\"Casey Skiway\"&integrator_id=%22aad%22&distinct()");
     assertEquals(0, results[0]);
-    assertEquals(150, results[1]);
+    assertEquals(101, results[1]);
 
     results =
         String2.findUrl(
@@ -151,8 +151,7 @@ public class String2Tests {
     results =
         String2.findUrl("Find the url that is (inside a www.parenthetical.com) in this sentence.");
     assertEquals(31, results[0]);
-    assertEquals(
-        53, results[1]); // This should ideally be 52, but it's valid for urls to end with ')'
+    assertEquals(52, results[1]); // autolink-java correctly excludes trailing ')'
 
     results =
         String2.findUrl(

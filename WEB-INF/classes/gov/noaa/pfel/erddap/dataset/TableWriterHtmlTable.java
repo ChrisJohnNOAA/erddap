@@ -10,6 +10,7 @@ import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import com.cohort.util.Calendar2;
 import com.cohort.util.File2;
+import com.cohort.util.LinkHelper;
 import com.cohort.util.Math2;
 import com.cohort.util.MustBe;
 import com.cohort.util.SimpleException;
@@ -397,37 +398,39 @@ public class TableWriterHtmlTable extends TableWriter {
                           + // just the fileName
                           (isLocal ? "" : externalLinkHtml)
                           + "</a>";
-                } else if (String2.containsUrl(s)) {
-                  List<String> separatedText = String2.extractUrls(s);
-                  StringBuilder output = new StringBuilder();
-                  for (String text : separatedText) {
-                    if (String2.containsUrl(text)) {
-                      // display as a link
-                      url = text;
-                      boolean isLocal =
-                          url.startsWith(EDStatic.config.baseUrl)
-                              || (baseHttpsUrlIsSomething
-                                  && url.startsWith(EDStatic.config.baseHttpsUrl));
-
-                      output.append(
-                          "<a href=\""
-                              + XML.encodeAsHTMLAttribute(String2.addHttpsForWWW(url))
-                              + "\">"
-                              + encode(text)
-                              + (isLocal ? "" : externalLinkHtml)
-                              + "</a>");
-                    } else {
-                      output.append(encode(text));
-                    }
-                  }
-                  s = output.toString();
-                } else if (String2.isEmailAddress(s)) {
-                  // to improve security, convert "@" to " at "
-                  s = XML.encodeAsHTMLAttribute(String2.replaceAll(s, "@", " at "));
-                } else if (s.startsWith("data:image/png;base64,")) {
-                  url = s;
                 } else {
-                  s = encode(s);
+                  List<LinkHelper.LinkPart> linkParts = LinkHelper.splitByLinks(s);
+                  if (LinkHelper.hasUrl(linkParts)) {
+                    StringBuilder output = new StringBuilder();
+                    for (LinkHelper.LinkPart part : linkParts) {
+                      if (part.isUrl) {
+                        // display as a link
+                        url = part.text;
+                        boolean isLocal =
+                            url.startsWith(EDStatic.config.baseUrl)
+                                || (baseHttpsUrlIsSomething
+                                    && url.startsWith(EDStatic.config.baseHttpsUrl));
+
+                        output.append(
+                            "<a href=\""
+                                + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(url))
+                                + "\">"
+                                + encode(part.text)
+                                + (isLocal ? "" : externalLinkHtml)
+                                + "</a>");
+                      } else {
+                        output.append(encode(part.text));
+                      }
+                    }
+                    s = output.toString();
+                  } else if (String2.isEmailAddress(s)) {
+                    // to improve security, convert "@" to " at "
+                    s = XML.encodeAsHTMLAttribute(String2.replaceAll(s, "@", " at "));
+                  } else if (s.startsWith("data:image/png;base64,")) {
+                    url = s;
+                  } else {
+                    s = encode(s);
+                  }
                 }
 
                 if (url != null) {

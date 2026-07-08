@@ -16,6 +16,7 @@ import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import com.cohort.util.Calendar2;
 import com.cohort.util.File2;
+import com.cohort.util.LinkHelper;
 import com.cohort.util.Math2;
 import com.cohort.util.MustBe;
 import com.cohort.util.SimpleException;
@@ -18156,23 +18157,24 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         String externalLinkHtml = EDStatic.messages.externalLinkHtml(language, tErddapUrl);
         for (int i = 0; i < valueSA.size(); i++) {
           String s = valueSA.get(i);
-          if (String2.containsUrl(s)) {
-            List<String> separatedText = String2.extractUrls(s);
+          List<LinkHelper.LinkPart> linkParts = LinkHelper.splitByLinks(s);
+          if (LinkHelper.hasUrl(linkParts)) {
             StringBuilder output = new StringBuilder();
-            for (String text : separatedText) {
-              if (String2.containsUrl(text)) {
+            for (LinkHelper.LinkPart part : linkParts) {
+              if (part.isUrl) {
                 // display as a link
+                String text = part.text;
                 boolean isLocal = text.startsWith(EDStatic.config.baseUrl);
                 text = XML.encodeAsHTMLAttribute(text);
                 output.append(
                     "<a href=\""
-                        + String2.addHttpsForWWW(text)
+                        + LinkHelper.addHttpsForWWW(text)
                         + "\">"
                         + text
                         + (isLocal ? "" : externalLinkHtml)
                         + "</a>");
               } else {
-                output.append(text);
+                output.append(part.text);
               }
             }
             valueSA.set(i, output.toString());
