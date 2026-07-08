@@ -1177,14 +1177,16 @@ public class String2 {
       Pattern.compile(
           "^[/\\\\]?([a-zA-Z0-9-_.~!$&'()*+,;=:@%\\-]+[/\\\\])*[^/\\\\:?#,\\s]*[/\\\\]?(?<![.,?!#])");
   // queryPattern was identified as potentially very slow (catastrophic backtracking).
-  // This optimized version uses disjoint (mutually exclusive) branches to ensure linear
-  // performance and satisfy security scanners (e.g., CodeQL).
-  // Each branch handles a specific character class or sequence to avoid overlapping matches.
+  // This optimized version uses disjoint (mutually exclusive) branches and an unrolled
+  // loop structure (U* (P+ U+)*) to ensure linear performance and satisfy security scanners.
+  // Each branch (U) handles a specific character class or sequence that is NOT trailing
+  // punctuation (P), ensuring that valid queries are matched without backtracking into
+  // boundary punctuation.
   // Note: Unlike the original, this version is non-greedy for quotes; ?a="q1" "q2"
   // matches ?a="q1" instead of the whole string.
   private static Pattern queryPattern =
       Pattern.compile(
-          "^\\?(?:[^\\s#\"%.,?!]++|(?>\"(?:\\\\.|[^\"\\\\\\n])*+\"|\")|(?>%22(?>(?:(?!%22).)*+%22)|%22)|%(?!22)|[.,?!])*(?<![.,?!])");
+          "^\\?(?:[^\\s#\"%.,?!]++|\"(?>(?:\\\\.|[^\"\\\\\\n])*+\"|)|%22(?>(?:(?!%22).)*+%22|)|%(?!22))*(?:[.,?!]++(?:[^\\s#\"%.,?!]++|\"(?>(?:\\\\.|[^\"\\\\\\n])*+\"|)|%22(?>(?:(?!%22).)*+%22|)|%(?!22))+)*");
   private static Pattern fragmentPattern = Pattern.compile("^#[^.,!#)\\s]*(?<![.,?!#])");
 
   public static int[] findUrl(String input) {
