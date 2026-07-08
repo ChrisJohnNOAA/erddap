@@ -4951,6 +4951,8 @@ public class Table {
                   }
                 }
                 s = output.toString();
+              } else {
+                s = XML.encodeAsHTML(s);
               }
 
               // Check for href and mouseover to see if there's something like an anchor tag which

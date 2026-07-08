@@ -18165,12 +18165,11 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
                 // display as a link
                 String text = part.text;
                 boolean isLocal = text.startsWith(EDStatic.config.baseUrl);
-                text = XML.encodeAsHTMLAttribute(text);
                 output.append(
                     "<a href=\""
-                        + LinkHelper.addHttpsForWWW(text)
+                        + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
                         + "\">"
-                        + text
+                        + XML.encodeAsHTML(text)
                         + (isLocal ? "" : externalLinkHtml)
                         + "</a>");
               } else {
