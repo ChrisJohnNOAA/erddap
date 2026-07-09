@@ -397,9 +397,9 @@ public class TableWriterHtmlTable extends TableWriter {
                           + // just the fileName
                           (isLocal ? "" : externalLinkHtml)
                           + "</a>";
-                } else if (LinkHelper.containsUrl(s)) {
+                } else if (true) {
                   StringBuilder output = new StringBuilder();
-                  LinkHelper.linkify(
+                  if (LinkHelper.linkify(
                       s,
                       (text, isUrl) -> {
                         if (isUrl) {
@@ -419,15 +419,16 @@ public class TableWriterHtmlTable extends TableWriter {
                         } else {
                           output.append(encode(text));
                         }
-                      });
-                  s = output.toString();
-                } else if (String2.isEmailAddress(s)) {
-                  // to improve security, convert "@" to " at "
-                  s = XML.encodeAsHTMLAttribute(String2.replaceAll(s, "@", " at "));
-                } else if (s.startsWith("data:image/png;base64,")) {
-                  url = s;
-                } else {
-                  s = encode(s);
+                      })) {
+                    s = output.toString();
+                  } else if (String2.isEmailAddress(s)) {
+                    // to improve security, convert "@" to " at "
+                    s = XML.encodeAsHTMLAttribute(String2.replaceAll(s, "@", " at "));
+                  } else if (s.startsWith("data:image/png;base64,")) {
+                    url = s;
+                  } else {
+                    s = encode(s);
+                  }
                 }
 
                 if (url != null) {

@@ -18156,25 +18156,24 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         String externalLinkHtml = EDStatic.messages.externalLinkHtml(language, tErddapUrl);
         for (int i = 0; i < valueSA.size(); i++) {
           String s = valueSA.get(i);
-          if (LinkHelper.containsUrl(s)) {
-            StringBuilder output = new StringBuilder();
-            LinkHelper.linkify(
-                s,
-                (text, isUrl) -> {
-                  if (isUrl) {
-                    // display as a link
-                    boolean isLocal = text.startsWith(EDStatic.config.baseUrl);
-                    output.append(
-                        "<a href=\""
-                            + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
-                            + "\">"
-                            + XML.encodeAsHTML(text)
-                            + (isLocal ? "" : externalLinkHtml)
-                            + "</a>");
-                  } else {
-                    output.append(text);
-                  }
-                });
+          StringBuilder output = new StringBuilder();
+          if (LinkHelper.linkify(
+              s,
+              (text, isUrl) -> {
+                if (isUrl) {
+                  // display as a link
+                  boolean isLocal = text.startsWith(EDStatic.config.baseUrl);
+                  output.append(
+                      "<a href=\""
+                          + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
+                          + "\">"
+                          + XML.encodeAsHTML(text)
+                          + (isLocal ? "" : externalLinkHtml)
+                          + "</a>");
+                } else {
+                  output.append(text);
+                }
+              })) {
             valueSA.set(i, output.toString());
           } else if (String2.isEmailAddress(s)) {
             // to improve security, convert "@" to " at "

@@ -4935,22 +4935,21 @@ public class Table {
                       + // just the fileName
                       "</a>";
             } else if (needEncodingAsHtml) {
-              if (LinkHelper.containsUrl(s)) {
-                StringBuilder output = new StringBuilder();
-                LinkHelper.linkify(
-                    s,
-                    (text, isUrl) -> {
-                      if (isUrl) {
-                        output.append(
-                            "<a href=\""
-                                + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
-                                + "\">"
-                                + XML.encodeAsHTML(text)
-                                + "</a>");
-                      } else {
-                        output.append(XML.encodeAsHTML(text));
-                      }
-                    });
+              StringBuilder output = new StringBuilder();
+              if (LinkHelper.linkify(
+                  s,
+                  (text, isUrl) -> {
+                    if (isUrl) {
+                      output.append(
+                          "<a href=\""
+                              + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
+                              + "\">"
+                              + XML.encodeAsHTML(text)
+                              + "</a>");
+                    } else {
+                      output.append(XML.encodeAsHTML(text));
+                    }
+                  })) {
                 s = output.toString();
               } else {
                 s = XML.encodeAsHTML(s);
@@ -4960,22 +4959,21 @@ public class Table {
               // the url extraction will mangle.
             } else if (!needEncodingAsHtml && !s.contains("href=") && !s.contains("onmouseover")) {
               String decodedS = XML.decodeEntities(s);
-              if (LinkHelper.containsUrl(decodedS)) {
-                StringBuilder output = new StringBuilder();
-                LinkHelper.linkify(
-                    decodedS,
-                    (text, isUrl) -> {
-                      if (isUrl) {
-                        output.append(
-                            "<a href=\""
-                                + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
-                                + "\">"
-                                + XML.encodeAsHTML(text)
-                                + "</a>");
-                      } else {
-                        output.append(XML.encodeAsHTML(text));
-                      }
-                    });
+              StringBuilder output = new StringBuilder();
+              if (LinkHelper.linkify(
+                  decodedS,
+                  (text, isUrl) -> {
+                    if (isUrl) {
+                      output.append(
+                          "<a href=\""
+                              + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
+                              + "\">"
+                              + XML.encodeAsHTML(text)
+                              + "</a>");
+                    } else {
+                      output.append(XML.encodeAsHTML(text));
+                    }
+                  })) {
                 s = output.toString();
               }
             } else if (!needEncodingAsHtml && String2.isUrl(XML.decodeEntities(s))) {
