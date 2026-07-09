@@ -6,6 +6,7 @@ import java.util.List;
 import org.nibor.autolink.LinkExtractor;
 import org.nibor.autolink.LinkSpan;
 import org.nibor.autolink.LinkType;
+import org.nibor.autolink.Span;
 
 /** A helper class for finding and splitting links in text using autolink-java. */
 public class LinkHelper {
@@ -50,7 +51,10 @@ public class LinkHelper {
           continue;
         }
 
-        if (c == '%' && i + 2 < masked.length && masked[i + 1] == '2' && masked[i + 2] == '2') {
+        if (c == '%'
+            && i + 2 < masked.length
+            && masked[i + 1] == '2'
+            && masked[i + 2] == '2') {
           inDoubleQuote = !inDoubleQuote;
           // Mask %22 as zzz to ensure linker includes it and toggles quote state
           masked[i] = 'z';
@@ -220,16 +224,19 @@ public class LinkHelper {
    *
    * @param input the text to process
    * @param handler the handler to receive text and URL segments
+   * @return true if at least one link was found and handled
    */
-  public static void linkify(String input, LinkPartHandler handler) {
+  public static boolean linkify(String input, LinkPartHandler handler) {
     if (input == null || input.isEmpty()) {
-      return;
+      return false;
     }
 
     CharSequence searchIn = new NormalizedCharSequence(input);
     int lastEnd = 0;
+    boolean found = false;
     for (LinkSpan span : EXTRACTOR.extractLinks(searchIn)) {
       if (isValidLink(searchIn, span)) {
+        found = true;
         if (span.getBeginIndex() > lastEnd) {
           handler.handle(input.substring(lastEnd, span.getBeginIndex()), false);
         }
@@ -240,6 +247,7 @@ public class LinkHelper {
     if (lastEnd < input.length()) {
       handler.handle(input.substring(lastEnd), false);
     }
+    return found;
   }
 
   /**
