@@ -25,7 +25,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * TableWriterHtmlTable provides a way to write a table to an HTML or XHTML Table outputStream in
@@ -398,39 +397,37 @@ public class TableWriterHtmlTable extends TableWriter {
                           + // just the fileName
                           (isLocal ? "" : externalLinkHtml)
                           + "</a>";
-                } else {
-                  List<LinkHelper.LinkPart> linkParts = LinkHelper.splitByLinks(s);
-                  if (LinkHelper.hasUrl(linkParts)) {
-                    StringBuilder output = new StringBuilder();
-                    for (LinkHelper.LinkPart part : linkParts) {
-                      if (part.isUrl) {
-                        // display as a link
-                        url = part.text;
-                        boolean isLocal =
-                            url.startsWith(EDStatic.config.baseUrl)
-                                || (baseHttpsUrlIsSomething
-                                    && url.startsWith(EDStatic.config.baseHttpsUrl));
+                } else if (LinkHelper.containsUrl(s)) {
+                  StringBuilder output = new StringBuilder();
+                  LinkHelper.linkify(
+                      s,
+                      (text, isUrl) -> {
+                        if (isUrl) {
+                          // display as a link
+                          boolean isLocal =
+                              text.startsWith(EDStatic.config.baseUrl)
+                                  || (baseHttpsUrlIsSomething
+                                      && text.startsWith(EDStatic.config.baseHttpsUrl));
 
-                        output.append(
-                            "<a href=\""
-                                + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(url))
-                                + "\">"
-                                + encode(part.text)
-                                + (isLocal ? "" : externalLinkHtml)
-                                + "</a>");
-                      } else {
-                        output.append(encode(part.text));
-                      }
-                    }
-                    s = output.toString();
-                  } else if (String2.isEmailAddress(s)) {
-                    // to improve security, convert "@" to " at "
-                    s = XML.encodeAsHTMLAttribute(String2.replaceAll(s, "@", " at "));
-                  } else if (s.startsWith("data:image/png;base64,")) {
-                    url = s;
-                  } else {
-                    s = encode(s);
-                  }
+                          output.append(
+                              "<a href=\""
+                                  + XML.encodeAsHTMLAttribute(LinkHelper.addHttpsForWWW(text))
+                                  + "\">"
+                                  + encode(text)
+                                  + (isLocal ? "" : externalLinkHtml)
+                                  + "</a>");
+                        } else {
+                          output.append(encode(text));
+                        }
+                      });
+                  s = output.toString();
+                } else if (String2.isEmailAddress(s)) {
+                  // to improve security, convert "@" to " at "
+                  s = XML.encodeAsHTMLAttribute(String2.replaceAll(s, "@", " at "));
+                } else if (s.startsWith("data:image/png;base64,")) {
+                  url = s;
+                } else {
+                  s = encode(s);
                 }
 
                 if (url != null) {

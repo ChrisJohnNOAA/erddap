@@ -30,14 +30,42 @@ public class LinkHelper {
   }
 
   /**
-   * A CharSequence that lazily replaces backslashes with forward slashes. This allows autolink-java
-   * to recognize protocols like http:\\\\ as http://.
+   * A CharSequence that lazily replaces backslashes with forward slashes and masks spaces and
+   * quotes within URLs to allow autolink-java to recognize URLs with quoted spaces.
    */
   private static class NormalizedCharSequence implements CharSequence {
     private final String source;
+    private final char[] masked;
 
     NormalizedCharSequence(String source) {
       this.source = source;
+      this.masked = source.toCharArray();
+      boolean inDoubleQuote = false;
+      for (int i = 0; i < masked.length; i++) {
+        char c = masked[i];
+
+        if (c == '\"') {
+          inDoubleQuote = !inDoubleQuote;
+          masked[i] = 'z'; // Mask quote as alphanumeric to ensure linker includes it
+          continue;
+        }
+
+        if (c == '%' && i + 2 < masked.length && masked[i + 1] == '2' && masked[i + 2] == '2') {
+          inDoubleQuote = !inDoubleQuote;
+          // Mask %22 as zzz to ensure linker includes it and toggles quote state
+          masked[i] = 'z';
+          masked[i + 1] = 'z';
+          masked[i + 2] = 'z';
+          i += 2;
+          continue;
+        }
+
+        if (c == '\\') {
+          masked[i] = '/';
+        } else if (c == ' ' && inDoubleQuote) {
+          masked[i] = '_';
+        }
+      }
     }
 
     @Override
@@ -47,8 +75,7 @@ public class LinkHelper {
 
     @Override
     public char charAt(int index) {
-      char c = source.charAt(index);
-      return c == '\\' ? '/' : c;
+      return masked[index];
     }
 
     @Override
@@ -58,7 +85,7 @@ public class LinkHelper {
 
     @Override
     public String toString() {
-      return source.replace('\\', '/');
+      return new String(masked);
     }
   }
 
@@ -134,7 +161,7 @@ public class LinkHelper {
       return new int[] {-1, -1};
     }
 
-    CharSequence searchIn = input.indexOf('\\') >= 0 ? new NormalizedCharSequence(input) : input;
+    CharSequence searchIn = new NormalizedCharSequence(input);
 
     Iterable<LinkSpan> spans = EXTRACTOR.extractLinks(searchIn);
     for (LinkSpan span : spans) {
@@ -157,7 +184,7 @@ public class LinkHelper {
     if (input == null || input.isEmpty()) {
       return false;
     }
-    CharSequence searchIn = input.indexOf('\\') >= 0 ? new NormalizedCharSequence(input) : input;
+    CharSequence searchIn = new NormalizedCharSequence(input);
     for (LinkSpan span : EXTRACTOR.extractLinks(searchIn)) {
       if (isValidLink(searchIn, span)) {
         return true;
@@ -177,23 +204,42 @@ public class LinkHelper {
       return null;
     }
     List<LinkPart> parts = new ArrayList<>();
+    linkify(input, (text, isUrl) -> parts.add(new LinkPart(text, isUrl)));
+    return parts;
+  }
 
-    CharSequence searchIn = input.indexOf('\\') >= 0 ? new NormalizedCharSequence(input) : input;
+  /** Functional interface for handling parts of a string during linkification. */
+  @FunctionalInterface
+  public interface LinkPartHandler {
+    void handle(String text, boolean isUrl);
+  }
 
+  /**
+   * Processes the input string, identifying links and plain text segments, and passes each to the
+   * handler.
+   *
+   * @param input the text to process
+   * @param handler the handler to receive text and URL segments
+   */
+  public static void linkify(String input, LinkPartHandler handler) {
+    if (input == null || input.isEmpty()) {
+      return;
+    }
+
+    CharSequence searchIn = new NormalizedCharSequence(input);
     int lastEnd = 0;
     for (LinkSpan span : EXTRACTOR.extractLinks(searchIn)) {
       if (isValidLink(searchIn, span)) {
         if (span.getBeginIndex() > lastEnd) {
-          parts.add(new LinkPart(input.substring(lastEnd, span.getBeginIndex()), false));
+          handler.handle(input.substring(lastEnd, span.getBeginIndex()), false);
         }
-        parts.add(new LinkPart(input.substring(span.getBeginIndex(), span.getEndIndex()), true));
+        handler.handle(input.substring(span.getBeginIndex(), span.getEndIndex()), true);
         lastEnd = span.getEndIndex();
       }
     }
     if (lastEnd < input.length()) {
-      parts.add(new LinkPart(input.substring(lastEnd), false));
+      handler.handle(input.substring(lastEnd), false);
     }
-    return parts;
   }
 
   /**

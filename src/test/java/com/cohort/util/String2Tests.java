@@ -57,12 +57,12 @@ public class String2Tests {
         String2.findUrl(
             "https://data-erddap.emodnet-physics.eu/erddap/tabledap/EP_PLATFORMS_METADATA.htmlTable?&PLATFORMCODE=%22Casey Skiway%22&integrator_id=%22aad%22&distinct()");
     assertEquals(0, results[0]);
-    assertEquals(109, results[1]);
+    assertEquals(154, results[1]);
     results =
         String2.findUrl(
             "https://data-erddap.emodnet-physics.eu/erddap/tabledap/EP_PLATFORMS_METADATA.htmlTable?&PLATFORMCODE=\"Casey Skiway\"&integrator_id=%22aad%22&distinct()");
     assertEquals(0, results[0]);
-    assertEquals(101, results[1]);
+    assertEquals(150, results[1]);
 
     results =
         String2.findUrl(
