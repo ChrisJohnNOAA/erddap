@@ -32,10 +32,7 @@ public class LinkHelper {
           continue;
         }
 
-        if (c == '%'
-            && i + 2 < masked.length
-            && masked[i + 1] == '2'
-            && masked[i + 2] == '2') {
+        if (c == '%' && i + 2 < masked.length && masked[i + 1] == '2' && masked[i + 2] == '2') {
           inDoubleQuote = !inDoubleQuote;
           // Mask %22 as zzz to ensure linker includes it and toggles quote state
           masked[i] = 'z';
@@ -135,6 +132,16 @@ public class LinkHelper {
   }
 
   /**
+   * Finds the first URL in the input string.
+   *
+   * @param input the text to search
+   * @return an int array with [start, end] indices, or [-1, -1] if not found.
+   */
+  public static int[] findUrl(String input) {
+    return findUrl(input, 0);
+  }
+
+  /**
    * Finds the first URL in the input string starting from startIndex.
    *
    * @param input the text to search
@@ -157,25 +164,6 @@ public class LinkHelper {
       }
     }
     return new int[] {-1, -1};
-  }
-
-  /**
-   * Checks if the input string contains any URL.
-   *
-   * @param input the text to check
-   * @return true if a URL is found
-   */
-  public static boolean containsUrl(String input) {
-    if (input == null || input.isEmpty()) {
-      return false;
-    }
-    CharSequence searchIn = new NormalizedCharSequence(input);
-    for (LinkSpan span : EXTRACTOR.extractLinks(searchIn)) {
-      if (isValidLink(searchIn, span)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /** Functional interface for handling parts of a string during linkification. */

@@ -1147,45 +1147,6 @@ public class String2 {
     if (s.length() > 0) throw new RuntimeException(s);
   }
 
-  public static int[] findUrl(String input) {
-    return LinkHelper.findUrl(input, 0);
-  }
-
-  public static int[] findUrl(String input, int startIndex) {
-    return LinkHelper.findUrl(input, startIndex);
-  }
-
-  /**
-   * Detects a url within a string. The url does not have to be the entire string like with isUrl.
-   *
-   * @param input the text to check for urls
-   * @return if the string contains a url
-   */
-  public static boolean containsUrl(final String input) {
-    return LinkHelper.containsUrl(input);
-  }
-
-  /**
-   * This is used when setting href attributs in anchor tags. Specifically this is to make sure
-   * browsers know this is an absolute url and not a relative url.
-   */
-  public static String addHttpsForWWW(final String input) {
-    return LinkHelper.addHttpsForWWW(input);
-  }
-
-  /**
-   * Returns a list of strings, separating urls from text. This is intended to assist wrapping urls
-   * in anchor tags in several locations.
-   *
-   * @param input the text to separate
-   */
-  public static List<String> extractUrls(final String input) {
-    if (input == null) return null;
-    List<String> result = new ArrayList<>();
-    LinkHelper.linkify(input, (text, isUrl) -> result.add(text));
-    return result;
-  }
-
   /**
    * This indicates if 'url' is probably a valid url. This is like isRemote, but returns true for
    * "file://...".
