@@ -1180,12 +1180,9 @@ public class String2 {
    * @param input the text to separate
    */
   public static List<String> extractUrls(final String input) {
-    List<LinkHelper.LinkPart> parts = LinkHelper.splitByLinks(input);
-    if (parts == null) return null;
-    List<String> result = new ArrayList<>(parts.size());
-    for (LinkHelper.LinkPart part : parts) {
-      result.add(part.text);
-    }
+    if (input == null) return null;
+    List<String> result = new ArrayList<>();
+    LinkHelper.linkify(input, (text, isUrl) -> result.add(text));
     return result;
   }
 

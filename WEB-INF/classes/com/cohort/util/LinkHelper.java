@@ -1,34 +1,15 @@
 package com.cohort.util;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import org.nibor.autolink.LinkExtractor;
 import org.nibor.autolink.LinkSpan;
 import org.nibor.autolink.LinkType;
-import org.nibor.autolink.Span;
 
 /** A helper class for finding and splitting links in text using autolink-java. */
 public class LinkHelper {
 
   private static final LinkExtractor EXTRACTOR =
       LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL, LinkType.WWW)).build();
-
-  /** Represents a part of a string, which can be either plain text or a URL. */
-  public static class LinkPart {
-    public final String text;
-    public final boolean isUrl;
-
-    public LinkPart(String text, boolean isUrl) {
-      this.text = text;
-      this.isUrl = isUrl;
-    }
-
-    @Override
-    public String toString() {
-      return (isUrl ? "URL(" : "TEXT(") + text + ")";
-    }
-  }
 
   /**
    * A CharSequence that lazily replaces backslashes with forward slashes and masks spaces and
@@ -197,21 +178,6 @@ public class LinkHelper {
     return false;
   }
 
-  /**
-   * Splits the input string into parts of plain text and URLs.
-   *
-   * @param input the text to split
-   * @return a list of LinkPart objects
-   */
-  public static List<LinkPart> splitByLinks(String input) {
-    if (input == null) {
-      return null;
-    }
-    List<LinkPart> parts = new ArrayList<>();
-    linkify(input, (text, isUrl) -> parts.add(new LinkPart(text, isUrl)));
-    return parts;
-  }
-
   /** Functional interface for handling parts of a string during linkification. */
   @FunctionalInterface
   public interface LinkPartHandler {
@@ -248,24 +214,6 @@ public class LinkHelper {
       handler.handle(input.substring(lastEnd), false);
     }
     return found;
-  }
-
-  /**
-   * Checks if any of the parts is a URL.
-   *
-   * @param parts the list of parts to check
-   * @return true if any part is a URL
-   */
-  public static boolean hasUrl(List<LinkPart> parts) {
-    if (parts == null) {
-      return false;
-    }
-    for (LinkPart part : parts) {
-      if (part.isUrl) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
