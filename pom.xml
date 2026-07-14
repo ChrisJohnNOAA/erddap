@@ -44,13 +44,13 @@
         <erddapreffiles.download.version>1.0.0</erddapreffiles.download.version>
         <netcdfJavaVersion>5.10.0</netcdfJavaVersion>
         <test.resources.version>test1.06</test.resources.version>
-        <jettyVersion>12.1.10</jettyVersion>
+        <jettyVersion>12.1.11</jettyVersion>
         <error-prone.version>2.50.0</error-prone.version>
         <prometheusVersion>1.8.0</prometheusVersion>
         <parquetVersion>1.17.1</parquetVersion>
-        <awssdkVersion>2.46.19</awssdkVersion>
+        <awssdkVersion>2.47.1</awssdkVersion>
         <luceneVersion>10.5.0</luceneVersion>
-        <nettyVersion>4.2.15.Final</nettyVersion>
+        <nettyVersion>4.2.16.Final</nettyVersion>
         <mavenTestPluginVersion>3.5.6</mavenTestPluginVersion>
         <jacocoMavenVersion>0.8.15</jacocoMavenVersion>
         <download.unpackWhenChanged>true</download.unpackWhenChanged>
@@ -216,7 +216,7 @@
                 <configuration>
                     <attachClasses>true</attachClasses>
                     <warSourceDirectory>${project.basedir}</warSourceDirectory>
-                    <warSourceExcludes>**/*.java, **/*.javaINACTIVE, **/*.javaInactive, **/*.java_NOT_YET, **/*.javaNOT_FINISHED, **/*.javaOLD, content/**, data/**, development/**, test-data/**, /src/test/**, target/**, src/**, WEB-INF/classes/gov/noaa/pfel/coastwatch/log.*, WEB-INF/lib/**, WEB-INF/NetCheck.*, WEB-INF/*.web.xml, WEB-INF/FileVisitorDNLS.sh, WEB-INF/incompleteMainCatalog.xml, WEB-INF/iobis.m, WEB-INF/obis.m, WEB-INF/QN2005193*, WEB-INF/ValidateDataSetProperties*, WEB-INF/fonts/**, WEB-INF/temp/**, WEB-INF/ref/*.zip, *.*, translation/**, .mvn/**, .settings/**, .github/**, .vscode/**</warSourceExcludes>
+                    <warSourceExcludes>**/*.java, **/*.javaINACTIVE, **/*.javaInactive, **/*.java_NOT_YET, **/*.javaNOT_FINISHED, **/*.javaOLD, content/**, data/**, development/**, test-data/**, /src/test/**, target/**, src/**, WEB-INF/classes/gov/noaa/pfel/coastwatch/log.*, WEB-INF/lib/**, WEB-INF/NetCheck.*, WEB-INF/*.web.xml, WEB-INF/FileVisitorDNLS.sh, WEB-INF/incompleteMainCatalog.xml, WEB-INF/iobis.m, WEB-INF/obis.m, WEB-INF/QN2005193*, WEB-INF/ValidateDataSetProperties*, WEB-INF/fonts/**, WEB-INF/temp/**, WEB-INF/ref/*.zip, *.*, translation/**, .mvn/**, .settings/**, .github/**, .vscode/**, docker/**, dokka/**, Dockerfile</warSourceExcludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -1108,7 +1108,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.12</version>
+            <version>42.7.13</version>
         </dependency>
 
         <!-- CASSANDRA 
@@ -1134,7 +1134,7 @@
         <dependency>
             <groupId>at.yawk.lz4</groupId>
             <artifactId>lz4-java</artifactId>
-            <version>1.11.0</version>
+            <version>1.11.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core 
