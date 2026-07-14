@@ -131,41 +131,6 @@ public class LinkHelper {
     return hasDot;
   }
 
-  /**
-   * Finds the first URL in the input string.
-   *
-   * @param input the text to search
-   * @return an int array with [start, end] indices, or [-1, -1] if not found.
-   */
-  public static int[] findUrl(String input) {
-    return findUrl(input, 0);
-  }
-
-  /**
-   * Finds the first URL in the input string starting from startIndex.
-   *
-   * @param input the text to search
-   * @param startIndex the index to start searching from
-   * @return an int array with [start, end] indices, or [-1, -1] if not found.
-   */
-  public static int[] findUrl(String input, int startIndex) {
-    if (input == null || startIndex < 0 || startIndex >= input.length()) {
-      return new int[] {-1, -1};
-    }
-
-    CharSequence searchIn = new NormalizedCharSequence(input);
-
-    Iterable<LinkSpan> spans = EXTRACTOR.extractLinks(searchIn);
-    for (LinkSpan span : spans) {
-      if (span.getBeginIndex() >= startIndex) {
-        if (isValidLink(searchIn, span)) {
-          return new int[] {span.getBeginIndex(), span.getEndIndex()};
-        }
-      }
-    }
-    return new int[] {-1, -1};
-  }
-
   /** Functional interface for handling parts of a string during linkification. */
   @FunctionalInterface
   public interface LinkPartHandler {
