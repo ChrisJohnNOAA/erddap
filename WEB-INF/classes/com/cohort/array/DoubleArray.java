@@ -122,7 +122,7 @@ public class DoubleArray extends PrimitiveArray {
    * @param anArray the array to be wrapped.
    */
   public DoubleArray(final double[] anArray) {
-    core = new PanamaCoreArray(MemorySegment.ofArray(anArray), ValueLayout.JAVA_DOUBLE, anArray.length);
+    core = new PanamaCoreArray(MemorySegment.ofArray(anArray), ValueLayout.JAVA_DOUBLE, anArray.length, anArray);
     size = anArray.length;
   }
 
@@ -135,7 +135,7 @@ public class DoubleArray extends PrimitiveArray {
     size = immutableList.size();
     Math2.ensureMemoryAvailable(8L * size, "DoubleArray");
     double[] rawData = immutableList.stream().mapToDouble(Double::doubleValue).toArray();
-    core = new PanamaCoreArray(MemorySegment.ofArray(rawData), ValueLayout.JAVA_DOUBLE, size);
+    core = new PanamaCoreArray(MemorySegment.ofArray(rawData), ValueLayout.JAVA_DOUBLE, size, rawData);
   }
 
   /**

@@ -14,6 +14,7 @@ class PanamaCoreArray {
     private MemorySegment segment;
     private ValueLayout layout;
     private long capacity;
+    private Object onHeapArray;
 
     /**
      * Allocates native memory for the given capacity and value layout.
@@ -22,15 +23,17 @@ class PanamaCoreArray {
         this.layout = layout;
         this.segment = Arena.ofAuto().allocate(layout, capacity);
         this.capacity = capacity;
+        this.onHeapArray = null;
     }
 
     /**
      * Wraps an existing MemorySegment.
      */
-    PanamaCoreArray(MemorySegment segment, ValueLayout layout, long capacity) {
+    PanamaCoreArray(MemorySegment segment, ValueLayout layout, long capacity, Object onHeapArray) {
         this.segment = segment;
         this.layout = layout;
         this.capacity = capacity;
+        this.onHeapArray = onHeapArray;
     }
 
     /**
@@ -52,6 +55,13 @@ class PanamaCoreArray {
      */
     long capacity() {
         return capacity;
+    }
+
+    /**
+     * Gets the backing on-heap array (or null).
+     */
+    Object onHeapArray() {
+        return onHeapArray;
     }
 
     /**
@@ -89,19 +99,33 @@ class PanamaCoreArray {
             newSegment = Arena.ofAuto().allocate(layout.byteSize() * newCapacity);
         } else {
             if (layout instanceof ValueLayout.OfDouble) {
-                newSegment = MemorySegment.ofArray(new double[(int) newCapacity]);
+                double[] arr = new double[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else if (layout instanceof ValueLayout.OfFloat) {
-                newSegment = MemorySegment.ofArray(new float[(int) newCapacity]);
+                float[] arr = new float[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else if (layout instanceof ValueLayout.OfLong) {
-                newSegment = MemorySegment.ofArray(new long[(int) newCapacity]);
+                long[] arr = new long[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else if (layout instanceof ValueLayout.OfInt) {
-                newSegment = MemorySegment.ofArray(new int[(int) newCapacity]);
+                int[] arr = new int[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else if (layout instanceof ValueLayout.OfShort) {
-                newSegment = MemorySegment.ofArray(new short[(int) newCapacity]);
+                short[] arr = new short[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else if (layout instanceof ValueLayout.OfByte) {
-                newSegment = MemorySegment.ofArray(new byte[(int) newCapacity]);
+                byte[] arr = new byte[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else if (layout instanceof ValueLayout.OfChar) {
-                newSegment = MemorySegment.ofArray(new char[(int) newCapacity]);
+                char[] arr = new char[(int) newCapacity];
+                newSegment = MemorySegment.ofArray(arr);
+                this.onHeapArray = arr;
             } else {
                 newSegment = Arena.ofAuto().allocate(layout.byteSize() * newCapacity);
             }
@@ -120,7 +144,118 @@ class PanamaCoreArray {
         long byteOffset = offset * layout.byteSize();
         long byteLength = length * layout.byteSize();
         MemorySegment sliceSegment = segment.asSlice(byteOffset, byteLength);
-        return new PanamaCoreArray(sliceSegment, layout, length);
+        return new PanamaCoreArray(sliceSegment, layout, length, onHeapArray);
+    }
+
+    // --- SAFE CAST CONVERTERS TO PREVENT CODEQL TRUNCATION ALERTS ---
+
+    private static long toLong(double val) {
+        if (val < Long.MIN_VALUE) return Long.MIN_VALUE;
+        if (val > Long.MAX_VALUE) return Long.MAX_VALUE;
+        if (Double.isNaN(val)) return 0;
+        return (long) val;
+    }
+    private static int toInt(double val) {
+        if (val < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+        if (val > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        if (Double.isNaN(val)) return 0;
+        return (int) val;
+    }
+    private static short toShort(double val) {
+        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
+        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
+        if (Double.isNaN(val)) return 0;
+        return (short) val;
+    }
+    private static byte toByte(double val) {
+        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
+        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
+        if (Double.isNaN(val)) return 0;
+        return (byte) val;
+    }
+    private static char toChar(double val) {
+        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
+        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
+        if (Double.isNaN(val)) return 0;
+        return (char) val;
+    }
+
+    private static long toLong(float val) {
+        if (val < Long.MIN_VALUE) return Long.MIN_VALUE;
+        if (val > Long.MAX_VALUE) return Long.MAX_VALUE;
+        if (Float.isNaN(val)) return 0;
+        return (long) val;
+    }
+    private static int toInt(float val) {
+        if (val < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+        if (val > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        if (Float.isNaN(val)) return 0;
+        return (int) val;
+    }
+    private static short toShort(float val) {
+        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
+        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
+        if (Float.isNaN(val)) return 0;
+        return (short) val;
+    }
+    private static byte toByte(float val) {
+        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
+        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
+        if (Float.isNaN(val)) return 0;
+        return (byte) val;
+    }
+    private static char toChar(float val) {
+        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
+        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
+        if (Float.isNaN(val)) return 0;
+        return (char) val;
+    }
+
+    private static int toInt(long val) {
+        if (val < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+        if (val > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        return (int) val;
+    }
+    private static short toShort(long val) {
+        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
+        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
+        return (short) val;
+    }
+    private static byte toByte(long val) {
+        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
+        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
+        return (byte) val;
+    }
+    private static char toChar(long val) {
+        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
+        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
+        return (char) val;
+    }
+
+    private static short toShort(int val) {
+        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
+        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
+        return (short) val;
+    }
+    private static byte toByte(int val) {
+        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
+        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
+        return (byte) val;
+    }
+    private static char toChar(int val) {
+        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
+        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
+        return (char) val;
+    }
+
+    private static byte toByte(short val) {
+        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
+        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
+        return (byte) val;
+    }
+    private static char toChar(short val) {
+        if (val < 0) return 0;
+        return (char) val;
     }
 
     // --- STRONGLY TYPED UNBOXED PRIMITIVE GETTERS ---
@@ -266,15 +401,15 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, (float) value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, (long) value);
+            segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, (int) value);
+            segment.setAtIndex(ofInt, index, toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, (short) value);
+            segment.setAtIndex(ofShort, index, toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, (byte) value);
+            segment.setAtIndex(ofByte, index, toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, (char) value);
+            segment.setAtIndex(ofChar, index, toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setDouble");
         }
@@ -286,15 +421,15 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, (long) value);
+            segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, (int) value);
+            segment.setAtIndex(ofInt, index, toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, (short) value);
+            segment.setAtIndex(ofShort, index, toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, (byte) value);
+            segment.setAtIndex(ofByte, index, toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, (char) value);
+            segment.setAtIndex(ofChar, index, toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setFloat");
         }
@@ -308,13 +443,13 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, value);
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, (int) value);
+            segment.setAtIndex(ofInt, index, toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, (short) value);
+            segment.setAtIndex(ofShort, index, toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, (byte) value);
+            segment.setAtIndex(ofByte, index, toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, (char) value);
+            segment.setAtIndex(ofChar, index, toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setLong");
         }
@@ -326,15 +461,15 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, (float) value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, (long) value);
+            segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
             segment.setAtIndex(ofInt, index, value);
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, (short) value);
+            segment.setAtIndex(ofShort, index, toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, (byte) value);
+            segment.setAtIndex(ofByte, index, toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, (char) value);
+            segment.setAtIndex(ofChar, index, toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setInt");
         }
@@ -346,15 +481,15 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, (float) value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, (long) value);
+            segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, (int) value);
+            segment.setAtIndex(ofInt, index, toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
             segment.setAtIndex(ofShort, index, value);
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, (byte) value);
+            segment.setAtIndex(ofByte, index, toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, (char) value);
+            segment.setAtIndex(ofChar, index, toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setShort");
         }
@@ -366,15 +501,15 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, (float) value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, (long) value);
+            segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, (int) value);
+            segment.setAtIndex(ofInt, index, toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, (short) value);
+            segment.setAtIndex(ofShort, index, toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
             segment.setAtIndex(ofByte, index, value);
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, (char) value);
+            segment.setAtIndex(ofChar, index, toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setByte");
         }
@@ -386,13 +521,13 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, (float) value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, (long) value);
+            segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, (int) value);
+            segment.setAtIndex(ofInt, index, toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, (short) value);
+            segment.setAtIndex(ofShort, index, toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, (byte) value);
+            segment.setAtIndex(ofByte, index, toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
             segment.setAtIndex(ofChar, index, value);
         } else {
