@@ -149,6 +149,28 @@ class PanamaCoreArray {
 
     // --- SAFE CAST CONVERTERS TO PREVENT CODEQL TRUNCATION ALERTS ---
 
+    private static float toFloat(double val) {
+        if (val < -Float.MAX_VALUE) return -Float.MAX_VALUE;
+        if (val > Float.MAX_VALUE) return Float.MAX_VALUE;
+        if (Double.isNaN(val)) return Float.NaN;
+        return (float) val;
+    }
+    private static float toFloat(long val) {
+        return (float) val;
+    }
+    private static float toFloat(int val) {
+        return (float) val;
+    }
+    private static float toFloat(short val) {
+        return (float) val;
+    }
+    private static float toFloat(byte val) {
+        return (float) val;
+    }
+    private static float toFloat(char val) {
+        return (float) val;
+    }
+
     private static long toLong(double val) {
         if (val < Long.MIN_VALUE) return Long.MIN_VALUE;
         if (val > Long.MAX_VALUE) return Long.MAX_VALUE;
@@ -399,7 +421,7 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, (float) value);
+            segment.setAtIndex(ofFloat, index, toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
@@ -439,7 +461,7 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, (float) value);
+            segment.setAtIndex(ofFloat, index, toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, value);
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
@@ -459,7 +481,7 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, (float) value);
+            segment.setAtIndex(ofFloat, index, toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
@@ -479,7 +501,7 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, (float) value);
+            segment.setAtIndex(ofFloat, index, toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
@@ -499,7 +521,7 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, (float) value);
+            segment.setAtIndex(ofFloat, index, toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
@@ -519,7 +541,7 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, (float) value);
+            segment.setAtIndex(ofFloat, index, toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
