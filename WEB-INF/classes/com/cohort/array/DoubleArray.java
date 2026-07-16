@@ -238,13 +238,6 @@ public class DoubleArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new DoubleArray(new double[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    if (pa == null && stride == 1) {
-      DoubleArray da = new DoubleArray();
-      da.core = this.core.slice(startIndex, willFind);
-      da.size = willFind;
-      return da;
-    }
-
     DoubleArray da = null;
     if (pa == null) {
       da = new DoubleArray(willFind, true);
