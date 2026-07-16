@@ -6,9 +6,9 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.TestUtil;
-import dods.dap.DAS;
-import dods.dap.DConnect;
 import java.nio.file.Path;
+import opendap.dap.DAS;
+import opendap.dap.DConnect2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import tags.TagDisabledIncompleteTest;
@@ -31,8 +31,8 @@ class OpendapHelperTests {
     String url =
         "https://tds.coaps.fsu.edu/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
     String2.log("\n* OpendapHelper.testGetAttributes\n" + url);
-    DConnect dConnect = new DConnect(url, true, 1, 1);
-    DAS das = dConnect.getDAS(OpendapHelper.DEFAULT_TIMEOUT);
+    DConnect2 dConnect = new DConnect2(url, true);
+    DAS das = dConnect.getDAS();
     Attributes atts = new Attributes();
     OpendapHelper.getAttributes(das, "flag", atts);
 
@@ -334,12 +334,12 @@ class OpendapHelperTests {
       // OpendapHelper.getPrimitiveArrays ?flag[0:10:99]
       // Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
       // at
-      // dods.dap.BaseTypePrimitiveVector.setLength(BaseTypePrimitiveVector.java:69)
-      // at dods.dap.DVector.deserialize(DVector.java:221)
-      // at dods.dap.DataDDS.readData(DataDDS.java:75)
-      // at dods.dap.DConnect.getDataFromUrl(DConnect.java:523)
-      // at dods.dap.DConnect.getData(DConnect.java:450)
-      // at dods.dap.DConnect.getData(DConnect.java:633)
+      // opendap.dap.BaseTypePrimitiveVector.setLength(BaseTypePrimitiveVector.java:69)
+      // at opendap.dap.DVector.deserialize(DVector.java:221)
+      // at opendap.dap.DataDDS.readData(DataDDS.java:75)
+      // at opendap.dap.DConnect2.getDataFromUrl(DConnect2.java:523)
+      // at opendap.dap.DConnect2.getData(DConnect2.java:450)
+      // at opendap.dap.DConnect2.getData(DConnect2.java:633)
       // at
       // gov.noaa.pfel.coastwatch.griddata.OpendapHelper.getPrimitiveArrays(OpendapHelper.java:458)
       // at
@@ -378,7 +378,7 @@ class OpendapHelperTests {
                 + "\nurl="
                 + dArrayUrl
                 + "\n(The server timed out 2013-10-24.)");
-      else if (results.startsWith("dods.dap.DODSException: Connection cannot be opened"))
+      else if (results.startsWith("opendap.dap.DODSException: Connection cannot be opened"))
         String2.pressEnterToContinue(
             MustBe.throwableToString(t)
                 + "\nurl="

@@ -2,8 +2,8 @@ package gov.noaa.pfel.coastwatch.griddata;
 
 import com.cohort.util.String2;
 import com.cohort.util.Test;
-import dods.dap.DConnect;
 import gov.noaa.pfel.coastwatch.util.SSR;
+import opendap.dap.DConnect2;
 import org.junit.jupiter.api.BeforeAll;
 import tags.TagDisabledIncompleteTest;
 import tags.TagDisabledThredds;
@@ -48,12 +48,8 @@ class OpendapTests {
     // test THREDDS //was :8081
     opendap =
         new Opendap("https://oceanwatch.pfeg.noaa.gov/thredds/dodsC/satellite/GA/ssta/3day", true);
-    DConnect dConnect = new DConnect(opendap.url, opendap.acceptDeflate, 1, 1);
-    opendap.getGridInfo(
-        dConnect.getDAS(OpendapHelper.DEFAULT_TIMEOUT),
-        dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT),
-        "GAssta",
-        "-1.0e34");
+    DConnect2 dConnect = new DConnect2(opendap.url, opendap.acceptDeflate);
+    opendap.getGridInfo(dConnect.getDAS(), dConnect.getDDS(), "GAssta", "-1.0e34");
     Test.ensureEqual(
         opendap.getLat(0), -44.975, ""); // I'm not sure about exact range, should be global data
     Test.ensureEqual(opendap.getLat(opendap.gridNLatValues - 1), 59.975, "");
@@ -66,8 +62,8 @@ class OpendapTests {
     opendap =
         new Opendap( // was :8081
             "https://oceanwatch.pfeg.noaa.gov/thredds/dodsC/satellite/AG/ssta/3day", true);
-    dConnect = new DConnect(opendap.url, opendap.acceptDeflate, 1, 1);
-    opendap.getGridInfo(dConnect.getDAS(60000), dConnect.getDDS(60000), "AGssta", "-1.0e34");
+    dConnect = new DConnect2(opendap.url, opendap.acceptDeflate);
+    opendap.getGridInfo(dConnect.getDAS(), dConnect.getDDS(), "AGssta", "-1.0e34");
     Test.ensureEqual(opendap.getLat(0), -75, "");
     Test.ensureEqual(opendap.getLat(opendap.gridNLatValues - 1), 75, "");
     Test.ensureEqual(opendap.gridLatIncrement, .1, "");
@@ -119,9 +115,9 @@ class OpendapTests {
     System.out.println(
         "Opendap.simpleSpeedTest\n" + "  opendapUrl=" + opendapUrl + "\n" + "  query=" + query);
     boolean acceptDeflate = true;
-    dods.dap.DConnect dConnect = new dods.dap.DConnect(opendapUrl, acceptDeflate, 1, 1);
+    opendap.dap.DConnect2 dConnect = new opendap.dap.DConnect2(opendapUrl, acceptDeflate);
     long time = System.currentTimeMillis();
-    dods.dap.DataDDS dataDds = dConnect.getData(query, null);
+    opendap.dap.DataDDS dataDds = dConnect.getData(query, null);
     System.out.println(
         "  Opendap.simpleSpeedTest binary query TIME="
             + (System.currentTimeMillis() - time)
@@ -277,15 +273,17 @@ class OpendapTests {
   /**
    * This performs a THREDDS test: a series of requests for one x,y,t point from a grid dataset.
    * When this fails, error from thredds is: Exception in thread "main"
-   * dods.dap.parser.TokenMgrError: Lexical error at line 1, column 1. Encountered: "" (0), after :
-   * "" at dods.dap.parser.ErrorParserTokenManager.getNextToken(ErrorParserTokenManager.java:823) at
-   * dods.dap.parser.ErrorParser.jj_consume_token(ErrorParser.java:155) at
-   * dods.dap.parser.ErrorParser.ErrorObject(ErrorParser.java:10) at
-   * dods.dap.DODSException.parse(DODSException.java:193) at
-   * dods.dap.DConnect.handleContentDesc(DConnect.java:633) at
-   * dods.dap.DConnect.openConnection(DConnect.java:202) at
-   * dods.dap.DConnect.getDataFromUrl(DConnect.java:380) at
-   * dods.dap.DConnect.getData(DConnect.java:339) at dods.dap.DConnect.getData(DConnect.java:522) at
+   * opendap.dap.parser.TokenMgrError: Lexical error at line 1, column 1. Encountered: "" (0), after
+   * : "" at
+   * opendap.dap.parser.ErrorParserTokenManager.getNextToken(ErrorParserTokenManager.java:823) at
+   * opendap.dap.parser.ErrorParser.jj_consume_token(ErrorParser.java:155) at
+   * opendap.dap.parser.ErrorParser.ErrorObject(ErrorParser.java:10) at
+   * opendap.dap.DODSException.parse(DODSException.java:193) at
+   * opendap.dap.DConnect2.handleContentDesc(DConnect2.java:633) at
+   * opendap.dap.DConnect2.openConnection(DConnect2.java:202) at
+   * opendap.dap.DConnect2.getDataFromUrl(DConnect2.java:380) at
+   * opendap.dap.DConnect2.getData(DConnect2.java:339) at
+   * opendap.dap.DConnect2.getData(DConnect2.java:522) at
    * gov.noaa.pfel.coastwatch.griddata.Opendap.simpleSpeedTest(Opendap.java:1180) at
    * gov.noaa.pfel.coastwatch.griddata.Opendap.threddsTunnelTest(Opendap.java:1264) at
    * gov.noaa.pfel.coastwatch.TestAll.main(TestAll.java:156)

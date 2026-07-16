@@ -16,7 +16,6 @@ import com.cohort.util.Math2;
 import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
-import dods.dap.*;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
@@ -27,9 +26,10 @@ import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.util.TaskThread;
 import gov.noaa.pfel.erddap.variable.*;
 import java.io.File;
+import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import opendap.dap.*;
 
 /**
  * This class downloads data from a Hyrax data server with lots of files into .nc files in the
@@ -555,20 +555,20 @@ public class EDDTableFromHyraxFiles extends EDDTableFromFiles {
     // and a parallel table to hold the addAttributes
     Table dataSourceTable = new Table();
     Table dataAddTable = new Table();
-    DConnect dConnect = new DConnect(oneFileDapUrl, acceptDeflate, 1, 1);
-    DAS das = dConnect.getDAS(OpendapHelper.DEFAULT_TIMEOUT);
-    DDS dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    DConnect2 dConnect = new DConnect2(oneFileDapUrl, acceptDeflate);
+    DAS das = dConnect.getDAS();
+    DDS dds = dConnect.getDDS();
 
     // get source global attributes
     OpendapHelper.getAttributes(das, "GLOBAL", dataSourceTable.globalAttributes());
 
     // variables
-    Iterator<BaseType> en = dds.getVariables();
+    Enumeration<BaseType> en = dds.getVariables();
     double maxTimeES = Double.NaN;
     Attributes gridMappingAtts = null;
-    while (en.hasNext()) {
-      BaseType baseType = en.next();
-      String varName = baseType.getName();
+    while (en.hasMoreElements()) {
+      BaseType baseType = en.nextElement();
+      String varName = baseType.getClearName();
       Attributes sourceAtts = new Attributes();
       OpendapHelper.getAttributes(das, varName, sourceAtts);
 

@@ -22,7 +22,6 @@ import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
-import dods.dap.*;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
@@ -40,10 +39,11 @@ import java.io.ByteArrayInputStream;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import opendap.dap.*;
 import thredds.client.catalog.Access;
 import thredds.client.catalog.Catalog;
 import thredds.client.catalog.Dataset;
@@ -313,9 +313,8 @@ public class EDDGridFromDap extends EDDGrid {
     //  because GridDataSet determines axes via _CoordinateAxisType (or similar) metadata
     //  which most datasets we use don't have yet.
     //  One could certainly write another class that did use ucar.nc2.dt.GridDataSet.
-    DConnect dConnect = null;
-    if (quickRestartAttributes == null)
-      dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    DConnect2 dConnect = null;
+    if (quickRestartAttributes == null) dConnect = new DConnect2(localSourceUrl, acceptDeflate);
 
     // DAS
     byte dasBytes[] =
@@ -403,7 +402,7 @@ public class EDDGridFromDap extends EDDGrid {
       for (int av = 0; av < numDimensions; av++) {
 
         DArrayDimension dad = mainDArray.getDimension(av);
-        String tSourceAxisName = dad.getName();
+        String tSourceAxisName = dad.getClearName();
 
         // ensure this dimension's name is the same as for the other dataVariables
         // (or as specified in tAxisVariables()[0])
@@ -599,7 +598,7 @@ public class EDDGridFromDap extends EDDGrid {
   public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
 
     // read dds
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(localSourceUrl, acceptDeflate);
     byte ddsBytes[] = SSR.getUrlResponseBytes(localSourceUrl + ".dds");
     DDS dds = new DDS();
     dds.parse(new ByteArrayInputStream(ddsBytes));
@@ -968,7 +967,7 @@ public class EDDGridFromDap extends EDDGrid {
     // String errorInMethod = "Error in EDDGridFromDap.getSourceData for " + datasetID + ": ";
     String constraint = buildDapArrayQuery(tConstraints);
 
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(localSourceUrl, acceptDeflate);
     PrimitiveArray results[] = new PrimitiveArray[axisVariables.length + tDataVariables.length];
     for (int dv = 0; dv < tDataVariables.length; dv++) {
       // ???why not get all the dataVariables at once?
@@ -1108,10 +1107,10 @@ public class EDDGridFromDap extends EDDGrid {
     if (tLocalSourceUrl.endsWith(".html"))
       tLocalSourceUrl = tLocalSourceUrl.substring(0, tLocalSourceUrl.length() - 5);
 
-    // get DConnect
+    // get DConnect2
     long getDasDdsTime = System.currentTimeMillis();
-    DConnect dConnect =
-        new DConnect(tLocalSourceUrl, acceptDeflate, 1, 1); // open nRetries, data nRetries
+    DConnect2 dConnect =
+        new DConnect2(tLocalSourceUrl, acceptDeflate); // open nRetries, data nRetries
     int timeOutMinutes = 5;
     int longTimeOut = (int) (timeOutMinutes * Calendar2.MILLIS_PER_MINUTE);
     int nRetries = 3;
@@ -1120,7 +1119,7 @@ public class EDDGridFromDap extends EDDGrid {
       try {
         if (das == null) {
           String2.log("getDAS try#" + tri + " (timeout is " + timeOutMinutes + " minutes)");
-          das = dConnect.getDAS(longTimeOut);
+          das = dConnect.getDAS();
         }
         break;
       } catch (Throwable t) {
@@ -1141,7 +1140,7 @@ public class EDDGridFromDap extends EDDGrid {
       try {
         if (dds == null) {
           String2.log("getDDS try#" + tri + " (timeout is " + timeOutMinutes + " minutes)");
-          dds = dConnect.getDDS(longTimeOut);
+          dds = dConnect.getDDS();
         }
         break;
       } catch (Throwable t) {
@@ -1170,7 +1169,7 @@ public class EDDGridFromDap extends EDDGrid {
 
     // read through the variables[]
     HashSet<String> dimensionNameCsvsFound = new HashSet<>();
-    Iterator<BaseType> vars = dds.getVariables();
+    Enumeration<BaseType> vars = dds.getVariables();
     StringArray varNames = new StringArray();
     StringBuilder results = new StringBuilder();
     // if dimensionName!=null, this notes if a var with another dimension combo was found
@@ -1178,9 +1177,9 @@ public class EDDGridFromDap extends EDDGrid {
     String sourceDimensionNamesInBrackets = null;
     Attributes gridMappingAtts = null;
     NEXT_VAR:
-    while (vars.hasNext()) {
-      BaseType bt = vars.next();
-      String dName = bt.getName();
+    while (vars.hasMoreElements()) {
+      BaseType bt = vars.nextElement();
+      String dName = bt.getClearName();
       varNames.add(dName);
 
       Attributes sourceAtts = new Attributes();
@@ -1196,13 +1195,14 @@ public class EDDGridFromDap extends EDDGrid {
       // ensure it is a DGrid or DArray
       DArray mainDArray;
       if (bt instanceof DGrid dgrid)
-        mainDArray = (DArray) dgrid.getVariables().next(); // first element is always main array
+        mainDArray =
+            (DArray) dgrid.getVariables().nextElement(); // first element is always main array
       else if (bt instanceof DArray darray) mainDArray = darray;
       else continue;
 
       // if it's a coordinate variable, skip it
       int numDimensions = mainDArray.numDimensions();
-      if (numDimensions == 1 && mainDArray.getDimension(0).getName().equals(dName)) continue;
+      if (numDimensions == 1 && mainDArray.getDimension(0).getClearName().equals(dName)) continue;
 
       // reduce numDimensions by 1 if String var
       PrimitiveVector pv = mainDArray.getPrimitiveVector(); // just gets the data type
@@ -1214,7 +1214,7 @@ public class EDDGridFromDap extends EDDGrid {
 
       // skip if combo is 1D bnds=bounds info
       if (numDimensions == 1) {
-        String tName = mainDArray.getDimension(0).getName();
+        String tName = mainDArray.getDimension(0).getClearName();
         if (tName == null
             || tName.endsWith("bnds")
             || tName.endsWith("bounds")
@@ -1223,13 +1223,13 @@ public class EDDGridFromDap extends EDDGrid {
       }
       // skip if combo is 2D bnds=bounds info  (bnds, time_bnds, etc)
       if (numDimensions == 2) {
-        String tName = mainDArray.getDimension(1).getName();
+        String tName = mainDArray.getDimension(1).getClearName();
         if (tName == null || tName.endsWith("bnds") || tName.endsWith("bounds")) continue;
       }
       // skip if combo is 3D [][colorindex][rgb]  (or uppercase)
       if (numDimensions == 3
-          && "colorindex".equalsIgnoreCase(mainDArray.getDimension(1).getName())
-          && "rgb".equalsIgnoreCase(mainDArray.getDimension(2).getName())) continue;
+          && "colorindex".equalsIgnoreCase(mainDArray.getDimension(1).getClearName())
+          && "rgb".equalsIgnoreCase(mainDArray.getDimension(2).getClearName())) continue;
 
       // skip if varName endsWith("bnds")
       if (dName.endsWith("bnds") || dName.endsWith("bounds")) continue;
@@ -1240,7 +1240,7 @@ public class EDDGridFromDap extends EDDGrid {
         // has this combo of dimensionNames been seen?
         String tDimensionNames[] = new String[numDimensions];
         for (int av = 0; av < numDimensions; av++)
-          tDimensionNames[av] = mainDArray.getDimension(av).getName();
+          tDimensionNames[av] = mainDArray.getDimension(av).getClearName();
         String dimCsv = String2.toCSSVString(tDimensionNames);
         boolean alreadyExisted = !dimensionNameCsvsFound.add(dimCsv);
         if (reallyVerbose)
@@ -1281,7 +1281,7 @@ public class EDDGridFromDap extends EDDGrid {
       }
       for (int av = 0; av < numDimensions; av++) {
         DArrayDimension dad = mainDArray.getDimension(av);
-        if (!dimensionNames[av].equals(dad.getName())) {
+        if (!dimensionNames[av].equals(dad.getClearName())) {
           otherComboFound = true;
           continue NEXT_VAR;
         }
@@ -1293,7 +1293,7 @@ public class EDDGridFromDap extends EDDGrid {
         StringBuilder sourceNamesInBrackets = new StringBuilder();
         for (int av = 0; av < numDimensions; av++) {
           DArrayDimension dad = mainDArray.getDimension(av);
-          String aName = dad.getName();
+          String aName = dad.getClearName();
           Attributes aSourceAtts = new Attributes();
           try {
             OpendapHelper.getAttributes(das, aName, aSourceAtts);

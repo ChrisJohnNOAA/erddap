@@ -14,13 +14,12 @@ import com.cohort.util.Math2;
 import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
-import dods.dap.*;
 import gov.noaa.pfel.coastwatch.TimePeriods;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Iterator;
+import opendap.dap.*;
 
 /** This class holds information about an OPeNDAP grid data set for one time period. */
 public class Opendap {
@@ -149,7 +148,7 @@ public class Opendap {
     if (verbose) String2.log("Opendap.getGridInfo for " + gridName);
 
     // clear variables (in case trouble)
-    DConnect dConnect = new DConnect(url, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(url, acceptDeflate);
     this.gridName = gridName;
     gridDimensionNames = null;
     gridDimensionData = null;
@@ -168,7 +167,8 @@ public class Opendap {
 
     // get the grid baseType
     BaseType bt = dds.getVariable(gridName); // throws exception if not found
-    DArray da = (DArray) ((DGrid) bt).getVariables().next(); // first element is always main array
+    DArray da =
+        (DArray) ((DGrid) bt).getVariables().nextElement(); // first element is always main array
     // if (verbose) String2.log("  da.getName()=" + da.getName()); //always(?) same as gridName
 
     // gridMissingValue:  get from _FillValue  (it is preferred over missing_value)
@@ -193,11 +193,11 @@ public class Opendap {
     gridDimensionData = new double[numDimensions][];
     gridDimensionAscending = new boolean[numDimensions];
     int po = 0;
-    Iterator<DArrayDimension> e2 = da.getDimensions();
-    while (e2.hasNext()) {
+    java.util.Enumeration<DArrayDimension> e2 = da.getDimensions();
+    while (e2.hasMoreElements()) {
       long time1 = System.currentTimeMillis();
-      DArrayDimension dad = e2.next();
-      gridDimensionNames[po] = dad.getName();
+      DArrayDimension dad = e2.nextElement();
+      gridDimensionNames[po] = dad.getClearName();
 
       // get dimension info
       // I used to try to deduce the values from "point_spacing"="even" and "actual_range"?
@@ -206,21 +206,21 @@ public class Opendap {
       //  Time dimension can be large, but can't be deduced.
       // And it isn't safe to rely on metadata.
       // So always just download the values.
-      gridDimensionData[po] = OpendapHelper.getDoubleArray(dConnect, "?" + dad.getName());
+      gridDimensionData[po] = OpendapHelper.getDoubleArray(dConnect, "?" + dad.getClearName());
 
       // gather other information
       double range =
           Math.abs(
               gridDimensionData[po][gridDimensionData[po].length - 1] - gridDimensionData[po][0]);
       gridDimensionAscending[po] = range > 0;
-      switch (dad.getName()) {
+      switch (dad.getClearName()) {
         case "time", "time_series" -> {
           gridTimeDimension = po;
 
           // interpret time_series units (e.g., "days since 1985-01-01" or "days since 1985-1-1")
           // it must be: <units> since <isoDate>   or exception thrown
           // FUTURE: need to catch time zone information
-          String tsUnits = OpendapHelper.getAttributeValue(das, dad.getName(), "units");
+          String tsUnits = OpendapHelper.getAttributeValue(das, dad.getClearName(), "units");
           tsUnits = String2.replaceAll(tsUnits, "\"", "");
           double timeBaseAndFactor[] =
               Calendar2.getTimeBaseAndFactor(tsUnits); // throws exception if trouble
@@ -231,7 +231,7 @@ public class Opendap {
           // timeLongName is used to determine if the times in the file are already
           // centered ("Centered Time" or anything other than "End Time")
           // or aren't yet centered ("End Time").
-          timeLongName = OpendapHelper.getAttributeValue(das, dad.getName(), "long_name");
+          timeLongName = OpendapHelper.getAttributeValue(das, dad.getClearName(), "long_name");
         }
         case "depth", "altitude" -> gridDepthDimension = po;
         case "lat", "latitude" -> {
@@ -262,7 +262,7 @@ public class Opendap {
       if (verbose)
         String2.log(
             "  Dimension "
-                + dad.getName()
+                + dad.getClearName()
                 + " length="
                 + (dad.getStop() + 1)
                 + " time="
@@ -456,7 +456,7 @@ public class Opendap {
 
     // echo parameters
     long startTime = System.currentTimeMillis();
-    DConnect dConnect = new DConnect(url, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(url, acceptDeflate);
     desiredNLon = Math.max(1, desiredNLon);
     desiredNLat = Math.max(1, desiredNLat);
     double lonDim[] = gridDimensionData[gridLonDimension];
@@ -945,7 +945,7 @@ public class Opendap {
   public Grid makeGrid(int minIndex[], int maxIndex[], int stride[]) throws Exception {
 
     long startTime = System.currentTimeMillis();
-    DConnect dConnect = new DConnect(url, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(url, acceptDeflate);
     minLonInNewFile = getLon(minIndex[gridLonDimension]);
     maxLonInNewFile = getLon(maxIndex[gridLonDimension]);
     minLatInNewFile = getLat(minIndex[gridLatDimension]);

@@ -19,13 +19,6 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
-import dods.dap.BaseType;
-import dods.dap.DArray;
-import dods.dap.DArrayDimension;
-import dods.dap.DConnect;
-import dods.dap.DDS;
-import dods.dap.DGrid;
-import dods.dap.NoSuchVariableException;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
@@ -56,6 +49,13 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Queue;
+import opendap.dap.BaseType;
+import opendap.dap.DArray;
+import opendap.dap.DArrayDimension;
+import opendap.dap.DConnect2;
+import opendap.dap.DDS;
+import opendap.dap.DGrid;
+import opendap.dap.NoSuchVariableException;
 import org.semver4j.Semver;
 
 /**
@@ -284,9 +284,8 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     }
 
     // open the connection to the opendap source
-    DConnect dConnect = null;
-    if (quickRestartAttributes == null)
-      dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    DConnect2 dConnect = null;
+    if (quickRestartAttributes == null) dConnect = new DConnect2(localSourceUrl, acceptDeflate);
 
     // setup via info.json
     // source https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMHchla5day
@@ -553,7 +552,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
   public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
 
     // read dds
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(localSourceUrl, acceptDeflate);
     byte ddsBytes[] = SSR.getUrlResponseBytes(localSourceUrl + ".dds");
     DDS dds = new DDS();
     dds.parse(new ByteArrayInputStream(ddsBytes));
@@ -924,7 +923,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
     String constraint = buildDapArrayQuery(tConstraints);
 
     // get results one var at a time (that's how OpendapHelper is set up)
-    DConnect dConnect = new DConnect(localSourceUrl, acceptDeflate, 1, 1);
+    DConnect2 dConnect = new DConnect2(localSourceUrl, acceptDeflate);
     PrimitiveArray results[] = new PrimitiveArray[axisVariables.length + tDataVariables.length];
     for (int dv = 0; dv < tDataVariables.length; dv++) {
       // get the data

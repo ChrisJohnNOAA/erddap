@@ -25,9 +25,6 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
-import dods.dap.DAS;
-import dods.dap.DConnect;
-import dods.dap.DDS;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
@@ -85,6 +82,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import opendap.dap.DAS;
+import opendap.dap.DConnect2;
+import opendap.dap.DDS;
 import org.apache.http.HttpStatus;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.server.Server;
@@ -11250,7 +11250,7 @@ class JettyTests extends WireMockLifecycle {
     // !!! I also tested this with
     // <sourceCanConstrainStringRegex>~=</sourceCanConstrainStringRegex>
     // but it fails:
-    // Exception in thread "main" dods.dap.DODSException: "Your Query Produced No
+    // Exception in thread "main" opendap.dap.DODSException: "Your Query Produced No
     // Matching Results."
     // and it isn't an encoding problem, opera encodes unencoded request as
     // https://oceanwatch.pfeg.noaa.gov/opendap/GLOBEC/GLOBEC_bottle.dods?lon,NO3,datetime_epoch,ship,lat&lat%3E0&datetime_epoch%3E=1.0286784E9&datetime_epoch%3C=1.0287E9&ship~=%22(zztop|.*Horiz.*)%22
@@ -14259,9 +14259,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
     String threddsUrl = baseUrl + "/dods/public_data/SODA/soda_pop2.2.4";
     String erddapUrl =
         EDStatic.erddapUrl + "/griddap/hawaii_d90f_20ee_c4cb"; // in tests, always non-https url
-    DConnect threddsConnect = new DConnect(threddsUrl, true, 1, 1);
-    DConnect erddapConnect = new DConnect(erddapUrl, true, 1, 1); // in tests, always non-https url
-    DAS das = erddapConnect.getDAS(OpendapHelper.DEFAULT_TIMEOUT);
+    DConnect2 threddsConnect = new DConnect2(threddsUrl, true);
+    DConnect2 erddapConnect = new DConnect2(erddapUrl, true); // in tests, always non-https url
+    DAS das = erddapConnect.getDAS();
     PrimitiveArray tpas[], epas[];
 
     // get global attributes
@@ -18900,7 +18900,7 @@ netcdf EDDTableFromNcFiles_Data.nc {
   void testFindVarsWithSharedDimensions() throws Throwable {
     String2.log("\n\n*** OpendapHelper.findVarsWithSharedDimensions");
     String expected, results;
-    DConnect dConnect;
+    DConnect2 dConnect;
     DDS dds;
 
     // test of Sequence DAP dataset
@@ -18908,8 +18908,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
     String sequenceUrl =
         System.getProperty("test.coastwatch.pfegUrl", "https://coastwatch.pfeg.noaa.gov")
             + "/erddap/tabledap/erdGlobecMoc1";
-    dConnect = new DConnect(sequenceUrl, true, 1, 1);
-    dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    dConnect = new DConnect2(sequenceUrl, true);
+    dds = dConnect.getDDS();
     results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
     expected = "";
     Test.ensureEqual(results, expected, "results=" + results);
@@ -18920,8 +18920,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
         System.getProperty("test.coaps.fsuUrl", "https://tds.coaps.fsu.edu")
             + "/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
     String2.log("\n*** test of DArray DAP dataset\n" + dArrayUrl);
-    dConnect = new DConnect(dArrayUrl, true, 1, 1);
-    dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    dConnect = new DConnect2(dArrayUrl, true);
+    dds = dConnect.getDDS();
     results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
     expected =
         "time, lat, lon, PL_HD, PL_CRS, DIR, PL_WDIR, PL_SPD, SPD, PL_WSPD, P, T, RH, date, time_of_day, flag";
@@ -18930,8 +18930,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
     // ***** test of DGrid DAP dataset
     String2.log("\n*** test of DGrid DAP dataset");
     String dGridUrl = "http://localhost:8080/erddap/griddap/erdQSwindmday";
-    dConnect = new DConnect(dGridUrl, true, 1, 1);
-    dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    dConnect = new DConnect2(dGridUrl, true);
+    dds = dConnect.getDDS();
     results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
     expected = "x_wind, y_wind";
     Test.ensureEqual(results, expected, "results=" + results);
@@ -18947,7 +18947,7 @@ netcdf EDDTableFromNcFiles_Data.nc {
   void testFindAllScalarOrMultiDimVars() throws Throwable {
     String2.log("\n\n*** OpendapHelper.testFindAllScalarOrMultiDimVars");
     String expected, results;
-    DConnect dConnect;
+    DConnect2 dConnect;
     DDS dds;
     String url;
 
@@ -18955,8 +18955,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
      * //test of Sequence DAP dataset
      * String2.log("\n*** test of Sequence DAP dataset");
      * url = "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/erdGlobecMoc1";
-     * dConnect = new DConnect(url, true, 1, 1);
-     * dds = dConnect.getDDS(DEFAULT_TIMEOUT);
+     * dConnect = new DConnect2(url, true);
+     * dds = dConnect.getDDS();
      * results = String2.toCSSVString(findVarsWithSharedDimensions(dds));
      * expected =
      * "zztop";
@@ -18969,8 +18969,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
     url =
         "https://tds.coaps.fsu.edu/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
     String2.log("\n*** test of DArray DAP dataset\n" + url);
-    dConnect = new DConnect(url, true, 1, 1);
-    dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    dConnect = new DConnect2(url, true);
+    dds = dConnect.getDDS();
     results = String2.toCSSVString(OpendapHelper.findAllScalarOrMultiDimVars(dds));
     expected =
         "time, lat, lon, PL_HD, PL_CRS, DIR, PL_WDIR, PL_SPD, SPD, PL_WSPD, P, T, RH, date, time_of_day, flag, history";
@@ -18979,8 +18979,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
     // ***** test of DGrid DAP dataset
     String2.log("\n*** test of DGrid DAP dataset");
     url = "http://localhost:8080/erddap/griddap/erdQSwindmday";
-    dConnect = new DConnect(url, true, 1, 1);
-    dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    dConnect = new DConnect2(url, true);
+    dds = dConnect.getDDS();
     results = String2.toCSSVString(OpendapHelper.findAllScalarOrMultiDimVars(dds));
     expected = "time, altitude, latitude, longitude, x_wind, y_wind";
     Test.ensureEqual(results, expected, "results=" + results);
@@ -18990,7 +18990,7 @@ netcdf EDDTableFromNcFiles_Data.nc {
      * 2020-10-26 disabled because source is unreliable String2.log("\n*** test of NODC template
      * dataset"); url =
      * "https://data.nodc.noaa.gov/thredds/dodsC/testdata/netCDFTemplateExamples/timeSeries/BodegaMarineLabBuoyCombined.nc";
-     * dConnect = new DConnect(url, true, 1, 1); dds = dConnect.getDDS(DEFAULT_TIMEOUT); results =
+     * dConnect = new DConnect2(url, true); dds = dConnect.getDDS(); results =
      * String2.toCSSVString(findAllScalarOrMultiDimVars(dds)); expected = "time, lat, lon, alt,
      * station_name, temperature, salinity, density, conductivity, " + "turbidity, fluorescence,
      * platform1, temperature_qc, salinity_qc, density_qc, " + "conductivity_qc, turbidity_qc,
@@ -19001,8 +19001,8 @@ netcdf EDDTableFromNcFiles_Data.nc {
     // ***** test of sequence dataset (no vars should be found
     String2.log("\n*** test of sequence dataset");
     url = "http://localhost:8080/erddap/tabledap/erdCAMarCatLY";
-    dConnect = new DConnect(url, true, 1, 1);
-    dds = dConnect.getDDS(OpendapHelper.DEFAULT_TIMEOUT);
+    dConnect = new DConnect2(url, true);
+    dds = dConnect.getDDS();
     results = String2.toCSSVString(OpendapHelper.findAllScalarOrMultiDimVars(dds));
     expected = "";
     Test.ensureEqual(results, expected, "results=" + results);
