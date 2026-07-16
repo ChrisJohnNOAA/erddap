@@ -588,7 +588,7 @@ class PrimitiveArrayTests {
     PrimitiveArray.sort(table, new int[] {1, 0}, new boolean[] {true, true}); // tie, a/ascending
     Test.ensureEqual(arByte.array, new byte[] {110, 0, 50, 100}, ""); // col0
     Test.ensureEqual(arFloat.array, new float[] {-5, 1, 3, 3}, ""); // col1
-    Test.ensureEqual(arDouble.array, new double[] {0, 17, 3, 1e300}, ""); // col2
+    Test.ensureEqual(arDouble.toArray(), new double[] {0, 17, 3, 1e300}, ""); // col2
     for (int i = 0; i < 4; i++)
       Test.ensureEqual(
           arString.get(i), (new String[] {"ABE", "a", "A", "abe"})[i], "i=" + i); // col3
@@ -597,7 +597,7 @@ class PrimitiveArrayTests {
     PrimitiveArray.sort(table, new int[] {1, 0}, new boolean[] {true, false}); // tie, a/descending
     Test.ensureEqual(arByte.array, new byte[] {110, 0, 100, 50}, "");
     Test.ensureEqual(arFloat.array, new float[] {-5, 1, 3, 3}, "");
-    Test.ensureEqual(arDouble.array, new double[] {0, 17, 1e300, 3}, "");
+    Test.ensureEqual(arDouble.toArray(), new double[] {0, 17, 1e300, 3}, "");
     for (int i = 0; i < 4; i++)
       Test.ensureEqual(arString.get(i), (new String[] {"ABE", "a", "abe", "A"})[i], "i=" + i);
 
@@ -610,7 +610,7 @@ class PrimitiveArrayTests {
           "i=" + i + " arString=" + arString); // col3
     Test.ensureEqual(arByte.array, new byte[] {50, 0, 110, 100}, ""); // col0
     Test.ensureEqual(arFloat.array, new float[] {3, 1, -5, 3}, ""); // col1
-    Test.ensureEqual(arDouble.array, new double[] {3, 17, 0, 1e300}, ""); // col2
+    Test.ensureEqual(arDouble.toArray(), new double[] {3, 17, 0, 1e300}, ""); // col2
 
     // test sortIgnoreCase
     PrimitiveArray.sortIgnoreCase(table, new int[] {3}, new boolean[] {false});
@@ -619,7 +619,7 @@ class PrimitiveArrayTests {
           arString.get(i), (new String[] {"abe", "ABE", "a", "A"})[i], "i=" + i); // col3
     Test.ensureEqual(arByte.array, new byte[] {100, 110, 0, 50}, ""); // col0
     Test.ensureEqual(arFloat.array, new float[] {3, -5, 1, 3}, ""); // col1
-    Test.ensureEqual(arDouble.array, new double[] {1e300, 0, 17, 3}, ""); // col2
+    Test.ensureEqual(arDouble.toArray(), new double[] {1e300, 0, 17, 3}, ""); // col2
 
     // test rank this pa
     arFloat = new FloatArray(new float[] {3, 1, 3, Float.NaN, -5});

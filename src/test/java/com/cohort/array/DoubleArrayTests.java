@@ -285,7 +285,7 @@ class DoubleArrayTests {
 
     // test trimToSize
     anArray.trimToSize();
-    Test.ensureEqual(anArray.array.length, 2, "");
+    Test.ensureEqual(anArray.capacity(), 2, "");
 
     // test equals
     DoubleArray anArray2 = new DoubleArray();
@@ -339,27 +339,27 @@ class DoubleArrayTests {
     Test.ensureEqual(anArray.toString(), "-1.0, 1.0, NaN", "");
 
     // test move
-    anArray = new DoubleArray(new double[] {0, 1, 2, 3, 4});
-    double[] ar = anArray.array;
+    double[] ar = new double[] {0, 1, 2, 3, 4};
+    anArray = new DoubleArray(ar);
     anArray.move(1, 3, 0);
     Test.ensureEqual(anArray.toArray(), new double[] {1, 2, 0, 3, 4}, "");
-    Test.ensureTrue(ar == anArray.array, ""); // ensure it points to same array
+    Test.ensureEqual(ar, new double[] {1, 2, 0, 3, 4}, ""); // ensure on-heap array was modified in place (zero-copy wrapping)
 
-    anArray = new DoubleArray(new double[] {0, 1, 2, 3, 4});
-    ar = anArray.array;
+    ar = new double[] {0, 1, 2, 3, 4};
+    anArray = new DoubleArray(ar);
     anArray.move(3, 5, 0);
     Test.ensureEqual(anArray.toArray(), new double[] {3, 4, 0, 1, 2}, "");
-    Test.ensureTrue(ar == anArray.array, ""); // ensure it points to same array
+    Test.ensureEqual(ar, new double[] {3, 4, 0, 1, 2}, "");
 
-    anArray = new DoubleArray(new double[] {0, 1, 2, 3, 4});
-    ar = anArray.array;
+    ar = new double[] {0, 1, 2, 3, 4};
+    anArray = new DoubleArray(ar);
     anArray.move(1, 2, 4);
     Test.ensureEqual(anArray.toArray(), new double[] {0, 2, 3, 1, 4}, "");
-    Test.ensureTrue(ar == anArray.array, ""); // ensure it points to same array
+    Test.ensureEqual(ar, new double[] {0, 2, 3, 1, 4}, "");
 
     // move does nothing, but is allowed
-    anArray = new DoubleArray(new double[] {0, 1, 2, 3, 4});
-    ar = anArray.array;
+    ar = new double[] {0, 1, 2, 3, 4};
+    anArray = new DoubleArray(ar);
     anArray.move(1, 1, 0);
     Test.ensureEqual(anArray.toArray(), new double[] {0, 1, 2, 3, 4}, "");
     anArray.move(1, 2, 1);
@@ -370,7 +370,7 @@ class DoubleArrayTests {
     Test.ensureEqual(anArray.toArray(), new double[] {0, 1, 2, 3, 4}, "");
     anArray.move(3, 5, 5);
     Test.ensureEqual(anArray.toArray(), new double[] {0, 1, 2, 3, 4}, "");
-    Test.ensureTrue(ar == anArray.array, ""); // ensure it points to same array
+    Test.ensureEqual(ar, new double[] {0, 1, 2, 3, 4}, "");
 
     // makeIndices
     anArray = new DoubleArray(new double[] {25, 1, 1, 10});

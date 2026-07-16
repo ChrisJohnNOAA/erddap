@@ -13,8 +13,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -24,7 +27,7 @@ import java.util.Set;
 import ucar.ma2.StructureData;
 
 /**
- * DoubleArray is a thin shell over a double[] with methods like ArrayList's methods; it extends
+ * DoubleArray is a thin shell over a PanamaCoreArray with methods like ArrayList's methods; it extends
  * PrimitiveArray.
  */
 public class DoubleArray extends PrimitiveArray {
@@ -78,15 +81,13 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This is the main data structure. This should be private, but is public so you can manipulate it
-   * if you promise to be careful. Note that if the PrimitiveArray's capacity is increased, the
-   * PrimitiveArray will use a different array for storage.
+   * Underneath, storage is managed by PanamaCoreArray.
    */
-  public double[] array;
+  public PanamaCoreArray core;
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public DoubleArray() {
-    array = new double[8];
+    core = new PanamaCoreArray(8, ValueLayout.JAVA_DOUBLE);
   }
 
   /**
@@ -97,7 +98,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   public DoubleArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(8L * primitiveArray.size(), "DoubleArray");
-    array = new double[primitiveArray.size()]; // exact size
+    core = new PanamaCoreArray(primitiveArray.size(), ValueLayout.JAVA_DOUBLE);
     append(primitiveArray);
   }
 
@@ -110,18 +111,18 @@ public class DoubleArray extends PrimitiveArray {
    */
   public DoubleArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(8L * capacity, "DoubleArray");
-    array = new double[capacity];
+    core = new PanamaCoreArray(capacity, ValueLayout.JAVA_DOUBLE);
     if (active) size = capacity;
   }
 
   /**
-   * A constructor which (at least initially) uses the array and all its elements ('size' will equal
-   * anArray.length).
+   * A constructor which wraps an existing on-heap double[] instantly using MemorySegment.ofArray
+   * for zero-copy NetCDF-Java interoperability.
    *
-   * @param anArray the array to be used as this object's array.
+   * @param anArray the array to be wrapped.
    */
   public DoubleArray(final double[] anArray) {
-    array = anArray;
+    core = new PanamaCoreArray(MemorySegment.ofArray(anArray), ValueLayout.JAVA_DOUBLE, anArray.length);
     size = anArray.length;
   }
 
@@ -133,7 +134,8 @@ public class DoubleArray extends PrimitiveArray {
   public DoubleArray(final ImmutableList<Double> immutableList) {
     size = immutableList.size();
     Math2.ensureMemoryAvailable(8L * size, "DoubleArray");
-    array = immutableList.stream().mapToDouble(Double::doubleValue).toArray();
+    double[] rawData = immutableList.stream().mapToDouble(Double::doubleValue).toArray();
+    core = new PanamaCoreArray(MemorySegment.ofArray(rawData), ValueLayout.JAVA_DOUBLE, size);
   }
 
   /**
@@ -180,7 +182,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public final int capacity() {
-    return array.length;
+    return (int) core.capacity();
   }
 
   /** This indicates if this class' type is PAType.FLOAT or PAType.DOUBLE. */
@@ -197,16 +199,18 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public int hashCode() {
-    // see
-    // https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#hashCode()
-    // and
-    // https://stackoverflow.com/questions/299304/why-does-javas-hashcode-in-string-use-31-as-a-multiplier
-    // and java docs for Double.hashCode
     int code = 0;
     for (int i = 0; i < size; i++) {
-      code = 31 * code + Double.hashCode(array[i]);
+      code = 31 * code + Double.hashCode(core.getDouble(i));
     }
     return code;
+  }
+
+  /**
+   * Configures the byte order for layout configurations to handle Big/Little Endian automatically.
+   */
+  public void setByteOrder(ByteOrder order) {
+    core.setByteOrder(order);
   }
 
   /**
@@ -234,6 +238,13 @@ public class DoubleArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new DoubleArray(new double[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
+    if (pa == null && stride == 1) {
+      DoubleArray da = new DoubleArray();
+      da.core = this.core.slice(startIndex, willFind);
+      da.size = willFind;
+      return da;
+    }
+
     DoubleArray da = null;
     if (pa == null) {
       da = new DoubleArray(willFind, true);
@@ -242,12 +253,12 @@ public class DoubleArray extends PrimitiveArray {
       da.ensureCapacity(willFind);
       da.size = willFind;
     }
-    double tar[] = da.array;
     if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
+      MemorySegment.copy(this.core.segment(), (long) startIndex * 8, da.core.segment(), 0, (long) willFind * 8);
     } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      for (int i = 0; i < willFind; i++) {
+        da.set(i, this.get(startIndex + i * stride));
+      }
     }
     return da;
   }
@@ -286,9 +297,9 @@ public class DoubleArray extends PrimitiveArray {
    * @param value the value to be added to the array
    */
   public void add(final double value) {
-    if (size == array.length) // if we're at capacity
-    ensureCapacity(size + 1L);
-    array[size++] = value;
+    if (size == core.capacity()) // if we're at capacity
+      ensureCapacity(size + 1L);
+    core.setDouble(size++, value);
   }
 
   /**
@@ -299,9 +310,9 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void addObject(final Object value) {
-    if (size == array.length) // if we're at capacity
-    ensureCapacity(size + 1L);
-    array[size++] = value instanceof Number num ? num.doubleValue() : Double.NaN;
+    if (size == core.capacity()) // if we're at capacity
+      ensureCapacity(size + 1L);
+    core.setDouble(size++, value instanceof Number num ? num.doubleValue() : Double.NaN);
   }
 
   /**
@@ -323,7 +334,7 @@ public class DoubleArray extends PrimitiveArray {
   public void add(final double ar[]) {
     final int arSize = ar.length;
     ensureCapacity(size + (long) arSize);
-    System.arraycopy(ar, 0, array, size, arSize);
+    MemorySegment.copy(MemorySegment.ofArray(ar), 0, core.segment(), (long) size * 8, (long) arSize * 8);
     size += arSize;
   }
 
@@ -339,7 +350,9 @@ public class DoubleArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayAddN, getClass().getSimpleName(), "" + n));
     ensureCapacity(size + (long) n);
-    Arrays.fill(array, size, size + n, value);
+    for (int i = 0; i < n; i++) {
+      core.setDouble(size + i, value);
+    }
     size += n;
   }
 
@@ -354,11 +367,11 @@ public class DoubleArray extends PrimitiveArray {
     if (index < 0 || index > size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayAtInsert, getClass().getSimpleName(), "" + index, "" + size));
-    if (size == array.length) // if we're at capacity
-    ensureCapacity(size + 1L);
-    System.arraycopy(array, index, array, index + 1, size - index);
+    if (size == core.capacity()) // if we're at capacity
+      ensureCapacity(size + 1L);
+    MemorySegment.copy(core.segment(), (long) index * 8, core.segment(), (long) (index + 1) * 8, (long) (size - index) * 8);
     size++;
-    array[index] = value;
+    core.setDouble(index, value);
   }
 
   /**
@@ -451,7 +464,7 @@ public class DoubleArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
+    if (otherPA instanceof DoubleArray otherDA) {
       if (otherIndex + nValues > otherPA.size)
         throw new IllegalArgumentException(
             String2.ERROR
@@ -462,7 +475,7 @@ public class DoubleArray extends PrimitiveArray {
                 + " > otherPA.size="
                 + otherPA.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((DoubleArray) otherPA).array, otherIndex, array, size, nValues);
+      MemorySegment.copy(otherDA.core.segment(), (long) otherIndex * 8, core.segment(), (long) size * 8, (long) nValues * 8);
       size += nValues;
       return this;
     }
@@ -497,10 +510,8 @@ public class DoubleArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayRemove, getClass().getSimpleName(), "" + index, "" + size));
-    System.arraycopy(array, index + 1, array, index, size - index - 1);
+    MemorySegment.copy(core.segment(), (long) (index + 1) * 8, core.segment(), (long) index * 8, (long) (size - index - 1) * 8);
     size--;
-
-    // for object types, nullify the object at the end
   }
 
   /**
@@ -519,10 +530,8 @@ public class DoubleArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.removeRange: from (" + from + ") > to (" + to + ").");
     }
-    System.arraycopy(array, to, array, from, size - to);
+    MemorySegment.copy(core.segment(), (long) to * 8, core.segment(), (long) from * 8, (long) (size - to) * 8);
     size -= to - from;
-
-    // for object types, nullify the objects at the end
   }
 
   /**
@@ -561,30 +570,21 @@ public class DoubleArray extends PrimitiveArray {
               + last
               + ").");
     if (first == last || destination == first || destination == last) return; // nothing to do
-    // String2.log("move first=" + first + " last=" + last + " dest=" + destination);
-    // String2.log("move initial " + String2.toCSSVString(array));
 
     // store the range to be moved
     final int nToMove = last - first;
     final double[] temp = new double[nToMove];
-    System.arraycopy(array, first, temp, 0, nToMove);
+    MemorySegment.copy(core.segment(), (long) first * 8, MemorySegment.ofArray(temp), 0, (long) nToMove * 8);
 
-    // if moving to left...    (draw diagram to visualize this)
+    // if moving to left...
     if (destination < first) {
-      System.arraycopy(array, destination, array, destination + nToMove, first - destination);
-      // String2.log("move after shift " + String2.toCSSVString(array));
-
-      // copy temp data into place
-      System.arraycopy(temp, 0, array, destination, nToMove);
+      MemorySegment.copy(core.segment(), (long) destination * 8, core.segment(), (long) (destination + nToMove) * 8, (long) (first - destination) * 8);
+      MemorySegment.copy(MemorySegment.ofArray(temp), 0, core.segment(), (long) destination * 8, (long) nToMove * 8);
     } else {
       // moving to right
-      System.arraycopy(array, last, array, first, destination - last);
-      // String2.log("move after shift " + String2.toCSSVString(array));
-
-      // copy temp data into place
-      System.arraycopy(temp, 0, array, destination - nToMove, nToMove);
+      MemorySegment.copy(core.segment(), (long) last * 8, core.segment(), (long) first * 8, (long) (destination - last) * 8);
+      MemorySegment.copy(MemorySegment.ofArray(temp), 0, core.segment(), (long) (destination - nToMove) * 8, (long) nToMove * 8);
     }
-    // String2.log("move done " + String2.toCSSVString(array));
   }
 
   /**
@@ -597,7 +597,9 @@ public class DoubleArray extends PrimitiveArray {
   public void justKeep(final BitSet bitset) {
     int newSize = 0;
     for (int row = 0; row < size; row++) {
-      if (bitset.get(row)) array[newSize++] = array[row];
+      if (bitset.get(row)) {
+        core.setDouble(newSize++, core.getDouble(row));
+      }
     }
     removeRange(newSize, size);
   }
@@ -610,16 +612,14 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void ensureCapacity(final long minCapacity) {
-    if (array.length < minCapacity) {
+    if (core.capacity() < minCapacity) {
       // ensure minCapacity is < Integer.MAX_VALUE
       Math2.ensureArraySizeOkay(minCapacity, "DoubleArray");
       // caller may know exact number needed, so don't double above 2x current size
-      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
+      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, core.capacity() + core.capacity());
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
       Math2.ensureMemoryAvailable(8L * newCapacity, "DoubleArray");
-      double[] newArray = new double[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      core.resize(newCapacity);
     }
   }
 
@@ -630,11 +630,10 @@ public class DoubleArray extends PrimitiveArray {
    *     return an array with their storage type e.g., ULongArray returns a long[].
    */
   public double[] toArray() {
-    if (array.length == size) return array;
-    Math2.ensureMemoryAvailable(8L * size, "DoubleArray.toArray");
-    // this is faster than making array then arraycopy because it doesn't have to fill the initial
-    // array with 0's
-    return Arrays.copyOfRange(array, 0, size);
+    double[] target = new double[size];
+    MemorySegment targetSegment = MemorySegment.ofArray(target);
+    MemorySegment.copy(core.segment(), 0, targetSegment, 0, (long) size * ValueLayout.JAVA_DOUBLE.byteSize());
+    return target;
   }
 
   /**
@@ -669,7 +668,7 @@ public class DoubleArray extends PrimitiveArray {
         12L * size, "DoubleArray.toStringArray"); // 12L is feeble minimal estimate
     final String sar[] = new String[size];
     for (int i = 0; i < size; i++) {
-      final double d = array[i];
+      final double d = core.getDouble(i);
       sar[i] = Double.isFinite(d) ? String.valueOf(d) : "";
     }
     return sar;
@@ -685,7 +684,7 @@ public class DoubleArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.get: index (" + index + ") >= size (" + size + ").");
-    return array[index];
+    return core.getDouble(index);
   }
 
   /**
@@ -698,7 +697,7 @@ public class DoubleArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.set: index (" + index + ") >= size (" + size + ").");
-    array[index] = value;
+    core.setDouble(index, value);
   }
 
   /**
@@ -891,11 +890,11 @@ public class DoubleArray extends PrimitiveArray {
    */
   public int indexOf(final double lookFor, final int startIndex) {
     if (Double.isNaN(lookFor)) {
-      for (int i = startIndex; i < size; i++) if (Double.isNaN(array[i])) return i;
+      for (int i = startIndex; i < size; i++) if (Double.isNaN(core.getDouble(i))) return i;
       return -1;
     }
 
-    for (int i = startIndex; i < size; i++) if (array[i] == lookFor) return i;
+    for (int i = startIndex; i < size; i++) if (core.getDouble(i) == lookFor) return i;
     return -1;
   }
 
@@ -928,7 +927,7 @@ public class DoubleArray extends PrimitiveArray {
               + ") >= size ("
               + size
               + ").");
-    for (int i = startIndex; i >= 0; i--) if (array[i] == lookFor) return i;
+    for (int i = startIndex; i >= 0; i--) if (core.getDouble(i) == lookFor) return i;
     return -1;
   }
 
@@ -947,7 +946,9 @@ public class DoubleArray extends PrimitiveArray {
   /** If size != capacity, this makes a new 'array' of size 'size' so capacity will equal size. */
   @Override
   public void trimToSize() {
-    array = toArray();
+    if (core.capacity() != size) {
+      core.resize(size);
+    }
   }
 
   /**
@@ -982,15 +983,15 @@ public class DoubleArray extends PrimitiveArray {
           + other.size()
           + " value(s).";
     for (int i = 0; i < size; i++)
-      if (!Math2.equalsIncludingNanOrInfinite(array[i], other.array[i]))
+      if (!Math2.equalsIncludingNanOrInfinite(core.getDouble(i), other.core.getDouble(i)))
         return "The two DoubleArrays aren't equal: this["
             + i
             + "]="
-            + array[i]
+            + core.getDouble(i)
             + "; other["
             + i
             + "]="
-            + other.array[i]
+            + other.core.getDouble(i)
             + ".";
     return "";
   }
@@ -1013,7 +1014,7 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public String toNccsvAttString() {
     final StringBuilder sb = new StringBuilder(size * 15);
-    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + array[i] + "d");
+    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + core.getDouble(i) + "d");
     return sb.toString();
   }
 
@@ -1023,10 +1024,10 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void sort() {
-    // see switchover point and speed comparison in
-    //  https://www.baeldung.com/java-arrays-sort-vs-parallelsort
-    if (size < 8192) Arrays.sort(array, 0, size);
-    else Arrays.parallelSort(array, 0, size);
+    double[] temp = toArray();
+    if (size < 8192) Arrays.sort(temp, 0, size);
+    else Arrays.parallelSort(temp, 0, size);
+    MemorySegment.copy(MemorySegment.ofArray(temp), 0, core.segment(), 0, (long) size * 8);
   }
 
   /**
@@ -1055,7 +1056,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void copy(final int from, final int to) {
-    array[to] = array[from];
+    core.setDouble(to, core.getDouble(from));
   }
 
   /**
@@ -1068,11 +1069,12 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public void reorder(final int rank[]) {
     final int n = rank.length;
-    // new length could be n, but I'll keep it the same array.length as before
-    Math2.ensureMemoryAvailable(8L * array.length, "DoubleArray");
-    final double newArray[] = new double[array.length];
-    for (int i = 0; i < n; i++) newArray[i] = array[rank[i]];
-    array = newArray;
+    Math2.ensureMemoryAvailable(8L * core.capacity(), "DoubleArray");
+    PanamaCoreArray newCore = new PanamaCoreArray(core.capacity(), ValueLayout.JAVA_DOUBLE);
+    for (int i = 0; i < n; i++) {
+      newCore.setDouble(i, core.getDouble(rank[i]));
+    }
+    core = newCore;
   }
 
   /**
@@ -1081,9 +1083,10 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void reverseBytes() {
-    for (int i = 0; i < size; i++)
-      // this probably fails for some values since not all bit combos are valid doubles
-      array[i] = Double.longBitsToDouble(Long.reverseBytes(Double.doubleToLongBits(array[i])));
+    for (int i = 0; i < size; i++) {
+      double v = core.getDouble(i);
+      core.setDouble(i, Double.longBitsToDouble(Long.reverseBytes(Double.doubleToLongBits(v))));
+    }
   }
 
   /**
@@ -1097,7 +1100,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
-    for (int i = 0; i < size; i++) dos.writeDouble(array[i]);
+    for (int i = 0; i < size; i++) dos.writeDouble(core.getDouble(i));
     return size == 0 ? 0 : 8;
   }
 
@@ -1112,7 +1115,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos, final int i) throws Exception {
-    dos.writeDouble(array[i]);
+    dos.writeDouble(core.getDouble(i));
     return 8;
   }
 
@@ -1126,7 +1129,7 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
     ensureCapacity(size + (long) n);
-    for (int i = 0; i < n; i++) array[size++] = dis.readDouble();
+    for (int i = 0; i < n; i++) core.setDouble(size++, dis.readDouble());
   }
 
   /**
@@ -1141,7 +1144,7 @@ public class DoubleArray extends PrimitiveArray {
     final int nValues = dis.readInt();
     dis.readInt(); // skip duplicate of nValues
     ensureCapacity(size + (long) nValues);
-    for (int i = 0; i < nValues; i++) array[size++] = dis.readDouble();
+    for (int i = 0; i < nValues; i++) core.setDouble(size++, dis.readDouble());
   }
 
   /**
@@ -1180,10 +1183,10 @@ public class DoubleArray extends PrimitiveArray {
     final int otherSize = pa.size();
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof DoubleArray da) {
-      System.arraycopy(da.array, 0, array, size, otherSize);
+      MemorySegment.copy(da.core.segment(), 0, core.segment(), (long) size * 8, (long) otherSize * 8);
     } else {
       for (int i = 0; i < otherSize; i++)
-        array[size + i] = pa.getNiceDouble(i); // this converts mv's
+        core.setDouble(size + i, pa.getNiceDouble(i)); // this converts mv's
     }
     size += otherSize; // do last to minimize concurrency problems
   }
@@ -1202,10 +1205,10 @@ public class DoubleArray extends PrimitiveArray {
     final int otherSize = pa.size();
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof DoubleArray da) {
-      System.arraycopy(da.array, 0, array, size, otherSize);
+      MemorySegment.copy(da.core.segment(), 0, core.segment(), (long) size * 8, (long) otherSize * 8);
     } else {
       for (int i = 0; i < otherSize; i++)
-        array[size + i] = pa.getRawDouble(i); // this DOESN'T convert mv's
+        core.setDouble(size + i, pa.getRawDouble(i)); // this DOESN'T convert mv's
     }
     size += otherSize; // do last to minimize concurrency problems
   }
@@ -1229,11 +1232,11 @@ public class DoubleArray extends PrimitiveArray {
     // make a hashMap with all the unique values (associated values are initially all dummy)
     final Integer dummy = -1;
     final HashMap<Double, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    double lastValue = array[0]; // since lastValue often equals currentValue, cache it
+    double lastValue = core.getDouble(0); // since lastValue often equals currentValue, cache it
     hashMap.put(lastValue, dummy);
     boolean alreadySorted = true;
     for (int i = 1; i < size; i++) {
-      double currentValue = array[i];
+      double currentValue = core.getDouble(i);
       if (currentValue != lastValue) {
         if (currentValue < lastValue) alreadySorted = false;
         lastValue = currentValue;
@@ -1247,7 +1250,6 @@ public class DoubleArray extends PrimitiveArray {
     if (nUnique == size && alreadySorted) {
       indices.ensureCapacity(size);
       for (int i = 0; i < size; i++) indices.add(i);
-      // String2.log("DoubleArray.makeIndices all unique and already sorted.");
       return this; // the PrimitiveArray with unique values
     }
 
@@ -1270,14 +1272,15 @@ public class DoubleArray extends PrimitiveArray {
 
     // convert original values to ranks
     final int ranks[] = new int[size];
-    lastValue = array[0];
+    lastValue = core.getDouble(0);
     ranks[0] = (Integer) hashMap.get(lastValue);
     int lastRank = ranks[0];
     for (int i = 1; i < size; i++) {
-      if (array[i] == lastValue) {
+      double currentVal = core.getDouble(i);
+      if (currentVal == lastValue) {
         ranks[i] = lastRank;
       } else {
-        lastValue = array[i];
+        lastValue = currentVal;
         ranks[i] = (Integer) hashMap.get(lastValue);
         lastRank = ranks[i];
       }
@@ -1304,15 +1307,15 @@ public class DoubleArray extends PrimitiveArray {
     int count = 0;
     if (Double.isNaN(from)) {
       for (int i = 0; i < size; i++) {
-        if (Double.isNaN(array[i])) {
-          array[i] = to;
+        if (Double.isNaN(core.getDouble(i))) {
+          core.setDouble(i, to);
           count++;
         }
       }
     } else {
       for (int i = 0; i < size; i++) {
-        if (Math2.almostEqual(9, array[i], from)) {
-          array[i] = to;
+        if (Math2.almostEqual(9, core.getDouble(i), from)) {
+          core.setDouble(i, to);
           count++;
         }
       }
@@ -1326,8 +1329,13 @@ public class DoubleArray extends PrimitiveArray {
   public void removeDuplicatesAE5() {
     if (size <= 1) return;
     int nValid = 1;
-    for (int i = 1; i < size; i++)
-      if (!Math2.almostEqual(5, array[i], array[nValid - 1])) array[nValid++] = array[i];
+    for (int i = 1; i < size; i++) {
+      double currentVal = core.getDouble(i);
+      double prevVal = core.getDouble(nValid - 1);
+      if (!Math2.almostEqual(5, currentVal, prevVal)) {
+        core.setDouble(nValid++, currentVal);
+      }
+    }
     size = nValid;
   }
 
@@ -1340,9 +1348,11 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public int firstTie() {
     for (int i = 1; i < size; i++) {
-      if (Double.isNaN(array[i - 1])) {
-        if (Double.isNaN(array[i])) return i - 1;
-      } else if (array[i - 1] == array[i]) {
+      double currentVal = core.getDouble(i);
+      double prevVal = core.getDouble(i - 1);
+      if (Double.isNaN(prevVal)) {
+        if (Double.isNaN(currentVal)) return i - 1;
+      } else if (prevVal == currentVal) {
         return i - 1;
       }
     }
@@ -1359,28 +1369,23 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public String isEvenlySpaced() {
     if (size <= 2) return "";
-    // This diff is closer to exact
-    // and usually detects not-evenly-spaced anywhere in the array on first test!
-    final double diff = (array[size - 1] - array[0]) / (size - 1);
+    final double diff = (core.getDouble(size - 1) - core.getDouble(0)) / (size - 1);
     for (int i = 1; i < size; i++) {
-      // This is a difficult test to do well. See tests below.
-      // 1e7 avoids dEps test in almostEqual
-      if (Math2.almostEqual(9, (array[i] - array[i - 1]) * 1e7, diff * 1e7)) {
-        // String2.log(i + " passed first test");
+      double currentVal = core.getDouble(i);
+      double prevVal = core.getDouble(i - 1);
+      if (Math2.almostEqual(9, (currentVal - prevVal) * 1e7, diff * 1e7)) {
       } else if (
-      // do easier test if first 12 digits are same
-      Math2.almostEqual(12, array[i - 1] + diff, array[i])
-          && Math2.almostEqual(2, (array[i] - array[i - 1]) * 1e7, diff * 1e7)) {
-        // String2.log(i + " passed second test " + (array[i] - array[i - 1]) + " " + diff);
+      Math2.almostEqual(12, prevVal + diff, currentVal)
+          && Math2.almostEqual(2, (currentVal - prevVal) * 1e7, diff * 1e7)) {
       } else {
         return MessageFormat.format(
             ArrayNotEvenlySpaced,
             getClass().getSimpleName(),
             "" + (i - 1),
-            "" + array[i - 1],
+            "" + prevVal,
             "" + i,
-            "" + array[i],
-            "" + (array[i] - array[i - 1]),
+            "" + currentVal,
+            "" + (currentVal - prevVal),
             "" + diff);
       }
     }
@@ -1400,7 +1405,7 @@ public class DoubleArray extends PrimitiveArray {
     double tmin = Double.MAX_VALUE;
     double tmax = -Double.MAX_VALUE;
     for (int i = 0; i < size; i++) {
-      final double v = array[i];
+      final double v = core.getDouble(i);
       if (Double.isFinite(v)) {
         n++;
         if (v <= tmin) {
@@ -1431,38 +1436,37 @@ public class DoubleArray extends PrimitiveArray {
 
     // find median
     DoubleArray gaps = new DoubleArray(size - 1, false);
-    for (int i = 1; i < size; i++) // 1 because looking back
-    gaps.add(array[i] - array[i - 1]);
+    for (int i = 1; i < size; i++)
+      gaps.add(core.getDouble(i) - core.getDouble(i - 1));
     gaps.sort();
     final int size1o2 = (size / 2) - 1;
     double median =
         (size - 1) % 2 == 0
-            ? // even number of gaps?
-            (gaps.get(size1o2) + gaps.get(size1o2 + 1)) / 2.0
-            : // average of 2 values
-            gaps.get(size1o2);
+            ? (gaps.get(size1o2) + gaps.get(size1o2 + 1)) / 2.0
+            : gaps.get(size1o2);
     gaps = null; // allow gc
 
-    // look for gaps that are NaN or > median
     final StringBuilder sb =
         new StringBuilder(
             "Time gaps greater than the median ("
                 + Calendar2.elapsedTimeString(median * 1000)
                 + "):");
     int count = 0;
-    for (int i = 1; i < size; i++) { // 1 because looking back
-      final double gap = array[i] - array[i - 1];
+    for (int i = 1; i < size; i++) {
+      double currentVal = core.getDouble(i);
+      double prevVal = core.getDouble(i - 1);
+      final double gap = currentVal - prevVal;
       if (!Double.isFinite(gap) || gap > median) {
         if (count++ == 0) sb.append('\n');
         sb.append(
             "["
                 + (i - 1)
                 + "]="
-                + Calendar2.safeEpochSecondsToIsoStringTZ(array[i - 1], "(NaN)")
+                + Calendar2.safeEpochSecondsToIsoStringTZ(prevVal, "(NaN)")
                 + " -> ["
                 + i
                 + "]="
-                + Calendar2.safeEpochSecondsToIsoStringTZ(array[i], "(NaN)")
+                + Calendar2.safeEpochSecondsToIsoStringTZ(currentVal, "(NaN)")
                 + ", gap="
                 + Calendar2.elapsedTimeString(gap * 1000)
                 + "\n");

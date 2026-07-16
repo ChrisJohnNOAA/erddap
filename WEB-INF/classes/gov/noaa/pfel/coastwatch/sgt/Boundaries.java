@@ -378,17 +378,23 @@ public class Boundaries {
                 lon.add(tLon + shift[i] - 360); //  shift this pt to left
                 else lon.add(tLon + shift[i] + 360); //  shift this pt to right
                 lat.add(tLat);
+                double[] lonArr = tempLon[i].toArray();
+                double[] latArr = tempLat[i].toArray();
                 int tn =
                     GSHHS.reduce(
                         tempLat[i].size(),
-                        tempLon[i].array,
-                        tempLat[i].array,
+                        lonArr,
+                        latArr,
                         requestMinX,
                         requestMaxX,
                         requestMinY,
                         requestMaxY);
-                tempLat[i].removeRange(tn, tempLat[i].size());
-                tempLon[i].removeRange(tn, tempLon[i].size());
+                tempLat[i].clear();
+                tempLon[i].clear();
+                for (int k = 0; k < tn; k++) {
+                  tempLon[i].add(lonArr[k]);
+                  tempLat[i].add(latArr[k]);
+                }
                 if (tn > 0) {
                   lon.append(tempLon[i]);
                   lat.append(tempLat[i]);
@@ -421,18 +427,24 @@ public class Boundaries {
         // try to add this subpath
         for (int i = 0; i < 4; i++) {
           if (tempLat[i].size() > 0) {
+            double[] lonArr = tempLon[i].toArray();
+            double[] latArr = tempLat[i].toArray();
             int tn =
                 GSHHS.reduce(
                     tempLat[i].size(),
-                    tempLon[i].array,
-                    tempLat[i].array,
+                    lonArr,
+                    latArr,
                     requestMinX,
                     requestMaxX,
                     requestMinY,
                     requestMaxY);
             if (tn > 0) {
-              tempLat[i].removeRange(tn, tempLat[i].size());
-              tempLon[i].removeRange(tn, tempLon[i].size());
+              tempLat[i].clear();
+              tempLon[i].clear();
+              for (int k = 0; k < tn; k++) {
+                tempLon[i].add(lonArr[k]);
+                tempLat[i].add(latArr[k]);
+              }
               lon.append(tempLon[i]);
               lat.append(tempLat[i]);
               lon.add(Double.NaN); // break in line
@@ -460,7 +472,7 @@ public class Boundaries {
     lon.trimToSize();
     lat.trimToSize();
 
-    SimpleLine line = new SimpleLine(lon.array, lat.array);
+    SimpleLine line = new SimpleLine(lon.toArray(), lat.toArray());
 
     // for (int i = 0; i < lon.size(); i++)
     //    String2.log(String2.left("" + i, 5) +
