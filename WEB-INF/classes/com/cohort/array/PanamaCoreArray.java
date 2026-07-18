@@ -92,44 +92,11 @@ class PanamaCoreArray {
         if (newCapacity < 0) {
             throw new IllegalArgumentException("Capacity cannot be negative");
         }
-        boolean nativeSegment = segment.isNative();
         long bytesToCopy = Math.min(capacity, newCapacity) * layout.byteSize();
-        MemorySegment newSegment;
-        if (nativeSegment) {
-            newSegment = Arena.ofAuto().allocate(layout.byteSize() * newCapacity);
-        } else {
-            if (layout instanceof ValueLayout.OfDouble) {
-                double[] arr = new double[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else if (layout instanceof ValueLayout.OfFloat) {
-                float[] arr = new float[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else if (layout instanceof ValueLayout.OfLong) {
-                long[] arr = new long[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else if (layout instanceof ValueLayout.OfInt) {
-                int[] arr = new int[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else if (layout instanceof ValueLayout.OfShort) {
-                short[] arr = new short[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else if (layout instanceof ValueLayout.OfByte) {
-                byte[] arr = new byte[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else if (layout instanceof ValueLayout.OfChar) {
-                char[] arr = new char[(int) newCapacity];
-                newSegment = MemorySegment.ofArray(arr);
-                this.onHeapArray = arr;
-            } else {
-                newSegment = Arena.ofAuto().allocate(layout.byteSize() * newCapacity);
-            }
-        }
+        // Since native segments are more efficient, convert to a native off-heap segment on resize
+        MemorySegment newSegment = Arena.ofAuto().allocate(layout.byteSize() * newCapacity);
+        this.onHeapArray = null;
+
         if (bytesToCopy > 0) {
             MemorySegment.copy(segment, 0, newSegment, 0, bytesToCopy);
         }
@@ -145,139 +112,6 @@ class PanamaCoreArray {
         long byteLength = length * layout.byteSize();
         MemorySegment sliceSegment = segment.asSlice(byteOffset, byteLength);
         return new PanamaCoreArray(sliceSegment, layout, length, onHeapArray);
-    }
-
-    // --- SAFE CAST CONVERTERS TO PREVENT CODEQL TRUNCATION ALERTS ---
-
-    private static float toFloat(double val) {
-        if (val < -Float.MAX_VALUE) return -Float.MAX_VALUE;
-        if (val > Float.MAX_VALUE) return Float.MAX_VALUE;
-        if (Double.isNaN(val)) return Float.NaN;
-        return (float) val;
-    }
-    private static float toFloat(long val) {
-        return (float) val;
-    }
-    private static float toFloat(int val) {
-        return (float) val;
-    }
-    private static float toFloat(short val) {
-        return (float) val;
-    }
-    private static float toFloat(byte val) {
-        return (float) val;
-    }
-    private static float toFloat(char val) {
-        return (float) val;
-    }
-
-    private static long toLong(double val) {
-        if (val < Long.MIN_VALUE) return Long.MIN_VALUE;
-        if (val > Long.MAX_VALUE) return Long.MAX_VALUE;
-        if (Double.isNaN(val)) return 0;
-        return (long) val;
-    }
-    private static int toInt(double val) {
-        if (val < Integer.MIN_VALUE) return Integer.MIN_VALUE;
-        if (val > Integer.MAX_VALUE) return Integer.MAX_VALUE;
-        if (Double.isNaN(val)) return 0;
-        return (int) val;
-    }
-    private static short toShort(double val) {
-        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
-        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
-        if (Double.isNaN(val)) return 0;
-        return (short) val;
-    }
-    private static byte toByte(double val) {
-        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
-        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
-        if (Double.isNaN(val)) return 0;
-        return (byte) val;
-    }
-    private static char toChar(double val) {
-        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
-        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
-        if (Double.isNaN(val)) return 0;
-        return (char) val;
-    }
-
-    private static long toLong(float val) {
-        if (val < Long.MIN_VALUE) return Long.MIN_VALUE;
-        if (val > Long.MAX_VALUE) return Long.MAX_VALUE;
-        if (Float.isNaN(val)) return 0;
-        return (long) val;
-    }
-    private static int toInt(float val) {
-        if (val < Integer.MIN_VALUE) return Integer.MIN_VALUE;
-        if (val > Integer.MAX_VALUE) return Integer.MAX_VALUE;
-        if (Float.isNaN(val)) return 0;
-        return (int) val;
-    }
-    private static short toShort(float val) {
-        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
-        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
-        if (Float.isNaN(val)) return 0;
-        return (short) val;
-    }
-    private static byte toByte(float val) {
-        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
-        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
-        if (Float.isNaN(val)) return 0;
-        return (byte) val;
-    }
-    private static char toChar(float val) {
-        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
-        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
-        if (Float.isNaN(val)) return 0;
-        return (char) val;
-    }
-
-    private static int toInt(long val) {
-        if (val < Integer.MIN_VALUE) return Integer.MIN_VALUE;
-        if (val > Integer.MAX_VALUE) return Integer.MAX_VALUE;
-        return (int) val;
-    }
-    private static short toShort(long val) {
-        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
-        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
-        return (short) val;
-    }
-    private static byte toByte(long val) {
-        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
-        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
-        return (byte) val;
-    }
-    private static char toChar(long val) {
-        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
-        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
-        return (char) val;
-    }
-
-    private static short toShort(int val) {
-        if (val < Short.MIN_VALUE) return Short.MIN_VALUE;
-        if (val > Short.MAX_VALUE) return Short.MAX_VALUE;
-        return (short) val;
-    }
-    private static byte toByte(int val) {
-        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
-        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
-        return (byte) val;
-    }
-    private static char toChar(int val) {
-        if (val < Character.MIN_VALUE) return Character.MIN_VALUE;
-        if (val > Character.MAX_VALUE) return Character.MAX_VALUE;
-        return (char) val;
-    }
-
-    private static byte toByte(short val) {
-        if (val < Byte.MIN_VALUE) return Byte.MIN_VALUE;
-        if (val > Byte.MAX_VALUE) return Byte.MAX_VALUE;
-        return (byte) val;
-    }
-    private static char toChar(short val) {
-        if (val < 0) return 0;
-        return (char) val;
     }
 
     // --- STRONGLY TYPED UNBOXED PRIMITIVE GETTERS ---
@@ -421,17 +255,17 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, toFloat(value));
+            segment.setAtIndex(ofFloat, index, NumbersSafeCast.toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, toLong(value));
+            segment.setAtIndex(ofLong, index, NumbersSafeCast.toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, toInt(value));
+            segment.setAtIndex(ofInt, index, NumbersSafeCast.toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, toShort(value));
+            segment.setAtIndex(ofShort, index, NumbersSafeCast.toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, toByte(value));
+            segment.setAtIndex(ofByte, index, NumbersSafeCast.toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, toChar(value));
+            segment.setAtIndex(ofChar, index, NumbersSafeCast.toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setDouble");
         }
@@ -443,15 +277,15 @@ class PanamaCoreArray {
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             segment.setAtIndex(ofFloat, index, value);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, toLong(value));
+            segment.setAtIndex(ofLong, index, NumbersSafeCast.toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, toInt(value));
+            segment.setAtIndex(ofInt, index, NumbersSafeCast.toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, toShort(value));
+            segment.setAtIndex(ofShort, index, NumbersSafeCast.toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, toByte(value));
+            segment.setAtIndex(ofByte, index, NumbersSafeCast.toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, toChar(value));
+            segment.setAtIndex(ofChar, index, NumbersSafeCast.toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setFloat");
         }
@@ -461,17 +295,17 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, toFloat(value));
+            segment.setAtIndex(ofFloat, index, NumbersSafeCast.toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             segment.setAtIndex(ofLong, index, value);
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, toInt(value));
+            segment.setAtIndex(ofInt, index, NumbersSafeCast.toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, toShort(value));
+            segment.setAtIndex(ofShort, index, NumbersSafeCast.toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, toByte(value));
+            segment.setAtIndex(ofByte, index, NumbersSafeCast.toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, toChar(value));
+            segment.setAtIndex(ofChar, index, NumbersSafeCast.toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setLong");
         }
@@ -481,17 +315,17 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, toFloat(value));
+            segment.setAtIndex(ofFloat, index, NumbersSafeCast.toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, toLong(value));
+            segment.setAtIndex(ofLong, index, NumbersSafeCast.toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
             segment.setAtIndex(ofInt, index, value);
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, toShort(value));
+            segment.setAtIndex(ofShort, index, NumbersSafeCast.toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, toByte(value));
+            segment.setAtIndex(ofByte, index, NumbersSafeCast.toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, toChar(value));
+            segment.setAtIndex(ofChar, index, NumbersSafeCast.toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setInt");
         }
@@ -501,17 +335,17 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, toFloat(value));
+            segment.setAtIndex(ofFloat, index, NumbersSafeCast.toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, toLong(value));
+            segment.setAtIndex(ofLong, index, NumbersSafeCast.toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, toInt(value));
+            segment.setAtIndex(ofInt, index, NumbersSafeCast.toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
             segment.setAtIndex(ofShort, index, value);
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, toByte(value));
+            segment.setAtIndex(ofByte, index, NumbersSafeCast.toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, toChar(value));
+            segment.setAtIndex(ofChar, index, NumbersSafeCast.toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setShort");
         }
@@ -521,17 +355,17 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, toFloat(value));
+            segment.setAtIndex(ofFloat, index, NumbersSafeCast.toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, toLong(value));
+            segment.setAtIndex(ofLong, index, NumbersSafeCast.toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, toInt(value));
+            segment.setAtIndex(ofInt, index, NumbersSafeCast.toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, toShort(value));
+            segment.setAtIndex(ofShort, index, NumbersSafeCast.toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
             segment.setAtIndex(ofByte, index, value);
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            segment.setAtIndex(ofChar, index, toChar(value));
+            segment.setAtIndex(ofChar, index, NumbersSafeCast.toChar(value));
         } else {
             throw new UnsupportedOperationException("Unsupported layout for setByte");
         }
@@ -541,15 +375,15 @@ class PanamaCoreArray {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
             segment.setAtIndex(ofDouble, index, (double) value);
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            segment.setAtIndex(ofFloat, index, toFloat(value));
+            segment.setAtIndex(ofFloat, index, NumbersSafeCast.toFloat(value));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            segment.setAtIndex(ofLong, index, toLong(value));
+            segment.setAtIndex(ofLong, index, NumbersSafeCast.toLong(value));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            segment.setAtIndex(ofInt, index, toInt(value));
+            segment.setAtIndex(ofInt, index, NumbersSafeCast.toInt(value));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            segment.setAtIndex(ofShort, index, toShort(value));
+            segment.setAtIndex(ofShort, index, NumbersSafeCast.toShort(value));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            segment.setAtIndex(ofByte, index, toByte(value));
+            segment.setAtIndex(ofByte, index, NumbersSafeCast.toByte(value));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
             segment.setAtIndex(ofChar, index, value);
         } else {

@@ -127,15 +127,15 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * A constructor that converts an ImmutableList<Double>.
-   *
-   * @param anArray the array to be used as this object's array.
+   * A constructor that converts an ImmutableList<Double> directly to off-heap memory.
    */
   public DoubleArray(final ImmutableList<Double> immutableList) {
     size = immutableList.size();
     Math2.ensureMemoryAvailable(8L * size, "DoubleArray");
-    double[] rawData = immutableList.stream().mapToDouble(Double::doubleValue).toArray();
-    core = new PanamaCoreArray(MemorySegment.ofArray(rawData), ValueLayout.JAVA_DOUBLE, size, rawData);
+    core = new PanamaCoreArray(size, ValueLayout.JAVA_DOUBLE);
+    for (int i = 0; i < size; i++) {
+      core.setDouble(i, immutableList.get(i));
+    }
   }
 
   /**
@@ -564,19 +564,19 @@ public class DoubleArray extends PrimitiveArray {
               + ").");
     if (first == last || destination == first || destination == last) return; // nothing to do
 
-    // store the range to be moved
+    // store the range to be moved using an off-heap native segment to avoid GC pressure
     final int nToMove = last - first;
-    final double[] temp = new double[nToMove];
-    MemorySegment.copy(core.segment(), (long) first * 8, MemorySegment.ofArray(temp), 0, (long) nToMove * 8);
+    java.lang.foreign.MemorySegment temp = java.lang.foreign.Arena.ofAuto().allocate(nToMove * 8L);
+    MemorySegment.copy(core.segment(), first * 8L, temp, 0, nToMove * 8L);
 
     // if moving to left...
     if (destination < first) {
-      MemorySegment.copy(core.segment(), (long) destination * 8, core.segment(), (long) (destination + nToMove) * 8, (long) (first - destination) * 8);
-      MemorySegment.copy(MemorySegment.ofArray(temp), 0, core.segment(), (long) destination * 8, (long) nToMove * 8);
+      MemorySegment.copy(core.segment(), destination * 8L, core.segment(), (destination + nToMove) * 8L, (first - destination) * 8L);
+      MemorySegment.copy(temp, 0, core.segment(), destination * 8L, nToMove * 8L);
     } else {
       // moving to right
-      MemorySegment.copy(core.segment(), (long) last * 8, core.segment(), (long) first * 8, (long) (destination - last) * 8);
-      MemorySegment.copy(MemorySegment.ofArray(temp), 0, core.segment(), (long) (destination - nToMove) * 8, (long) nToMove * 8);
+      MemorySegment.copy(core.segment(), last * 8L, core.segment(), first * 8L, (destination - last) * 8L);
+      MemorySegment.copy(temp, 0, core.segment(), (destination - nToMove) * 8L, nToMove * 8L);
     }
   }
 
@@ -1012,15 +1012,39 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This sorts the elements in ascending order. To get the elements in reverse order, just read
-   * from the end of the list to the beginning.
+   * This sorts the elements in ascending order in-place on the underlying MemorySegment
+   * to avoid intermediate on-heap array allocations and GC overhead.
    */
   @Override
   public void sort() {
-    double[] temp = toArray();
-    if (size < 8192) Arrays.sort(temp, 0, size);
-    else Arrays.parallelSort(temp, 0, size);
-    MemorySegment.copy(MemorySegment.ofArray(temp), 0, core.segment(), 0, (long) size * 8);
+    if (size <= 1) return;
+    quickSort(0, size - 1);
+  }
+
+  private void quickSort(int low, int high) {
+    if (low < high) {
+      int pi = partition(low, high);
+      quickSort(low, pi - 1);
+      quickSort(pi + 1, high);
+    }
+  }
+
+  private int partition(int low, int high) {
+    double pivot = core.getDouble(high);
+    int i = (low - 1);
+    for (int j = low; j < high; j++) {
+      double val = core.getDouble(j);
+      if (Double.compare(val, pivot) < 0) {
+        i++;
+        double temp = core.getDouble(i);
+        core.setDouble(i, val);
+        core.setDouble(j, temp);
+      }
+    }
+    double temp = core.getDouble(i + 1);
+    core.setDouble(i + 1, core.getDouble(high));
+    core.setDouble(high, temp);
+    return i + 1;
   }
 
   /**
