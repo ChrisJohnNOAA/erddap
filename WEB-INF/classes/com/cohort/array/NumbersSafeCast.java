@@ -157,4 +157,9 @@ final class NumbersSafeCast {
         if (val < 0) return 0;
         return (char) val;
     }
+
+    static char toChar(byte val) {
+        if (val < 0) return 0;
+        return (char) val;
+    }
 }

@@ -137,13 +137,13 @@ class PanamaCoreArray {
 
     float getFloat(long index) {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            return (float) segment.getAtIndex(ofDouble, index);
+            return NumbersSafeCast.toFloat(segment.getAtIndex(ofDouble, index));
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
             return segment.getAtIndex(ofFloat, index);
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            return (float) segment.getAtIndex(ofLong, index);
+            return NumbersSafeCast.toFloat(segment.getAtIndex(ofLong, index));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            return (float) segment.getAtIndex(ofInt, index);
+            return NumbersSafeCast.toFloat(segment.getAtIndex(ofInt, index));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
             return (float) segment.getAtIndex(ofShort, index);
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
@@ -156,9 +156,9 @@ class PanamaCoreArray {
 
     long getLong(long index) {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            return (long) segment.getAtIndex(ofDouble, index);
+            return NumbersSafeCast.toLong(segment.getAtIndex(ofDouble, index));
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            return (long) segment.getAtIndex(ofFloat, index);
+            return NumbersSafeCast.toLong(segment.getAtIndex(ofFloat, index));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
             return segment.getAtIndex(ofLong, index);
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
@@ -175,11 +175,11 @@ class PanamaCoreArray {
 
     int getInt(long index) {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            return (int) segment.getAtIndex(ofDouble, index);
+            return NumbersSafeCast.toInt(segment.getAtIndex(ofDouble, index));
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            return (int) segment.getAtIndex(ofFloat, index);
+            return NumbersSafeCast.toInt(segment.getAtIndex(ofFloat, index));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            return (int) segment.getAtIndex(ofLong, index);
+            return NumbersSafeCast.toInt(segment.getAtIndex(ofLong, index));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
             return segment.getAtIndex(ofInt, index);
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
@@ -194,13 +194,13 @@ class PanamaCoreArray {
 
     short getShort(long index) {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            return (short) segment.getAtIndex(ofDouble, index);
+            return NumbersSafeCast.toShort(segment.getAtIndex(ofDouble, index));
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            return (short) segment.getAtIndex(ofFloat, index);
+            return NumbersSafeCast.toShort(segment.getAtIndex(ofFloat, index));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            return (short) segment.getAtIndex(ofLong, index);
+            return NumbersSafeCast.toShort(segment.getAtIndex(ofLong, index));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            return (short) segment.getAtIndex(ofInt, index);
+            return NumbersSafeCast.toShort(segment.getAtIndex(ofInt, index));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
             return segment.getAtIndex(ofShort, index);
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
@@ -213,36 +213,36 @@ class PanamaCoreArray {
 
     byte getByte(long index) {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            return (byte) segment.getAtIndex(ofDouble, index);
+            return NumbersSafeCast.toByte(segment.getAtIndex(ofDouble, index));
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            return (byte) segment.getAtIndex(ofFloat, index);
+            return NumbersSafeCast.toByte(segment.getAtIndex(ofFloat, index));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            return (byte) segment.getAtIndex(ofLong, index);
+            return NumbersSafeCast.toByte(segment.getAtIndex(ofLong, index));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            return (byte) segment.getAtIndex(ofInt, index);
+            return NumbersSafeCast.toByte(segment.getAtIndex(ofInt, index));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            return (byte) segment.getAtIndex(ofShort, index);
+            return NumbersSafeCast.toByte(segment.getAtIndex(ofShort, index));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
             return segment.getAtIndex(ofByte, index);
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
-            return (byte) segment.getAtIndex(ofChar, index);
+            return NumbersSafeCast.toByte(segment.getAtIndex(ofChar, index));
         }
         throw new UnsupportedOperationException("Unsupported layout for getByte");
     }
 
     char getChar(long index) {
         if (layout instanceof ValueLayout.OfDouble ofDouble) {
-            return (char) segment.getAtIndex(ofDouble, index);
+            return NumbersSafeCast.toChar(segment.getAtIndex(ofDouble, index));
         } else if (layout instanceof ValueLayout.OfFloat ofFloat) {
-            return (char) segment.getAtIndex(ofFloat, index);
+            return NumbersSafeCast.toChar(segment.getAtIndex(ofFloat, index));
         } else if (layout instanceof ValueLayout.OfLong ofLong) {
-            return (char) segment.getAtIndex(ofLong, index);
+            return NumbersSafeCast.toChar(segment.getAtIndex(ofLong, index));
         } else if (layout instanceof ValueLayout.OfInt ofInt) {
-            return (char) segment.getAtIndex(ofInt, index);
+            return NumbersSafeCast.toChar(segment.getAtIndex(ofInt, index));
         } else if (layout instanceof ValueLayout.OfShort ofShort) {
-            return (char) segment.getAtIndex(ofShort, index);
+            return NumbersSafeCast.toChar(segment.getAtIndex(ofShort, index));
         } else if (layout instanceof ValueLayout.OfByte ofByte) {
-            return (char) segment.getAtIndex(ofByte, index);
+            return NumbersSafeCast.toChar(segment.getAtIndex(ofByte, index));
         } else if (layout instanceof ValueLayout.OfChar ofChar) {
             return segment.getAtIndex(ofChar, index);
         }
