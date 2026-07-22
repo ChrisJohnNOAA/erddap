@@ -179,7 +179,7 @@ public class PanamaArrayBenchmark {
         for (int i = 0; i < 1000; i++) {
             int length = 5000;
             PanamaCoreArray slice = arr.core.slice(i * 10, length);
-            totalLength += (int) slice.capacity();
+            totalLength += (int) slice.capacity;
         }
         return totalLength;
     }
