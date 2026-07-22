@@ -1022,7 +1022,6 @@ public class OpendapHelper {
    * @param fullFileName the complete name (dir+name+extension) for the .nc file
    */
   public static void allDapToNc(String dapUrl, String fullFileName) throws Throwable {
-    String2.log(dapUrl);
     String beginError =
         "OpendapHelper.allDapToNc" + "\n  url=" + dapUrl + "\n  file=" + fullFileName;
     if (verbose) String2.log(beginError);

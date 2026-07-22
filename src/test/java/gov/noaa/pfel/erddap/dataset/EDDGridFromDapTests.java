@@ -40,7 +40,6 @@ import tags.TagExternalOther;
 import tags.TagImageComparison;
 import tags.TagIncompleteTest;
 import tags.TagMissingDataset;
-import tags.TagSlowTests;
 import tags.TagThredds;
 import testDataset.EDDTestDataset;
 import testDataset.Initialization;
@@ -2804,6 +2803,9 @@ class EDDGridFromDapTests {
             + "    <sourceUrl>http://apdrc.soest.hawaii.edu/dods/public_data/SODA/soda_pop2.2.4</sourceUrl>\n"
             + "    <reloadEveryNMinutes>43200</reloadEveryNMinutes>\n"
             + "    <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "        <att name=\"_CoordSysBuilder\">ucar.nc2.internal.dataset.conv.CoardsConventions</att>\n"
+                : "")
             + "        <att name=\"Conventions\">COARDS</att>\n"
             + "        <att name=\"dataType\">Grid</att>\n"
             + "        <att name=\"documentation\">http://apdrc.soest.hawaii.edu/datadoc/soda_2.2.4.php</att>\n"
@@ -2830,6 +2832,10 @@ class EDDGridFromDapTests {
             + "        <sourceName>time</sourceName>\n"
             + "        <destinationName>time</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxisType\">Time</att>\n"
+                    + "            <att name=\"calendar\">gregorian</att>\n"
+                : "")
             + "            <att name=\"grads_dim\">t</att>\n"
             + "            <att name=\"grads_mapping\">linear</att>\n"
             + "            <att name=\"grads_min\">00z15jan1871</att>\n"
@@ -2862,6 +2868,10 @@ class EDDGridFromDapTests {
             + "        <sourceName>lev</sourceName>\n"
             + "        <destinationName>depth</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxisType\">Height</att>\n"
+                    + "            <att name=\"_CoordinateZisPositive\">down</att>\n"
+                : "")
             + "            <att name=\"grads_dim\">z</att>\n"
             + "            <att name=\"grads_mapping\">levels</att>\n"
             + "            <att name=\"long_name\">altitude</att>\n"
@@ -2891,6 +2901,9 @@ class EDDGridFromDapTests {
             + "        <sourceName>lat</sourceName>\n"
             + "        <destinationName>latitude</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxisType\">Lat</att>\n"
+                : "")
             + "            <att name=\"grads_dim\">y</att>\n"
             + "            <att name=\"grads_mapping\">linear</att>\n"
             + "            <att name=\"grads_size\">330</att>\n"
@@ -2919,6 +2932,9 @@ class EDDGridFromDapTests {
             + "        <sourceName>lon</sourceName>\n"
             + "        <destinationName>longitude</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxisType\">Lon</att>\n"
+                : "")
             + "            <att name=\"grads_dim\">x</att>\n"
             + "            <att name=\"grads_mapping\">linear</att>\n"
             + "            <att name=\"grads_size\">720</att>\n"
@@ -2947,26 +2963,48 @@ class EDDGridFromDapTests {
             + "        <sourceName>temp</sourceName>\n"
             + "        <destinationName>temp</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                : "")
             + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-            + "            <att name=\"long_name\">temperature [degc]</att>\n"
+            + "            <att name=\"long_name\">temperature [degc]"
+            + (EDStatic.config.useNetcdfDap ? " " : "")
+            + "</att>\n"
             + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
             + "        </sourceAttributes -->\n"
             + "        <addAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                : "")
             + "            <att name=\"ioos_category\">Temperature</att>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"long_name\">temperature [degc]</att>\n"
+                : "")
             + "        </addAttributes>\n"
             + "    </dataVariable>\n"
             + "    <dataVariable>\n"
             + "        <sourceName>salt</sourceName>\n"
             + "        <destinationName>salt</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                : "")
             + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-            + "            <att name=\"long_name\">salinity [psu]</att>\n"
+            + "            <att name=\"long_name\">salinity [psu]"
+            + (EDStatic.config.useNetcdfDap ? " " : "")
+            + "</att>\n"
             + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
             + "        </sourceAttributes -->\n"
             + "        <addAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                : "")
             + "            <att name=\"colorBarMaximum\" type=\"double\">37.0</att>\n"
             + "            <att name=\"colorBarMinimum\" type=\"double\">32.0</att>\n"
             + "            <att name=\"ioos_category\">Salinity</att>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"long_name\">salinity [psu]</att>\n"
+                : "")
             + "            <att name=\"standard_name\">sea_water_practical_salinity</att>\n"
             + "            <att name=\"units\">PSU</att>\n"
             + "        </addAttributes>\n"
@@ -2975,36 +3013,69 @@ class EDDGridFromDapTests {
             + "        <sourceName>u</sourceName>\n"
             + "        <destinationName>u</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                : "")
             + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-            + "            <att name=\"long_name\">zonal velocity [m/s]</att>\n"
+            + "            <att name=\"long_name\">zonal velocity [m/s]"
+            + (EDStatic.config.useNetcdfDap ? " " : "")
+            + "</att>\n"
             + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
             + "        </sourceAttributes -->\n"
             + "        <addAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                : "")
             + "            <att name=\"ioos_category\">Currents</att>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"long_name\">zonal velocity [m/s]</att>\n"
+                : "")
             + "        </addAttributes>\n"
             + "    </dataVariable>\n"
             + "    <dataVariable>\n"
             + "        <sourceName>v</sourceName>\n"
             + "        <destinationName>v</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                : "")
             + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-            + "            <att name=\"long_name\">meridional velocity [m/s]</att>\n"
+            + "            <att name=\"long_name\">meridional velocity [m/s]"
+            + (EDStatic.config.useNetcdfDap ? " " : "")
+            + "</att>\n"
             + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
             + "        </sourceAttributes -->\n"
             + "        <addAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                : "")
             + "            <att name=\"ioos_category\">Currents</att>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"long_name\">meridional velocity [m/s]</att>\n"
+                : "")
             + "        </addAttributes>\n"
             + "    </dataVariable>\n"
             + "    <dataVariable>\n"
             + "        <sourceName>w</sourceName>\n"
             + "        <destinationName>w</destinationName>\n"
             + "        <!-- sourceAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                : "")
             + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-            + "            <att name=\"long_name\">vertical velocity [m/s]</att>\n"
+            + "            <att name=\"long_name\">vertical velocity [m/s]"
+            + (EDStatic.config.useNetcdfDap ? " " : "")
+            + "</att>\n"
             + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
             + "        </sourceAttributes -->\n"
             + "        <addAttributes>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                : "")
             + "            <att name=\"ioos_category\">Currents</att>\n"
+            + (EDStatic.config.useNetcdfDap
+                ? "            <att name=\"long_name\">vertical velocity [m/s]</att>\n"
+                : "")
             + "        </addAttributes>\n"
             + "    </dataVariable>\n"
             + "</dataset>\n"
@@ -3061,6 +3132,9 @@ class EDDGridFromDapTests {
               + "    <sourceUrl>http://apdrc.soest.hawaii.edu/dods/public_data/SODA/soda_pop2.2.4</sourceUrl>\n"
               + "    <reloadEveryNMinutes>43200</reloadEveryNMinutes>\n"
               + "    <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "        <att name=\"_CoordSysBuilder\">ucar.nc2.internal.dataset.conv.CoardsConventions</att>\n"
+                  : "")
               + "        <att name=\"Conventions\">COARDS</att>\n"
               + "        <att name=\"dataType\">Grid</att>\n"
               + "        <att name=\"documentation\">http://apdrc.soest.hawaii.edu/datadoc/soda_2.2.4.php</att>\n"
@@ -3094,6 +3168,10 @@ class EDDGridFromDapTests {
               + "        <sourceName>time</sourceName>\n"
               + "        <destinationName>time</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxisType\">Time</att>\n"
+                      + "            <att name=\"calendar\">gregorian</att>\n"
+                  : "")
               + "            <att name=\"grads_dim\">t</att>\n"
               + "            <att name=\"grads_mapping\">linear</att>\n"
               + "            <att name=\"grads_min\">00z15jan1871</att>\n"
@@ -3127,6 +3205,10 @@ class EDDGridFromDapTests {
               + "        <sourceName>lev</sourceName>\n"
               + "        <destinationName>depth</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxisType\">Height</att>\n"
+                      + "            <att name=\"_CoordinateZisPositive\">down</att>\n"
+                  : "")
               + "            <att name=\"grads_dim\">z</att>\n"
               + "            <att name=\"grads_mapping\">levels</att>\n"
               + "            <att name=\"long_name\">altitude</att>\n"
@@ -3157,6 +3239,9 @@ class EDDGridFromDapTests {
               + "        <sourceName>lat</sourceName>\n"
               + "        <destinationName>latitude</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxisType\">Lat</att>\n"
+                  : "")
               + "            <att name=\"grads_dim\">y</att>\n"
               + "            <att name=\"grads_mapping\">linear</att>\n"
               + "            <att name=\"grads_size\">330</att>\n"
@@ -3186,6 +3271,9 @@ class EDDGridFromDapTests {
               + "        <sourceName>lon</sourceName>\n"
               + "        <destinationName>longitude</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxisType\">Lon</att>\n"
+                  : "")
               + "            <att name=\"grads_dim\">x</att>\n"
               + "            <att name=\"grads_mapping\">linear</att>\n"
               + "            <att name=\"grads_size\">720</att>\n"
@@ -3215,27 +3303,49 @@ class EDDGridFromDapTests {
               + "        <sourceName>temp</sourceName>\n"
               + "        <destinationName>temp</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                  : "")
               + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-              + "            <att name=\"long_name\">temperature [degc]</att>\n"
+              + "            <att name=\"long_name\">temperature [degc]"
+              + (EDStatic.config.useNetcdfDap ? " " : "")
+              + "</att>\n"
               + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
               + "        </sourceAttributes -->\n"
               + "        <addAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                  : "")
               + "            <att name=\"ioos_category\">Temperature</att>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"long_name\">temperature [degc]</att>\n"
+                  : "")
               + "        </addAttributes>\n"
               + "    </dataVariable>\n"
               + "    <dataVariable>\n"
               + "        <sourceName>salt</sourceName>\n"
               + "        <destinationName>salt</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                  : "")
               + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-              + "            <att name=\"long_name\">salinity [psu]</att>\n"
+              + "            <att name=\"long_name\">salinity [psu]"
+              + (EDStatic.config.useNetcdfDap ? " " : "")
+              + "</att>\n"
               + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
               + "        </sourceAttributes -->\n"
               + "        <addAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                  : "")
               +
               // " <att name=\"colorBarMaximum\" type=\"double\">37.0</att>\n" +
               // " <att name=\"colorBarMinimum\" type=\"double\">32.0</att>\n" +
               "            <att name=\"ioos_category\">Salinity</att>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"long_name\">salinity [psu]</att>\n"
+                  : "")
               +
               // " <att name=\"standard_name\">sea_water_practical_salinity</att>\n" +
               // //should not be set
@@ -3246,36 +3356,69 @@ class EDDGridFromDapTests {
               + "        <sourceName>u</sourceName>\n"
               + "        <destinationName>u</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                  : "")
               + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-              + "            <att name=\"long_name\">zonal velocity [m/s]</att>\n"
+              + "            <att name=\"long_name\">zonal velocity [m/s]"
+              + (EDStatic.config.useNetcdfDap ? " " : "")
+              + "</att>\n"
               + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
               + "        </sourceAttributes -->\n"
               + "        <addAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                  : "")
               + "            <att name=\"ioos_category\">Currents</att>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"long_name\">zonal velocity [m/s]</att>\n"
+                  : "")
               + "        </addAttributes>\n"
               + "    </dataVariable>\n"
               + "    <dataVariable>\n"
               + "        <sourceName>v</sourceName>\n"
               + "        <destinationName>v</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                  : "")
               + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-              + "            <att name=\"long_name\">meridional velocity [m/s]</att>\n"
+              + "            <att name=\"long_name\">meridional velocity [m/s]"
+              + (EDStatic.config.useNetcdfDap ? " " : "")
+              + "</att>\n"
               + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
               + "        </sourceAttributes -->\n"
               + "        <addAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                  : "")
               + "            <att name=\"ioos_category\">Currents</att>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"long_name\">meridional velocity [m/s]</att>\n"
+                  : "")
               + "        </addAttributes>\n"
               + "    </dataVariable>\n"
               + "    <dataVariable>\n"
               + "        <sourceName>w</sourceName>\n"
               + "        <destinationName>w</destinationName>\n"
               + "        <!-- sourceAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">time lev lat lon </att>\n"
+                  : "")
               + "            <att name=\"_FillValue\" type=\"float\">-9.99E33</att>\n"
-              + "            <att name=\"long_name\">vertical velocity [m/s]</att>\n"
+              + "            <att name=\"long_name\">vertical velocity [m/s]"
+              + (EDStatic.config.useNetcdfDap ? " " : "")
+              + "</att>\n"
               + "            <att name=\"missing_value\" type=\"float\">-9.99E33</att>\n"
               + "        </sourceAttributes -->\n"
               + "        <addAttributes>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"_CoordinateAxes\">null</att>\n"
+                  : "")
               + "            <att name=\"ioos_category\">Currents</att>\n"
+              + (EDStatic.config.useNetcdfDap
+                  ? "            <att name=\"long_name\">vertical velocity [m/s]</att>\n"
+                  : "")
               + "        </addAttributes>\n"
               + "    </dataVariable>\n"
               + "</dataset>\n"
@@ -5086,7 +5229,7 @@ class EDDGridFromDapTests {
    * .mat files that had already been fixed but not released.
    */
   @org.junit.jupiter.api.Test
-  @TagSlowTests
+  //   @TagSlowTests
   void testScaleFactor() throws Throwable {
     // testVerboseOn();
     int language = 0;
@@ -5114,9 +5257,45 @@ class EDDGridFromDapTests {
             query,
             EDStatic.config.fullTestCacheDirectory,
             gridDataset.className() + "_soda224",
-            ".htmlTable"); // was ok
+            ".csv"); // was ok
     String results = File2.directReadFromUtf8File(EDStatic.config.fullTestCacheDirectory + tName);
     String expected =
+"""
+time,depth,latitude,longitude,temp,salt,u,v,w
+UTC,m,degrees_north,degrees_east,degree_C,PSU,m s-1,m s-1,m s-1
+2001-12-15T00:00:00Z,5.01,23.25,185.25,26.7815,35.205196,-0.16983111,0.11358413,2.099171E-10
+2001-12-15T00:00:00Z,15.07,23.25,185.25,26.77543,35.205135,-0.15841055,0.11168823,-6.394319E-7
+2001-12-15T00:00:00Z,25.28,23.25,185.25,26.774588,35.205017,-0.15311892,0.10998611,-1.3381572E-6
+2001-12-15T00:00:00Z,35.76,23.25,185.25,26.77368,35.204895,-0.14991552,0.10805892,-2.0429648E-6
+2001-12-15T00:00:00Z,46.61,23.25,185.25,26.764574,35.20452,-0.14870398,0.104062855,-2.752996E-6
+2001-12-15T00:00:00Z,57.98,23.25,185.25,26.749784,35.203552,-0.14991795,0.100631386,-3.6830083E-6
+2001-12-15T00:00:00Z,70.02,23.25,185.25,26.367449,35.174995,-0.1544595,0.100428626,-4.489923E-6
+2001-12-15T00:00:00Z,82.92,23.25,185.25,25.175518,35.09087,-0.15810964,0.10412967,-5.2572973E-6
+2001-12-15T00:00:00Z,96.92,23.25,185.25,23.7473,35.01083,-0.15971948,0.10590148,-5.988114E-6
+2001-12-15T00:00:00Z,112.32,23.25,185.25,22.41019,34.960175,-0.15678999,0.10199895,-6.7946426E-6
+2001-12-15T00:00:00Z,129.49,23.25,185.25,21.421602,34.94844,-0.14994526,0.092228934,-7.665636E-6
+2001-12-15T00:00:00Z,148.96,23.25,185.25,20.425518,34.964577,-0.14127757,0.07916428,-8.562344E-6
+2001-12-15T00:00:00Z,171.4,23.25,185.25,19.411572,34.996235,-0.13167877,0.06492853,-9.4575935E-6
+2001-12-15T00:00:00Z,197.79,23.25,185.25,18.23367,34.998577,-0.12084997,0.049835183,-1.0331669E-5
+2001-12-15T00:00:00Z,229.48,23.25,185.25,16.86519,34.944527,-0.10882821,0.03442261,-1.1139305E-5
+2001-12-15T00:00:00Z,268.46,23.25,185.25,15.091892,34.813976,-0.09619266,0.020944066,-1.1797971E-5
+2001-12-15T00:00:00Z,317.65,23.25,185.25,13.235474,34.636963,-0.08367251,0.011090769,-1.2232452E-5
+2001-12-15T00:00:00Z,381.39,23.25,185.25,11.1458845,34.437386,-0.071684174,0.005118545,-1.242962E-5
+2001-12-15T00:00:00Z,465.91,23.25,185.25,9.037146,34.319927,-0.058858607,0.00294172,-1.2462376E-5
+            """;
+    Test.ensureEqual(results, expected, "results=\n" + results);
+
+    tName =
+        gridDataset.makeNewFileForDapQuery(
+            language,
+            null,
+            null,
+            query,
+            EDStatic.config.fullTestCacheDirectory,
+            gridDataset.className() + "_soda224",
+            ".htmlTable"); // was ok
+    results = File2.directReadFromUtf8File(EDStatic.config.fullTestCacheDirectory + tName);
+    expected =
         EDStatic.startHeadHtml(
                 language,
                 EDStatic.erddapUrl(null, (String) null, language),
