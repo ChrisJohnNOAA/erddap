@@ -174,12 +174,12 @@ public class PanamaArrayBenchmark {
     }
 
     private static int runSlicingPanama(DoubleArray arr) {
-        // Zero-copy subset
+        // True Zero-copy slicing of MemorySegment
         int totalLength = 0;
         for (int i = 0; i < 1000; i++) {
             int length = 5000;
-            DoubleArray slice = (DoubleArray) arr.subset(null, i * 10, 1, i * 10 + length - 1);
-            totalLength += slice.size();
+            PanamaCoreArray slice = arr.core.slice(i * 10, length);
+            totalLength += (int) slice.capacity();
         }
         return totalLength;
     }
