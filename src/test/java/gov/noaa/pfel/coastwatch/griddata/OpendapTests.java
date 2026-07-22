@@ -48,8 +48,9 @@ class OpendapTests {
     // test THREDDS //was :8081
     opendap =
         new Opendap("https://oceanwatch.pfeg.noaa.gov/thredds/dodsC/satellite/GA/ssta/3day", true);
-    DConnect2 dConnect = new DConnect2(opendap.url, opendap.acceptDeflate);
-    opendap.getGridInfo(dConnect.getDAS(), dConnect.getDDS(), "GAssta", "-1.0e34");
+    try (DConnect2 dConnect = new DConnect2(opendap.url, opendap.acceptDeflate)) {
+      opendap.getGridInfo(dConnect.getDAS(), dConnect.getDDS(), "GAssta", "-1.0e34");
+    }
     Test.ensureEqual(
         opendap.getLat(0), -44.975, ""); // I'm not sure about exact range, should be global data
     Test.ensureEqual(opendap.getLat(opendap.gridNLatValues - 1), 59.975, "");
@@ -62,8 +63,9 @@ class OpendapTests {
     opendap =
         new Opendap( // was :8081
             "https://oceanwatch.pfeg.noaa.gov/thredds/dodsC/satellite/AG/ssta/3day", true);
-    dConnect = new DConnect2(opendap.url, opendap.acceptDeflate);
-    opendap.getGridInfo(dConnect.getDAS(), dConnect.getDDS(), "AGssta", "-1.0e34");
+    try (DConnect2 dConnect2 = new DConnect2(opendap.url, opendap.acceptDeflate)) {
+      opendap.getGridInfo(dConnect2.getDAS(), dConnect2.getDDS(), "AGssta", "-1.0e34");
+    }
     Test.ensureEqual(opendap.getLat(0), -75, "");
     Test.ensureEqual(opendap.getLat(opendap.gridNLatValues - 1), 75, "");
     Test.ensureEqual(opendap.gridLatIncrement, .1, "");
@@ -115,23 +117,24 @@ class OpendapTests {
     System.out.println(
         "Opendap.simpleSpeedTest\n" + "  opendapUrl=" + opendapUrl + "\n" + "  query=" + query);
     boolean acceptDeflate = true;
-    opendap.dap.DConnect2 dConnect = new opendap.dap.DConnect2(opendapUrl, acceptDeflate);
-    long time = System.currentTimeMillis();
-    opendap.dap.DataDDS dataDds = dConnect.getData(query, null);
-    System.out.println(
-        "  Opendap.simpleSpeedTest binary query TIME="
-            + (System.currentTimeMillis() - time)
-            + "ms");
-
-    // do ascii query
-    if (doAsciiTestToo) {
-      time = System.currentTimeMillis();
-      String result = SSR.getUrlResponseStringUnchanged(opendapUrl + ".ascii" + query);
-      // String2.log(result);
+    try (opendap.dap.DConnect2 dConnect = new opendap.dap.DConnect2(opendapUrl, acceptDeflate)) {
+      long time = System.currentTimeMillis();
+      opendap.dap.DataDDS dataDds = dConnect.getData(query, null);
       System.out.println(
-          "  Opendap.simpleSpeedTest ascii  query TIME="
+          "  Opendap.simpleSpeedTest binary query TIME="
               + (System.currentTimeMillis() - time)
               + "ms");
+
+      // do ascii query
+      if (doAsciiTestToo) {
+        time = System.currentTimeMillis();
+        String result = SSR.getUrlResponseStringUnchanged(opendapUrl + ".ascii" + query);
+        // String2.log(result);
+        System.out.println(
+            "  Opendap.simpleSpeedTest ascii  query TIME="
+                + (System.currentTimeMillis() - time)
+                + "ms");
+      }
     }
   }
 

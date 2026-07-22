@@ -412,7 +412,7 @@ public class EDDTableFromDapSequence extends EDDTable {
               + " type="
               + outerVariable.getTypeName());
     int nOuterColumns = outerSequence.elementCount();
-    AttributeTable outerAttributeTable = das.getAttributeTable(outerSequenceName);
+    AttributeTable outerAttributeTable = OpendapHelper.getAttributeTable(das, outerSequenceName);
     for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
 
       // look at the variables in the outer sequence
@@ -422,7 +422,8 @@ public class EDDTableFromDapSequence extends EDDTable {
 
         // look at the variables in the inner sequence
         DSequence innerSequence = (DSequence) obt;
-        AttributeTable innerAttributeTable = das.getAttributeTable(innerSequence.getClearName());
+        AttributeTable innerAttributeTable =
+            OpendapHelper.getAttributeTable(das, innerSequence.getClearName());
         Enumeration<BaseType> ien = innerSequence.getVariables();
         while (ien.hasMoreElements()) {
           BaseType ibt = ien.nextElement();
@@ -843,213 +844,215 @@ public class EDDTableFromDapSequence extends EDDTable {
     // get DConnect2
     if (tLocalSourceUrl.endsWith(".html"))
       tLocalSourceUrl = tLocalSourceUrl.substring(0, tLocalSourceUrl.length() - 5);
-    DConnect2 dConnect = new DConnect2(tLocalSourceUrl, acceptDeflate);
-    DAS das = null;
-    try {
-      das = dConnect.getDAS();
-    } catch (Throwable t) {
-      throw new RuntimeException("Error while getting DAS from " + tLocalSourceUrl + ".das .", t);
-    }
-    // String2.log("das.getNames=" + String2.toCSSVString(das.getNames()));
-    // AttributeTable att = OpendapHelper.getAttributeTable(das, outerSequenceName);
-    // Attributes atts2 = new Attributes();
-    // OpendapHelper.getAttributes(att, atts2);
-    // String2.log("outer attributes=" + (att == null? "null" : atts2.toString()));
-
-    DDS dds = dConnect.getDDS();
-
-    // *** basically, make a table to hold the sourceAttributes
-    // and a parallel table to hold the addAttributes
-    Table dataSourceTable = new Table();
-    Table dataAddTable = new Table();
-
-    // get source global attributes
-    OpendapHelper.getAttributes(das, "GLOBAL", dataSourceTable.globalAttributes());
-
-    // get all of the vars
-    String outerSequenceName = null;
-    String innerSequenceName = null;
-    Enumeration<BaseType> datasetVars = dds.getVariables();
-    int nOuterVars = 0; // so outerVars are first in dataAddTable
-    Attributes gridMappingAtts = null;
-    while (datasetVars.hasMoreElements()) {
-      BaseType datasetVar = datasetVars.nextElement();
-
-      // is this the pseudo-data grid_mapping variable?
-      if (gridMappingAtts == null) {
-        Attributes tSourceAtts = new Attributes();
-        OpendapHelper.getAttributes(das, datasetVar.getClearName(), tSourceAtts);
-        gridMappingAtts = NcHelper.getGridMappingAtts(tSourceAtts);
+    try (DConnect2 dConnect = new DConnect2(tLocalSourceUrl, acceptDeflate)) {
+      DAS das = null;
+      try {
+        das = dConnect.getDAS();
+      } catch (Throwable t) {
+        throw new RuntimeException("Error while getting DAS from " + tLocalSourceUrl + ".das .", t);
       }
+      // String2.log("das.getNames=" + String2.toCSSVString(das.getNames()));
+      // AttributeTable att = OpendapHelper.getAttributeTable(das, outerSequenceName);
+      // Attributes atts2 = new Attributes();
+      // OpendapHelper.getAttributes(att, atts2);
+      // String2.log("outer attributes=" + (att == null? "null" : atts2.toString()));
 
-      if (outerSequenceName == null && datasetVar instanceof DSequence outerSequence) {
-        outerSequenceName = outerSequence.getClearName();
+      DDS dds = dConnect.getDDS();
 
-        // get list of outerSequence variables
-        Enumeration<BaseType> outerVars = outerSequence.getVariables();
-        while (outerVars.hasMoreElements()) {
-          BaseType outerVar = outerVars.nextElement();
+      // *** basically, make a table to hold the sourceAttributes
+      // and a parallel table to hold the addAttributes
+      Table dataSourceTable = new Table();
+      Table dataAddTable = new Table();
 
-          // catch innerSequence
-          if (outerVar instanceof DSequence innerSequence) {
-            if (innerSequenceName == null) {
-              innerSequenceName = outerVar.getClearName();
-              Enumeration<BaseType> innerVars = innerSequence.getVariables();
-              while (innerVars.hasMoreElements()) {
-                // inner variable
-                BaseType innerVar = innerVars.nextElement();
-                if (innerVar instanceof DConstructor || innerVar instanceof DVector) {
-                } else {
-                  String varName = innerVar.getClearName();
-                  Attributes sourceAtts = new Attributes();
-                  OpendapHelper.getAttributes(das, varName, sourceAtts);
-                  if (sourceAtts.size() == 0)
-                    OpendapHelper.getAttributes(
-                        das,
-                        outerSequenceName + "." + innerSequenceName + "." + varName,
-                        sourceAtts);
+      // get source global attributes
+      OpendapHelper.getAttributes(das, "GLOBAL", dataSourceTable.globalAttributes());
 
-                  PrimitiveArray sourcePA =
-                      PrimitiveArray.factory(OpendapHelper.getElementPAType(innerVar), 1, false);
-                  if ("true".equals(sourceAtts.getString("_Unsigned")))
-                    sourcePA = sourcePA.makeUnsignedPA();
-                  PrimitiveArray destPA =
-                      (PrimitiveArray)
-                          sourcePA
-                              .clone(); // !This doesn't handle change in type from scale_factor,
-                  // add_offset
-                  dataSourceTable.addColumn(
-                      dataSourceTable.nColumns(), varName, sourcePA, sourceAtts);
-                  dataAddTable.addColumn(
-                      dataAddTable.nColumns(),
-                      varName,
-                      destPA,
-                      makeReadyToUseAddVariableAttributesForDatasetsXml(
-                          dataSourceTable.globalAttributes(),
-                          sourceAtts,
-                          null,
-                          varName,
-                          destPA.elementType() != PAType.STRING, // tryToAddStandardName
-                          destPA.elementType() != PAType.STRING, // addColorBarMinMax
-                          true)); // tryToFindLLAT
+      // get all of the vars
+      String outerSequenceName = null;
+      String innerSequenceName = null;
+      Enumeration<BaseType> datasetVars = dds.getVariables();
+      int nOuterVars = 0; // so outerVars are first in dataAddTable
+      Attributes gridMappingAtts = null;
+      while (datasetVars.hasMoreElements()) {
+        BaseType datasetVar = datasetVars.nextElement();
+
+        // is this the pseudo-data grid_mapping variable?
+        if (gridMappingAtts == null) {
+          Attributes tSourceAtts = new Attributes();
+          OpendapHelper.getAttributes(das, datasetVar.getClearName(), tSourceAtts);
+          gridMappingAtts = NcHelper.getGridMappingAtts(tSourceAtts);
+        }
+
+        if (outerSequenceName == null && datasetVar instanceof DSequence outerSequence) {
+          outerSequenceName = outerSequence.getClearName();
+
+          // get list of outerSequence variables
+          Enumeration<BaseType> outerVars = outerSequence.getVariables();
+          while (outerVars.hasMoreElements()) {
+            BaseType outerVar = outerVars.nextElement();
+
+            // catch innerSequence
+            if (outerVar instanceof DSequence innerSequence) {
+              if (innerSequenceName == null) {
+                innerSequenceName = outerVar.getClearName();
+                Enumeration<BaseType> innerVars = innerSequence.getVariables();
+                while (innerVars.hasMoreElements()) {
+                  // inner variable
+                  BaseType innerVar = innerVars.nextElement();
+                  if (innerVar instanceof DConstructor || innerVar instanceof DVector) {
+                  } else {
+                    String varName = innerVar.getClearName();
+                    Attributes sourceAtts = new Attributes();
+                    OpendapHelper.getAttributes(das, varName, sourceAtts);
+                    if (sourceAtts.size() == 0)
+                      OpendapHelper.getAttributes(
+                          das,
+                          outerSequenceName + "." + innerSequenceName + "." + varName,
+                          sourceAtts);
+
+                    PrimitiveArray sourcePA =
+                        PrimitiveArray.factory(OpendapHelper.getElementPAType(innerVar), 1, false);
+                    if ("true".equals(sourceAtts.getString("_Unsigned")))
+                      sourcePA = sourcePA.makeUnsignedPA();
+                    PrimitiveArray destPA =
+                        (PrimitiveArray)
+                            sourcePA
+                                .clone(); // !This doesn't handle change in type from scale_factor,
+                    // add_offset
+                    dataSourceTable.addColumn(
+                        dataSourceTable.nColumns(), varName, sourcePA, sourceAtts);
+                    dataAddTable.addColumn(
+                        dataAddTable.nColumns(),
+                        varName,
+                        destPA,
+                        makeReadyToUseAddVariableAttributesForDatasetsXml(
+                            dataSourceTable.globalAttributes(),
+                            sourceAtts,
+                            null,
+                            varName,
+                            destPA.elementType() != PAType.STRING, // tryToAddStandardName
+                            destPA.elementType() != PAType.STRING, // addColorBarMinMax
+                            true)); // tryToFindLLAT
+                  }
                 }
+              } else {
+                if (verbose)
+                  String2.log("Skipping the other innerSequence: " + outerVar.getClearName());
               }
+            } else if (outerVar instanceof DConstructor) {
+              // skip it
             } else {
-              if (verbose)
-                String2.log("Skipping the other innerSequence: " + outerVar.getClearName());
-            }
-          } else if (outerVar instanceof DConstructor) {
-            // skip it
-          } else {
-            // outer variable
-            String varName = outerVar.getClearName();
-            Attributes sourceAtts = new Attributes();
-            OpendapHelper.getAttributes(das, varName, sourceAtts);
-            if (sourceAtts.size() == 0)
-              OpendapHelper.getAttributes(das, outerSequenceName + "." + varName, sourceAtts);
+              // outer variable
+              String varName = outerVar.getClearName();
+              Attributes sourceAtts = new Attributes();
+              OpendapHelper.getAttributes(das, varName, sourceAtts);
+              if (sourceAtts.size() == 0)
+                OpendapHelper.getAttributes(das, outerSequenceName + "." + varName, sourceAtts);
 
-            PrimitiveArray sourcePA =
-                PrimitiveArray.factory(OpendapHelper.getElementPAType(outerVar), 1, false);
-            if ("true".equals(sourceAtts.getString("_Unsigned")))
-              sourcePA = sourcePA.makeUnsignedPA();
-            PrimitiveArray destPA =
-                (PrimitiveArray)
-                    sourcePA.clone(); // !This doesn't handle change in type from scale_factor,
-            // add_offset
-            Attributes addAtts =
-                makeReadyToUseAddVariableAttributesForDatasetsXml(
-                    dataSourceTable.globalAttributes(),
-                    sourceAtts,
-                    null,
-                    varName,
-                    destPA.elementType() != PAType.STRING, // tryToAddStandardName
-                    destPA.elementType() != PAType.STRING, // addColorBarMinMax
-                    true); // tryToFindLLAT
-            dataSourceTable.addColumn(nOuterVars, varName, sourcePA, sourceAtts);
-            dataAddTable.addColumn(nOuterVars, varName, destPA, addAtts);
-            nOuterVars++;
+              PrimitiveArray sourcePA =
+                  PrimitiveArray.factory(OpendapHelper.getElementPAType(outerVar), 1, false);
+              if ("true".equals(sourceAtts.getString("_Unsigned")))
+                sourcePA = sourcePA.makeUnsignedPA();
+              PrimitiveArray destPA =
+                  (PrimitiveArray)
+                      sourcePA.clone(); // !This doesn't handle change in type from scale_factor,
+              // add_offset
+              Attributes addAtts =
+                  makeReadyToUseAddVariableAttributesForDatasetsXml(
+                      dataSourceTable.globalAttributes(),
+                      sourceAtts,
+                      null,
+                      varName,
+                      destPA.elementType() != PAType.STRING, // tryToAddStandardName
+                      destPA.elementType() != PAType.STRING, // addColorBarMinMax
+                      true); // tryToFindLLAT
+              dataSourceTable.addColumn(nOuterVars, varName, sourcePA, sourceAtts);
+              dataAddTable.addColumn(nOuterVars, varName, destPA, addAtts);
+              nOuterVars++;
+            }
           }
         }
       }
+
+      // add missing_value and/or _FillValue if needed
+      addMvFvAttsIfNeeded(dataSourceTable, dataAddTable);
+
+      // tryToFindLLAT
+      tryToFindLLAT(dataSourceTable, dataAddTable);
+
+      // don't suggestSubsetVariables(), instead:
+      // subset vars are nOuterVars (which are the first nOuterVar columns)
+      StringArray tSubsetVariables = new StringArray();
+      for (int col = 0; col < nOuterVars; col++)
+        tSubsetVariables.add(dataAddTable.getColumnName(col));
+      dataAddTable.globalAttributes().add("subsetVariables", tSubsetVariables.toString());
+
+      // get global attributes and ensure required entries are present
+      // after dataVariables known, add global attributes in the dataAddTable
+      dataAddTable
+          .globalAttributes()
+          .set(
+              makeReadyToUseAddGlobalAttributesForDatasetsXml(
+                  dataSourceTable.globalAttributes(),
+                  // another cdm_data_type could be better; this is ok
+                  hasLonLatTime(dataAddTable) ? "Point" : "Other",
+                  tLocalSourceUrl,
+                  externalGlobalAttributes,
+                  suggestKeywords(dataSourceTable, dataAddTable)));
+      if (outerSequenceName == null)
+        throw new SimpleException(
+            "No Sequence variable was found for " + tLocalSourceUrl + ".dds.");
+      if (gridMappingAtts != null) dataAddTable.globalAttributes().add(gridMappingAtts);
+
+      // write the information
+      boolean isDapper = tLocalSourceUrl.indexOf("dapper") > 0;
+
+      String sb =
+          "<dataset type=\"EDDTableFromDapSequence\" datasetID=\""
+              + suggestDatasetID(tPublicSourceUrl)
+              + "\" active=\"true\">\n"
+              + "    <sourceUrl>"
+              + XML.encodeAsXML(tLocalSourceUrl)
+              + "</sourceUrl>\n"
+              + "    <outerSequenceName>"
+              + XML.encodeAsXML(outerSequenceName)
+              + "</outerSequenceName>\n"
+              + (innerSequenceName == null
+                  ? ""
+                  : "    <innerSequenceName>"
+                      + XML.encodeAsXML(innerSequenceName)
+                      + "</innerSequenceName>\n")
+              + "    <skipDapperSpacerRows>"
+              + isDapper
+              + "</skipDapperSpacerRows>\n"
+              + "    <sourceCanConstrainStringEQNE>"
+              + !isDapper
+              + "</sourceCanConstrainStringEQNE>\n"
+              + // DAPPER doesn't support string constraints
+              "    <sourceCanConstrainStringGTLT>"
+              + !isDapper
+              + "</sourceCanConstrainStringGTLT>\n"
+              + // see email from Joe Sirott 1/21/2009
+              "    <sourceCanConstrainStringRegex></sourceCanConstrainStringRegex>\n"
+              + // was ~=, now ""; see notes.txt for 2009-01-16
+              "    <reloadEveryNMinutes>"
+              + tReloadEveryNMinutes
+              + "</reloadEveryNMinutes>\n"
+              + writeAttsForDatasetsXml(false, dataSourceTable.globalAttributes(), "    ")
+              + cdmSuggestion()
+              + writeAttsForDatasetsXml(true, dataAddTable.globalAttributes(), "    ")
+              +
+
+              // last 2 params: includeDataType, questionDestinationName
+              writeVariablesForDatasetsXml(
+                  dataSourceTable, dataAddTable, "dataVariable", false, false)
+              + """
+                        </dataset>
+
+                        """;
+
+      String2.log("\n\n*** generateDatasetsXml finished successfully.\n\n");
+      return sb;
     }
-
-    // add missing_value and/or _FillValue if needed
-    addMvFvAttsIfNeeded(dataSourceTable, dataAddTable);
-
-    // tryToFindLLAT
-    tryToFindLLAT(dataSourceTable, dataAddTable);
-
-    // don't suggestSubsetVariables(), instead:
-    // subset vars are nOuterVars (which are the first nOuterVar columns)
-    StringArray tSubsetVariables = new StringArray();
-    for (int col = 0; col < nOuterVars; col++)
-      tSubsetVariables.add(dataAddTable.getColumnName(col));
-    dataAddTable.globalAttributes().add("subsetVariables", tSubsetVariables.toString());
-
-    // get global attributes and ensure required entries are present
-    // after dataVariables known, add global attributes in the dataAddTable
-    dataAddTable
-        .globalAttributes()
-        .set(
-            makeReadyToUseAddGlobalAttributesForDatasetsXml(
-                dataSourceTable.globalAttributes(),
-                // another cdm_data_type could be better; this is ok
-                hasLonLatTime(dataAddTable) ? "Point" : "Other",
-                tLocalSourceUrl,
-                externalGlobalAttributes,
-                suggestKeywords(dataSourceTable, dataAddTable)));
-    if (outerSequenceName == null)
-      throw new SimpleException("No Sequence variable was found for " + tLocalSourceUrl + ".dds.");
-    if (gridMappingAtts != null) dataAddTable.globalAttributes().add(gridMappingAtts);
-
-    // write the information
-    boolean isDapper = tLocalSourceUrl.indexOf("dapper") > 0;
-
-    String sb =
-        "<dataset type=\"EDDTableFromDapSequence\" datasetID=\""
-            + suggestDatasetID(tPublicSourceUrl)
-            + "\" active=\"true\">\n"
-            + "    <sourceUrl>"
-            + XML.encodeAsXML(tLocalSourceUrl)
-            + "</sourceUrl>\n"
-            + "    <outerSequenceName>"
-            + XML.encodeAsXML(outerSequenceName)
-            + "</outerSequenceName>\n"
-            + (innerSequenceName == null
-                ? ""
-                : "    <innerSequenceName>"
-                    + XML.encodeAsXML(innerSequenceName)
-                    + "</innerSequenceName>\n")
-            + "    <skipDapperSpacerRows>"
-            + isDapper
-            + "</skipDapperSpacerRows>\n"
-            + "    <sourceCanConstrainStringEQNE>"
-            + !isDapper
-            + "</sourceCanConstrainStringEQNE>\n"
-            + // DAPPER doesn't support string constraints
-            "    <sourceCanConstrainStringGTLT>"
-            + !isDapper
-            + "</sourceCanConstrainStringGTLT>\n"
-            + // see email from Joe Sirott 1/21/2009
-            "    <sourceCanConstrainStringRegex></sourceCanConstrainStringRegex>\n"
-            + // was ~=, now ""; see notes.txt for 2009-01-16
-            "    <reloadEveryNMinutes>"
-            + tReloadEveryNMinutes
-            + "</reloadEveryNMinutes>\n"
-            + writeAttsForDatasetsXml(false, dataSourceTable.globalAttributes(), "    ")
-            + cdmSuggestion()
-            + writeAttsForDatasetsXml(true, dataAddTable.globalAttributes(), "    ")
-            +
-
-            // last 2 params: includeDataType, questionDestinationName
-            writeVariablesForDatasetsXml(
-                dataSourceTable, dataAddTable, "dataVariable", false, false)
-            + """
-                      </dataset>
-
-                      """;
-
-    String2.log("\n\n*** generateDatasetsXml finished successfully.\n\n");
-    return sb;
   }
 }

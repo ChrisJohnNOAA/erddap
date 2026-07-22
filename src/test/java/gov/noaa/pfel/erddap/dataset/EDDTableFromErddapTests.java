@@ -323,12 +323,12 @@ class EDDTableFromErddapTests {
     String url =
         // "http://localhost:8080/cwexperimental/tabledap/erdCalcofiSur";
         "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/erdCalcofiSur";
-    DConnect2 dConnect = new DConnect2(url, true);
-    DAS das = dConnect.getDAS();
-    String results = OpendapHelper.getDasString(das);
-    // String expected = "zztop";
-    // Test.ensureEqual(results, expected, "results=\n" + results);
-
+    try (DConnect2 dConnect = new DConnect2(url, true)) {
+      DAS das = dConnect.getDAS();
+      String results = OpendapHelper.getDasString(das);
+      // String expected = "zztop";
+      // Test.ensureEqual(results, expected, "results=\n" + results);
+    }
     EDDTable edd =
         (EDDTableFromErddap)
             EDDTableFromErddap.oneFromDatasetsXml(null, "testCalcofiSurFromErddap");

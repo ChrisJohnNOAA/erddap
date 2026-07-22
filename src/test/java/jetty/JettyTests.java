@@ -18632,7 +18632,7 @@ netcdf EDDTableFromNcFiles_Data.nc {
             + "  :summary = \"Remote Sensing Inc. distributes science quality wind velocity data from the SeaWinds instrument onboard NASA's QuikSCAT satellite.  SeaWinds is a microwave scatterometer designed to measure surface winds over the global ocean.  Wind velocity fields are provided in zonal, meridional, and modulus sets. The reference height for all wind velocities is 10 meters. (This is a monthly composite.)\";\n"
             + "  :time_coverage_end = \"1999-09-16T00:00:00Z\";\n"
             + "  :time_coverage_start = \"1999-08-16T12:00:00Z\";\n"
-            + "  :title = \"Wind, QuikSCAT SeaWinds, 0.125Â°, Global, Science Quality, 1999-2009 (Monthly)\";\n"
+            + "  :title = \"Wind, QuikSCAT SeaWinds, 0.125°, Global, Science Quality, 1999-2009 (Monthly)\";\n"
             + "  :Westernmost_Easting = 0.0; // double\n"
             + "\n"
             + "  data:\n"
@@ -18882,7 +18882,7 @@ netcdf EDDTableFromNcFiles_Data.nc {
             + "  :summary = \"Remote Sensing Inc. distributes science quality wind velocity data from the SeaWinds instrument onboard NASA's QuikSCAT satellite.  SeaWinds is a microwave scatterometer designed to measure surface winds over the global ocean.  Wind velocity fields are provided in zonal, meridional, and modulus sets. The reference height for all wind velocities is 10 meters. (This is a monthly composite.)\";\n"
             + "  :time_coverage_end = \"1999-09-16T00:00:00Z\";\n"
             + "  :time_coverage_start = \"1999-08-16T12:00:00Z\";\n"
-            + "  :title = \"Wind, QuikSCAT SeaWinds, 0.125Â°, Global, Science Quality, 1999-2009 (Monthly)\";\n"
+            + "  :title = \"Wind, QuikSCAT SeaWinds, 0.125°, Global, Science Quality, 1999-2009 (Monthly)\";\n"
             + "  :Westernmost_Easting = 0.0; // double\n"
             + "}\n";
     Test.ensureEqual(results.substring(0, expected.length()), expected, "results=" + results);
@@ -18900,7 +18900,6 @@ netcdf EDDTableFromNcFiles_Data.nc {
   void testFindVarsWithSharedDimensions() throws Throwable {
     String2.log("\n\n*** OpendapHelper.findVarsWithSharedDimensions");
     String expected, results;
-    DConnect2 dConnect;
     DDS dds;
 
     // test of Sequence DAP dataset
@@ -18908,8 +18907,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
     String sequenceUrl =
         System.getProperty("test.coastwatch.pfegUrl", "https://coastwatch.pfeg.noaa.gov")
             + "/erddap/tabledap/erdGlobecMoc1";
-    dConnect = new DConnect2(sequenceUrl, true);
-    dds = dConnect.getDDS();
+    try (DConnect2 dConnect = new DConnect2(sequenceUrl, true)) {
+      dds = dConnect.getDDS();
+    }
     results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
     expected = "";
     Test.ensureEqual(results, expected, "results=" + results);
@@ -18920,8 +18920,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
         System.getProperty("test.coaps.fsuUrl", "https://tds.coaps.fsu.edu")
             + "/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
     String2.log("\n*** test of DArray DAP dataset\n" + dArrayUrl);
-    dConnect = new DConnect2(dArrayUrl, true);
-    dds = dConnect.getDDS();
+    try (DConnect2 dConnect2 = new DConnect2(dArrayUrl, true)) {
+      dds = dConnect2.getDDS();
+    }
     results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
     expected =
         "time, lat, lon, PL_HD, PL_CRS, DIR, PL_WDIR, PL_SPD, SPD, PL_WSPD, P, T, RH, date, time_of_day, flag";
@@ -18930,8 +18931,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
     // ***** test of DGrid DAP dataset
     String2.log("\n*** test of DGrid DAP dataset");
     String dGridUrl = "http://localhost:8080/erddap/griddap/erdQSwindmday";
-    dConnect = new DConnect2(dGridUrl, true);
-    dds = dConnect.getDDS();
+    try (DConnect2 dConnect3 = new DConnect2(dGridUrl, true)) {
+      dds = dConnect3.getDDS();
+    }
     results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
     expected = "x_wind, y_wind";
     Test.ensureEqual(results, expected, "results=" + results);
@@ -18947,7 +18949,6 @@ netcdf EDDTableFromNcFiles_Data.nc {
   void testFindAllScalarOrMultiDimVars() throws Throwable {
     String2.log("\n\n*** OpendapHelper.testFindAllScalarOrMultiDimVars");
     String expected, results;
-    DConnect2 dConnect;
     DDS dds;
     String url;
 
@@ -18969,8 +18970,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
     url =
         "https://tds.coaps.fsu.edu/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
     String2.log("\n*** test of DArray DAP dataset\n" + url);
-    dConnect = new DConnect2(url, true);
-    dds = dConnect.getDDS();
+    try (DConnect2 dConnect = new DConnect2(url, true)) {
+      dds = dConnect.getDDS();
+    }
     results = String2.toCSSVString(OpendapHelper.findAllScalarOrMultiDimVars(dds));
     expected =
         "time, lat, lon, PL_HD, PL_CRS, DIR, PL_WDIR, PL_SPD, SPD, PL_WSPD, P, T, RH, date, time_of_day, flag, history";
@@ -18979,8 +18981,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
     // ***** test of DGrid DAP dataset
     String2.log("\n*** test of DGrid DAP dataset");
     url = "http://localhost:8080/erddap/griddap/erdQSwindmday";
-    dConnect = new DConnect2(url, true);
-    dds = dConnect.getDDS();
+    try (DConnect2 dConnect2 = new DConnect2(url, true)) {
+      dds = dConnect2.getDDS();
+    }
     results = String2.toCSSVString(OpendapHelper.findAllScalarOrMultiDimVars(dds));
     expected = "time, altitude, latitude, longitude, x_wind, y_wind";
     Test.ensureEqual(results, expected, "results=" + results);
@@ -19001,8 +19004,9 @@ netcdf EDDTableFromNcFiles_Data.nc {
     // ***** test of sequence dataset (no vars should be found
     String2.log("\n*** test of sequence dataset");
     url = "http://localhost:8080/erddap/tabledap/erdCAMarCatLY";
-    dConnect = new DConnect2(url, true);
-    dds = dConnect.getDDS();
+    try (DConnect2 dConnect3 = new DConnect2(url, true)) {
+      dds = dConnect3.getDDS();
+    }
     results = String2.toCSSVString(OpendapHelper.findAllScalarOrMultiDimVars(dds));
     expected = "";
     Test.ensureEqual(results, expected, "results=" + results);

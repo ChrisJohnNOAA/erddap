@@ -202,9 +202,12 @@ public class OpendapTest extends NetCheckTest {
 
       // open the dataSet; getTimeOptions, makeGrid
       Opendap opendap = new Opendap(url, true); // acceptDeflate, resetFlagDir
-      DConnect2 dConnect = new DConnect2(opendap.url, opendap.acceptDeflate);
-      DAS das = dConnect.getDAS();
-      DDS dds = dConnect.getDDS();
+      DAS das;
+      DDS dds;
+      try (DConnect2 dConnect = new DConnect2(opendap.url, opendap.acceptDeflate)) {
+        das = dConnect.getDAS();
+        dds = dConnect.getDDS();
+      }
       opendap.getGridInfo(das, dds, variableName, missingValue);
       opendap.getTimeOptions(
           false, // false = format as date time

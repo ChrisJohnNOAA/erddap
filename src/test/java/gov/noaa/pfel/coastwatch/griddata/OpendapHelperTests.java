@@ -31,42 +31,43 @@ class OpendapHelperTests {
     String url =
         "https://tds.coaps.fsu.edu/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
     String2.log("\n* OpendapHelper.testGetAttributes\n" + url);
-    DConnect2 dConnect = new DConnect2(url, true);
-    DAS das = dConnect.getDAS();
-    Attributes atts = new Attributes();
-    OpendapHelper.getAttributes(das, "flag", atts);
+    try (DConnect2 dConnect = new DConnect2(url, true)) {
+      DAS das = dConnect.getDAS();
+      Attributes atts = new Attributes();
+      OpendapHelper.getAttributes(das, "flag", atts);
 
-    String results = atts.toString();
-    String expected = // the DODS_ attributes are from an attribute that is a container.
-        "    A=Units added\n"
-            + "    B=Data out of range\n"
-            + "    C=Non-sequential time\n"
-            + "    D=Failed T>=Tw>=Td\n"
-            + "    DODS_dimName=f_string\n"
-            + "    DODS_strlen=13i\n"
-            + "    E=True wind error\n"
-            + "    F=Velocity unrealistic\n"
-            + "    G=Value > 4 s. d. from climatology\n"
-            + "    H=Discontinuity\n"
-            + "    I=Interesting feature\n"
-            + "    J=Erroneous\n"
-            + "    K=Suspect - visual\n"
-            + "    L=Ocean platform over land\n"
-            + "    long_name=quality control flags\n"
-            + "    M=Instrument malfunction\n"
-            + "    N=In Port\n"
-            + "    O=Multiple original units\n"
-            + "    P=Movement uncertain\n"
-            + "    Q=Pre-flagged as suspect\n"
-            + "    R=Interpolated data\n"
-            + "    S=Spike - visual\n"
-            + "    T=Time duplicate\n"
-            + "    U=Suspect - statistial\n"
-            + "    V=Spike - statistical\n"
-            + "    X=Step - statistical\n"
-            + "    Y=Suspect between X-flags\n"
-            + "    Z=Good data\n";
-    Test.ensureEqual(results, expected, "results=" + results);
+      String results = atts.toString();
+      String expected = // the DODS_ attributes are from an attribute that is a container.
+          "    A=Units added\n"
+              + "    B=Data out of range\n"
+              + "    C=Non-sequential time\n"
+              + "    D=Failed T>=Tw>=Td\n"
+              + "    DODS_dimName=f_string\n"
+              + "    DODS_strlen=13i\n"
+              + "    E=True wind error\n"
+              + "    F=Velocity unrealistic\n"
+              + "    G=Value > 4 s. d. from climatology\n"
+              + "    H=Discontinuity\n"
+              + "    I=Interesting feature\n"
+              + "    J=Erroneous\n"
+              + "    K=Suspect - visual\n"
+              + "    L=Ocean platform over land\n"
+              + "    long_name=quality control flags\n"
+              + "    M=Instrument malfunction\n"
+              + "    N=In Port\n"
+              + "    O=Multiple original units\n"
+              + "    P=Movement uncertain\n"
+              + "    Q=Pre-flagged as suspect\n"
+              + "    R=Interpolated data\n"
+              + "    S=Spike - visual\n"
+              + "    T=Time duplicate\n"
+              + "    U=Suspect - statistial\n"
+              + "    V=Spike - statistical\n"
+              + "    X=Step - statistical\n"
+              + "    Y=Suspect between X-flags\n"
+              + "    Z=Good data\n";
+      Test.ensureEqual(results, expected, "results=" + results);
+    }
   }
 
   /** This tests dapToNc DArray. */
