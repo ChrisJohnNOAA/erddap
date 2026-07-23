@@ -688,7 +688,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   public double[] toArray() {
     double[] target = new double[size];
-    MemorySegment.copy(segment, 0, MemorySegment.ofArray(target), 0, (long) size * Double.BYTES);
+    MemorySegment.copy(segment, layout, 0L, target, 0, size);
     return target;
   }
 
@@ -1105,10 +1105,18 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public void sort() {
     if (size <= 1) return;
-    double[] temp = toArray();
+    final ValueLayout.OfDouble ly = this.layout;
+    double[] temp = new double[size];
+
+    // 1. Direct transfer to heap
+    MemorySegment.copy(segment, ly, 0L, temp, 0, size);
+
+    // 2. In-place JVM sort
     if (size < 8192) Arrays.sort(temp, 0, size);
     else Arrays.parallelSort(temp, 0, size);
-    MemorySegment.copy(MemorySegment.ofArray(temp), 0, segment, 0, (long) size * Double.BYTES);
+
+    // 3. Direct transfer back to off-heap segment
+    MemorySegment.copy(temp, 0, segment, ly, 0L, size);
   }
 
   /**
@@ -1155,13 +1163,22 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public void reorder(final int rank[]) {
     final int n = rank.length;
-    Math2.ensureMemoryAvailable((long) Double.BYTES * capacity, "DoubleArray");
-    MemorySegment newSegment = Arena.ofAuto().allocate(layout, capacity);
     final ValueLayout.OfDouble ly = this.layout;
+
+    // 1. Bulk copy off-heap segment to a temporary JVM heap array
+    double[] src = new double[size];
+    MemorySegment.copy(segment, ly, 0L, src, 0, size);
+
+    // 2. Perform reorder on JVM heap (zero FFM overhead, max JIT optimization & L1 cache locality)
+    double[] dst = new double[n];
     for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(ly, i, segment.getAtIndex(ly, rank[i]));
+      dst[i] = src[rank[i]];
     }
-    segment = newSegment;
+
+    // 3. Ensure off-heap capacity and bulk copy reordered array back to segment
+    ensureCapacity(n);
+    MemorySegment.copy(dst, 0, segment, ly, 0L, n);
+    size = n;
   }
 
   /**
@@ -1179,7 +1196,7 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This writes 'size' elements to a DataOutputStream using highly optimized bulk buffers.
+   * This writes 'size' elements to a DataOutputStream.
    *
    * @param dos the DataOutputStream
    * @return the number of bytes used per element (for Strings, this is the size of one of the
