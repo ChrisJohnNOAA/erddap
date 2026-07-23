@@ -702,7 +702,11 @@ public class DoubleArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.get: index (" + index + ") >= size (" + size + ").");
-    return segment.getAtIndex(layout, index);
+    if (layout == ValueLayout.JAVA_DOUBLE) {
+      return segment.getAtIndex(ValueLayout.JAVA_DOUBLE, index);
+    } else {
+      return segment.getAtIndex(layout, index);
+    }
   }
 
   /**
@@ -715,7 +719,11 @@ public class DoubleArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.set: index (" + index + ") >= size (" + size + ").");
-    segment.setAtIndex(layout, index, value);
+    if (layout == ValueLayout.JAVA_DOUBLE) {
+      segment.setAtIndex(ValueLayout.JAVA_DOUBLE, index, value);
+    } else {
+      segment.setAtIndex(layout, index, value);
+    }
   }
 
   /**
