@@ -119,6 +119,13 @@ public class WireMockStarter {
     stubFromResourceDap(
         "/dods/public_data/SODA/soda_pop2.2.4.dds", "/mock/apdrc/soda_pop2.2.4.dds");
 
+    stubFromResourceData(
+        "/dods/public_data/SODA/soda_pop2.2.4.dods?time,lev,lat,lon",
+        "/mock/apdrc/soda_pop2.2.4_axes.dods");
+    stubFromResourceData(
+        "/dods/public_data/SODA/soda_pop2.2.4.dods?time,lat,lon",
+        "/mock/apdrc/soda_pop2.2.4_axes_3d.dods");
+
     stubFromResource("/dods/public_data/SODA/soda_pop2.2.4.html", "/mock/apdrc/soda_pop2.2.4.html");
 
     stubFromResource(
