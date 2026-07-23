@@ -86,13 +86,27 @@ public class DoubleArray extends PrimitiveArray {
   public MemorySegment segment;
 
   private ValueLayout.OfDouble layout;
+  private boolean isNativeByteOrder = true;
   private long capacity;
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public DoubleArray() {
     layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
     capacity = 8;
     segment = Arena.ofAuto().allocate((long) Double.BYTES * capacity);
+  }
+
+  /**
+   * A constructor for a capacity of 8 elements using an explicit Arena.
+   *
+   * @param arena the Arena to manage the memory segment lifecycle.
+   */
+  public DoubleArray(final Arena arena) {
+    layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
+    capacity = 8;
+    segment = arena.allocate((long) Double.BYTES * capacity);
   }
 
   /**
@@ -104,6 +118,7 @@ public class DoubleArray extends PrimitiveArray {
   public DoubleArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable((long) Double.BYTES * primitiveArray.size(), "DoubleArray");
     layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
     capacity = primitiveArray.size();
     segment = Arena.ofAuto().allocate((long) Double.BYTES * capacity);
     append(primitiveArray);
@@ -119,8 +134,26 @@ public class DoubleArray extends PrimitiveArray {
   public DoubleArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable((long) Double.BYTES * capacity, "DoubleArray");
     layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
     this.capacity = capacity;
     segment = Arena.ofAuto().allocate((long) Double.BYTES * this.capacity);
+    if (active) size = capacity;
+  }
+
+  /**
+   * A constructor for a specified number of elements using an explicit Arena.
+   *
+   * @param capacity creates an DoubleArray with the specified initial capacity.
+   * @param active if true, size will be set to capacity and all elements will equal 0; else size =
+   *     0.
+   * @param arena the Arena to manage the memory segment lifecycle.
+   */
+  public DoubleArray(final int capacity, final boolean active, final Arena arena) {
+    Math2.ensureMemoryAvailable((long) Double.BYTES * capacity, "DoubleArray");
+    layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
+    this.capacity = capacity;
+    segment = arena.allocate((long) Double.BYTES * this.capacity);
     if (active) size = capacity;
   }
 
@@ -133,6 +166,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   public DoubleArray(final double[] anArray) {
     layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
     capacity = anArray.length;
     segment = MemorySegment.ofArray(anArray);
     size = anArray.length;
@@ -143,6 +177,7 @@ public class DoubleArray extends PrimitiveArray {
     size = immutableList.size();
     Math2.ensureMemoryAvailable((long) Double.BYTES * size, "DoubleArray");
     layout = ValueLayout.JAVA_DOUBLE;
+    isNativeByteOrder = true;
     capacity = size;
     segment = Arena.ofAuto().allocate((long) Double.BYTES * capacity);
     for (int i = 0; i < size; i++) {
@@ -224,6 +259,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   public void setByteOrder(ByteOrder order) {
     layout = ValueLayout.JAVA_DOUBLE.withOrder(order);
+    isNativeByteOrder = (order == ByteOrder.nativeOrder());
   }
 
   /**
@@ -742,7 +778,7 @@ public class DoubleArray extends PrimitiveArray {
     if (index < 0 || index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.get: index (" + index + ") >= size (" + size + ").");
-    if (layout == ValueLayout.JAVA_DOUBLE) {
+    if (isNativeByteOrder) {
       return segment.getAtIndex(ValueLayout.JAVA_DOUBLE, index);
     } else {
       return segment.getAtIndex(layout, index);
@@ -760,7 +796,7 @@ public class DoubleArray extends PrimitiveArray {
     if (index < 0 || index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.set: index (" + index + ") >= size (" + size + ").");
-    if (layout == ValueLayout.JAVA_DOUBLE) {
+    if (isNativeByteOrder) {
       segment.setAtIndex(ValueLayout.JAVA_DOUBLE, index, value);
     } else {
       segment.setAtIndex(layout, index, value);
@@ -1099,24 +1135,69 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * Sorts the elements in ascending order. Note: Temporarily copies data to a heap array for
-   * sorting via Arrays.sort/parallelSort, then copies it back to the MemorySegment.
+   * Sorts the elements in ascending order in-place using a high-performance, purely off-heap
+   * Quicksort algorithm, completely avoiding heap allocations or native-to-heap copies.
    */
   @Override
   public void sort() {
     if (size <= 1) return;
-    final ValueLayout.OfDouble ly = this.layout;
-    double[] temp = new double[size];
+    quickSort(segment, layout, 0, size - 1);
+  }
 
-    // 1. Direct transfer to heap
-    MemorySegment.copy(segment, ly, 0L, temp, 0, size);
+  private static void quickSort(MemorySegment seg, ValueLayout.OfDouble ly, int left, int right) {
+    if (right - left < 27) { // Insertion sort for small subarrays
+      for (int i = left + 1; i <= right; i++) {
+        double val = seg.getAtIndex(ly, i);
+        int j = i - 1;
+        while (j >= left && Double.compare(seg.getAtIndex(ly, j), val) > 0) {
+          seg.setAtIndex(ly, j + 1, seg.getAtIndex(ly, j));
+          j--;
+        }
+        seg.setAtIndex(ly, j + 1, val);
+      }
+      return;
+    }
+    // Partition
+    int pIndex = partition(seg, ly, left, right);
+    quickSort(seg, ly, left, pIndex - 1);
+    quickSort(seg, ly, pIndex + 1, right);
+  }
 
-    // 2. In-place JVM sort
-    if (size < 8192) Arrays.sort(temp, 0, size);
-    else Arrays.parallelSort(temp, 0, size);
+  private static int partition(MemorySegment seg, ValueLayout.OfDouble ly, int left, int right) {
+    int mid = left + (right - left) / 2;
+    double lVal = seg.getAtIndex(ly, left);
+    double mVal = seg.getAtIndex(ly, mid);
+    double rVal = seg.getAtIndex(ly, right);
+    if (Double.compare(lVal, mVal) > 0) {
+      swap(seg, ly, left, mid);
+    }
+    if (Double.compare(seg.getAtIndex(ly, left), rVal) > 0) {
+      swap(seg, ly, left, right);
+    }
+    if (Double.compare(seg.getAtIndex(ly, mid), rVal) > 0) {
+      swap(seg, ly, mid, right);
+    }
 
-    // 3. Direct transfer back to off-heap segment
-    MemorySegment.copy(temp, 0, segment, ly, 0L, size);
+    double pivot = seg.getAtIndex(ly, mid);
+    swap(seg, ly, mid, right - 1);
+    int i = left;
+    int j = right - 1;
+    while (true) {
+      while (Double.compare(seg.getAtIndex(ly, ++i), pivot) < 0)
+        ;
+      while (Double.compare(seg.getAtIndex(ly, --j), pivot) > 0)
+        ;
+      if (i >= j) break;
+      swap(seg, ly, i, j);
+    }
+    swap(seg, ly, i, right - 1);
+    return i;
+  }
+
+  private static void swap(MemorySegment seg, ValueLayout.OfDouble ly, int i, int j) {
+    double t = seg.getAtIndex(ly, i);
+    seg.setAtIndex(ly, i, seg.getAtIndex(ly, j));
+    seg.setAtIndex(ly, j, t);
   }
 
   /**
@@ -1154,7 +1235,8 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This reorders the values in 'array' based on rank.
+   * This reorders the values in 'array' based on rank. Reorders directly in off-heap memory using a
+   * scratch segment, completely eliminating heap allocations.
    *
    * @param rank is an int with values (0 ... size-1) which points to the row number for a row with
    *     a specific rank (e.g., rank[0] is the row number of the first item in the sorted list,
@@ -1165,20 +1247,17 @@ public class DoubleArray extends PrimitiveArray {
     final int n = rank.length;
     final ValueLayout.OfDouble ly = this.layout;
 
-    // 1. Bulk copy off-heap segment to a temporary JVM heap array
-    double[] src = new double[size];
-    MemorySegment.copy(segment, ly, 0L, src, 0, size);
+    // Allocate scratch segment off-heap
+    MemorySegment dstSegment = Arena.ofAuto().allocate((long) Double.BYTES * n);
 
-    // 2. Perform reorder on JVM heap (zero FFM overhead, max JIT optimization & L1 cache locality)
-    double[] dst = new double[n];
+    // Direct off-heap gather loop (no heap allocations)
     for (int i = 0; i < n; i++) {
-      dst[i] = src[rank[i]];
+      dstSegment.setAtIndex(ly, i, segment.getAtIndex(ly, rank[i]));
     }
 
-    // 3. Ensure off-heap capacity and bulk copy reordered array back to segment
-    ensureCapacity(n);
-    MemorySegment.copy(dst, 0, segment, ly, 0L, n);
-    size = n;
+    this.segment = dstSegment;
+    this.capacity = n;
+    this.size = n;
   }
 
   /**
@@ -1195,15 +1274,6 @@ public class DoubleArray extends PrimitiveArray {
     }
   }
 
-  /**
-   * This writes 'size' elements to a DataOutputStream.
-   *
-   * @param dos the DataOutputStream
-   * @return the number of bytes used per element (for Strings, this is the size of one of the
-   *     strings, not others, and so is useless; for other types the value is consistent). But if
-   *     size=0, this returns 0.
-   * @throws Exception if trouble
-   */
   /**
    * Writes the entire DoubleArray directly to a FileChannel with zero heap-copying where supported,
    * falling back to buffer-based write otherwise.
@@ -1258,12 +1328,49 @@ public class DoubleArray extends PrimitiveArray {
     }
   }
 
+  /**
+   * Writes data directly to a file via memory-mapping (mmap). Eliminates FileChannel.write() system
+   * calls entirely.
+   */
+  public static DoubleArray createMapped(java.nio.file.Path path, long size, Arena arena)
+      throws IOException {
+    try (java.nio.channels.FileChannel channel =
+        java.nio.channels.FileChannel.open(
+            path,
+            java.nio.file.StandardOpenOption.READ,
+            java.nio.file.StandardOpenOption.WRITE,
+            java.nio.file.StandardOpenOption.CREATE)) {
+
+      long byteSize = size * Double.BYTES;
+      MemorySegment mappedSegment =
+          channel.map(java.nio.channels.FileChannel.MapMode.READ_WRITE, 0, byteSize, arena);
+
+      DoubleArray array = new DoubleArray();
+      array.segment = mappedSegment;
+      array.capacity = size;
+      array.size = (int) size;
+      array.isNativeByteOrder = true;
+      return array;
+    }
+  }
+
+  /** Bulk copy from an existing DoubleArray straight into a mapped file segment. */
+  public void copyToMapped(DoubleArray mappedTarget) {
+    MemorySegment.copy(this.segment, 0, mappedTarget.segment, 0, (long) this.size * Double.BYTES);
+  }
+
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
     if (size == 0) return 0;
-    // Single-pass read straight from off-heap memory to DataOutputStream
-    for (int i = 0; i < size; i++) {
-      dos.writeDouble(segment.getAtIndex(ValueLayout.JAVA_DOUBLE, i));
+    double[] chunk = new double[Math.min(8192, size)];
+    int len = size;
+    final ValueLayout.OfDouble ly = this.layout;
+    for (int offset = 0; offset < len; offset += chunk.length) {
+      int count = Math.min(chunk.length, len - offset);
+      MemorySegment.copy(segment, ly, (long) offset * Double.BYTES, chunk, 0, count);
+      for (int i = 0; i < count; i++) {
+        dos.writeDouble(chunk[i]);
+      }
     }
     return Double.BYTES;
   }
@@ -1294,8 +1401,17 @@ public class DoubleArray extends PrimitiveArray {
   public void readDis(final DataInputStream dis, final int n) throws Exception {
     if (n <= 0) return;
     ensureCapacity(size + (long) n);
-    for (int i = 0; i < n; i++) {
-      segment.setAtIndex(ValueLayout.JAVA_DOUBLE, size++, dis.readDouble());
+    double[] chunk = new double[Math.min(8192, n)];
+    final ValueLayout.OfDouble ly = this.layout;
+    int remaining = n;
+    while (remaining > 0) {
+      int count = Math.min(chunk.length, remaining);
+      for (int i = 0; i < count; i++) {
+        chunk[i] = dis.readDouble();
+      }
+      MemorySegment.copy(chunk, 0, segment, ly, (long) size * Double.BYTES, count);
+      size += count;
+      remaining -= count;
     }
   }
 
@@ -1311,8 +1427,17 @@ public class DoubleArray extends PrimitiveArray {
     final int nValues = dis.readInt();
     dis.readInt(); // skip duplicate of nValues
     ensureCapacity(size + (long) nValues);
-    for (int i = 0; i < nValues; i++) {
-      segment.setAtIndex(ValueLayout.JAVA_DOUBLE, size++, dis.readDouble());
+    double[] chunk = new double[Math.min(8192, nValues)];
+    final ValueLayout.OfDouble ly = this.layout;
+    int remaining = nValues;
+    while (remaining > 0) {
+      int count = Math.min(chunk.length, remaining);
+      for (int i = 0; i < count; i++) {
+        chunk[i] = dis.readDouble();
+      }
+      MemorySegment.copy(chunk, 0, segment, ly, (long) size * Double.BYTES, count);
+      size += count;
+      remaining -= count;
     }
   }
 
