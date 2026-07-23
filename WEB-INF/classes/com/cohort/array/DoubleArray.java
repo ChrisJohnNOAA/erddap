@@ -610,13 +610,10 @@ public class DoubleArray extends PrimitiveArray {
     if (first == last || destination == first || destination == last) return; // nothing to do
 
     final int nToMove = last - first;
-    double[] temp = new double[nToMove];
-    MemorySegment.copy(
-        segment,
-        (long) first * Double.BYTES,
-        MemorySegment.ofArray(temp),
-        0,
-        (long) nToMove * Double.BYTES);
+    final double[] temp = new double[nToMove];
+    final ValueLayout.OfDouble ly = this.layout;
+
+    MemorySegment.copy(segment, ly, (long) first * Double.BYTES, temp, 0, nToMove);
 
     // if moving to left...
     if (destination < first) {
@@ -626,12 +623,7 @@ public class DoubleArray extends PrimitiveArray {
           segment,
           (long) (destination + nToMove) * Double.BYTES,
           (long) (first - destination) * Double.BYTES);
-      MemorySegment.copy(
-          MemorySegment.ofArray(temp),
-          0,
-          segment,
-          (long) destination * Double.BYTES,
-          (long) nToMove * Double.BYTES);
+      MemorySegment.copy(temp, 0, segment, ly, (long) destination * Double.BYTES, nToMove);
     } else {
       // moving to right
       MemorySegment.copy(
@@ -641,11 +633,7 @@ public class DoubleArray extends PrimitiveArray {
           (long) first * Double.BYTES,
           (long) (destination - last) * Double.BYTES);
       MemorySegment.copy(
-          MemorySegment.ofArray(temp),
-          0,
-          segment,
-          (long) (destination - nToMove) * Double.BYTES,
-          (long) nToMove * Double.BYTES);
+          temp, 0, segment, ly, (long) (destination - nToMove) * Double.BYTES, nToMove);
     }
   }
 
@@ -748,11 +736,12 @@ public class DoubleArray extends PrimitiveArray {
    * @param index 0 ... size-1
    * @return the specified element
    */
+  @SuppressWarnings("ReferenceEquality")
   public double get(final int index) {
     if (index < 0 || index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.get: index (" + index + ") >= size (" + size + ").");
-    if (ValueLayout.JAVA_DOUBLE.equals(layout)) {
+    if (layout == ValueLayout.JAVA_DOUBLE) {
       return segment.getAtIndex(ValueLayout.JAVA_DOUBLE, index);
     } else {
       return segment.getAtIndex(layout, index);
@@ -765,11 +754,12 @@ public class DoubleArray extends PrimitiveArray {
    * @param index 0 ... size-1
    * @param value the value for that element
    */
+  @SuppressWarnings("ReferenceEquality")
   public void set(final int index, final double value) {
     if (index < 0 || index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.set: index (" + index + ") >= size (" + size + ").");
-    if (ValueLayout.JAVA_DOUBLE.equals(layout)) {
+    if (layout == ValueLayout.JAVA_DOUBLE) {
       segment.setAtIndex(ValueLayout.JAVA_DOUBLE, index, value);
     } else {
       segment.setAtIndex(layout, index, value);
@@ -965,6 +955,7 @@ public class DoubleArray extends PrimitiveArray {
    * @return the index where 'lookFor' is found, or -1 if not found.
    */
   public int indexOf(final double lookFor, final int startIndex) {
+    if (startIndex < 0 || startIndex >= size) return -1;
     if (Double.isNaN(lookFor)) {
       final ValueLayout.OfDouble ly = this.layout;
       for (int i = startIndex; i < size; i++) if (Double.isNaN(segment.getAtIndex(ly, i))) return i;
@@ -997,7 +988,7 @@ public class DoubleArray extends PrimitiveArray {
    * @return the index where 'lookFor' is found, or -1 if not found.
    */
   public int lastIndexOf(final double lookFor, final int startIndex) {
-    if (startIndex >= size)
+    if (startIndex < 0 || startIndex >= size)
       throw new IllegalArgumentException(
           String2.ERROR
               + " in DoubleArray.get: startIndex ("
@@ -1067,8 +1058,10 @@ public class DoubleArray extends PrimitiveArray {
           + other.size()
           + " value(s).";
     final ValueLayout.OfDouble ly = this.layout;
+    final ValueLayout.OfDouble otherLy = other.layout;
     for (int i = 0; i < size; i++)
-      if (!Math2.equalsIncludingNanOrInfinite(segment.getAtIndex(ly, i), other.get(i)))
+      if (!Math2.equalsIncludingNanOrInfinite(
+          segment.getAtIndex(ly, i), other.segment.getAtIndex(otherLy, i)))
         return "The two DoubleArrays aren't equal: this["
             + i
             + "]="
@@ -1160,7 +1153,7 @@ public class DoubleArray extends PrimitiveArray {
     MemorySegment newSegment = Arena.ofAuto().allocate(layout, capacity);
     final ValueLayout.OfDouble ly = this.layout;
     for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(ly, i, get(rank[i]));
+      newSegment.setAtIndex(ly, i, segment.getAtIndex(ly, rank[i]));
     }
     segment = newSegment;
   }
@@ -1179,7 +1172,7 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This writes 'size' elements to a DataOutputStream.
+   * This writes 'size' elements to a DataOutputStream using highly optimized bulk buffers.
    *
    * @param dos the DataOutputStream
    * @return the number of bytes used per element (for Strings, this is the size of one of the
@@ -1189,8 +1182,25 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
-    for (int i = 0; i < size; i++) dos.writeDouble(get(i));
-    return size == 0 ? 0 : Double.BYTES;
+    if (size == 0) return 0;
+
+    final ValueLayout.OfDouble ly = this.layout;
+    final int bufferSize = Math.min(size, 4096);
+    final double[] buf = new double[bufferSize];
+
+    int offset = 0;
+    int remaining = size;
+
+    while (remaining > 0) {
+      int chunkSize = Math.min(remaining, bufferSize);
+      MemorySegment.copy(segment, ly, (long) offset * Double.BYTES, buf, 0, chunkSize);
+      for (int k = 0; k < chunkSize; k++) {
+        dos.writeDouble(buf[k]);
+      }
+      offset += chunkSize;
+      remaining -= chunkSize;
+    }
+    return Double.BYTES;
   }
 
   /**
@@ -1217,9 +1227,22 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
+    if (n <= 0) return;
     ensureCapacity(size + (long) n);
-    for (int i = 0; i < n; i++) {
-      segment.setAtIndex(layout, size++, dis.readDouble());
+
+    final ValueLayout.OfDouble ly = this.layout;
+    final int bufferSize = Math.min(n, 4096);
+    final double[] buf = new double[bufferSize];
+
+    int remaining = n;
+    while (remaining > 0) {
+      int chunkSize = Math.min(remaining, bufferSize);
+      for (int k = 0; k < chunkSize; k++) {
+        buf[k] = dis.readDouble();
+      }
+      MemorySegment.copy(buf, 0, segment, ly, (long) size * Double.BYTES, chunkSize);
+      size += chunkSize;
+      remaining -= chunkSize;
     }
   }
 
@@ -1235,8 +1258,20 @@ public class DoubleArray extends PrimitiveArray {
     final int nValues = dis.readInt();
     dis.readInt(); // skip duplicate of nValues
     ensureCapacity(size + (long) nValues);
-    for (int i = 0; i < nValues; i++) {
-      segment.setAtIndex(layout, size++, dis.readDouble());
+
+    final ValueLayout.OfDouble ly = this.layout;
+    final int bufferSize = Math.min(nValues, 4096);
+    final double[] buf = new double[bufferSize];
+
+    int remaining = nValues;
+    while (remaining > 0) {
+      int chunkSize = Math.min(remaining, bufferSize);
+      for (int k = 0; k < chunkSize; k++) {
+        buf[k] = dis.readDouble();
+      }
+      MemorySegment.copy(buf, 0, segment, ly, (long) size * Double.BYTES, chunkSize);
+      size += chunkSize;
+      remaining -= chunkSize;
     }
   }
 
@@ -1326,14 +1361,17 @@ public class DoubleArray extends PrimitiveArray {
       return new DoubleArray();
     }
 
+    final ValueLayout.OfDouble ly = this.layout;
+
     // make a hashMap with all the unique values (associated values are initially all dummy)
     final Integer dummy = -1;
     final HashMap<Double, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    double lastValue = get(0); // since lastValue often equals currentValue, cache it
+    double lastValue =
+        segment.getAtIndex(ly, 0); // since lastValue often equals currentValue, cache it
     hashMap.put(lastValue, dummy);
     boolean alreadySorted = true;
     for (int i = 1; i < size; i++) {
-      double currentValue = get(i);
+      double currentValue = segment.getAtIndex(ly, i);
       if (currentValue != lastValue) {
         if (currentValue < lastValue) alreadySorted = false;
         lastValue = currentValue;
@@ -1369,11 +1407,11 @@ public class DoubleArray extends PrimitiveArray {
 
     // convert original values to ranks
     final int ranks[] = new int[size];
-    lastValue = get(0);
+    lastValue = segment.getAtIndex(ly, 0);
     ranks[0] = (Integer) hashMap.get(lastValue);
     int lastRank = ranks[0];
     for (int i = 1; i < size; i++) {
-      double currentVal = get(i);
+      double currentVal = segment.getAtIndex(ly, i);
       if (currentVal == lastValue) {
         ranks[i] = lastRank;
       } else {
@@ -1406,14 +1444,14 @@ public class DoubleArray extends PrimitiveArray {
     if (Double.isNaN(from)) {
       for (int i = 0; i < size; i++) {
         if (Double.isNaN(segment.getAtIndex(ly, i))) {
-          set(i, to);
+          segment.setAtIndex(ly, i, to);
           count++;
         }
       }
     } else {
       for (int i = 0; i < size; i++) {
         if (Math2.almostEqual(9, segment.getAtIndex(ly, i), from)) {
-          set(i, to);
+          segment.setAtIndex(ly, i, to);
           count++;
         }
       }
@@ -1432,7 +1470,7 @@ public class DoubleArray extends PrimitiveArray {
       double currentVal = segment.getAtIndex(ly, i);
       double prevVal = segment.getAtIndex(ly, nValid - 1);
       if (!Math2.almostEqual(5, currentVal, prevVal)) {
-        set(nValid++, currentVal);
+        segment.setAtIndex(ly, nValid++, currentVal);
       }
     }
     size = nValid;
