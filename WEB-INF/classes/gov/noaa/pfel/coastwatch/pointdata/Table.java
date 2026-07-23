@@ -9280,7 +9280,8 @@ public class Table {
               setColumn(c, fa);
             } else if (nBits <= 64) {
               DoubleArray da = new DoubleArray(nFrames, true);
-              for (int f = 0; f < nFrames; f++) da.set(f, Double.longBitsToDouble(pa[c].getLong(f)));
+              for (int f = 0; f < nFrames; f++)
+                da.set(f, Double.longBitsToDouble(pa[c].getLong(f)));
               pa[c] = da;
               setColumn(c, da);
             }

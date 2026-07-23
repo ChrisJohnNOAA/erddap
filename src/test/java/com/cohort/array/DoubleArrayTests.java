@@ -343,7 +343,10 @@ class DoubleArrayTests {
     anArray = new DoubleArray(ar);
     anArray.move(1, 3, 0);
     Test.ensureEqual(anArray.toArray(), new double[] {1, 2, 0, 3, 4}, "");
-    Test.ensureEqual(ar, new double[] {1, 2, 0, 3, 4}, ""); // ensure on-heap array was modified in place (zero-copy wrapping)
+    Test.ensureEqual(
+        ar,
+        new double[] {1, 2, 0, 3, 4},
+        ""); // ensure on-heap array was modified in place (zero-copy wrapping)
 
     ar = new double[] {0, 1, 2, 3, 4};
     anArray = new DoubleArray(ar);
