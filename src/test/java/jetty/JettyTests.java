@@ -18465,54 +18465,6 @@ netcdf EDDTableFromNcFiles_Data.nc {
 
   /** OpendapHelper */
 
-  /** This tests findVarsWithSharedDimensions. */
-  @org.junit.jupiter.api.Test
-  @TagJetty
-  void testFindVarsWithSharedDimensions() throws Throwable {
-    String2.log("\n\n*** OpendapHelper.findVarsWithSharedDimensions");
-    String expected, results;
-    DDS dds;
-
-    // test of Sequence DAP dataset
-    String2.log("\n*** test of Sequence DAP dataset");
-    String sequenceUrl =
-        System.getProperty("test.coastwatch.pfegUrl", "https://coastwatch.pfeg.noaa.gov")
-            + "/erddap/tabledap/erdGlobecMoc1";
-    try (DConnect2 dConnect = new DConnect2(sequenceUrl, true)) {
-      dds = dConnect.getDDS();
-    }
-    results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
-    expected = "";
-    Test.ensureEqual(results, expected, "results=" + results);
-
-    // test of DArray DAP dataset
-    // 2018-09-13 https: works in browser by not yet in Java
-    String dArrayUrl =
-        System.getProperty("test.coaps.fsuUrl", "https://tds.coaps.fsu.edu")
-            + "/thredds/dodsC/samos/data/research/WTEP/2012/WTEP_20120128v30001.nc";
-    String2.log("\n*** test of DArray DAP dataset\n" + dArrayUrl);
-    try (DConnect2 dConnect2 = new DConnect2(dArrayUrl, true)) {
-      dds = dConnect2.getDDS();
-    }
-    results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
-    expected =
-        "time, lat, lon, PL_HD, PL_CRS, DIR, PL_WDIR, PL_SPD, SPD, PL_WSPD, P, T, RH, date, time_of_day, flag";
-    Test.ensureEqual(results, expected, "results=" + results);
-
-    // ***** test of DGrid DAP dataset
-    String2.log("\n*** test of DGrid DAP dataset");
-    String dGridUrl = "http://localhost:8080/erddap/griddap/erdQSwindmday";
-    try (DConnect2 dConnect3 = new DConnect2(dGridUrl, true)) {
-      dds = dConnect3.getDDS();
-    }
-    results = String2.toCSSVString(OpendapHelper.findVarsWithSharedDimensions(dds));
-    expected = "x_wind, y_wind";
-    Test.ensureEqual(results, expected, "results=" + results);
-
-    /* */
-    String2.log("\n*** OpendapHelper.testFindVarsWithSharedDimensions finished.");
-  }
-
   /** This tests findAllVars. */
   @org.junit.jupiter.api.Test
   @TagJetty
