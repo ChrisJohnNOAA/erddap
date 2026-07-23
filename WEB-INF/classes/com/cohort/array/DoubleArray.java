@@ -646,9 +646,10 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public void justKeep(final BitSet bitset) {
     int newSize = 0;
+    final ValueLayout.OfDouble ly = this.layout;
     for (int row = 0; row < size; row++) {
       if (bitset.get(row)) {
-        set(newSize++, get(row));
+        segment.setAtIndex(ly, newSize++, segment.getAtIndex(ly, row));
       }
     }
     removeRange(newSize, size);
@@ -991,9 +992,9 @@ public class DoubleArray extends PrimitiveArray {
     if (startIndex < 0 || startIndex >= size)
       throw new IllegalArgumentException(
           String2.ERROR
-              + " in DoubleArray.get: startIndex ("
+              + " in DoubleArray.lastIndexOf: startIndex ("
               + startIndex
-              + ") >= size ("
+              + ") is invalid for size ("
               + size
               + ").");
     final ValueLayout.OfDouble ly = this.layout;
@@ -1124,6 +1125,10 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public int compare(final int index1, final PrimitiveArray otherPA, final int index2) {
+    if (otherPA instanceof DoubleArray otherDA) {
+      return Double.compare(
+          segment.getAtIndex(layout, index1), otherDA.segment.getAtIndex(otherDA.layout, index2));
+    }
     return Double.compare(getDouble(index1), otherPA.getNiceDouble(index2));
   }
 
@@ -1136,7 +1141,8 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void copy(final int from, final int to) {
-    set(to, get(from));
+    final ValueLayout.OfDouble ly = this.layout;
+    segment.setAtIndex(ly, to, segment.getAtIndex(ly, from));
   }
 
   /**
@@ -1167,7 +1173,8 @@ public class DoubleArray extends PrimitiveArray {
     final ValueLayout.OfDouble ly = this.layout;
     for (int i = 0; i < size; i++) {
       double v = segment.getAtIndex(ly, i);
-      set(i, Double.longBitsToDouble(Long.reverseBytes(Double.doubleToLongBits(v))));
+      segment.setAtIndex(
+          ly, i, Double.longBitsToDouble(Long.reverseBytes(Double.doubleToLongBits(v))));
     }
   }
 

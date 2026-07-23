@@ -3,20 +3,23 @@ package com.cohort.array;
 import java.util.Random;
 
 /**
- * Isolated Micro-Benchmark for comparing Java double[] against Panama-backed DoubleArray. Evaluates
- * Sequential Reads, Random/Stride Access, and Slicing/Subsetting.
+ * Extended Micro-Benchmark for comparing Java double[] against Panama FFM-backed DoubleArray.
+ * Evaluates Sequential Reads, Random/Stride Access, Slicing/Subsetting, Bulk Stream I/O, Sorting,
+ * element moving (move), and reordering.
  */
 public class PanamaArrayBenchmark {
 
   private static final int ARRAY_SIZE = 10_000_000;
+  private static final int HEAVY_OP_SIZE = 1_000_000;
   private static final int NUM_TRIALS = 5;
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     System.out.println("=================================================");
     System.out.println("  ERDDAP Panama-backed DoubleArray Benchmark  ");
     System.out.println("=================================================");
     System.out.printf("Array size: %,d elements\n", ARRAY_SIZE);
-    System.out.printf("Warmup and running %d trials per pattern...\n\n", NUM_TRIALS);
+    System.out.printf("Heavy Ops size (Sort/IO/Reorder/Move): %,d elements\n", HEAVY_OP_SIZE);
+    System.out.printf("Running %d trials per pattern...\n\n", NUM_TRIALS);
 
     // Setup test data
     double[] standardArray = new double[ARRAY_SIZE];
@@ -36,17 +39,45 @@ public class PanamaArrayBenchmark {
       strideIndices[i] = rand.nextInt(ARRAY_SIZE);
     }
 
+    // Setup heavy ops test rank indices
+    int[] ranks = new int[HEAVY_OP_SIZE];
+    for (int i = 0; i < HEAVY_OP_SIZE; i++) {
+      ranks[i] = rand.nextInt(HEAVY_OP_SIZE);
+    }
+
+    // Setup heavy ops test arrays
+    double[] heavyStd = new double[HEAVY_OP_SIZE];
+    System.arraycopy(standardArray, 0, heavyStd, 0, HEAVY_OP_SIZE);
+    DoubleArray heavyPan = new DoubleArray(HEAVY_OP_SIZE, true);
+    for (int i = 0; i < HEAVY_OP_SIZE; i++) {
+      heavyPan.set(i, heavyStd[i]);
+    }
+
     // WARMUP
     System.out.println("Warming up JIT...");
-    runSequentialRead(standardArray, panamaArray);
-    runStrideAccess(standardArray, panamaArray, strideIndices);
-    runSlicing(standardArray, panamaArray);
+    for (int i = 0; i < 3; i++) {
+      runSequentialRead(standardArray, panamaArray);
+      runStrideAccess(standardArray, panamaArray, strideIndices);
+      runSlicing(standardArray, panamaArray);
+      runWriteReadStandard(heavyStd);
+      runWriteReadPanama(heavyPan);
+      runSortStandard(heavyStd);
+      runSortPanama(heavyPan);
+      runMoveStandard(heavyStd, 100, 5000, 20000);
+      runMovePanama(heavyPan, 100, 5000, 20000);
+      runReorderStandard(heavyStd, ranks);
+      runReorderPanama(heavyPan, ranks);
+    }
     System.out.println("Warmup complete. Starting benchmark trials...\n");
 
     // Benchmark trial measurements
     double timeStandardSeq = 0, timePanamaSeq = 0;
     double timeStandardStride = 0, timePanamaStride = 0;
     double timeStandardSlice = 0, timePanamaSlice = 0;
+    double timeStandardIO = 0, timePanamaIO = 0;
+    double timeStandardSort = 0, timePanamaSort = 0;
+    double timeStandardMove = 0, timePanamaMove = 0;
+    double timeStandardReorder = 0, timePanamaReorder = 0;
 
     for (int trial = 1; trial <= NUM_TRIALS; trial++) {
       System.out.printf("--- Trial %d ---\n", trial);
@@ -96,8 +127,79 @@ public class PanamaArrayBenchmark {
       durationPan = (end - start) / 1_000_000.0;
       timePanamaSlice += durationPan;
       System.out.printf(
-          "Slicing/Subsets  -> Standard (ArrayCopy): %.2f ms, Panama (Zero-Copy): %.4f ms (Length: %d)\n\n",
+          "Slicing/Subsets  -> Standard (ArrayCopy): %.2f ms, Panama (Zero-Copy): %.4f ms (Length: %d)\n",
           durationStd, durationPan, slicedLengthPan);
+
+      // Pattern 4: Bulk Stream Write / Read IO (using custom chunk batching)
+      start = System.nanoTime();
+      double[] ioStd = runWriteReadStandard(heavyStd);
+      end = System.nanoTime();
+      durationStd = (end - start) / 1_000_000.0;
+      timeStandardIO += durationStd;
+
+      start = System.nanoTime();
+      DoubleArray ioPan = runWriteReadPanama(heavyPan);
+      end = System.nanoTime();
+      durationPan = (end - start) / 1_000_000.0;
+      timePanamaIO += durationPan;
+      System.out.printf(
+          "Bulk Stream IO   -> Standard: %.2f ms, Panama (Chunked): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+          durationStd, durationPan, ioStd[0], ioPan.get(0));
+
+      // Pattern 5: Sort
+      // Clone first to avoid sorting pre-sorted arrays
+      double[] sortStdIn = heavyStd.clone();
+      DoubleArray sortPanIn = new DoubleArray(heavyPan);
+
+      start = System.nanoTime();
+      runSortStandard(sortStdIn);
+      end = System.nanoTime();
+      durationStd = (end - start) / 1_000_000.0;
+      timeStandardSort += durationStd;
+
+      start = System.nanoTime();
+      runSortPanama(sortPanIn);
+      end = System.nanoTime();
+      durationPan = (end - start) / 1_000_000.0;
+      timePanamaSort += durationPan;
+      System.out.printf(
+          "Sorting          -> Standard: %.2f ms, Panama: %.2f ms (CheckSums: %.2f vs %.2f)\n",
+          durationStd, durationPan, sortStdIn[0], sortPanIn.get(0));
+
+      // Pattern 6: Move
+      double[] moveStdIn = heavyStd.clone();
+      DoubleArray movePanIn = new DoubleArray(heavyPan);
+
+      start = System.nanoTime();
+      runMoveStandard(moveStdIn, 100, 5000, 20000);
+      end = System.nanoTime();
+      durationStd = (end - start) / 1_000_000.0;
+      timeStandardMove += durationStd;
+
+      start = System.nanoTime();
+      runMovePanama(movePanIn, 100, 5000, 20000);
+      end = System.nanoTime();
+      durationPan = (end - start) / 1_000_000.0;
+      timePanamaMove += durationPan;
+      System.out.printf(
+          "Moving Elements  -> Standard: %.2f ms, Panama (Optimized): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+          durationStd, durationPan, moveStdIn[20000], movePanIn.get(20000));
+
+      // Pattern 7: Reorder
+      start = System.nanoTime();
+      double[] reorderStd = runReorderStandard(heavyStd, ranks);
+      end = System.nanoTime();
+      durationStd = (end - start) / 1_000_000.0;
+      timeStandardReorder += durationStd;
+
+      start = System.nanoTime();
+      runReorderPanama(heavyPan, ranks);
+      end = System.nanoTime();
+      durationPan = (end - start) / 1_000_000.0;
+      timePanamaReorder += durationPan;
+      System.out.printf(
+          "Reordering       -> Standard: %.2f ms, Panama (Inlined Ly): %.2f ms (CheckSums: %.2f vs %.2f)\n\n",
+          durationStd, durationPan, reorderStd[0], heavyPan.get(0));
     }
 
     // Print final averages
@@ -115,6 +217,18 @@ public class PanamaArrayBenchmark {
     System.out.printf(
         "   Panama (Zero-Copy):   %.4f ms (Significant GC Pressure Reduction)\n",
         timePanamaSlice / NUM_TRIALS);
+    System.out.printf("4. Bulk Stream Write / Read IO:\n");
+    System.out.printf("   Standard: %.2f ms\n", timeStandardIO / NUM_TRIALS);
+    System.out.printf("   Panama (Chunked Buffer): %.2f ms\n", timePanamaIO / NUM_TRIALS);
+    System.out.printf("5. Array Sorting (Sort):\n");
+    System.out.printf("   Standard: %.2f ms\n", timeStandardSort / NUM_TRIALS);
+    System.out.printf("   Panama:   %.2f ms\n", timePanamaSort / NUM_TRIALS);
+    System.out.printf("6. Moving Elements (Move):\n");
+    System.out.printf("   Standard: %.2f ms\n", timeStandardMove / NUM_TRIALS);
+    System.out.printf("   Panama (Allocation-Free): %.2f ms\n", timePanamaMove / NUM_TRIALS);
+    System.out.printf("7. Reordering Elements (Reorder):\n");
+    System.out.printf("   Standard: %.2f ms\n", timeStandardReorder / NUM_TRIALS);
+    System.out.printf("   Panama (Direct Segment Ly): %.2f ms\n", timePanamaReorder / NUM_TRIALS);
     System.out.println("=================================================");
   }
 
@@ -183,9 +297,81 @@ public class PanamaArrayBenchmark {
     int totalLength = 0;
     for (int i = 0; i < 1000; i++) {
       int length = 5000;
-      java.lang.foreign.MemorySegment slice = arr.segment.asSlice(i * 10 * 8L, length * 8L);
-      totalLength += (int) (slice.byteSize() / 8);
+      java.lang.foreign.MemorySegment slice =
+          arr.segment.asSlice(i * 10 * Double.BYTES, length * Double.BYTES);
+      totalLength += (int) (slice.byteSize() / Double.BYTES);
     }
     return totalLength;
+  }
+
+  private static double[] runWriteReadStandard(double[] arr) throws Exception {
+    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+    java.io.DataOutputStream dos = new java.io.DataOutputStream(baos);
+    for (double v : arr) {
+      dos.writeDouble(v);
+    }
+    dos.close();
+    byte[] bytes = baos.toByteArray();
+    java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(bytes);
+    java.io.DataInputStream dis = new java.io.DataInputStream(bais);
+    double[] target = new double[arr.length];
+    for (int i = 0; i < target.length; i++) {
+      target[i] = dis.readDouble();
+    }
+    return target;
+  }
+
+  private static DoubleArray runWriteReadPanama(DoubleArray arr) throws Exception {
+    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+    java.io.DataOutputStream dos = new java.io.DataOutputStream(baos);
+    arr.writeDos(dos);
+    dos.close();
+    byte[] bytes = baos.toByteArray();
+    java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(bytes);
+    java.io.DataInputStream dis = new java.io.DataInputStream(bais);
+    DoubleArray target = new DoubleArray(arr.size(), false);
+    target.readDis(dis, arr.size());
+    return target;
+  }
+
+  private static void runSortStandard(double[] arr) {
+    if (arr.length < 8192) {
+      java.util.Arrays.sort(arr, 0, arr.length);
+    } else {
+      java.util.Arrays.parallelSort(arr, 0, arr.length);
+    }
+  }
+
+  private static void runSortPanama(DoubleArray arr) {
+    arr.sort();
+  }
+
+  private static void runMoveStandard(double[] arr, int first, int last, int destination) {
+    int nToMove = last - first;
+    double[] temp = new double[nToMove];
+    System.arraycopy(arr, first, temp, 0, nToMove);
+    if (destination < first) {
+      System.arraycopy(arr, destination, arr, destination + nToMove, first - destination);
+      System.arraycopy(temp, 0, arr, destination, nToMove);
+    } else {
+      System.arraycopy(arr, last, arr, first, destination - last);
+      System.arraycopy(temp, 0, arr, destination - nToMove, nToMove);
+    }
+  }
+
+  private static void runMovePanama(DoubleArray arr, int first, int last, int destination) {
+    arr.move(first, last, destination);
+  }
+
+  private static double[] runReorderStandard(double[] arr, int[] ranks) {
+    double[] newArr = new double[ranks.length];
+    for (int i = 0; i < ranks.length; i++) {
+      newArr[i] = arr[ranks[i]];
+    }
+    return newArr;
+  }
+
+  private static void runReorderPanama(DoubleArray arr, int[] ranks) {
+    arr.reorder(ranks);
   }
 }
