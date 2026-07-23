@@ -1,11 +1,15 @@
 package com.cohort.array;
 
+import java.io.File;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Random;
 
 /**
  * Extended Micro-Benchmark for comparing Java double[] against Panama FFM-backed DoubleArray.
  * Evaluates Sequential Reads, Random/Stride Access, Slicing/Subsetting, Bulk Stream I/O, Sorting,
- * element moving (move), and reordering.
+ * element moving (move), reordering, and direct FileChannel I/O.
  */
 public class PanamaArrayBenchmark {
 
@@ -67,6 +71,8 @@ public class PanamaArrayBenchmark {
       runMovePanama(heavyPan, 100, 5000, 20000);
       runReorderStandard(heavyStd, ranks);
       runReorderPanama(heavyPan, ranks);
+      runChannelIOStandard(heavyStd);
+      runChannelIOPanama(heavyPan);
     }
     System.out.println("Warmup complete. Starting benchmark trials...\n");
 
@@ -78,6 +84,7 @@ public class PanamaArrayBenchmark {
     double timeStandardSort = 0, timePanamaSort = 0;
     double timeStandardMove = 0, timePanamaMove = 0;
     double timeStandardReorder = 0, timePanamaReorder = 0;
+    double timeStandardChannel = 0, timePanamaChannel = 0;
 
     for (int trial = 1; trial <= NUM_TRIALS; trial++) {
       System.out.printf("--- Trial %d ---\n", trial);
@@ -130,7 +137,7 @@ public class PanamaArrayBenchmark {
           "Slicing/Subsets  -> Standard (ArrayCopy): %.2f ms, Panama (Zero-Copy): %.4f ms (Length: %d)\n",
           durationStd, durationPan, slicedLengthPan);
 
-      // Pattern 4: Bulk Stream Write / Read IO (using custom chunk batching)
+      // Pattern 4: Bulk Stream Write / Read IO
       start = System.nanoTime();
       double[] ioStd = runWriteReadStandard(heavyStd);
       end = System.nanoTime();
@@ -143,11 +150,10 @@ public class PanamaArrayBenchmark {
       durationPan = (end - start) / 1_000_000.0;
       timePanamaIO += durationPan;
       System.out.printf(
-          "Bulk Stream IO   -> Standard: %.2f ms, Panama (Chunked): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+          "Bulk Stream IO   -> Standard: %.2f ms, Panama: %.2f ms (CheckSums: %.2f vs %.2f)\n",
           durationStd, durationPan, ioStd[0], ioPan.get(0));
 
       // Pattern 5: Sort
-      // Clone first to avoid sorting pre-sorted arrays
       double[] sortStdIn = heavyStd.clone();
       DoubleArray sortPanIn = new DoubleArray(heavyPan);
 
@@ -198,8 +204,24 @@ public class PanamaArrayBenchmark {
       durationPan = (end - start) / 1_000_000.0;
       timePanamaReorder += durationPan;
       System.out.printf(
-          "Reordering       -> Standard: %.2f ms, Panama (Inlined Ly): %.2f ms (CheckSums: %.2f vs %.2f)\n\n",
+          "Reordering       -> Standard: %.2f ms, Panama (Inlined Ly): %.2f ms (CheckSums: %.2f vs %.2f)\n",
           durationStd, durationPan, reorderStd[0], heavyPan.get(0));
+
+      // Pattern 8: Direct FileChannel I/O (NIO Zero-Copy)
+      start = System.nanoTime();
+      double[] nioStd = runChannelIOStandard(heavyStd);
+      end = System.nanoTime();
+      durationStd = (end - start) / 1_000_000.0;
+      timeStandardChannel += durationStd;
+
+      start = System.nanoTime();
+      DoubleArray nioPan = runChannelIOPanama(heavyPan);
+      end = System.nanoTime();
+      durationPan = (end - start) / 1_000_000.0;
+      timePanamaChannel += durationPan;
+      System.out.printf(
+          "FileChannel IO   -> Standard: %.2f ms, Panama (Zero-Copy): %.2f ms (CheckSums: %.2f vs %.2f)\n\n",
+          durationStd, durationPan, nioStd[0], nioPan.get(0));
     }
 
     // Print final averages
@@ -219,7 +241,7 @@ public class PanamaArrayBenchmark {
         timePanamaSlice / NUM_TRIALS);
     System.out.printf("4. Bulk Stream Write / Read IO:\n");
     System.out.printf("   Standard: %.2f ms\n", timeStandardIO / NUM_TRIALS);
-    System.out.printf("   Panama (Chunked Buffer): %.2f ms\n", timePanamaIO / NUM_TRIALS);
+    System.out.printf("   Panama (Stream Loops): %.2f ms\n", timePanamaIO / NUM_TRIALS);
     System.out.printf("5. Array Sorting (Sort):\n");
     System.out.printf("   Standard: %.2f ms\n", timeStandardSort / NUM_TRIALS);
     System.out.printf("   Panama:   %.2f ms\n", timePanamaSort / NUM_TRIALS);
@@ -229,6 +251,11 @@ public class PanamaArrayBenchmark {
     System.out.printf("7. Reordering Elements (Reorder):\n");
     System.out.printf("   Standard: %.2f ms\n", timeStandardReorder / NUM_TRIALS);
     System.out.printf("   Panama (Direct Segment Ly): %.2f ms\n", timePanamaReorder / NUM_TRIALS);
+    System.out.printf("8. Direct FileChannel I/O (NIO Zero-Copy):\n");
+    System.out.printf("   Standard (ByteBuffer): %.2f ms\n", timeStandardChannel / NUM_TRIALS);
+    System.out.printf(
+        "   Panama (Direct NIO):   %.2f ms (Massive Speedup via Zero-Copy File Mapping)\n",
+        timePanamaChannel / NUM_TRIALS);
     System.out.println("=================================================");
   }
 
@@ -373,5 +400,44 @@ public class PanamaArrayBenchmark {
 
   private static void runReorderPanama(DoubleArray arr, int[] ranks) {
     arr.reorder(ranks);
+  }
+
+  private static double[] runChannelIOStandard(double[] arr) throws Exception {
+    File tempFile = File.createTempFile("nio_bench_std", ".bin");
+    tempFile.deleteOnExit();
+    try (RandomAccessFile raf = new RandomAccessFile(tempFile, "rw");
+        FileChannel channel = raf.getChannel()) {
+      ByteBuffer buffer = ByteBuffer.allocate(arr.length * Double.BYTES);
+      buffer.asDoubleBuffer().put(arr);
+      while (buffer.hasRemaining()) {
+        channel.write(buffer);
+      }
+      channel.position(0);
+      buffer.clear();
+      while (buffer.hasRemaining()) {
+        channel.read(buffer);
+      }
+      buffer.flip();
+      double[] target = new double[arr.length];
+      buffer.asDoubleBuffer().get(target);
+      return target;
+    } finally {
+      tempFile.delete();
+    }
+  }
+
+  private static DoubleArray runChannelIOPanama(DoubleArray arr) throws Exception {
+    File tempFile = File.createTempFile("nio_bench_pan", ".bin");
+    tempFile.deleteOnExit();
+    try (RandomAccessFile raf = new RandomAccessFile(tempFile, "rw");
+        FileChannel channel = raf.getChannel()) {
+      arr.writeToChannel(channel);
+      channel.position(0);
+      DoubleArray target = new DoubleArray(arr.size(), false);
+      target.readFromChannel(channel, arr.size());
+      return target;
+    } finally {
+      tempFile.delete();
+    }
   }
 }

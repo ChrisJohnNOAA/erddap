@@ -1204,6 +1204,60 @@ public class DoubleArray extends PrimitiveArray {
    *     size=0, this returns 0.
    * @throws Exception if trouble
    */
+  /**
+   * Writes the entire DoubleArray directly to a FileChannel with zero heap-copying where supported,
+   * falling back to buffer-based write otherwise.
+   */
+  public long writeToChannel(final java.nio.channels.FileChannel channel) throws IOException {
+    if (size == 0) return 0;
+    try {
+      java.nio.ByteBuffer buffer = segment.asSlice(0, (long) size * Double.BYTES).asByteBuffer();
+      long bytesWritten = 0;
+      while (buffer.hasRemaining()) {
+        bytesWritten += channel.write(buffer);
+      }
+      return bytesWritten;
+    } catch (UnsupportedOperationException e) {
+      double[] temp = toArray();
+      java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocate(size * Double.BYTES);
+      buffer.asDoubleBuffer().put(temp);
+      long bytesWritten = 0;
+      while (buffer.hasRemaining()) {
+        bytesWritten += channel.write(buffer);
+      }
+      return bytesWritten;
+    }
+  }
+
+  /** Reads n elements directly from a FileChannel into this DoubleArray. */
+  public void readFromChannel(final java.nio.channels.FileChannel channel, final int n)
+      throws IOException {
+    if (n <= 0) return;
+    ensureCapacity(size + (long) n);
+    try {
+      java.nio.ByteBuffer buffer =
+          segment.asSlice((long) size * Double.BYTES, (long) n * Double.BYTES).asByteBuffer();
+      while (buffer.hasRemaining()) {
+        if (channel.read(buffer) == -1) {
+          throw new java.io.EOFException();
+        }
+      }
+      size += n;
+    } catch (UnsupportedOperationException e) {
+      double[] temp = new double[n];
+      java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocate(n * Double.BYTES);
+      while (buffer.hasRemaining()) {
+        if (channel.read(buffer) == -1) {
+          throw new java.io.EOFException();
+        }
+      }
+      buffer.flip();
+      buffer.asDoubleBuffer().get(temp);
+      MemorySegment.copy(temp, 0, segment, layout, (long) size * Double.BYTES, n);
+      size += n;
+    }
+  }
+
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
     if (size == 0) return 0;
