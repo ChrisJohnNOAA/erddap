@@ -768,16 +768,22 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This gets a specified element with maximum JIT optimization.
+   * This gets a specified element with maximum JIT optimization. Passes directly to
+   * segment.getAtIndex when isNativeByteOrder is true, bypassing manual range checks to allow C2
+   * BCE (Bounds Check Elimination) and loop unrolling, with a wrapper catching
+   * IndexOutOfBoundsException for backwards compatible error messages.
    *
    * @param index 0 ... size-1
    * @return the specified element
    */
   @SuppressWarnings("ReferenceEquality")
   public double get(final int index) {
-    if (index < 0 || index >= size)
+    try {
+      java.util.Objects.checkIndex(index, size);
+    } catch (IndexOutOfBoundsException e) {
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.get: index (" + index + ") >= size (" + size + ").");
+    }
     if (isNativeByteOrder) {
       return segment.getAtIndex(ValueLayout.JAVA_DOUBLE, index);
     } else {
@@ -786,16 +792,22 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This sets a specified element with maximum JIT optimization.
+   * This sets a specified element with maximum JIT optimization. Passes directly to
+   * segment.setAtIndex when isNativeByteOrder is true, bypassing manual range checks to allow C2
+   * BCE (Bounds Check Elimination) and loop unrolling, with a wrapper catching
+   * IndexOutOfBoundsException for backwards compatible error messages.
    *
    * @param index 0 ... size-1
    * @param value the value for that element
    */
   @SuppressWarnings("ReferenceEquality")
   public void set(final int index, final double value) {
-    if (index < 0 || index >= size)
+    try {
+      java.util.Objects.checkIndex(index, size);
+    } catch (IndexOutOfBoundsException e) {
       throw new IllegalArgumentException(
           String2.ERROR + " in DoubleArray.set: index (" + index + ") >= size (" + size + ").");
+    }
     if (isNativeByteOrder) {
       segment.setAtIndex(ValueLayout.JAVA_DOUBLE, index, value);
     } else {
@@ -1135,69 +1147,27 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * Sorts the elements in ascending order in-place using a high-performance, purely off-heap
-   * Quicksort algorithm, completely avoiding heap allocations or native-to-heap copies.
+   * Sorts the elements in ascending order. Uses ultra-fast bulk memory copies to leverage Java's
+   * multi-threaded Dual-Pivot Quicksort, eliminating FFM per-element function call overhead during
+   * sorting.
    */
   @Override
   public void sort() {
     if (size <= 1) return;
-    quickSort(segment, layout, 0, size - 1);
-  }
 
-  private static void quickSort(MemorySegment seg, ValueLayout.OfDouble ly, int left, int right) {
-    if (right - left < 27) { // Insertion sort for small subarrays
-      for (int i = left + 1; i <= right; i++) {
-        double val = seg.getAtIndex(ly, i);
-        int j = i - 1;
-        while (j >= left && Double.compare(seg.getAtIndex(ly, j), val) > 0) {
-          seg.setAtIndex(ly, j + 1, seg.getAtIndex(ly, j));
-          j--;
-        }
-        seg.setAtIndex(ly, j + 1, val);
-      }
-      return;
-    }
-    // Partition
-    int pIndex = partition(seg, ly, left, right);
-    quickSort(seg, ly, left, pIndex - 1);
-    quickSort(seg, ly, pIndex + 1, right);
-  }
+    // 1. Bulk transfer off-heap memory to a temporary heap array (ultra-fast native memcpy)
+    double[] temp = new double[size];
+    MemorySegment.copy(segment, ValueLayout.JAVA_DOUBLE, 0L, temp, 0, size);
 
-  private static int partition(MemorySegment seg, ValueLayout.OfDouble ly, int left, int right) {
-    int mid = left + (right - left) / 2;
-    double lVal = seg.getAtIndex(ly, left);
-    double mVal = seg.getAtIndex(ly, mid);
-    double rVal = seg.getAtIndex(ly, right);
-    if (Double.compare(lVal, mVal) > 0) {
-      swap(seg, ly, left, mid);
-    }
-    if (Double.compare(seg.getAtIndex(ly, left), rVal) > 0) {
-      swap(seg, ly, left, right);
-    }
-    if (Double.compare(seg.getAtIndex(ly, mid), rVal) > 0) {
-      swap(seg, ly, mid, right);
+    // 2. Execute multi-threaded Dual-Pivot Quicksort
+    if (size < 8192) {
+      Arrays.sort(temp, 0, size);
+    } else {
+      Arrays.parallelSort(temp, 0, size);
     }
 
-    double pivot = seg.getAtIndex(ly, mid);
-    swap(seg, ly, mid, right - 1);
-    int i = left;
-    int j = right - 1;
-    while (true) {
-      while (Double.compare(seg.getAtIndex(ly, ++i), pivot) < 0)
-        ;
-      while (Double.compare(seg.getAtIndex(ly, --j), pivot) > 0)
-        ;
-      if (i >= j) break;
-      swap(seg, ly, i, j);
-    }
-    swap(seg, ly, i, right - 1);
-    return i;
-  }
-
-  private static void swap(MemorySegment seg, ValueLayout.OfDouble ly, int i, int j) {
-    double t = seg.getAtIndex(ly, i);
-    seg.setAtIndex(ly, i, seg.getAtIndex(ly, j));
-    seg.setAtIndex(ly, j, t);
+    // 3. Bulk transfer sorted data back to off-heap memory segment
+    MemorySegment.copy(temp, 0, segment, ValueLayout.JAVA_DOUBLE, 0L, size);
   }
 
   /**
@@ -1235,28 +1205,26 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This reorders the values in 'array' based on rank. Reorders directly in off-heap memory using a
-   * scratch segment, completely eliminating heap allocations.
-   *
-   * @param rank is an int with values (0 ... size-1) which points to the row number for a row with
-   *     a specific rank (e.g., rank[0] is the row number of the first item in the sorted list,
-   *     rank[1] is the row number of the second item in the sorted list, ...).
+   * Reorders elements based on rank. Uses a bulk-copy hybrid approach to allow C2 JIT to optimize
+   * non-sequential gather indexing without per-element FFM boundary check overhead.
    */
   @Override
   public void reorder(final int rank[]) {
     final int n = rank.length;
-    final ValueLayout.OfDouble ly = this.layout;
 
-    // Allocate scratch segment off-heap
-    MemorySegment dstSegment = Arena.ofAuto().allocate((long) Double.BYTES * n);
+    // 1. Bulk copy off-heap segment to a temporary JVM heap array
+    double[] src = new double[size];
+    MemorySegment.copy(segment, ValueLayout.JAVA_DOUBLE, 0L, src, 0, size);
 
-    // Direct off-heap gather loop (no heap allocations)
+    // 2. Perform gather operation on JVM heap (max JIT optimization & L1 cache locality)
+    double[] dst = new double[n];
     for (int i = 0; i < n; i++) {
-      dstSegment.setAtIndex(ly, i, segment.getAtIndex(ly, rank[i]));
+      dst[i] = src[rank[i]];
     }
 
-    this.segment = dstSegment;
-    this.capacity = n;
+    // 3. Ensure capacity and bulk copy reordered array back to segment
+    ensureCapacity(n);
+    MemorySegment.copy(dst, 0, segment, ValueLayout.JAVA_DOUBLE, 0L, n);
     this.size = n;
   }
 
@@ -1276,7 +1244,8 @@ public class DoubleArray extends PrimitiveArray {
 
   /**
    * Writes the entire DoubleArray directly to a FileChannel with zero heap-copying where supported,
-   * falling back to buffer-based write otherwise.
+   * falling back to buffer-based write otherwise. Standard channel writes issue conventional OS
+   * system calls, whereas createMapped provides true zero-copy OS memory mapping.
    */
   public long writeToChannel(final java.nio.channels.FileChannel channel) throws IOException {
     if (size == 0) return 0;
@@ -1299,7 +1268,11 @@ public class DoubleArray extends PrimitiveArray {
     }
   }
 
-  /** Reads n elements directly from a FileChannel into this DoubleArray. */
+  /**
+   * Reads n elements directly from a FileChannel into this DoubleArray. Standard channel reads
+   * issue conventional OS system calls, whereas createMapped provides true zero-copy OS memory
+   * mapping.
+   */
   public void readFromChannel(final java.nio.channels.FileChannel channel, final int n)
       throws IOException {
     if (n <= 0) return;
@@ -1330,7 +1303,7 @@ public class DoubleArray extends PrimitiveArray {
 
   /**
    * Writes data directly to a file via memory-mapping (mmap). Eliminates FileChannel.write() system
-   * calls entirely.
+   * calls entirely, providing true zero-copy OS memory mapping.
    */
   public static DoubleArray createMapped(java.nio.file.Path path, long size, Arena arena)
       throws IOException {
@@ -1359,18 +1332,30 @@ public class DoubleArray extends PrimitiveArray {
     MemorySegment.copy(this.segment, 0, mappedTarget.segment, 0, (long) this.size * Double.BYTES);
   }
 
+  /**
+   * Writes the entire DoubleArray directly to a DataOutputStream in fast, chunked bulk byte blocks
+   * using double buffer serialization, bypassing slow per-element loop overhead.
+   */
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
     if (size == 0) return 0;
-    double[] chunk = new double[Math.min(8192, size)];
+    int chunkDoubleCount = Math.min(8192, size);
+    double[] doubleChunk = new double[chunkDoubleCount];
+    byte[] byteChunk = new byte[chunkDoubleCount * Double.BYTES];
+    java.nio.ByteBuffer byteBuf =
+        java.nio.ByteBuffer.wrap(byteChunk).order(java.nio.ByteOrder.BIG_ENDIAN);
+    java.nio.DoubleBuffer doubleBuf = byteBuf.asDoubleBuffer();
+
     int len = size;
     final ValueLayout.OfDouble ly = this.layout;
-    for (int offset = 0; offset < len; offset += chunk.length) {
-      int count = Math.min(chunk.length, len - offset);
-      MemorySegment.copy(segment, ly, (long) offset * Double.BYTES, chunk, 0, count);
-      for (int i = 0; i < count; i++) {
-        dos.writeDouble(chunk[i]);
-      }
+    for (int offset = 0; offset < len; offset += chunkDoubleCount) {
+      int count = Math.min(chunkDoubleCount, len - offset);
+      // Bulk copy from MemorySegment to the double[] chunk (handles layout order)
+      MemorySegment.copy(segment, ly, (long) offset * Double.BYTES, doubleChunk, 0, count);
+      // Bulk put from double[] to DoubleBuffer (handles native-to-big-endian translation in bulk)
+      doubleBuf.clear();
+      doubleBuf.put(doubleChunk, 0, count);
+      dos.write(byteChunk, 0, count * Double.BYTES);
     }
     return Double.BYTES;
   }
@@ -1391,7 +1376,8 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This reads/adds n elements from a DataInputStream.
+   * This reads/adds n elements from a DataInputStream in fast bulk blocks using double buffer
+   * deserialization.
    *
    * @param dis the DataInputStream
    * @param n the number of elements to be read/added
@@ -1401,15 +1387,21 @@ public class DoubleArray extends PrimitiveArray {
   public void readDis(final DataInputStream dis, final int n) throws Exception {
     if (n <= 0) return;
     ensureCapacity(size + (long) n);
-    double[] chunk = new double[Math.min(8192, n)];
+    int chunkDoubleCount = Math.min(8192, n);
+    double[] doubleChunk = new double[chunkDoubleCount];
+    byte[] byteChunk = new byte[chunkDoubleCount * Double.BYTES];
+    java.nio.ByteBuffer byteBuf =
+        java.nio.ByteBuffer.wrap(byteChunk).order(java.nio.ByteOrder.BIG_ENDIAN);
+    java.nio.DoubleBuffer doubleBuf = byteBuf.asDoubleBuffer();
+
     final ValueLayout.OfDouble ly = this.layout;
     int remaining = n;
     while (remaining > 0) {
-      int count = Math.min(chunk.length, remaining);
-      for (int i = 0; i < count; i++) {
-        chunk[i] = dis.readDouble();
-      }
-      MemorySegment.copy(chunk, 0, segment, ly, (long) size * Double.BYTES, count);
+      int count = Math.min(chunkDoubleCount, remaining);
+      dis.readFully(byteChunk, 0, count * Double.BYTES);
+      doubleBuf.clear();
+      doubleBuf.get(doubleChunk, 0, count);
+      MemorySegment.copy(doubleChunk, 0, segment, ly, (long) size * Double.BYTES, count);
       size += count;
       remaining -= count;
     }
@@ -1427,15 +1419,21 @@ public class DoubleArray extends PrimitiveArray {
     final int nValues = dis.readInt();
     dis.readInt(); // skip duplicate of nValues
     ensureCapacity(size + (long) nValues);
-    double[] chunk = new double[Math.min(8192, nValues)];
+    int chunkDoubleCount = Math.min(8192, nValues);
+    double[] doubleChunk = new double[chunkDoubleCount];
+    byte[] byteChunk = new byte[chunkDoubleCount * Double.BYTES];
+    java.nio.ByteBuffer byteBuf =
+        java.nio.ByteBuffer.wrap(byteChunk).order(java.nio.ByteOrder.BIG_ENDIAN);
+    java.nio.DoubleBuffer doubleBuf = byteBuf.asDoubleBuffer();
+
     final ValueLayout.OfDouble ly = this.layout;
     int remaining = nValues;
     while (remaining > 0) {
-      int count = Math.min(chunk.length, remaining);
-      for (int i = 0; i < count; i++) {
-        chunk[i] = dis.readDouble();
-      }
-      MemorySegment.copy(chunk, 0, segment, ly, (long) size * Double.BYTES, count);
+      int count = Math.min(chunkDoubleCount, remaining);
+      dis.readFully(byteChunk, 0, count * Double.BYTES);
+      doubleBuf.clear();
+      doubleBuf.get(doubleChunk, 0, count);
+      MemorySegment.copy(doubleChunk, 0, segment, ly, (long) size * Double.BYTES, count);
       size += count;
       remaining -= count;
     }
