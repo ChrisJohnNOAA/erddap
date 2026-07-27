@@ -16,9 +16,19 @@ import java.util.Random;
  */
 public class PanamaArrayBenchmark {
 
-  private static final int ARRAY_SIZE = 10_000_000;
-  private static final int HEAVY_OP_SIZE = 1_000_000;
+  private static final int ARRAY_SIZE = 100_000_000;
+  private static final int HEAVY_OP_SIZE = 25_000_000;
   private static final int NUM_TRIALS = 5;
+
+  // Benchmark trial measurements
+  static double timeStandardSeq = 0, timePanamaSeq = 0;
+  static double timeStandardStride = 0, timePanamaStride = 0;
+  static double timeStandardSlice = 0, timePanamaSlice = 0;
+  static double timeStandardIO = 0, timePanamaIO = 0;
+  static double timeStandardSort = 0, timePanamaSort = 0;
+  static double timeStandardMove = 0, timePanamaMove = 0;
+  static double timeStandardReorder = 0, timePanamaReorder = 0;
+  static double timeStandardChannel = 0, timePanamaMapped = 0;
 
   public static void main(String[] args) throws Exception {
     System.out.println("=================================================");
@@ -79,16 +89,6 @@ public class PanamaArrayBenchmark {
     }
     System.out.println("Warmup complete. Starting benchmark trials...\n");
 
-    // Benchmark trial measurements
-    double timeStandardSeq = 0, timePanamaSeq = 0;
-    double timeStandardStride = 0, timePanamaStride = 0;
-    double timeStandardSlice = 0, timePanamaSlice = 0;
-    double timeStandardIO = 0, timePanamaIO = 0;
-    double timeStandardSort = 0, timePanamaSort = 0;
-    double timeStandardMove = 0, timePanamaMove = 0;
-    double timeStandardReorder = 0, timePanamaReorder = 0;
-    double timeStandardChannel = 0, timePanamaMapped = 0;
-
     for (int trial = 1; trial <= NUM_TRIALS; trial++) {
       System.out.printf("--- Trial %d ---\n", trial);
 
@@ -141,90 +141,19 @@ public class PanamaArrayBenchmark {
           durationStd, durationPan, slicedLengthPan);
 
       // Pattern 4: Bulk Stream Write / Read IO
-      start = System.nanoTime();
-      double[] ioStd = runWriteReadStandard(heavyStd);
-      end = System.nanoTime();
-      durationStd = (end - start) / 1_000_000.0;
-      timeStandardIO += durationStd;
-
-      start = System.nanoTime();
-      DoubleArray ioPan = runWriteReadPanama(heavyPan);
-      end = System.nanoTime();
-      durationPan = (end - start) / 1_000_000.0;
-      timePanamaIO += durationPan;
-      System.out.printf(
-          "Bulk Stream IO   -> Standard: %.2f ms, Panama (Chunked): %.2f ms (CheckSums: %.2f vs %.2f)\n",
-          durationStd, durationPan, ioStd[0], ioPan.get(0));
+      timeReadWriteIO(heavyStd, heavyPan);
 
       // Pattern 5: Sort
-      double[] sortStdIn = heavyStd.clone();
-      DoubleArray sortPanIn = new DoubleArray(heavyPan);
-
-      start = System.nanoTime();
-      runSortStandard(sortStdIn);
-      end = System.nanoTime();
-      durationStd = (end - start) / 1_000_000.0;
-      timeStandardSort += durationStd;
-
-      start = System.nanoTime();
-      runSortPanama(sortPanIn);
-      end = System.nanoTime();
-      durationPan = (end - start) / 1_000_000.0;
-      timePanamaSort += durationPan;
-      System.out.printf(
-          "Sorting          -> Standard: %.2f ms, Panama (Off-heap QS): %.2f ms (CheckSums: %.2f vs %.2f)\n",
-          durationStd, durationPan, sortStdIn[0], sortPanIn.get(0));
+      timeSort(heavyStd, heavyPan);
 
       // Pattern 6: Move
-      double[] moveStdIn = heavyStd.clone();
-      DoubleArray movePanIn = new DoubleArray(heavyPan);
-
-      start = System.nanoTime();
-      runMoveStandard(moveStdIn, 100, 5000, 20000);
-      end = System.nanoTime();
-      durationStd = (end - start) / 1_000_000.0;
-      timeStandardMove += durationStd;
-
-      start = System.nanoTime();
-      runMovePanama(movePanIn, 100, 5000, 20000);
-      end = System.nanoTime();
-      durationPan = (end - start) / 1_000_000.0;
-      timePanamaMove += durationPan;
-      System.out.printf(
-          "Moving Elements  -> Standard: %.2f ms, Panama (Allocation-Free): %.2f ms (CheckSums: %.2f vs %.2f)\n",
-          durationStd, durationPan, moveStdIn[20000], movePanIn.get(20000));
+      timeMove(heavyStd, heavyPan);
 
       // Pattern 7: Reorder
-      start = System.nanoTime();
-      double[] reorderStd = runReorderStandard(heavyStd, ranks);
-      end = System.nanoTime();
-      durationStd = (end - start) / 1_000_000.0;
-      timeStandardReorder += durationStd;
-
-      start = System.nanoTime();
-      runReorderPanama(heavyPan, ranks);
-      end = System.nanoTime();
-      durationPan = (end - start) / 1_000_000.0;
-      timePanamaReorder += durationPan;
-      System.out.printf(
-          "Reordering       -> Standard: %.2f ms, Panama (Scratch Segment): %.2f ms (CheckSums: %.2f vs %.2f)\n",
-          durationStd, durationPan, reorderStd[0], heavyPan.get(0));
+      timeReorder(ranks, heavyStd, heavyPan);
 
       // Pattern 8: True Zero-Copy Memory-Mapped I/O (mmap)
-      start = System.nanoTime();
-      double[] nioStd = runChannelIOStandard(heavyStd);
-      end = System.nanoTime();
-      durationStd = (end - start) / 1_000_000.0;
-      timeStandardChannel += durationStd;
-
-      start = System.nanoTime();
-      DoubleArray nioPan = runMappedIOPanama(heavyPan);
-      end = System.nanoTime();
-      durationPan = (end - start) / 1_000_000.0;
-      timePanamaMapped += durationPan;
-      System.out.printf(
-          "Memory Mapped IO -> Standard (File IO): %.2f ms, Panama (mmap Zero-Copy): %.2f ms (CheckSums: %.2f vs %.2f)\n\n",
-          durationStd, durationPan, nioStd[0], nioPan.get(0));
+      timeFileMap(heavyStd, heavyPan);
     }
 
     // Print final averages
@@ -261,6 +190,117 @@ public class PanamaArrayBenchmark {
         "   Panama (mmap Zero-Copy):   %.2f ms (True Kernel-Bypassed Zero-Copy I/O)\n",
         timePanamaMapped / NUM_TRIALS);
     System.out.println("=================================================");
+  }
+
+  private static void timeReadWriteIO(double[] heavyStd, DoubleArray heavyPan) throws Exception {
+    long start;
+    long end;
+    double durationStd;
+    double durationPan;
+    start = System.nanoTime();
+    double[] ioStd = runWriteReadStandard(heavyStd);
+    end = System.nanoTime();
+    durationStd = (end - start) / 1_000_000.0;
+    timeStandardIO += durationStd;
+
+    start = System.nanoTime();
+    DoubleArray ioPan = runWriteReadPanama(heavyPan);
+    end = System.nanoTime();
+    durationPan = (end - start) / 1_000_000.0;
+    timePanamaIO += durationPan;
+    System.out.printf(
+        "Bulk Stream IO   -> Standard: %.2f ms, Panama (Chunked): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+        durationStd, durationPan, ioStd[0], ioPan.get(0));
+  }
+
+  private static void timeSort(double[] heavyStd, DoubleArray heavyPan) {
+    long start;
+    long end;
+    double durationStd;
+    double durationPan;
+    double[] sortStdIn = heavyStd.clone();
+    DoubleArray sortPanIn = new DoubleArray(heavyPan);
+
+    start = System.nanoTime();
+    runSortStandard(sortStdIn);
+    end = System.nanoTime();
+    durationStd = (end - start) / 1_000_000.0;
+    timeStandardSort += durationStd;
+
+    start = System.nanoTime();
+    runSortPanama(sortPanIn);
+    end = System.nanoTime();
+    durationPan = (end - start) / 1_000_000.0;
+    timePanamaSort += durationPan;
+    System.out.printf(
+        "Sorting          -> Standard: %.2f ms, Panama (Off-heap QS): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+        durationStd, durationPan, sortStdIn[0], sortPanIn.get(0));
+  }
+
+  private static void timeMove(double[] heavyStd, DoubleArray heavyPan) {
+    long start;
+    long end;
+    double durationStd;
+    double durationPan;
+    double[] moveStdIn = heavyStd.clone();
+    DoubleArray movePanIn = new DoubleArray(heavyPan);
+
+    start = System.nanoTime();
+    runMoveStandard(moveStdIn, 100, 5000, 20000);
+    end = System.nanoTime();
+    durationStd = (end - start) / 1_000_000.0;
+    timeStandardMove += durationStd;
+
+    start = System.nanoTime();
+    runMovePanama(movePanIn, 100, 5000, 20000);
+    end = System.nanoTime();
+    durationPan = (end - start) / 1_000_000.0;
+    timePanamaMove += durationPan;
+    System.out.printf(
+        "Moving Elements  -> Standard: %.2f ms, Panama (Allocation-Free): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+        durationStd, durationPan, moveStdIn[20000], movePanIn.get(20000));
+  }
+
+  private static void timeReorder(int[] ranks, double[] heavyStd, DoubleArray heavyPan) {
+    long start;
+    long end;
+    double durationStd;
+    double durationPan;
+    start = System.nanoTime();
+    double[] reorderStd = runReorderStandard(heavyStd, ranks);
+    end = System.nanoTime();
+    durationStd = (end - start) / 1_000_000.0;
+    timeStandardReorder += durationStd;
+
+    start = System.nanoTime();
+    runReorderPanama(heavyPan, ranks);
+    end = System.nanoTime();
+    durationPan = (end - start) / 1_000_000.0;
+    timePanamaReorder += durationPan;
+    System.out.printf(
+        "Reordering       -> Standard: %.2f ms, Panama (Scratch Segment): %.2f ms (CheckSums: %.2f vs %.2f)\n",
+        durationStd, durationPan, reorderStd[0], heavyPan.get(0));
+  }
+
+  private static void timeFileMap(double[] heavyStd, DoubleArray heavyPan) throws Exception {
+    long start;
+    long end;
+    double durationStd;
+    double durationPan;
+    start = System.nanoTime();
+    double[] nioStd = runChannelIOStandard(heavyStd);
+    end = System.nanoTime();
+    durationStd = (end - start) / 1_000_000.0;
+    timeStandardChannel += durationStd;
+
+    start = System.nanoTime();
+    DoubleArray nioPan = runMappedIOPanama(heavyPan);
+    end = System.nanoTime();
+    durationPan = (end - start) / 1_000_000.0;
+    timePanamaMapped += durationPan;
+    System.out.printf(
+        "Memory Mapped IO -> Standard (File IO): %.2f ms, Panama (mmap Zero-Copy): %.2f ms (CheckSums: %.2f vs %.2f)\n\n",
+        durationStd, durationPan, nioStd[0], nioPan.get(0));
   }
 
   private static void runSequentialRead(double[] standard, DoubleArray panama) {
