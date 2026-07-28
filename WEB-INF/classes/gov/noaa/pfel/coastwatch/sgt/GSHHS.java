@@ -256,8 +256,8 @@ public class GSHHS {
 
     // fill path object
     int n = lon.size();
-    int lonAr[] = lon.array;
-    int latAr[] = lat.array;
+    int lonAr[] = lon.toArray();
+    int latAr[] = lat.toArray();
     for (int i = 0; i < n; i++) {
       if (lonAr[i] == Integer.MAX_VALUE) {
         i++; // move to next point

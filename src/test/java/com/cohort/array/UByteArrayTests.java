@@ -304,7 +304,7 @@ class UByteArrayTests {
 
     // test trimToSize
     anArray.trimToSize();
-    Test.ensureEqual(anArray.array.length, 2, "");
+    Test.ensureEqual(anArray.capacity(), 2, "");
 
     // test equals
     UByteArray anArray2 = new UByteArray();

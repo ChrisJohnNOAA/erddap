@@ -296,7 +296,7 @@ class LongArrayTests {
 
     // test trimToSize
     anArray.trimToSize();
-    Test.ensureEqual(anArray.array.length, 2, "");
+    Test.ensureEqual(anArray.capacity(), 2, "");
 
     // test equals
     LongArray anArray2 = new LongArray();

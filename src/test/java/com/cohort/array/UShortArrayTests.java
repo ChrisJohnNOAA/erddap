@@ -293,7 +293,7 @@ class UShortArrayTests {
 
     // test trimToSize
     anArray.trimToSize();
-    Test.ensureEqual(anArray.array.length, 2, "");
+    Test.ensureEqual(anArray.capacity(), 2, "");
 
     // test equals
     UShortArray anArray2 = new UShortArray();

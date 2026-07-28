@@ -9189,14 +9189,13 @@ public class Table {
         for (int c = 0; c < nChannels; c++) {
           ByteArray ba = (ByteArray) pa[c];
           ShortArray sa = new ShortArray(nFrames, true);
-          short sar[] = sa.array;
           setColumn(c, sa);
           long lmin = Long.MAX_VALUE;
           long lmax = Long.MIN_VALUE;
           int min = Integer.MAX_VALUE;
           int max = Integer.MIN_VALUE;
           for (int f = 0; f < nFrames; f++) {
-            long tl = (ba.array[f] & 0xffL) ^ 0x55L;
+            long tl = (ba.getArrayVal(f) & 0xffL) ^ 0x55L;
             if ((tl & 0x80L) == 0x80L) tl = -(tl ^ 0x80L);
             lmin = Math.min(lmin, tl);
             lmax = Math.max(lmax, tl);
@@ -9206,9 +9205,10 @@ public class Table {
             if (sample < d1) sample = sample * d2;
             else sample = Math.exp((sample * d0) - 1.0) / 87.7;
             sample = signum * sample;
-            sar[f] = Math2.roundToShort(sm1 * sample); // sample is +/-1
-            min = Math.min(min, sar[f]);
-            max = Math.max(max, sar[f]);
+            short outVal = Math2.roundToShort(sm1 * sample); // sample is +/-1
+            sa.setArrayVal(f, outVal);
+            min = Math.min(min, outVal);
+            max = Math.max(max, outVal);
           }
           if (reallyVerbose)
             msg.append("\n col=")
@@ -9234,22 +9234,22 @@ public class Table {
         for (int c = 0; c < nChannels; c++) {
           ByteArray ba = (ByteArray) pa[c];
           ShortArray sa = new ShortArray(nFrames, true);
-          short sar[] = sa.array;
           setColumn(c, sa);
           long lmin = Long.MAX_VALUE;
           long lmax = Long.MIN_VALUE;
           int min = Integer.MAX_VALUE;
           int max = Integer.MIN_VALUE;
           for (int f = 0; f < nFrames; f++) {
-            long tl = (ba.array[f] & 0xffL) ^ 0xffL;
+            long tl = (ba.getArrayVal(f) & 0xffL) ^ 0xffL;
             if ((tl & 0x80L) == 0x80L) tl = -(tl ^ 0x80L);
             lmin = Math.min(lmin, tl);
             lmax = Math.max(lmax, tl);
             double sample = tl / 255.0;
             sample = Math.signum(sample) * d0 * (Math.pow(256.0, Math.abs(sample)) - 1.0);
-            sar[f] = Math2.roundToShort(sm1 * sample);
-            min = Math.min(min, sar[f]);
-            max = Math.max(max, sar[f]);
+            short outVal = Math2.roundToShort(sm1 * sample);
+            sa.setArrayVal(f, outVal);
+            min = Math.min(min, outVal);
+            max = Math.max(max, outVal);
           }
           if (reallyVerbose)
             msg.append("\n  col=")
@@ -9274,14 +9274,12 @@ public class Table {
             // if littleEndian, store in integer type, then reverseBytes, then convert to float
             if (nBits <= 32) {
               FloatArray fa = new FloatArray(nFrames, true);
-              float far[] = fa.array;
-              for (int f = 0; f < nFrames; f++) far[f] = Float.intBitsToFloat(pa[c].getInt(f));
+              for (int f = 0; f < nFrames; f++) fa.setArrayVal(f, Float.intBitsToFloat(pa[c].getInt(f)));
               pa[c] = fa;
               setColumn(c, fa);
             } else if (nBits <= 64) {
               DoubleArray da = new DoubleArray(nFrames, true);
-              double dar[] = da.array;
-              for (int f = 0; f < nFrames; f++) dar[f] = Double.longBitsToDouble(pa[c].getLong(f));
+              for (int f = 0; f < nFrames; f++) da.setArrayVal(f, Double.longBitsToDouble(pa[c].getLong(f)));
               pa[c] = da;
               setColumn(c, da);
             }
@@ -9293,9 +9291,8 @@ public class Table {
       if (addElapsedTimeColumn) {
         double sampleRate = af.getSampleRate(); // double so calculations below as double
         DoubleArray da = new DoubleArray(nFrames, true);
-        double dar[] = da.array;
         for (int f = 0; f < nFrames; f++)
-          dar[f] = f / sampleRate; // that's the most precise way to calculate it
+          da.setArrayVal(f, f / sampleRate); // that's the most precise way to calculate it
         addColumn(0, ELAPSED_TIME, da, elapsedTimeAtts);
       }
 

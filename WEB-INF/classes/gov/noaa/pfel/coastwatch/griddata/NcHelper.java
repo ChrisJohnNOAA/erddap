@@ -1598,7 +1598,7 @@ public class NcHelper {
     DoubleArray da = new DoubleArray(pa);
     if (pa instanceof FloatArray) {
       int n = da.size();
-      for (int i = 0; i < n; i++) da.array[i] = Math2.floatToDouble(da.array[i]);
+      for (int i = 0; i < n; i++) da.setArrayVal(i, Math2.floatToDouble(da.getArrayVal(i)));
     }
     return da;
   }

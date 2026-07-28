@@ -1081,8 +1081,8 @@ public class SgtGraph {
             if (nMarkerXs > 0) {
               long markerTime = System.currentTimeMillis();
               int nMarkerXs1 = nMarkerXs - 1;
-              int xarray[] = markerXs.array;
-              int yarray[] = markerYs.array;
+              int xarray[] = markerXs.toArray();
+              int yarray[] = markerYs.toArray();
               for (int i = 0; i < nMarkerXs1; i++) {
                 // simple optimization:
                 // if next marker at same x,y, skip this one

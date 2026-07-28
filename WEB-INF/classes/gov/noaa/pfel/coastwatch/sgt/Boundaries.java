@@ -381,8 +381,8 @@ public class Boundaries {
                 int tn =
                     GSHHS.reduce(
                         tempLat[i].size(),
-                        tempLon[i].array,
-                        tempLat[i].array,
+                        tempLon[i].toArray(),
+                        tempLat[i].toArray(),
                         requestMinX,
                         requestMaxX,
                         requestMinY,
@@ -424,8 +424,8 @@ public class Boundaries {
             int tn =
                 GSHHS.reduce(
                     tempLat[i].size(),
-                    tempLon[i].array,
-                    tempLat[i].array,
+                    tempLon[i].toArray(),
+                    tempLat[i].toArray(),
                     requestMinX,
                     requestMaxX,
                     requestMinY,
@@ -460,7 +460,7 @@ public class Boundaries {
     lon.trimToSize();
     lat.trimToSize();
 
-    SimpleLine line = new SimpleLine(lon.array, lat.array);
+    SimpleLine line = new SimpleLine(lon.toArray(), lat.toArray());
 
     // for (int i = 0; i < lon.size(); i++)
     //    String2.log(String2.left("" + i, 5) +

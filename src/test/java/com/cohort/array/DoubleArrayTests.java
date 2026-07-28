@@ -4,6 +4,7 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import java.util.BitSet;
 
+@SuppressWarnings("MemorySegmentReferenceEquality")
 class DoubleArrayTests {
   /**
    * This tests the methods of this class.
@@ -285,7 +286,7 @@ class DoubleArrayTests {
 
     // test trimToSize
     anArray.trimToSize();
-    Test.ensureEqual(anArray.array.length, 2, "");
+    Test.ensureEqual(anArray.capacity(), 2, "");
 
     // test equals
     DoubleArray anArray2 = new DoubleArray();
@@ -340,7 +341,7 @@ class DoubleArrayTests {
 
     // test move
     anArray = new DoubleArray(new double[] {0, 1, 2, 3, 4});
-    double[] ar = anArray.array;
+    java.lang.foreign.MemorySegment ar = anArray.array;
     anArray.move(1, 3, 0);
     Test.ensureEqual(anArray.toArray(), new double[] {1, 2, 0, 3, 4}, "");
     Test.ensureTrue(ar == anArray.array, ""); // ensure it points to same array
