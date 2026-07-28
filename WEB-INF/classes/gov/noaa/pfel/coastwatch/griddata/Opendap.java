@@ -656,8 +656,7 @@ public class Opendap {
 
           // read all the time data
           PrimitiveArray timesPa = NcHelper.getPrimitiveArray(timeVar);
-          double timesAr[] = timesPa.toDoubleArray();
-          DoubleArray times = new DoubleArray(timesAr);
+          DoubleArray times = timesPa instanceof DoubleArray da ? da : new DoubleArray(timesPa);
 
           // look for expected
           int newIndex = times.indexOf(expectedTime, 0);
