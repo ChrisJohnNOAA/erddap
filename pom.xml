@@ -342,7 +342,7 @@
                             <url>https://github.com/ERDDAP/erddapTest/releases/download/${test.resources.version}/largeFiles.zip</url>
                             <unpackWhenChanged>${download.unpackWhenChanged}</unpackWhenChanged>
                             <outputDirectory>${project.basedir}/test-data</outputDirectory>
-                            <skip>true</skip>
+                            <skip>${skipTestResourceDownload}</skip>
                         </configuration>
                     </execution>
                     <execution>

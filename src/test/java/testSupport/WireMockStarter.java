@@ -119,61 +119,8 @@ public class WireMockStarter {
     stubFromResourceDap(
         "/dods/public_data/SODA/soda_pop2.2.4.dds", "/mock/apdrc/soda_pop2.2.4.dds");
 
-    // Stub the combined coordinate variables request required by Netcdf-Java
-    try {
-      java.io.ByteArrayOutputStream combinedStream = new java.io.ByteArrayOutputStream();
-      String combinedDds = "Dataset {\n"
-          + "  Float64 time[time = 1680];\n"
-          + "  Float64 lev[lev = 40];\n"
-          + "  Float64 lat[lat = 330];\n"
-          + "  Float64 lon[lon = 720];\n"
-          + "} public_data/SODA/soda_pop2.2.4;\n"
-          + "Data:\n";
-      combinedStream.write(combinedDds.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-
-      String[] resources = {
-          "/mock/apdrc/soda_pop2.2.4_time.dods",
-          "/mock/apdrc/soda_pop2.2.4_lev.dods",
-          "/mock/apdrc/soda_pop2.2.4_lat.dods",
-          "/mock/apdrc/soda_pop2.2.4_lon.dods"
-      };
-
-      for (String res : resources) {
-        try (InputStream is = WireMockStarter.class.getResourceAsStream(res)) {
-          if (is != null) {
-            byte[] fileBytes = is.readAllBytes();
-            int dataIndex = -1;
-            for (int i = 0; i < fileBytes.length - 5; i++) {
-              if (fileBytes[i] == 10 && fileBytes[i+1] == 68 && fileBytes[i+2] == 97 && fileBytes[i+3] == 116 && fileBytes[i+4] == 97 && fileBytes[i+5] == 58) {
-                for (int j = i + 5; j < fileBytes.length; j++) {
-                  if (fileBytes[j] == 10) {
-                    dataIndex = j + 1;
-                    break;
-                  }
-                }
-                break;
-              }
-            }
-            if (dataIndex != -1) {
-              combinedStream.write(fileBytes, dataIndex, fileBytes.length - dataIndex);
-            }
-          }
-        }
-      }
-
-      byte[] combinedBytes = combinedStream.toByteArray();
-      WireMock.stubFor(
-          WireMock.get(WireMock.urlEqualTo("/dods/public_data/SODA/soda_pop2.2.4.dods?time,lev,lat,lon"))
-              .willReturn(
-                  WireMock.aResponse()
-                      .withStatus(200)
-                      .withBody(combinedBytes)
-                      .withHeader("XDODS-Server", "dods/3.7")
-                      .withHeader("Content-Description", "dods_data"))
-              .atPriority(1));
-    } catch (Exception e) {
-      System.out.println("Failed to stub combined axes: " + e);
-    }
+    stubFromResourceData(
+        "/dods/public_data/SODA/soda_pop2.2.4.dods?time,lev,lat,lon", "/mock/apdrc/soda_pop2.2.4_all_axes.dods");
 
     stubFromResource("/dods/public_data/SODA/soda_pop2.2.4.html", "/mock/apdrc/soda_pop2.2.4.html");
 

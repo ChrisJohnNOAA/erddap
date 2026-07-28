@@ -950,14 +950,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
           if (var == null) {
             throw new SimpleException("Variable not found: " + tDataVariables[dv].sourceName());
           }
-          List<ucar.ma2.Range> ranges = new ArrayList<>();
-          for (int av = 0; av < axisVariables.length; av++) {
-            int start = tConstraints.get(av * 3);
-            int stride = tConstraints.get(av * 3 + 1);
-            int stop = tConstraints.get(av * 3 + 2);
-            ranges.add(new ucar.ma2.Range(start, stop, stride));
-          }
-          ucar.ma2.Section section = new ucar.ma2.Section(ranges);
+          ucar.ma2.Section section = NcHelper.getSectionFromConstraints(tConstraints, axisVariables.length);
           ucar.ma2.Array sliceArray = var.read(section);
           pa[0] = NcHelper.getPrimitiveArray(sliceArray);
 
