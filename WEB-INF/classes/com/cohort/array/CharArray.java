@@ -46,7 +46,8 @@ public class CharArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public CharArray() {
-    array = java.lang.foreign.Arena.ofAuto().allocate((8) * 2L);
+    wrappedArray = new char[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     maxIsMV = true; // always true for CharArray, so users shouldn't ever need to test it
   }
 
@@ -104,7 +105,8 @@ public class CharArray extends PrimitiveArray {
    */
   public CharArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(2L * primitiveArray.size(), "CharArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((primitiveArray.size()) * 2L); // exact size
+    wrappedArray = new char[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     maxIsMV = true; // always true for CharArray, so users shouldn't ever need to test it
     append(primitiveArray);
   }
@@ -118,7 +120,8 @@ public class CharArray extends PrimitiveArray {
    */
   public CharArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(2L * capacity, "CharArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((capacity) * 2L);
+    wrappedArray = new char[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     maxIsMV = true; // always true for CharArray, so users shouldn't ever need to test it
     if (active) size = capacity;
   }
@@ -131,7 +134,8 @@ public class CharArray extends PrimitiveArray {
    */
   public CharArray(final char[] anArray) {
     if (anArray == null) {
-      array = java.lang.foreign.Arena.ofAuto().allocate(0);
+      wrappedArray = new char[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
       size = 0;
     } else {
       wrappedArray = anArray;
@@ -175,7 +179,8 @@ public class CharArray extends PrimitiveArray {
    */
   public CharArray(final short[] shortArray) {
     size = shortArray.length;
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 2L);
+    wrappedArray = new char[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     maxIsMV = true; // always true for CharArray, so users shouldn't ever need to test it
     for (int i = 0; i < size; i++) setArrayVal(i, (char) shortArray[i]);
   }
@@ -714,10 +719,11 @@ public class CharArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(2L * newCapacity, "CharArray");
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(newCapacity * 2L);
+      char[] newArray = new char[newCapacity];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 2L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1174,10 +1180,11 @@ public class CharArray extends PrimitiveArray {
   public void trimToSize() {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(size * 2L);
+      char[] newArray = new char[size];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 2L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1343,7 +1350,8 @@ public class CharArray extends PrimitiveArray {
     final int n = rank.length;
     long currentCapacity = array.byteSize() / 2;
     Math2.ensureMemoryAvailable(2L * currentCapacity, "CharArray");
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(currentCapacity * 2L);
+    char[] newArray = new char[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
       newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, rank[i]));
     }

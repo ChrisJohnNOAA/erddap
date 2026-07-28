@@ -138,7 +138,8 @@ public class UByteArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public UByteArray() {
-    array = java.lang.foreign.Arena.ofAuto().allocate((8) * 1L);
+    wrappedArray = new byte[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -149,7 +150,8 @@ public class UByteArray extends PrimitiveArray {
    */
   public UByteArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(1L * primitiveArray.size(), "UByteArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((primitiveArray.size()) * 1L); // exact size
+    wrappedArray = new byte[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -162,7 +164,8 @@ public class UByteArray extends PrimitiveArray {
    */
   public UByteArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(1L * capacity, "UByteArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((capacity) * 1L);
+    wrappedArray = new byte[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -174,7 +177,8 @@ public class UByteArray extends PrimitiveArray {
    */
   public UByteArray(final byte[] anArray) {
     if (anArray == null) {
-      array = java.lang.foreign.Arena.ofAuto().allocate(0);
+      wrappedArray = new byte[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
       size = 0;
     } else {
       wrappedArray = anArray;
@@ -192,7 +196,8 @@ public class UByteArray extends PrimitiveArray {
   public UByteArray(final short[] anArray) {
     size = anArray.length;
     Math2.ensureMemoryAvailable(1L * size, "UByteArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 1L);
+    wrappedArray = new byte[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, pack(anArray[i]));
   }
 
@@ -205,7 +210,8 @@ public class UByteArray extends PrimitiveArray {
   public UByteArray(final int first, final int last) {
     size = last - first + 1;
     Math2.ensureMemoryAvailable(1L * size, "UByteArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 1L);
+    wrappedArray = new byte[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, pack(first + i));
   }
 
@@ -882,10 +888,11 @@ public class UByteArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(1L * newCapacity, "UByteArray");
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(newCapacity * 1L);
+      byte[] newArray = new byte[newCapacity];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 1L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1298,10 +1305,11 @@ public class UByteArray extends PrimitiveArray {
   public void trimToSize() {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(size * 1L);
+      byte[] newArray = new byte[size];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 1L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1481,7 +1489,8 @@ public class UByteArray extends PrimitiveArray {
     final int n = rank.length;
     long currentCapacity = array.byteSize() / 1;
     Math2.ensureMemoryAvailable(1L * currentCapacity, "UByteArray");
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(currentCapacity * 1L);
+    byte[] newArray = new byte[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
       newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_BYTE, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_BYTE, rank[i]));
     }

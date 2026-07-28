@@ -135,7 +135,8 @@ public class UShortArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public UShortArray() {
-    array = java.lang.foreign.Arena.ofAuto().allocate((8) * 2L);
+    wrappedArray = new short[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -146,7 +147,8 @@ public class UShortArray extends PrimitiveArray {
    */
   public UShortArray(PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(2L * primitiveArray.size(), "UShortArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((primitiveArray.size()) * 2L); // exact size
+    wrappedArray = new short[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -159,7 +161,8 @@ public class UShortArray extends PrimitiveArray {
    */
   public UShortArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(2L * capacity, "UShortArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((capacity) * 2L);
+    wrappedArray = new short[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -172,7 +175,8 @@ public class UShortArray extends PrimitiveArray {
   public UShortArray(final int first, final int last) {
     size = last - first + 1;
     Math2.ensureMemoryAvailable(2L * size, "UShortArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 2L);
+    wrappedArray = new short[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, pack(first + i));
   }
 
@@ -184,7 +188,8 @@ public class UShortArray extends PrimitiveArray {
    */
   public UShortArray(final short[] anArray) {
     if (anArray == null) {
-      array = java.lang.foreign.Arena.ofAuto().allocate(0);
+      wrappedArray = new short[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
       size = 0;
     } else {
       wrappedArray = anArray;
@@ -202,7 +207,8 @@ public class UShortArray extends PrimitiveArray {
   public UShortArray(final int[] anArray) {
     size = anArray.length;
     Math2.ensureMemoryAvailable(2L * size, "UShortArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 2L);
+    wrappedArray = new short[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, pack(anArray[i]));
   }
 
@@ -216,7 +222,8 @@ public class UShortArray extends PrimitiveArray {
   public UShortArray(final char[] charArray) {
     size = charArray.length;
     Math2.ensureMemoryAvailable(2L * size, "UShortArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 2L);
+    wrappedArray = new short[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, (short) charArray[i]);
   }
 
@@ -796,10 +803,11 @@ public class UShortArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(2L * newCapacity, "UShortArray");
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(newCapacity * 2L);
+      short[] newArray = new short[newCapacity];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 2L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1211,10 +1219,11 @@ public class UShortArray extends PrimitiveArray {
   public void trimToSize() {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(size * 2L);
+      short[] newArray = new short[size];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 2L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1376,7 +1385,8 @@ public class UShortArray extends PrimitiveArray {
     final int n = rank.length;
     long currentCapacity = array.byteSize() / 2;
     Math2.ensureMemoryAvailable(2L * currentCapacity, "UShortArray");
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(currentCapacity * 2L);
+    short[] newArray = new short[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
       newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, rank[i]));
     }

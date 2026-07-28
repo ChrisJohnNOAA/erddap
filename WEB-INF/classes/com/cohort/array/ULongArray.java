@@ -179,7 +179,8 @@ public class ULongArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public ULongArray() {
-    array = java.lang.foreign.Arena.ofAuto().allocate((8) * 8L);
+    wrappedArray = new long[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -190,7 +191,8 @@ public class ULongArray extends PrimitiveArray {
    */
   public ULongArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(8L * primitiveArray.size(), "ULongArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((primitiveArray.size()) * 8L); // exact size
+    wrappedArray = new long[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -203,7 +205,8 @@ public class ULongArray extends PrimitiveArray {
    */
   public ULongArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(8L * capacity, "ULongArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((capacity) * 8L);
+    wrappedArray = new long[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -215,7 +218,8 @@ public class ULongArray extends PrimitiveArray {
    */
   public ULongArray(final long[] anArray) {
     if (anArray == null) {
-      array = java.lang.foreign.Arena.ofAuto().allocate(0);
+      wrappedArray = new long[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
       size = 0;
     } else {
       wrappedArray = anArray;
@@ -233,7 +237,8 @@ public class ULongArray extends PrimitiveArray {
   public ULongArray(final BigInteger[] anArray) {
     size = anArray.length;
     Math2.ensureMemoryAvailable(8L * size, "ULongArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 8L);
+    wrappedArray = new long[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, packAndSetMaxIsMV(anArray[i]));
   }
 
@@ -793,10 +798,11 @@ public class ULongArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(8L * newCapacity, "ULongArray");
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(newCapacity * 8L);
+      long[] newArray = new long[newCapacity];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 8L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1199,10 +1205,11 @@ public class ULongArray extends PrimitiveArray {
   public void trimToSize() {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(size * 8L);
+      long[] newArray = new long[size];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 8L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1372,7 +1379,8 @@ public class ULongArray extends PrimitiveArray {
     final int n = rank.length;
     long currentCapacity = array.byteSize() / 8;
     Math2.ensureMemoryAvailable(8L * currentCapacity, "ULongArray");
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(currentCapacity * 8L);
+    long[] newArray = new long[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
       newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_LONG, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_LONG, rank[i]));
     }

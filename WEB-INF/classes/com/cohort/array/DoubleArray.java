@@ -94,7 +94,8 @@ public class DoubleArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public DoubleArray() {
-    array = java.lang.foreign.Arena.ofAuto().allocate((8) * 8L);
+    wrappedArray = new double[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -105,7 +106,8 @@ public class DoubleArray extends PrimitiveArray {
    */
   public DoubleArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(8L * primitiveArray.size(), "DoubleArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((primitiveArray.size()) * 8L); // exact size
+    wrappedArray = new double[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -118,7 +120,8 @@ public class DoubleArray extends PrimitiveArray {
    */
   public DoubleArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(8L * capacity, "DoubleArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((capacity) * 8L);
+    wrappedArray = new double[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -130,7 +133,8 @@ public class DoubleArray extends PrimitiveArray {
    */
   public DoubleArray(final double[] anArray) {
     if (anArray == null) {
-      array = java.lang.foreign.Arena.ofAuto().allocate(0);
+      wrappedArray = new double[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
       size = 0;
     } else {
       wrappedArray = anArray;
@@ -665,10 +669,11 @@ public class DoubleArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(8L * newCapacity, "DoubleArray");
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(newCapacity * 8L);
+      double[] newArray = new double[newCapacity];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 8L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -999,10 +1004,11 @@ public class DoubleArray extends PrimitiveArray {
   public void trimToSize() {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(size * 8L);
+      double[] newArray = new double[size];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 8L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1135,7 +1141,8 @@ public class DoubleArray extends PrimitiveArray {
     final int n = rank.length;
     long currentCapacity = array.byteSize() / 8;
     Math2.ensureMemoryAvailable(8L * currentCapacity, "DoubleArray");
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(currentCapacity * 8L);
+    double[] newArray = new double[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
       newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_DOUBLE, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_DOUBLE, rank[i]));
     }

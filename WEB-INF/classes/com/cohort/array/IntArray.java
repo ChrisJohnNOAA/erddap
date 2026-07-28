@@ -100,7 +100,8 @@ public class IntArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public IntArray() {
-    array = java.lang.foreign.Arena.ofAuto().allocate((8) * 4L);
+    wrappedArray = new int[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -111,7 +112,8 @@ public class IntArray extends PrimitiveArray {
    */
   public IntArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(4L * primitiveArray.size(), "IntArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((primitiveArray.size()) * 4L); // exact size
+    wrappedArray = new int[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -124,7 +126,8 @@ public class IntArray extends PrimitiveArray {
    */
   public IntArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(4L * capacity, "IntArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((capacity) * 4L);
+    wrappedArray = new int[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -137,7 +140,8 @@ public class IntArray extends PrimitiveArray {
   public IntArray(final int first, final int last) {
     size = last - first + 1;
     Math2.ensureMemoryAvailable(4L * size, "IntArray");
-    array = java.lang.foreign.Arena.ofAuto().allocate((size) * 4L);
+    wrappedArray = new int[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     for (int i = 0; i < size; i++) setArrayVal(i, first + i);
   }
 
@@ -149,7 +153,8 @@ public class IntArray extends PrimitiveArray {
    */
   public IntArray(final int[] anArray) {
     if (anArray == null) {
-      array = java.lang.foreign.Arena.ofAuto().allocate(0);
+      wrappedArray = new int[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
       size = 0;
     } else {
       wrappedArray = anArray;
@@ -692,10 +697,11 @@ public class IntArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(4L * newCapacity, "IntArray");
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(newCapacity * 4L);
+      int[] newArray = new int[newCapacity];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 4L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1116,10 +1122,11 @@ public class IntArray extends PrimitiveArray {
   public void trimToSize() {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(size * 4L);
+      int[] newArray = new int[size];
+      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 4L);
       array = newSegment;
-      wrappedArray = null;
+      wrappedArray = newArray;
     }
   }
 
@@ -1256,7 +1263,8 @@ public class IntArray extends PrimitiveArray {
     final int n = rank.length;
     long currentCapacity = array.byteSize() / 4;
     Math2.ensureMemoryAvailable(4L * currentCapacity, "IntArray");
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.Arena.ofAuto().allocate(currentCapacity * 4L);
+    int[] newArray = new int[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
       newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_INT, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_INT, rank[i]));
     }
