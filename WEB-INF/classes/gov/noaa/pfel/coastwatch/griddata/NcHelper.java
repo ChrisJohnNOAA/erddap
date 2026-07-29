@@ -2169,7 +2169,8 @@ public class NcHelper {
    * @throws Exception if trouble (if an attribute's values are in a LongArray, ULongArray, unsigned
    *     array)
    */
-  public static ucar.ma2.Section getSectionFromConstraints(IntArray tConstraints, int numAxes) throws Exception {
+  public static ucar.ma2.Section getSectionFromConstraints(IntArray tConstraints, int numAxes)
+      throws Exception {
     java.util.List<ucar.ma2.Range> ranges = new java.util.ArrayList<>();
     for (int av = 0; av < numAxes; av++) {
       int start = tConstraints.get(av * 3);

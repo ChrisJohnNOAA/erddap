@@ -16,11 +16,11 @@ import com.cohort.util.Calendar2;
 import com.cohort.util.File2;
 import com.cohort.util.Math2;
 import com.cohort.util.MustBe;
+import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
-import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.FileVisitorDNLS;
 import gov.noaa.pfel.coastwatch.util.SSR;
@@ -40,7 +40,6 @@ import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import gov.noaa.pfel.erddap.variable.EDVTimeStampGridAxis;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -48,22 +47,14 @@ import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Queue;
 import java.util.List;
-import ucar.nc2.dataset.NetcdfDataset;
-import ucar.nc2.dataset.NetcdfDatasets;
-import ucar.nc2.dataset.DatasetUrl;
-import ucar.nc2.Variable;
-import ucar.ma2.Section;
-import com.cohort.util.SimpleException;
-import opendap.dap.BaseType;
-import opendap.dap.DArray;
-import opendap.dap.DArrayDimension;
-import opendap.dap.DConnect2;
-import opendap.dap.DDS;
-import opendap.dap.DGrid;
+import java.util.Queue;
 import opendap.dap.NoSuchVariableException;
 import org.semver4j.Semver;
+import ucar.nc2.Variable;
+import ucar.nc2.dataset.DatasetUrl;
+import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
 
 /**
  * This class represents a grid dataset from an opendap DAP source.
@@ -348,8 +339,9 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
           case "dimension" -> {
             PrimitiveArray tSourceValues = null;
             if (quickRestartAttributes != null) {
-              tSourceValues = quickRestartAttributes.get(
-                  "sourceValues_" + String2.encodeVariableNameSafe(varName));
+              tSourceValues =
+                  quickRestartAttributes.get(
+                      "sourceValues_" + String2.encodeVariableNameSafe(varName));
             } else {
               Variable dimensionVar = dataset.findVariable(varName);
               if (dimensionVar != null) {
@@ -632,7 +624,7 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
           }
           int start = oldSize - 1;
           int size = newSize - oldSize + 1;
-          ucar.ma2.Section section = new ucar.ma2.Section(new int[]{start}, new int[]{size});
+          ucar.ma2.Section section = new ucar.ma2.Section(new int[] {start}, new int[] {size});
           ucar.ma2.Array sliceArray = axisVar.read(section);
           newValues = NcHelper.getPrimitiveArray(sliceArray);
         } catch (Exception nsve) {
@@ -950,7 +942,8 @@ public class EDDGridFromErddap extends EDDGrid implements FromErddap {
           if (var == null) {
             throw new SimpleException("Variable not found: " + tDataVariables[dv].sourceName());
           }
-          ucar.ma2.Section section = NcHelper.getSectionFromConstraints(tConstraints, axisVariables.length);
+          ucar.ma2.Section section =
+              NcHelper.getSectionFromConstraints(tConstraints, axisVariables.length);
           ucar.ma2.Array sliceArray = var.read(section);
           pa[0] = NcHelper.getPrimitiveArray(sliceArray);
 
