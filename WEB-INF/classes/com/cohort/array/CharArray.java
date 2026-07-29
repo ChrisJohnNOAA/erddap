@@ -29,6 +29,8 @@ import ucar.ma2.StructureData;
  */
 public class CharArray extends PrimitiveArray {
 
+  private static final java.lang.foreign.ValueLayout.OfChar LAYOUT = java.lang.foreign.ValueLayout.JAVA_CHAR.withOrder(java.nio.ByteOrder.nativeOrder());
+
   /**
    * This is the main data structure. This should be private, but is public so you can manipulate it
    * if you promise to be careful. Note that if the PrimitiveArray's capacity is increased, the
@@ -38,10 +40,10 @@ public class CharArray extends PrimitiveArray {
   private char[] wrappedArray;
 
   public char getArrayVal(final int i) {
-    return array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i);
+    return array.getAtIndex(LAYOUT, i);
   }
   public void setArrayVal(final int i, final char val) {
-    array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i, val);
+    array.setAtIndex(LAYOUT, i, val);
   }
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
@@ -297,11 +299,7 @@ public class CharArray extends PrimitiveArray {
     }
     da.setMaxIsMV(maxIsMV);
     if (stride == 1) {
-      if (wrappedArray != null && da.wrappedArray != null) {
-        System.arraycopy(wrappedArray, startIndex, da.wrappedArray, 0, willFind);
-      } else {
-        java.lang.foreign.MemorySegment.copy(array, startIndex * 2L, da.array, 0, willFind * 2L);
-      }
+      PanamaHelper.copyElements(wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 2);
     } else {
       int po = 0;
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -403,7 +401,7 @@ public class CharArray extends PrimitiveArray {
       Arrays.fill(wrappedArray, size, size + n, value);
     } else {
       for (int i = size; i < size + n; i++) {
-        array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i, value);
+        array.setAtIndex(LAYOUT, i, value);
       }
     }
     size += n;
@@ -550,11 +548,7 @@ public class CharArray extends PrimitiveArray {
       ensureCapacity(size + nValues);
       {
           CharArray oPA = (CharArray) ((CharArray) otherPA);
-          if (wrappedArray != null && oPA.wrappedArray != null) {
-            System.arraycopy(oPA.wrappedArray, otherIndex, wrappedArray, size, nValues);
-          } else {
-            java.lang.foreign.MemorySegment.copy(oPA.array, (otherIndex) * 2L, array, (size) * 2L, (nValues) * 2L);
-          }
+          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 2);
         }
       size += nValues;
 
@@ -594,11 +588,7 @@ public class CharArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayRemove, getClass().getSimpleName(), "" + index, "" + size));
-    if (wrappedArray != null) {
-      System.arraycopy(wrappedArray, index + 1, wrappedArray, index, size - index - 1);
-    } else {
-      java.lang.foreign.MemorySegment.copy(array, (index + 1) * 2L, array, index * 2L, (size - index - 1) * 2L);
-    }
+    PanamaHelper.remove(index, 2, size, wrappedArray, array);
     size--;
   }
 
@@ -618,11 +608,7 @@ public class CharArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in CharArray.removeRange: from (" + from + ") > to (" + to + ").");
     }
-    if (wrappedArray != null) {
-      System.arraycopy(wrappedArray, to, wrappedArray, from, size - to);
-    } else {
-      java.lang.foreign.MemorySegment.copy(array, to * 2L, array, from * 2L, (size - to) * 2L);
-    }
+    PanamaHelper.removeRange(from, to, 2, size, wrappedArray, array);
     size -= to - from;
   }
 
@@ -739,7 +725,7 @@ public class CharArray extends PrimitiveArray {
     if (wrappedArray != null) {
       return Arrays.copyOfRange(wrappedArray, 0, size);
     }
-    return array.asSlice(0, size * 2L).toArray(java.lang.foreign.ValueLayout.JAVA_CHAR);
+    return array.asSlice(0, size * 2L).toArray(LAYOUT);
   }
 
   /**
@@ -794,7 +780,7 @@ public class CharArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in CharArray.get: index (" + index + ") >= size (" + size + ").");
-    return array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, index);
+    return array.getAtIndex(LAYOUT, index);
   }
 
   /**
@@ -807,7 +793,7 @@ public class CharArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in CharArray.set: index (" + index + ") >= size (" + size + ").");
-    array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, index, value);
+    array.setAtIndex(LAYOUT, index, value);
   }
 
   /**
@@ -1282,7 +1268,7 @@ public class CharArray extends PrimitiveArray {
       if (size < 8192) Arrays.sort(wrappedArray, 0, size);
       else Arrays.parallelSort(wrappedArray, 0, size);
     } else {
-      char[] temp = array.asSlice(0, size * 2L).toArray(java.lang.foreign.ValueLayout.JAVA_CHAR);
+      char[] temp = array.asSlice(0, size * 2L).toArray(LAYOUT);
       if (size < 8192) Arrays.sort(temp, 0, size);
       else Arrays.parallelSort(temp, 0, size);
       java.lang.foreign.MemorySegment.copy(
@@ -1353,10 +1339,10 @@ public class CharArray extends PrimitiveArray {
     char[] newArray = new char[(int) currentCapacity];
     java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, rank[i]));
+      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
     }
     array = newSegment;
-    wrappedArray = null;
+    wrappedArray = newArray;
   }
 
   /**
@@ -1366,8 +1352,8 @@ public class CharArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     for (int i = 0; i < size; i++) {
-      char val = array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i);
-      array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_CHAR, i, Character.reverseBytes(val));
+      char val = array.getAtIndex(LAYOUT, i);
+      array.setAtIndex(LAYOUT, i, Character.reverseBytes(val));
     }
   }
 
@@ -1527,11 +1513,7 @@ public class CharArray extends PrimitiveArray {
     if (pa instanceof CharArray ca) {
       {
           CharArray oPA = (CharArray) ca;
-          if (wrappedArray != null && oPA.wrappedArray != null) {
-            System.arraycopy(oPA.wrappedArray, 0, wrappedArray, size, otherSize);
-          } else {
-            java.lang.foreign.MemorySegment.copy(oPA.array, (0) * 2L, array, (size) * 2L, (otherSize) * 2L);
-          }
+          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 2);
         }
       size += otherSize;
     } else if (pa.elementType() == PAType.STRING) {
@@ -1557,11 +1539,7 @@ public class CharArray extends PrimitiveArray {
     if (pa instanceof CharArray ca) {
       {
           CharArray oPA = (CharArray) ca;
-          if (wrappedArray != null && oPA.wrappedArray != null) {
-            System.arraycopy(oPA.wrappedArray, 0, wrappedArray, size, otherSize);
-          } else {
-            java.lang.foreign.MemorySegment.copy(oPA.array, (0) * 2L, array, (size) * 2L, (otherSize) * 2L);
-          }
+          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 2);
         }
       size += otherSize; // do last to minimize concurrency problems
     } else if (pa.elementType() == PAType.STRING) {

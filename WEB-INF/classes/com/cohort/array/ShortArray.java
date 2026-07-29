@@ -28,6 +28,8 @@ import ucar.ma2.StructureData;
  */
 public class ShortArray extends PrimitiveArray {
 
+  private static final java.lang.foreign.ValueLayout.OfShort LAYOUT = java.lang.foreign.ValueLayout.JAVA_SHORT.withOrder(java.nio.ByteOrder.nativeOrder());
+
   /**
    * This is the main data structure. This should be private, but is public so you can manipulate it
    * if you promise to be careful. Note that if the PrimitiveArray's capacity is increased, the
@@ -37,10 +39,10 @@ public class ShortArray extends PrimitiveArray {
   private short[] wrappedArray;
 
   public short getArrayVal(final int i) {
-    return array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i);
+    return array.getAtIndex(LAYOUT, i);
   }
   public void setArrayVal(final int i, final short val) {
-    array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i, val);
+    array.setAtIndex(LAYOUT, i, val);
   }
 
   /**
@@ -294,11 +296,7 @@ public class ShortArray extends PrimitiveArray {
     }
     da.setMaxIsMV(maxIsMV);
     if (stride == 1) {
-      if (wrappedArray != null && da.wrappedArray != null) {
-        System.arraycopy(wrappedArray, startIndex, da.wrappedArray, 0, willFind);
-      } else {
-        java.lang.foreign.MemorySegment.copy(array, startIndex * 2L, da.array, 0, willFind * 2L);
-      }
+      PanamaHelper.copyElements(wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 2);
     } else {
       int po = 0;
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -410,7 +408,7 @@ public class ShortArray extends PrimitiveArray {
       Arrays.fill(wrappedArray, size, size + n, value);
     } else {
       for (int i = size; i < size + n; i++) {
-        array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i, value);
+        array.setAtIndex(LAYOUT, i, value);
       }
     }
     size += n;
@@ -561,11 +559,7 @@ public class ShortArray extends PrimitiveArray {
       ensureCapacity(size + nValues);
       {
           ShortArray oPA = (ShortArray) ((ShortArray) otherPA);
-          if (wrappedArray != null && oPA.wrappedArray != null) {
-            System.arraycopy(oPA.wrappedArray, otherIndex, wrappedArray, size, nValues);
-          } else {
-            java.lang.foreign.MemorySegment.copy(oPA.array, (otherIndex) * 2L, array, (size) * 2L, (nValues) * 2L);
-          }
+          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 2);
         }
       size += nValues;
       if (otherPA.getMaxIsMV()) maxIsMV = true;
@@ -600,11 +594,7 @@ public class ShortArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayRemove, getClass().getSimpleName(), "" + index, "" + size));
-    if (wrappedArray != null) {
-      System.arraycopy(wrappedArray, index + 1, wrappedArray, index, size - index - 1);
-    } else {
-      java.lang.foreign.MemorySegment.copy(array, (index + 1) * 2L, array, index * 2L, (size - index - 1) * 2L);
-    }
+    PanamaHelper.remove(index, 2, size, wrappedArray, array);
     size--;
   }
 
@@ -624,11 +614,7 @@ public class ShortArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.removeRange: from (" + from + ") > to (" + to + ").");
     }
-    if (wrappedArray != null) {
-      System.arraycopy(wrappedArray, to, wrappedArray, from, size - to);
-    } else {
-      java.lang.foreign.MemorySegment.copy(array, to * 2L, array, from * 2L, (size - to) * 2L);
-    }
+    PanamaHelper.removeRange(from, to, 2, size, wrappedArray, array);
     size -= to - from;
   }
 
@@ -745,7 +731,7 @@ public class ShortArray extends PrimitiveArray {
     if (wrappedArray != null) {
       return Arrays.copyOfRange(wrappedArray, 0, size);
     }
-    return array.asSlice(0, size * 2L).toArray(java.lang.foreign.ValueLayout.JAVA_SHORT);
+    return array.asSlice(0, size * 2L).toArray(LAYOUT);
   }
 
   /**
@@ -803,7 +789,7 @@ public class ShortArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.get: index (" + index + ") >= size (" + size + ").");
-    return array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, index);
+    return array.getAtIndex(LAYOUT, index);
   }
 
   /**
@@ -816,7 +802,7 @@ public class ShortArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.set: index (" + index + ") >= size (" + size + ").");
-    array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, index, value);
+    array.setAtIndex(LAYOUT, index, value);
   }
 
   /**
@@ -1237,7 +1223,7 @@ public class ShortArray extends PrimitiveArray {
       if (size < 8192) Arrays.sort(wrappedArray, 0, size);
       else Arrays.parallelSort(wrappedArray, 0, size);
     } else {
-      short[] temp = array.asSlice(0, size * 2L).toArray(java.lang.foreign.ValueLayout.JAVA_SHORT);
+      short[] temp = array.asSlice(0, size * 2L).toArray(LAYOUT);
       if (size < 8192) Arrays.sort(temp, 0, size);
       else Arrays.parallelSort(temp, 0, size);
       java.lang.foreign.MemorySegment.copy(
@@ -1291,10 +1277,10 @@ public class ShortArray extends PrimitiveArray {
     short[] newArray = new short[(int) currentCapacity];
     java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
     for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i, array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, rank[i]));
+      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
     }
     array = newSegment;
-    wrappedArray = null;
+    wrappedArray = newArray;
   }
 
   /**
@@ -1304,8 +1290,8 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     for (int i = 0; i < size; i++) {
-      short val = array.getAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i);
-      array.setAtIndex(java.lang.foreign.ValueLayout.JAVA_SHORT, i, Short.reverseBytes(val));
+      short val = array.getAtIndex(LAYOUT, i);
+      array.setAtIndex(LAYOUT, i, Short.reverseBytes(val));
     }
   }
 
@@ -1437,11 +1423,7 @@ public class ShortArray extends PrimitiveArray {
       if (pa.getMaxIsMV()) setMaxIsMV(true);
       {
           ShortArray oPA = (ShortArray) sa;
-          if (wrappedArray != null && oPA.wrappedArray != null) {
-            System.arraycopy(oPA.wrappedArray, 0, wrappedArray, size, otherSize);
-          } else {
-            java.lang.foreign.MemorySegment.copy(oPA.array, (0) * 2L, array, (size) * 2L, (otherSize) * 2L);
-          }
+          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 2);
         }
       size += otherSize;
     } else {
@@ -1465,11 +1447,7 @@ public class ShortArray extends PrimitiveArray {
     if (pa instanceof ShortArray sa) {
       {
           ShortArray oPA = (ShortArray) sa;
-          if (wrappedArray != null && oPA.wrappedArray != null) {
-            System.arraycopy(oPA.wrappedArray, 0, wrappedArray, size, otherSize);
-          } else {
-            java.lang.foreign.MemorySegment.copy(oPA.array, (0) * 2L, array, (size) * 2L, (otherSize) * 2L);
-          }
+          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 2);
         }
     } else {
       for (int i = 0; i < otherSize; i++)
