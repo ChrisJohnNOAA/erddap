@@ -3915,4 +3915,14 @@ public abstract class PrimitiveArray {
     }
     return null;
   }
+
+  public static class ScratchBuffer {
+    public final byte[] bytes = new byte[65536];
+    public final java.lang.foreign.MemorySegment segment =
+        java.lang.foreign.MemorySegment.ofArray(bytes);
+    public final java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
+  }
+
+  public static final ThreadLocal<ScratchBuffer> SCRATCH_BUFFER =
+      ThreadLocal.withInitial(ScratchBuffer::new);
 }

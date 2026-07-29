@@ -1433,12 +1433,10 @@ public class ULongArray extends PrimitiveArray {
     }
     long byteCount = (long) size * elementSize();
     int elemSize = elementSize();
-    int chunkCapacity = (int) Math.min(byteCount, 65536);
-    chunkCapacity = (chunkCapacity / elemSize) * elemSize;
-    byte[] chunkBytes = new byte[chunkCapacity];
-    java.lang.foreign.MemorySegment chunkSegment =
-        java.lang.foreign.MemorySegment.ofArray(chunkBytes);
-    java.nio.ByteBuffer tempBuffer = java.nio.ByteBuffer.wrap(chunkBytes);
+    PrimitiveArray.ScratchBuffer scratch = PrimitiveArray.SCRATCH_BUFFER.get();
+    int chunkCapacity = scratch.bytes.length;
+    java.lang.foreign.MemorySegment chunkSegment = scratch.segment;
+    java.nio.ByteBuffer tempBuffer = scratch.buffer;
 
     boolean swap = (byteOrder != java.nio.ByteOrder.nativeOrder());
     int offset = 0;
