@@ -28,12 +28,25 @@ import ucar.ma2.StructureData;
  */
 public class ShortArray extends PrimitiveArray {
 
+  private static final java.lang.foreign.ValueLayout.OfShort LAYOUT =
+      java.lang.foreign.ValueLayout.JAVA_SHORT.withOrder(java.nio.ByteOrder.nativeOrder());
+
   /**
    * This is the main data structure. This should be private, but is public so you can manipulate it
    * if you promise to be careful. Note that if the PrimitiveArray's capacity is increased, the
    * PrimitiveArray will use a different array for storage.
    */
-  public short[] array;
+  public java.lang.foreign.MemorySegment array;
+
+  private short[] wrappedArray;
+
+  public short getArrayVal(final int i) {
+    return array.getAtIndex(LAYOUT, i);
+  }
+
+  public void setArrayVal(final int i, final short val) {
+    array.setAtIndex(LAYOUT, i, val);
+  }
 
   /**
    * This indicates if this class' type (e.g., PAType.SHORT) is an integer (in the math sense) type.
@@ -92,7 +105,8 @@ public class ShortArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public ShortArray() {
-    array = new short[8];
+    wrappedArray = new short[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -103,7 +117,8 @@ public class ShortArray extends PrimitiveArray {
    */
   public ShortArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(2L * primitiveArray.size(), "ShortArray");
-    array = new short[primitiveArray.size()]; // exact size
+    wrappedArray = new short[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -116,7 +131,8 @@ public class ShortArray extends PrimitiveArray {
    */
   public ShortArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(2L * capacity, "ShortArray");
-    array = new short[capacity];
+    wrappedArray = new short[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -129,8 +145,9 @@ public class ShortArray extends PrimitiveArray {
   public ShortArray(final int first, final int last) {
     size = last - first + 1;
     Math2.ensureMemoryAvailable(2L * size, "ShortArray");
-    array = new short[size];
-    for (int i = 0; i < size; i++) array[i] = (short) (first + i);
+    wrappedArray = new short[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
+    for (int i = 0; i < size; i++) setArrayVal(i, (short) (first + i));
   }
 
   /**
@@ -140,8 +157,15 @@ public class ShortArray extends PrimitiveArray {
    * @param anArray the array to be used as this object's array.
    */
   public ShortArray(final short[] anArray) {
-    array = anArray;
-    size = anArray.length;
+    if (anArray == null) {
+      wrappedArray = new short[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
+      size = 0;
+    } else {
+      wrappedArray = anArray;
+      array = java.lang.foreign.MemorySegment.ofArray(anArray);
+      size = anArray.length;
+    }
   }
 
   /**
@@ -153,25 +177,28 @@ public class ShortArray extends PrimitiveArray {
    */
   public ShortArray(final char[] charArray) {
     size = charArray.length;
-    array = new short[size];
-    for (int i = 0; i < size; i++) array[i] = (short) charArray[i];
+    wrappedArray = new short[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
+    for (int i = 0; i < size; i++) setArrayVal(i, (short) charArray[i]);
   }
 
   /**
-   * A special method which encodes all char values as short values via <tt>sa.array[i] =
-   * (short)array[i]</tt>. Thus negative short values become large positive char values. Note that
-   * the cohort 'missingValue' of a CharArray is different from the missingValue of a ShortArray and
-   * this method does nothing special for those values. This method does nothing special for the
-   * missingValues. 'capacity' and 'size' will equal ca.size. See CharArray.decodeFromShortArray().
+   * A special method which encodes all char values as short values via <tt>sa.getArrayVal(i) =
+   * (short)getArrayVal(i)</tt>. Thus negative short values become large positive char values. Note
+   * that the cohort 'missingValue' of a CharArray is different from the missingValue of a
+   * ShortArray and this method does nothing special for those values. This method does nothing
+   * special for the missingValues. 'capacity' and 'size' will equal ca.size. See
+   * CharArray.decodeFromShortArray().
    *
    * @param ca CharArray
    */
   public static ShortArray fromCharArrayBytes(final CharArray ca) {
     final int size = ca.size();
     final ShortArray sa = new ShortArray(size, true); // active
-    final short sarray[] = sa.array;
-    final char carray[] = ca.array;
-    for (int i = 0; i < size; i++) sarray[i] = (short) carray[i];
+    final short sarray[] = new short[size];
+    for (int i = 0; i < size; i++) sarray[i] = (short) ca.getArrayVal(i);
+    java.lang.foreign.MemorySegment.copy(
+        java.lang.foreign.MemorySegment.ofArray(sarray), 0, sa.array, 0, size * 2L);
     return sa;
   }
 
@@ -218,8 +245,8 @@ public class ShortArray extends PrimitiveArray {
    * @return the current capacity (number of elements) of the internal data array.
    */
   @Override
-  public int capacity() {
-    return array.length;
+  public final int capacity() {
+    return (int) (array.byteSize() / 2);
   }
 
   /**
@@ -235,7 +262,7 @@ public class ShortArray extends PrimitiveArray {
     // and
     // https://stackoverflow.com/questions/299304/why-does-javas-hashcode-in-string-use-31-as-a-multiplier
     int code = 0;
-    for (int i = 0; i < size; i++) code = 31 * code + array[i];
+    for (int i = 0; i < size; i++) code = 31 * code + getArrayVal(i);
     return code;
   }
 
@@ -261,28 +288,28 @@ public class ShortArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex)
-      return pa == null
-          ? new ShortArray(new short[0])
-          : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
+    if (stopIndex < startIndex) return pa == null ? new ShortArray(new short[0]) : pa;
 
-    final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    ShortArray sa = null;
+    int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
+    ShortArray da = null;
     if (pa == null) {
-      sa = new ShortArray(willFind, true);
+      da = new ShortArray(willFind, true);
     } else {
-      sa = (ShortArray) pa;
-      sa.ensureCapacity(willFind);
-      sa.size = willFind;
+      da = (ShortArray) pa;
+      da.ensureCapacity(willFind);
+      da.size = willFind;
     }
-    final short tar[] = sa.array;
+    da.setMaxIsMV(maxIsMV);
     if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
+      PanamaHelper.copyElements(
+          wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 2);
     } else {
       int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      for (int i = startIndex; i <= stopIndex; i += stride) {
+        da.setArrayVal(po++, getArrayVal(i));
+      }
     }
-    return sa.setMaxIsMV(maxIsMV);
+    return da;
   }
 
   /**
@@ -325,9 +352,9 @@ public class ShortArray extends PrimitiveArray {
    * @param value the value to be added to the array
    */
   public void add(final short value) {
-    if (size == array.length) // if we're at capacity
+    if (size == capacity()) // if we're at capacity
     ensureCapacity(size + 1L);
-    array[size++] = value;
+    setArrayVal(size++, value);
   }
 
   /**
@@ -363,7 +390,12 @@ public class ShortArray extends PrimitiveArray {
   public void add(final short ar[]) {
     final int arSize = ar.length;
     ensureCapacity(size + (long) arSize);
-    System.arraycopy(ar, 0, array, size, arSize);
+    if (wrappedArray != null) {
+      System.arraycopy(ar, 0, wrappedArray, size, arSize);
+    } else {
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(ar), (0) * 2L, array, (size) * 2L, (arSize) * 2L);
+    }
     size += arSize;
   }
 
@@ -379,7 +411,13 @@ public class ShortArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayAddN, getClass().getSimpleName(), "" + n));
     ensureCapacity(size + (long) n);
-    Arrays.fill(array, size, size + n, value);
+    if (wrappedArray != null) {
+      Arrays.fill(wrappedArray, size, size + n, value);
+    } else {
+      for (int i = size; i < size + n; i++) {
+        array.setAtIndex(LAYOUT, i, value);
+      }
+    }
     size += n;
   }
 
@@ -394,11 +432,16 @@ public class ShortArray extends PrimitiveArray {
     if (index < 0 || index > size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayAtInsert, getClass().getSimpleName(), "" + index, "" + size));
-    if (size == array.length) // if we're at capacity
+    if (size == capacity()) // if we're at capacity
     ensureCapacity(size + 1L);
-    System.arraycopy(array, index, array, index + 1, size - index);
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, index, wrappedArray, index + 1, size - index);
+    } else {
+      java.lang.foreign.MemorySegment.copy(
+          array, (index) * 2L, array, (index + 1) * 2L, (size - index) * 2L);
+    }
     size++;
-    array[index] = value;
+    setArrayVal(index, value);
   }
 
   /**
@@ -522,7 +565,11 @@ public class ShortArray extends PrimitiveArray {
                 + " > otherPA.size="
                 + otherPA.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((ShortArray) otherPA).array, otherIndex, array, size, nValues);
+      {
+        ShortArray oPA = (ShortArray) ((ShortArray) otherPA);
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 2);
+      }
       size += nValues;
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
@@ -556,10 +603,8 @@ public class ShortArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayRemove, getClass().getSimpleName(), "" + index, "" + size));
-    System.arraycopy(array, index + 1, array, index, size - index - 1);
+    PanamaHelper.remove(index, 2, size, wrappedArray, array);
     size--;
-
-    // for object types, nullify the object at the end
   }
 
   /**
@@ -578,10 +623,8 @@ public class ShortArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.removeRange: from (" + from + ") > to (" + to + ").");
     }
-    System.arraycopy(array, to, array, from, size - to);
+    PanamaHelper.removeRange(from, to, 2, size, wrappedArray, array);
     size -= to - from;
-
-    // for object types, nullify the objects at the end
   }
 
   /**
@@ -619,32 +662,51 @@ public class ShortArray extends PrimitiveArray {
               + ") or >= last ("
               + last
               + ").");
-    if (first == last || destination == first || destination == last) return; // nothing to do
-    // String2.log("move first=" + first + " last=" + last + " dest=" + destination);
-    // String2.log("move initial " + String2.toCSSVString(array));
+    if (first == last || destination == first || destination == last) return;
 
-    // store the range to be moved
     final int nToMove = last - first;
     final short[] temp = new short[nToMove];
-    System.arraycopy(array, first, temp, 0, nToMove);
-
-    // if moving to left...    (draw diagram to visualize this)
-    if (destination < first) {
-      System.arraycopy(array, destination, array, destination + nToMove, first - destination);
-      // String2.log("move after shift " + String2.toCSSVString(array));
-
-      // copy temp data into place
-      System.arraycopy(temp, 0, array, destination, nToMove);
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, first, temp, 0, nToMove);
     } else {
-      // moving to right
-      System.arraycopy(array, last, array, first, destination - last);
-      // String2.log("move after shift " + String2.toCSSVString(array));
-
-      // copy temp data into place
-      System.arraycopy(temp, 0, array, destination - nToMove, nToMove);
+      java.lang.foreign.MemorySegment.copy(
+          array, first * 2L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 2L);
     }
-    // String2.log("move done " + String2.toCSSVString(array));
 
+    if (destination < first) {
+      if (wrappedArray != null) {
+        System.arraycopy(
+            wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
+        System.arraycopy(temp, 0, wrappedArray, destination, nToMove);
+      } else {
+        java.lang.foreign.MemorySegment.copy(
+            array,
+            destination * 2L,
+            array,
+            (destination + nToMove) * 2L,
+            (first - destination) * 2L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            destination * 2L,
+            nToMove * 2L);
+      }
+    } else {
+      if (wrappedArray != null) {
+        System.arraycopy(wrappedArray, last, wrappedArray, first, destination - last);
+        System.arraycopy(temp, 0, wrappedArray, destination - nToMove, nToMove);
+      } else {
+        java.lang.foreign.MemorySegment.copy(
+            array, last * 2L, array, first * 2L, (destination - last) * 2L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            (destination - nToMove) * 2L,
+            nToMove * 2L);
+      }
+    }
   }
 
   /**
@@ -657,7 +719,7 @@ public class ShortArray extends PrimitiveArray {
   public void justKeep(final BitSet bitset) {
     int newSize = 0;
     for (int row = 0; row < size; row++) {
-      if (bitset.get(row)) array[newSize++] = array[row];
+      if (bitset.get(row)) setArrayVal(newSize++, getArrayVal(row));
     }
     removeRange(newSize, size);
   }
@@ -670,16 +732,18 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public void ensureCapacity(final long minCapacity) {
-    if (array.length < minCapacity) {
-      // ensure minCapacity is < Integer.MAX_VALUE
+    long currentCapacity = array.byteSize() / 2;
+    if (currentCapacity < minCapacity) {
       Math2.ensureArraySizeOkay(minCapacity, "ShortArray");
-      // caller may know exact number needed, so don't double above 2x current size
-      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
-      if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
+      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
+      if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(2L * newCapacity, "ShortArray");
-      final short[] newArray = new short[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      short[] newArray = new short[newCapacity];
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 2L);
+      array = newSegment;
+      wrappedArray = newArray;
     }
   }
 
@@ -690,11 +754,12 @@ public class ShortArray extends PrimitiveArray {
    *     return an array with their storage type e.g., ULongArray returns a long[].
    */
   public short[] toArray() {
-    if (array.length == size) return array;
+    if (size == (int) (array.byteSize() / 2) && wrappedArray != null) return wrappedArray;
     Math2.ensureMemoryAvailable(2L * size, "ShortArray.toArray");
-    // this is faster than making array then arraycopy because it doesn't have to fill the initial
-    // array with 0's
-    return Arrays.copyOfRange(array, 0, size);
+    if (wrappedArray != null) {
+      return Arrays.copyOfRange(wrappedArray, 0, size);
+    }
+    return array.asSlice(0, size * 2L).toArray(LAYOUT);
   }
 
   /**
@@ -719,7 +784,7 @@ public class ShortArray extends PrimitiveArray {
     Math2.ensureMemoryAvailable(8L * size, "ShortArray.toDoubleArray");
     final double dar[] = new double[size];
     for (int i = 0; i < size; i++) {
-      final short s = array[i];
+      final short s = getArrayVal(i);
       dar[i] = maxIsMV && s == Short.MAX_VALUE ? Double.NaN : s;
     }
     return dar;
@@ -736,7 +801,7 @@ public class ShortArray extends PrimitiveArray {
         8L * size, "ShortArray.toStringArray"); // 8L is feeble minimal estimate
     final String sar[] = new String[size];
     for (int i = 0; i < size; i++) {
-      final short s = array[i];
+      final short s = getArrayVal(i);
       sar[i] = maxIsMV && s == Short.MAX_VALUE ? "" : String.valueOf(s);
     }
     return sar;
@@ -752,7 +817,7 @@ public class ShortArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.get: index (" + index + ") >= size (" + size + ").");
-    return array[index];
+    return array.getAtIndex(LAYOUT, index);
   }
 
   /**
@@ -765,7 +830,7 @@ public class ShortArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.set: index (" + index + ") >= size (" + size + ").");
-    array[index] = value;
+    array.setAtIndex(LAYOUT, index, value);
   }
 
   /**
@@ -917,7 +982,12 @@ public class ShortArray extends PrimitiveArray {
   public PrimitiveArray makeUnsignedPA() {
     Math2.ensureMemoryAvailable(2L * size, "ShortArray");
     final short ar[] = new short[size];
-    System.arraycopy(array, 0, ar, 0, size);
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, 0, ar, 0, size);
+    } else {
+      java.lang.foreign.MemorySegment.copy(
+          array, (0) * 2L, java.lang.foreign.MemorySegment.ofArray(ar), (0) * 2L, (size) * 2L);
+    }
     return new UShortArray(ar);
   }
 
@@ -1038,7 +1108,7 @@ public class ShortArray extends PrimitiveArray {
    * @return the index where 'lookFor' is found, or -1 if not found.
    */
   public int indexOf(final short lookFor, final int startIndex) {
-    for (int i = startIndex; i < size; i++) if (array[i] == lookFor) return i;
+    for (int i = startIndex; i < size; i++) if (getArrayVal(i) == lookFor) return i;
     return -1;
   }
 
@@ -1071,7 +1141,7 @@ public class ShortArray extends PrimitiveArray {
               + ") >= size ("
               + size
               + ").");
-    for (int i = startIndex; i >= 0; i--) if (array[i] == lookFor) return i;
+    for (int i = startIndex; i >= 0; i--) if (getArrayVal(i) == lookFor) return i;
     return -1;
   }
 
@@ -1090,7 +1160,15 @@ public class ShortArray extends PrimitiveArray {
   /** If size != capacity, this makes a new 'array' of size 'size' so capacity will equal size. */
   @Override
   public void trimToSize() {
-    array = toArray();
+    int currentCapacity = capacity();
+    if (size < currentCapacity) {
+      short[] newArray = new short[size];
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 2L);
+      array = newSegment;
+      wrappedArray = newArray;
+    }
   }
 
   /**
@@ -1160,7 +1238,7 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public String toNccsvAttString() {
     final StringBuilder sb = new StringBuilder(size * 8);
-    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + array[i] + "s");
+    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + getArrayVal(i) + "s");
     return sb.toString();
   }
 
@@ -1170,10 +1248,17 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public void sort() {
-    // see switchover point and speed comparison in
-    //  https://www.baeldung.com/java-arrays-sort-vs-parallelsort
-    if (size < 8192) Arrays.sort(array, 0, size);
-    else Arrays.parallelSort(array, 0, size);
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) Arrays.sort(wrappedArray, 0, size);
+      else Arrays.parallelSort(wrappedArray, 0, size);
+    } else {
+      short[] temp = array.asSlice(0, size * 2L).toArray(LAYOUT);
+      if (size < 8192) Arrays.sort(temp, 0, size);
+      else Arrays.parallelSort(temp, 0, size);
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 2L);
+    }
   }
 
   /**
@@ -1186,7 +1271,8 @@ public class ShortArray extends PrimitiveArray {
    * @param otherPA the other PrimitiveArray which must be the same (or close) PAType.
    * @param index2 an index number 0 ... size-1
    * @return returns a negative integer, zero, or a positive integer if the value at index1 is less
-   *     than, equal to, or greater than the value at index2. Think "array[index1] - array[index2]".
+   *     than, equal to, or greater than the value at index2. Think "getArrayVal(index1) -
+   *     getArrayVal(index2)".
    */
   @Override
   public int compare(final int index1, final PrimitiveArray otherPA, final int index2) {
@@ -1202,7 +1288,7 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public void copy(final int from, final int to) {
-    array[to] = array[from];
+    setArrayVal(to, getArrayVal(from));
   }
 
   /**
@@ -1215,11 +1301,15 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public void reorder(final int rank[]) {
     final int n = rank.length;
-    // new length could be n, but I'll keep it the same array.length as before
-    Math2.ensureMemoryAvailable(2L * array.length, "ShortArray");
-    final short newArray[] = new short[array.length];
-    for (int i = 0; i < n; i++) newArray[i] = array[rank[i]];
-    array = newArray;
+    long currentCapacity = array.byteSize() / 2;
+    Math2.ensureMemoryAvailable(2L * currentCapacity, "ShortArray");
+    short[] newArray = new short[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
+    for (int i = 0; i < n; i++) {
+      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
+    }
+    array = newSegment;
+    wrappedArray = newArray;
   }
 
   /**
@@ -1228,7 +1318,10 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public void reverseBytes() {
-    for (int i = 0; i < size; i++) array[i] = Short.reverseBytes(array[i]);
+    for (int i = 0; i < size; i++) {
+      short val = array.getAtIndex(LAYOUT, i);
+      array.setAtIndex(LAYOUT, i, Short.reverseBytes(val));
+    }
   }
 
   /**
@@ -1242,7 +1335,7 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
-    for (int i = 0; i < size; i++) dos.writeShort(array[i]);
+    for (int i = 0; i < size; i++) dos.writeShort(getArrayVal(i));
     return size == 0 ? 0 : 2;
   }
 
@@ -1257,7 +1350,7 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos, final int i) throws Exception {
-    dos.writeShort(array[i]);
+    dos.writeShort(getArrayVal(i));
     return 2;
   }
 
@@ -1271,7 +1364,7 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
     ensureCapacity(size + (long) n);
-    for (int i = 0; i < n; i++) array[size++] = dis.readShort();
+    for (int i = 0; i < n; i++) setArrayVal(size++, dis.readShort());
   }
 
   /**
@@ -1288,7 +1381,7 @@ public class ShortArray extends PrimitiveArray {
     dos.writeInt(size); // yes, a second time
     // shorts are written as ints (see dods.dap.Int16PrimitiveVector.externalize)
     // since XDR doesn't support shorts
-    for (int i = 0; i < size; i++) dos.writeInt(array[i]); // yes, as ints
+    for (int i = 0; i < size; i++) dos.writeInt(getArrayVal(i)); // yes, as ints
   }
 
   /**
@@ -1302,7 +1395,7 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public void externalizeForDODS(final DataOutputStream dos, final int i) throws Exception {
-    dos.writeInt(array[i]); // as if int
+    dos.writeInt(getArrayVal(i)); // as if int
   }
 
   /**
@@ -1317,11 +1410,12 @@ public class ShortArray extends PrimitiveArray {
     int nValues = dis.readInt();
     dis.readInt(); // skip duplicate of nValues
     ensureCapacity(size + (long) nValues);
-    for (int i = 0; i < nValues; i++) array[size++] = (short) dis.readInt(); // yes, ints; see above
+    for (int i = 0; i < nValues; i++)
+      setArrayVal(size++, (short) dis.readInt()); // yes, ints; see above
   }
 
   /**
-   * This writes array[index] to a randomAccessFile at the current position.
+   * This writes getArrayVal(index) to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
    * @param index
@@ -1357,7 +1451,11 @@ public class ShortArray extends PrimitiveArray {
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof ShortArray sa) {
       if (pa.getMaxIsMV()) setMaxIsMV(true);
-      System.arraycopy(sa.array, 0, array, size, otherSize);
+      {
+        ShortArray oPA = (ShortArray) sa;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 2);
+      }
       size += otherSize;
     } else {
       for (int i = 0; i < otherSize; i++)
@@ -1378,10 +1476,14 @@ public class ShortArray extends PrimitiveArray {
     final int otherSize = pa.size();
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof ShortArray sa) {
-      System.arraycopy(sa.array, 0, array, size, otherSize);
+      {
+        ShortArray oPA = (ShortArray) sa;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 2);
+      }
     } else {
       for (int i = 0; i < otherSize; i++)
-        array[size + i] = Math2.narrowToShort(pa.getRawInt(i)); // this DOESN'T convert mv's
+        setArrayVal(size + i, Math2.narrowToShort(pa.getRawInt(i))); // this DOESN'T convert mv's
     }
     size += otherSize; // do last to minimize concurrency problems
   }
@@ -1405,11 +1507,11 @@ public class ShortArray extends PrimitiveArray {
     // make a hashMap with all the unique values (associated values are initially all dummy)
     final Integer dummy = -1;
     final HashMap<Short, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    short lastValue = array[0]; // since lastValue often equals currentValue, cache it
+    short lastValue = getArrayVal(0); // since lastValue often equals currentValue, cache it
     hashMap.put(lastValue, dummy);
     boolean alreadySorted = true;
     for (int i = 1; i < size; i++) {
-      short currentValue = array[i];
+      short currentValue = getArrayVal(i);
       if (currentValue != lastValue) {
         if (currentValue < lastValue) alreadySorted = false;
         lastValue = currentValue;
@@ -1445,14 +1547,14 @@ public class ShortArray extends PrimitiveArray {
 
     // convert original values to ranks
     final int ranks[] = new int[size];
-    lastValue = array[0];
+    lastValue = getArrayVal(0);
     ranks[0] = (Integer) hashMap.get(lastValue);
     int lastRank = ranks[0];
     for (int i = 1; i < size; i++) {
-      if (array[i] == lastValue) {
+      if (getArrayVal(i) == lastValue) {
         ranks[i] = lastRank;
       } else {
-        lastValue = array[i];
+        lastValue = getArrayVal(i);
         ranks[i] = (Integer) hashMap.get(lastValue);
         lastRank = ranks[i];
       }
@@ -1479,8 +1581,8 @@ public class ShortArray extends PrimitiveArray {
     if (from == to) return 0;
     int count = 0;
     for (int i = 0; i < size; i++) {
-      if (array[i] == from) {
-        array[i] = to;
+      if (getArrayVal(i) == from) {
+        setArrayVal(i, to);
         count++;
       }
     }
@@ -1497,7 +1599,7 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public int firstTie() {
     for (int i = 1; i < size; i++) {
-      if (array[i - 1] == array[i]) {
+      if (getArrayVal(i - 1) == getArrayVal(i)) {
         return i - 1;
       }
     }
@@ -1517,7 +1619,7 @@ public class ShortArray extends PrimitiveArray {
     short tmin = Short.MAX_VALUE;
     short tmax = Short.MIN_VALUE;
     for (int i = 0; i < size; i++) {
-      short v = array[i];
+      short v = getArrayVal(i);
       if (maxIsMV && v == Short.MAX_VALUE) {
       } else {
         n++;
@@ -1545,12 +1647,13 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public void changeSignedToFromUnsigned() {
     for (int i = 0; i < size; i++) {
-      final int i2 = array[i];
-      array[i] =
+      final int i2 = getArrayVal(i);
+      setArrayVal(
+          i,
           (short)
               (i2 < 0
                   ? i2 + Short.MAX_VALUE + 1
-                  : i2 - Short.MAX_VALUE - 1); // order of ops is important
+                  : i2 - Short.MAX_VALUE - 1)); // order of ops is important
     }
   }
 }

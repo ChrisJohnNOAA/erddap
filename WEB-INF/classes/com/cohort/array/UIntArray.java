@@ -28,6 +28,9 @@ import ucar.ma2.StructureData;
  */
 public class UIntArray extends PrimitiveArray {
 
+  private static final java.lang.foreign.ValueLayout.OfInt LAYOUT =
+      java.lang.foreign.ValueLayout.JAVA_INT.withOrder(java.nio.ByteOrder.nativeOrder());
+
   /** This is the minimum unsigned value, stored as a signed long. */
   public static final long MIN_VALUE = Math2.UINT_MIN_VALUE;
 
@@ -109,7 +112,17 @@ public class UIntArray extends PrimitiveArray {
    * if you promise to be careful. Note that if the PrimitiveArray's capacity is increased, the
    * PrimitiveArray will use a different array for storage.
    */
-  public int[] array;
+  public java.lang.foreign.MemorySegment array;
+
+  private int[] wrappedArray;
+
+  public int getArrayVal(final int i) {
+    return array.getAtIndex(LAYOUT, i);
+  }
+
+  public void setArrayVal(final int i, final int val) {
+    array.setAtIndex(LAYOUT, i, val);
+  }
 
   /**
    * This indicates if this class' type (e.g., PAType.SHORT) is an integer (in the math sense) type.
@@ -122,7 +135,8 @@ public class UIntArray extends PrimitiveArray {
 
   /** A constructor for a capacity of 8 elements. The initial 'size' will be 0. */
   public UIntArray() {
-    array = new int[8];
+    wrappedArray = new int[8];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
   }
 
   /**
@@ -133,7 +147,8 @@ public class UIntArray extends PrimitiveArray {
    */
   public UIntArray(final PrimitiveArray primitiveArray) {
     Math2.ensureMemoryAvailable(4L * primitiveArray.size(), "UIntArray");
-    array = new int[primitiveArray.size()]; // exact size
+    wrappedArray = new int[primitiveArray.size()];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray); // exact size
     append(primitiveArray);
   }
 
@@ -146,7 +161,8 @@ public class UIntArray extends PrimitiveArray {
    */
   public UIntArray(final int capacity, final boolean active) {
     Math2.ensureMemoryAvailable(4L * capacity, "UIntArray");
-    array = new int[capacity];
+    wrappedArray = new int[capacity];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
     if (active) size = capacity;
   }
 
@@ -159,8 +175,9 @@ public class UIntArray extends PrimitiveArray {
   public UIntArray(final int first, final int last) {
     size = last - first + 1;
     Math2.ensureMemoryAvailable(4L * size, "UIntArray");
-    array = new int[size];
-    for (int i = 0; i < size; i++) array[i] = pack(first + i);
+    wrappedArray = new int[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
+    for (int i = 0; i < size; i++) setArrayVal(i, pack(first + i));
   }
 
   /**
@@ -170,8 +187,15 @@ public class UIntArray extends PrimitiveArray {
    * @param anArray the array with already packed values to be used as this object's array.
    */
   public UIntArray(final int[] anArray) {
-    array = anArray;
-    size = anArray.length;
+    if (anArray == null) {
+      wrappedArray = new int[0];
+      array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
+      size = 0;
+    } else {
+      wrappedArray = anArray;
+      array = java.lang.foreign.MemorySegment.ofArray(anArray);
+      size = anArray.length;
+    }
   }
 
   /**
@@ -183,8 +207,9 @@ public class UIntArray extends PrimitiveArray {
   public UIntArray(final long[] anArray) {
     size = anArray.length;
     Math2.ensureMemoryAvailable(4L * size, "UIntArray");
-    array = new int[size];
-    for (int i = 0; i < size; i++) array[i] = pack(anArray[i]);
+    wrappedArray = new int[size];
+    array = java.lang.foreign.MemorySegment.ofArray(wrappedArray);
+    for (int i = 0; i < size; i++) setArrayVal(i, pack(anArray[i]));
   }
 
   /**
@@ -198,7 +223,12 @@ public class UIntArray extends PrimitiveArray {
   public PrimitiveArray makeSignedPA() {
     Math2.ensureMemoryAvailable(4L * size, "UIntArray");
     final int ar[] = new int[size];
-    System.arraycopy(array, 0, ar, 0, size);
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, 0, ar, 0, size);
+    } else {
+      java.lang.foreign.MemorySegment.copy(
+          array, (0) * 4L, java.lang.foreign.MemorySegment.ofArray(ar), (0) * 4L, (size) * 4L);
+    }
     return new IntArray(ar);
   }
 
@@ -245,8 +275,8 @@ public class UIntArray extends PrimitiveArray {
    * @return the current capacity (number of elements) of the internal data array.
    */
   @Override
-  public int capacity() {
-    return array.length;
+  public final int capacity() {
+    return (int) (array.byteSize() / 4);
   }
 
   /**
@@ -262,7 +292,7 @@ public class UIntArray extends PrimitiveArray {
     // and
     // https://stackoverflow.com/questions/299304/why-does-javas-hashcode-in-string-use-31-as-a-multiplier
     int code = 0;
-    for (int i = 0; i < size; i++) code = 31 * code + array[i];
+    for (int i = 0; i < size; i++) code = 31 * code + getArrayVal(i);
     return code;
   }
 
@@ -288,28 +318,28 @@ public class UIntArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex)
-      return pa == null
-          ? new UIntArray(new int[0])
-          : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
+    if (stopIndex < startIndex) return pa == null ? new UIntArray(new int[0]) : pa;
 
-    final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    UIntArray ia = null;
+    int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
+    UIntArray da = null;
     if (pa == null) {
-      ia = new UIntArray(willFind, true);
+      da = new UIntArray(willFind, true);
     } else {
-      ia = (UIntArray) pa;
-      ia.ensureCapacity(willFind);
-      ia.size = willFind;
+      da = (UIntArray) pa;
+      da.ensureCapacity(willFind);
+      da.size = willFind;
     }
-    final int tar[] = ia.array;
+    da.setMaxIsMV(maxIsMV);
     if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
+      PanamaHelper.copyElements(
+          wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 4);
     } else {
       int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      for (int i = startIndex; i <= stopIndex; i += stride) {
+        da.setArrayVal(po++, getArrayVal(i));
+      }
     }
-    return ia.setMaxIsMV(maxIsMV);
+    return da;
   }
 
   /**
@@ -351,10 +381,10 @@ public class UIntArray extends PrimitiveArray {
    * @param value the value to be added to the array
    */
   public void add(final long value) {
-    if (size == array.length) // if we're at capacity
+    if (size == capacity()) // if we're at capacity
     ensureCapacity(size + 1L);
     if (value < 0) maxIsMV = true;
-    array[size++] = pack(value);
+    setArrayVal(size++, pack(value));
   }
 
   /**
@@ -363,9 +393,9 @@ public class UIntArray extends PrimitiveArray {
    * @param packedValue the already packed value to be added to the array
    */
   public void addPacked(final int packedValue) {
-    if (size == array.length) // if we're at capacity
+    if (size == capacity()) // if we're at capacity
     ensureCapacity(size + 1L);
-    array[size++] = packedValue;
+    setArrayVal(size++, packedValue);
   }
 
   /**
@@ -400,7 +430,12 @@ public class UIntArray extends PrimitiveArray {
   public void add(final int ar[]) {
     final int arSize = ar.length;
     ensureCapacity(size + (long) arSize);
-    System.arraycopy(ar, 0, array, size, arSize);
+    if (wrappedArray != null) {
+      System.arraycopy(ar, 0, wrappedArray, size, arSize);
+    } else {
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(ar), (0) * 4L, array, (size) * 4L, (arSize) * 4L);
+    }
     size += arSize;
   }
 
@@ -416,7 +451,13 @@ public class UIntArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayAddN, getClass().getSimpleName(), "" + n));
     ensureCapacity(size + (long) n);
-    Arrays.fill(array, size, size + n, pack(value));
+    if (wrappedArray != null) {
+      Arrays.fill(wrappedArray, size, size + n, pack(value));
+    } else {
+      for (int i = size; i < size + n; i++) {
+        array.setAtIndex(LAYOUT, i, pack(value));
+      }
+    }
     size += n;
   }
 
@@ -429,15 +470,20 @@ public class UIntArray extends PrimitiveArray {
    */
   public void atInsert(final int index, final long value) {
     // String2.log(">>UIntArray index=" + index + " value=" + value + " size=" + size + " al=" +
-    // array.length);
+    // capacity());
     if (index < 0 || index > size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayAtInsert, getClass().getSimpleName(), "" + index, "" + size));
-    if (size == array.length) // if we're at capacity
+    if (size == capacity()) // if we're at capacity
     ensureCapacity(size + 1L);
-    System.arraycopy(array, index, array, index + 1, size - index);
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, index, wrappedArray, index + 1, size - index);
+    } else {
+      java.lang.foreign.MemorySegment.copy(
+          array, (index) * 4L, array, (index + 1) * 4L, (size - index) * 4L);
+    }
     size++;
-    array[index] = pack(value);
+    setArrayVal(index, pack(value));
   }
 
   /**
@@ -561,7 +607,11 @@ public class UIntArray extends PrimitiveArray {
                 + " > otherPA.size="
                 + otherPA.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((UIntArray) otherPA).array, otherIndex, array, size, nValues);
+      {
+        UIntArray oPA = (UIntArray) ((UIntArray) otherPA);
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 4);
+      }
       size += nValues;
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
@@ -595,10 +645,8 @@ public class UIntArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           MessageFormat.format(ArrayRemove, getClass().getSimpleName(), "" + index, "" + size));
-    System.arraycopy(array, index + 1, array, index, size - index - 1);
+    PanamaHelper.remove(index, 4, size, wrappedArray, array);
     size--;
-
-    // for object types, nullify the object at the end
   }
 
   /**
@@ -617,10 +665,8 @@ public class UIntArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in UIntArray.removeRange: from (" + from + ") > to (" + to + ").");
     }
-    System.arraycopy(array, to, array, from, size - to);
+    PanamaHelper.removeRange(from, to, 4, size, wrappedArray, array);
     size -= to - from;
-
-    // for object types, nullify the objects at the end
   }
 
   /**
@@ -658,32 +704,51 @@ public class UIntArray extends PrimitiveArray {
               + ") or >= last ("
               + last
               + ").");
-    if (first == last || destination == first || destination == last) return; // nothing to do
-    // String2.log("move first=" + first + " last=" + last + " dest=" + destination);
-    // String2.log("move initial " + String2.toCSSVString(array));
+    if (first == last || destination == first || destination == last) return;
 
-    // store the range to be moved
     final int nToMove = last - first;
     final int[] temp = new int[nToMove];
-    System.arraycopy(array, first, temp, 0, nToMove);
-
-    // if moving to left...    (draw diagram to visualize this)
-    if (destination < first) {
-      System.arraycopy(array, destination, array, destination + nToMove, first - destination);
-      // String2.log("move after shift " + String2.toCSSVString(array));
-
-      // copy temp data into place
-      System.arraycopy(temp, 0, array, destination, nToMove);
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, first, temp, 0, nToMove);
     } else {
-      // moving to right
-      System.arraycopy(array, last, array, first, destination - last);
-      // String2.log("move after shift " + String2.toCSSVString(array));
-
-      // copy temp data into place
-      System.arraycopy(temp, 0, array, destination - nToMove, nToMove);
+      java.lang.foreign.MemorySegment.copy(
+          array, first * 4L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 4L);
     }
-    // String2.log("move done " + String2.toCSSVString(array));
 
+    if (destination < first) {
+      if (wrappedArray != null) {
+        System.arraycopy(
+            wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
+        System.arraycopy(temp, 0, wrappedArray, destination, nToMove);
+      } else {
+        java.lang.foreign.MemorySegment.copy(
+            array,
+            destination * 4L,
+            array,
+            (destination + nToMove) * 4L,
+            (first - destination) * 4L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            destination * 4L,
+            nToMove * 4L);
+      }
+    } else {
+      if (wrappedArray != null) {
+        System.arraycopy(wrappedArray, last, wrappedArray, first, destination - last);
+        System.arraycopy(temp, 0, wrappedArray, destination - nToMove, nToMove);
+      } else {
+        java.lang.foreign.MemorySegment.copy(
+            array, last * 4L, array, first * 4L, (destination - last) * 4L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            (destination - nToMove) * 4L,
+            nToMove * 4L);
+      }
+    }
   }
 
   /**
@@ -696,7 +761,7 @@ public class UIntArray extends PrimitiveArray {
   public void justKeep(final BitSet bitset) {
     int newSize = 0;
     for (int row = 0; row < size; row++) {
-      if (bitset.get(row)) array[newSize++] = array[row];
+      if (bitset.get(row)) setArrayVal(newSize++, getArrayVal(row));
     }
     removeRange(newSize, size);
   }
@@ -709,16 +774,18 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public void ensureCapacity(final long minCapacity) {
-    if (array.length < minCapacity) {
-      // ensure minCapacity is < Integer.MAX_VALUE
+    long currentCapacity = array.byteSize() / 4;
+    if (currentCapacity < minCapacity) {
       Math2.ensureArraySizeOkay(minCapacity, "UIntArray");
-      // caller may know exact number needed, so don't double above 2x current size
-      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
-      if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
+      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
+      if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(4L * newCapacity, "UIntArray");
-      final int[] newArray = new int[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      int[] newArray = new int[newCapacity];
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 4L);
+      array = newSegment;
+      wrappedArray = newArray;
     }
   }
 
@@ -729,11 +796,12 @@ public class UIntArray extends PrimitiveArray {
    *     return an array with their storage type e.g., ULongArray returns a long[].
    */
   public int[] toArray() {
-    if (array.length == size) return array;
+    if (size == (int) (array.byteSize() / 4) && wrappedArray != null) return wrappedArray;
     Math2.ensureMemoryAvailable(4L * size, "UIntArray.toArray");
-    // this is faster than making array then arraycopy because it doesn't have to fill the initial
-    // array with 0's
-    return Arrays.copyOfRange(array, 0, size);
+    if (wrappedArray != null) {
+      return Arrays.copyOfRange(wrappedArray, 0, size);
+    }
+    return array.asSlice(0, size * 4L).toArray(LAYOUT);
   }
 
   /**
@@ -759,7 +827,7 @@ public class UIntArray extends PrimitiveArray {
     final int max = Math2.roundToInt(stats[PrimitiveArray.STATS_MAX]);
     final BitSet bitSet = new BitSet(max + 1); // +1 so 0..max
     for (int i = 0; i < size; i++) {
-      final int ti = array[i];
+      final int ti = getArrayVal(i);
       if (ti >= 0) bitSet.set(ti);
     }
     return bitSet;
@@ -776,7 +844,7 @@ public class UIntArray extends PrimitiveArray {
     Math2.ensureMemoryAvailable(8L * size, "UIntArray.toDoubleArray");
     final double dar[] = new double[size];
     for (int i = 0; i < size; i++) {
-      long j = unpack(array[i]);
+      long j = unpack(getArrayVal(i));
       dar[i] = maxIsMV && j == MAX_VALUE ? Double.NaN : j;
     }
     return dar;
@@ -793,7 +861,7 @@ public class UIntArray extends PrimitiveArray {
         8L * size, "UIntArray.toStringArray"); // 8L is feeble minimal estimate
     final String sar[] = new String[size];
     for (int i = 0; i < size; i++) {
-      final long j = unpack(array[i]);
+      final long j = unpack(getArrayVal(i));
       sar[i] = maxIsMV && j == MAX_VALUE ? "" : String.valueOf(j);
     }
     return sar;
@@ -809,7 +877,7 @@ public class UIntArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in UIntArray.get: index (" + index + ") >= size (" + size + ").");
-    return unpack(array[index]);
+    return unpack(getArrayVal(index));
   }
 
   /**
@@ -822,7 +890,7 @@ public class UIntArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in UIntArray.get: index (" + index + ") >= size (" + size + ").");
-    return array[index];
+    return getArrayVal(index);
   }
 
   /**
@@ -835,7 +903,7 @@ public class UIntArray extends PrimitiveArray {
     if (index >= size)
       throw new IllegalArgumentException(
           String2.ERROR + " in UIntArray.set: index (" + index + ") >= size (" + size + ").");
-    array[index] = pack(value);
+    setArrayVal(index, pack(value));
   }
 
   /**
@@ -1077,7 +1145,7 @@ public class UIntArray extends PrimitiveArray {
    */
   public int indexOf(final long lookFor, final int startIndex) {
     final int packedLookFor = pack(lookFor);
-    for (int i = startIndex; i < size; i++) if (array[i] == packedLookFor) return i;
+    for (int i = startIndex; i < size; i++) if (getArrayVal(i) == packedLookFor) return i;
     return -1;
   }
 
@@ -1111,7 +1179,7 @@ public class UIntArray extends PrimitiveArray {
               + size
               + ").");
     final int packedLookFor = pack(lookFor);
-    for (int i = startIndex; i >= 0; i--) if (array[i] == packedLookFor) return i;
+    for (int i = startIndex; i >= 0; i--) if (getArrayVal(i) == packedLookFor) return i;
     return -1;
   }
 
@@ -1130,7 +1198,15 @@ public class UIntArray extends PrimitiveArray {
   /** If size != capacity, this makes a new 'array' of size 'size' so capacity will equal size. */
   @Override
   public void trimToSize() {
-    array = toArray();
+    int currentCapacity = capacity();
+    if (size < currentCapacity) {
+      int[] newArray = new int[size];
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 4L);
+      array = newSegment;
+      wrappedArray = newArray;
+    }
   }
 
   /**
@@ -1164,8 +1240,8 @@ public class UIntArray extends PrimitiveArray {
           + other.size()
           + " value(s).";
     for (int i = 0; i < size; i++)
-      if (array[i] != other.array[i]
-          || (array[i] == PACKED_MAX_VALUE && maxIsMV != other.maxIsMV)) // handles mv
+      if (getArrayVal(i) != other.getArrayVal(i)
+          || (getArrayVal(i) == PACKED_MAX_VALUE && maxIsMV != other.maxIsMV)) // handles mv
       return "The two UIntArrays aren't equal: this["
             + i
             + "]="
@@ -1193,7 +1269,7 @@ public class UIntArray extends PrimitiveArray {
     final StringBuilder sb = new StringBuilder(9 * Math.min(size, (Integer.MAX_VALUE - 8192) / 9));
     for (int i = 0; i < size; i++) {
       if (i > 0) sb.append(", ");
-      sb.append(unpack(array[i]));
+      sb.append(unpack(getArrayVal(i)));
     }
     return sb.toString();
   }
@@ -1207,7 +1283,7 @@ public class UIntArray extends PrimitiveArray {
   @Override
   public String toNccsvAttString() {
     final StringBuilder sb = new StringBuilder(size * 10);
-    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + unpack(array[i]) + "ui");
+    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + unpack(getArrayVal(i)) + "ui");
     return sb.toString();
   }
 
@@ -1219,8 +1295,23 @@ public class UIntArray extends PrimitiveArray {
   public void sort() {
     // see switchover point and speed comparison in
     //  https://www.baeldung.com/java-arrays-sort-vs-parallelsort
-    if (size < 8192) Arrays.sort(array, 0, size);
-    else Arrays.parallelSort(array, 0, size);
+    if (size < 8192)
+      if (wrappedArray != null) {
+        Arrays.sort(wrappedArray, 0, size);
+      } else {
+        int[] temp = array.asSlice(0, size * 4L).toArray(LAYOUT);
+        Arrays.sort(temp, 0, size);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 4L);
+      }
+    else if (wrappedArray != null) {
+      Arrays.parallelSort(wrappedArray, 0, size);
+    } else {
+      int[] temp = array.asSlice(0, size * 4L).toArray(LAYOUT);
+      Arrays.parallelSort(temp, 0, size);
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 4L);
+    }
 
     // Then find the first value >=0, and move it and subsequent to beginning of array.
     // You can't use PrimitiveArray.binarySearch because it works on unsigned values
@@ -1228,7 +1319,7 @@ public class UIntArray extends PrimitiveArray {
     // This is not ideal, but this is rarely used.
     // [Future: you could use Arrays.binarySearch() with extra effort to find *first* value >=0.]
     int which = 0;
-    while (which < size && array[which] < 0) which++;
+    while (which < size && getArrayVal(which) < 0) which++;
     move(which, size, 0);
   }
 
@@ -1242,7 +1333,8 @@ public class UIntArray extends PrimitiveArray {
    * @param otherPA the other PrimitiveArray which must be the same (or close) PAType.
    * @param index2 an index number 0 ... size-1
    * @return returns a negative integer, zero, or a positive integer if the value at index1 is less
-   *     than, equal to, or greater than the value at index2. Think "array[index1] - array[index2]".
+   *     than, equal to, or greater than the value at index2. Think "getArrayVal(index1) -
+   *     getArrayVal(index2)".
    */
   @Override
   public int compare(final int index1, final PrimitiveArray otherPA, final int index2) {
@@ -1258,7 +1350,7 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public void copy(final int from, final int to) {
-    array[to] = array[from];
+    setArrayVal(to, getArrayVal(from));
   }
 
   /**
@@ -1271,11 +1363,15 @@ public class UIntArray extends PrimitiveArray {
   @Override
   public void reorder(final int rank[]) {
     final int n = rank.length;
-    // new length could be n, but I'll keep it the same array.length as before
-    Math2.ensureMemoryAvailable(4L * array.length, "UIntArray");
-    final int newArray[] = new int[array.length];
-    for (int i = 0; i < n; i++) newArray[i] = array[rank[i]];
-    array = newArray;
+    long currentCapacity = array.byteSize() / 4;
+    Math2.ensureMemoryAvailable(4L * currentCapacity, "UIntArray");
+    int[] newArray = new int[(int) currentCapacity];
+    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
+    for (int i = 0; i < n; i++) {
+      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
+    }
+    array = newSegment;
+    wrappedArray = newArray;
   }
 
   /**
@@ -1284,7 +1380,10 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public void reverseBytes() {
-    for (int i = 0; i < size; i++) array[i] = Integer.reverseBytes(array[i]);
+    for (int i = 0; i < size; i++) {
+      int val = array.getAtIndex(LAYOUT, i);
+      array.setAtIndex(LAYOUT, i, Integer.reverseBytes(val));
+    }
   }
 
   /**
@@ -1298,7 +1397,7 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
-    for (int i = 0; i < size; i++) dos.writeInt(array[i]);
+    for (int i = 0; i < size; i++) dos.writeInt(getArrayVal(i));
     return size == 0 ? 0 : 4;
   }
 
@@ -1313,7 +1412,7 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public int writeDos(final DataOutputStream dos, final int i) throws Exception {
-    dos.writeInt(array[i]);
+    dos.writeInt(getArrayVal(i));
     return 4;
   }
 
@@ -1327,7 +1426,7 @@ public class UIntArray extends PrimitiveArray {
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
     ensureCapacity(size + (long) n);
-    for (int i = 0; i < n; i++) array[size++] = dis.readInt();
+    for (int i = 0; i < n; i++) setArrayVal(size++, dis.readInt());
   }
 
   /**
@@ -1343,10 +1442,12 @@ public class UIntArray extends PrimitiveArray {
     final byte bar[] = new byte[3];
     for (int i = 0; i < n; i++) {
       dis.readFully(bar);
-      array[size++] =
+      setArrayVal(
+          size++,
           bigEndian
               ? ((((bar[0] & 0xFF) << 24) | ((bar[1] & 0xFF) << 16) | ((bar[2] & 0xFF) << 8)) >> 8)
-              : ((((bar[2] & 0xFF) << 24) | ((bar[1] & 0xFF) << 16) | ((bar[0] & 0xFF) << 8)) >> 8);
+              : ((((bar[2] & 0xFF) << 24) | ((bar[1] & 0xFF) << 16) | ((bar[0] & 0xFF) << 8))
+                  >> 8));
     }
   }
 
@@ -1363,10 +1464,11 @@ public class UIntArray extends PrimitiveArray {
     final byte bar[] = new byte[3];
     for (int i = 0; i < n; i++) {
       dis.readFully(bar);
-      array[size++] =
+      setArrayVal(
+          size++,
           bigEndian
               ? (((bar[0] & 0xFF) << 24) | ((bar[1] & 0xFF) << 16) | ((bar[2] & 0xFF) << 8))
-              : (((bar[2] & 0xFF) << 24) | ((bar[1] & 0xFF) << 16) | ((bar[0] & 0xFF) << 8));
+              : (((bar[2] & 0xFF) << 24) | ((bar[1] & 0xFF) << 16) | ((bar[0] & 0xFF) << 8)));
     }
   }
 
@@ -1382,11 +1484,11 @@ public class UIntArray extends PrimitiveArray {
     final int nValues = dis.readInt();
     dis.readInt(); // skip duplicate of nValues
     ensureCapacity(size + (long) nValues);
-    for (int i = 0; i < nValues; i++) array[size++] = dis.readInt();
+    for (int i = 0; i < nValues; i++) setArrayVal(size++, dis.readInt());
   }
 
   /**
-   * This writes array[index] to a randomAccessFile at the current position.
+   * This writes getArrayVal(index) to a randomAccessFile at the current position.
    *
    * @param raf the RandomAccessFile
    * @param index
@@ -1394,7 +1496,7 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public void writeToRAF(final RandomAccessFile raf, final int index) throws Exception {
-    raf.writeInt(array[index]);
+    raf.writeInt(getArrayVal(index));
   }
 
   /**
@@ -1446,7 +1548,11 @@ public class UIntArray extends PrimitiveArray {
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof UIntArray ua) {
       if (pa.getMaxIsMV()) setMaxIsMV(true);
-      System.arraycopy(ua.array, 0, array, size, otherSize);
+      {
+        UIntArray oPA = (UIntArray) ua;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 4);
+      }
       size += otherSize;
     } else {
       for (int i = 0; i < otherSize; i++)
@@ -1467,10 +1573,15 @@ public class UIntArray extends PrimitiveArray {
     final int otherSize = pa.size();
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof UIntArray ua) {
-      System.arraycopy(ua.array, 0, array, size, otherSize);
+      {
+        UIntArray oPA = (UIntArray) ua;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 4);
+      }
     } else {
       for (int i = 0; i < otherSize; i++)
-        array[size + i] = pack(Math2.roundToUInt(pa.getRawDouble(i))); // this DOESN'T convert mv's
+        setArrayVal(
+            size + i, pack(Math2.roundToUInt(pa.getRawDouble(i)))); // this DOESN'T convert mv's
     }
     size += otherSize; // do last to minimize concurrency problems
   }
@@ -1494,11 +1605,11 @@ public class UIntArray extends PrimitiveArray {
     // make a hashMap with all the unique values (associated values are initially all dummy)
     final Integer dummy = -1;
     final HashMap<Long, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    long lastValue = unpack(array[0]); // since lastValue often equals currentValue, cache it
+    long lastValue = unpack(getArrayVal(0)); // since lastValue often equals currentValue, cache it
     hashMap.put(lastValue, dummy);
     boolean alreadySorted = true;
     for (int i = 1; i < size; i++) {
-      long currentValue = unpack(array[i]);
+      long currentValue = unpack(getArrayVal(i));
       if (currentValue != lastValue) {
         if (currentValue < lastValue) alreadySorted = false;
         lastValue = currentValue;
@@ -1534,14 +1645,14 @@ public class UIntArray extends PrimitiveArray {
 
     // convert original values to ranks
     final int[] ranks = new int[size];
-    lastValue = unpack(array[0]);
+    lastValue = unpack(getArrayVal(0));
     ranks[0] = hashMap.get(lastValue);
     int lastRank = ranks[0];
     for (int i = 1; i < size; i++) {
-      if (array[i] == lastValue) {
+      if (getArrayVal(i) == lastValue) {
         ranks[i] = lastRank;
       } else {
-        lastValue = unpack(array[i]);
+        lastValue = unpack(getArrayVal(i));
         ranks[i] = hashMap.get(lastValue);
         lastRank = ranks[i];
       }
@@ -1568,8 +1679,8 @@ public class UIntArray extends PrimitiveArray {
     if (packedFrom == packedTo) return 0;
     int count = 0;
     for (int i = 0; i < size; i++) {
-      if (array[i] == packedFrom) {
-        array[i] = packedTo;
+      if (getArrayVal(i) == packedFrom) {
+        setArrayVal(i, packedTo);
         count++;
       }
     }
@@ -1586,7 +1697,7 @@ public class UIntArray extends PrimitiveArray {
   @Override
   public int firstTie() {
     for (int i = 1; i < size; i++) {
-      if (array[i - 1] == array[i]) {
+      if (getArrayVal(i - 1) == getArrayVal(i)) {
         return i - 1;
       }
     }
@@ -1606,9 +1717,9 @@ public class UIntArray extends PrimitiveArray {
     long tmin = MAX_VALUE;
     long tmax = MIN_VALUE;
     for (int i = 0; i < size; i++) {
-      if (maxIsMV && array[i] == PACKED_MAX_VALUE) {
+      if (maxIsMV && getArrayVal(i) == PACKED_MAX_VALUE) {
       } else {
-        long v = unpack(array[i]);
+        long v = unpack(getArrayVal(i));
         n++;
         if (v <= tmin) {
           tmini = i;
@@ -1634,9 +1745,9 @@ public class UIntArray extends PrimitiveArray {
   @Override
   public void changeSignedToFromUnsigned() {
     for (int i = 0; i < size; i++) {
-      final int i2 = array[i];
-      array[i] =
-          (int) (i2 < 0 ? i2 + MAX_VALUE + 1 : i2 - MAX_VALUE - 1); // order of ops is important
+      final int i2 = getArrayVal(i);
+      setArrayVal(
+          i, (int) (i2 < 0 ? i2 + MAX_VALUE + 1 : i2 - MAX_VALUE - 1)); // order of ops is important
     }
   }
 }

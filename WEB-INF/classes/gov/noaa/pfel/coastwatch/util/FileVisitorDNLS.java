@@ -1009,8 +1009,8 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
         table.sort(new String[] {LASTMODIFIED}, new boolean[] {false}); // ascending=false
         StringArray dirSA = (StringArray) table.getColumn(DIRECTORY);
         StringArray nameSA = (StringArray) table.getColumn(NAME);
-        long lastModAr[] = ((LongArray) table.getColumn(LASTMODIFIED)).array;
-        long sizeAr[] = ((LongArray) table.getColumn(SIZE)).array;
+        long lastModAr[] = ((LongArray) table.getColumn(LASTMODIFIED)).toArray();
+        long sizeAr[] = ((LongArray) table.getColumn(SIZE)).toArray();
 
         // calcuate correct currentCacheSizeB
         currentCacheSizeB = 0;

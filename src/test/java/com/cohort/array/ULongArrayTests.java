@@ -333,7 +333,7 @@ class ULongArrayTests {
 
     // test trimToSize
     anArray.trimToSize();
-    Test.ensureEqual(anArray.array.length, 2, "");
+    Test.ensureEqual(anArray.capacity(), 2, "");
 
     // test equals
     ULongArray anArray2 = new ULongArray();

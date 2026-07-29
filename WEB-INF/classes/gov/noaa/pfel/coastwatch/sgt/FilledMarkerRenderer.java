@@ -228,8 +228,8 @@ public class FilledMarkerRenderer extends CartesianRenderer {
     if (nMarkerXs > 0) {
       long markerTime = System.currentTimeMillis();
       int nMarkerXs1 = nMarkerXs - 1;
-      int xarray[] = markerXs.array;
-      int yarray[] = markerYs.array;
+      int xarray[] = markerXs.toArray();
+      int yarray[] = markerYs.toArray();
       // int count = 1;
       for (int i = 0; i < nMarkerXs1; i++) {
         // simple optimization:

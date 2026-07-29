@@ -104,14 +104,14 @@ public class NcHeaderFiles extends FileTypeInterface {
       List<Object> values = new ArrayList<>();
       switch (attributeType) {
         case BOOLEAN:
-          byte[] boolArray = ((ByteArray) value).array;
+          byte[] boolArray = ((ByteArray) value).toArray();
           for (int i = 0; i < boolArray.length; i++) {
             values.add(boolArray[i]);
           }
           attBuild.setValues(values, false);
           break;
         case BYTE:
-          byte[] byteArray = ((ByteArray) value).array;
+          byte[] byteArray = ((ByteArray) value).toArray();
           for (int i = 0; i < byteArray.length; i++) {
             values.add(byteArray[i]);
           }
@@ -133,14 +133,14 @@ public class NcHeaderFiles extends FileTypeInterface {
           attBuild.setValues(values, false);
           break;
         case FLOAT:
-          float[] floatArray = ((FloatArray) value).array;
+          float[] floatArray = ((FloatArray) value).toArray();
           for (int i = 0; i < floatArray.length; i++) {
             values.add(floatArray[i]);
           }
           attBuild.setValues(values, false);
           break;
         case INT:
-          int[] intArray = ((IntArray) value).array;
+          int[] intArray = ((IntArray) value).toArray();
           for (int i = 0; i < intArray.length; i++) {
             values.add(intArray[i]);
           }
@@ -155,7 +155,7 @@ public class NcHeaderFiles extends FileTypeInterface {
           attBuild.setValues(values, false);
           break;
         case SHORT:
-          short[] shortArray = ((ShortArray) value).array;
+          short[] shortArray = ((ShortArray) value).toArray();
           for (int i = 0; i < shortArray.length; i++) {
             values.add(shortArray[i]);
           }
@@ -169,14 +169,14 @@ public class NcHeaderFiles extends FileTypeInterface {
           attBuild.setValues(values, false);
           break;
         case UBYTE:
-          byte[] uByteArray = ((UByteArray) value).array;
+          byte[] uByteArray = ((UByteArray) value).toArray();
           for (int i = 0; i < uByteArray.length; i++) {
             values.add(uByteArray[i]);
           }
           attBuild.setValues(values, true);
           break;
         case UINT:
-          int[] uIntArray = ((UIntArray) value).array;
+          int[] uIntArray = ((UIntArray) value).toArray();
           for (int i = 0; i < uIntArray.length; i++) {
             values.add(uIntArray[i]);
           }
@@ -191,7 +191,7 @@ public class NcHeaderFiles extends FileTypeInterface {
           attBuild.setValues(values, true);
           break;
         case USHORT:
-          short[] ushortArray = ((UShortArray) value).array;
+          short[] ushortArray = ((UShortArray) value).toArray();
           for (int i = 0; i < ushortArray.length; i++) {
             values.add(ushortArray[i]);
           }

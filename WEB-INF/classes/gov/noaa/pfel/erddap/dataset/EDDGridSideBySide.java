@@ -587,7 +587,7 @@ public class EDDGridSideBySide extends EDDGrid {
       // String2.log("\n***sequence start=" + start + " stride=" + stride + " stop=" + stop);
       while (start <= stop) {
         // find first non-NaN
-        while (start <= stop && atIA.array[start] == Integer.MAX_VALUE) {
+        while (start <= stop && atIA.getArrayVal(start) == Integer.MAX_VALUE) {
           dvResults.addNDoubles(nValues1, tdvSourceMissingValue);
           start += stride;
         }
@@ -595,18 +595,18 @@ public class EDDGridSideBySide extends EDDGrid {
 
         // start value is valid
         // find as many more valid values as possible with constant stride for the child
-        int cStart = atIA.array[start];
+        int cStart = atIA.getArrayVal(start);
         int cStride = -1;
         int po = start + stride;
         while (po <= stop) { // go until value at po is trouble
-          int at = atIA.array[po];
+          int at = atIA.getArrayVal(po);
           if (at == Integer.MAX_VALUE) {
             // String2.log("***sequence stopped because no corresponding av0 value for this child");
             break;
           }
           if (cStride == -1) {
-            cStride = at - atIA.array[po - stride];
-          } else if (at - atIA.array[po - stride] != cStride) {
+            cStride = at - atIA.getArrayVal(po - stride);
+          } else if (at - atIA.getArrayVal(po - stride) != cStride) {
             // String2.log("***sequence stopped because stride changed");
             break;
           }
@@ -615,7 +615,7 @@ public class EDDGridSideBySide extends EDDGrid {
 
         // get the data
         if (cStride == -1) cStride = 1;
-        int cStop = atIA.array[po - stride]; // last valid value
+        int cStop = atIA.getArrayVal(po - stride); // last valid value
         // String2.log("***sequence subsequence: cStart=" + cStart + " cStride=" + cStride + "
         // cStop=" + cStop);
         ttConstraints.set(0, cStart);
