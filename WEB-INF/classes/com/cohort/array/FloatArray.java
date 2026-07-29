@@ -26,7 +26,8 @@ import ucar.ma2.StructureData;
  */
 public class FloatArray extends PrimitiveArray {
 
-  private static final java.lang.foreign.ValueLayout.OfFloat LAYOUT = java.lang.foreign.ValueLayout.JAVA_FLOAT.withOrder(java.nio.ByteOrder.nativeOrder());
+  private static final java.lang.foreign.ValueLayout.OfFloat LAYOUT =
+      java.lang.foreign.ValueLayout.JAVA_FLOAT.withOrder(java.nio.ByteOrder.nativeOrder());
 
   public static final FloatArray MV9 = new FloatArray(DoubleArray.MV9);
 
@@ -36,11 +37,13 @@ public class FloatArray extends PrimitiveArray {
    * PrimitiveArray will use a different array for storage.
    */
   public java.lang.foreign.MemorySegment array;
+
   private float[] wrappedArray;
 
   public float getArrayVal(final int i) {
     return array.getAtIndex(LAYOUT, i);
   }
+
   public void setArrayVal(final int i, final float val) {
     array.setAtIndex(LAYOUT, i, val);
   }
@@ -247,7 +250,8 @@ public class FloatArray extends PrimitiveArray {
     }
     da.setMaxIsMV(maxIsMV);
     if (stride == 1) {
-      PanamaHelper.copyElements(wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 4);
+      PanamaHelper.copyElements(
+          wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 4);
     } else {
       int po = 0;
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -334,7 +338,8 @@ public class FloatArray extends PrimitiveArray {
     if (wrappedArray != null) {
       System.arraycopy(ar, 0, wrappedArray, size, arSize);
     } else {
-      java.lang.foreign.MemorySegment.copy(java.lang.foreign.MemorySegment.ofArray(ar), (0) * 4L, array, (size) * 4L, (arSize) * 4L);
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(ar), (0) * 4L, array, (size) * 4L, (arSize) * 4L);
     }
     size += arSize;
   }
@@ -377,7 +382,8 @@ public class FloatArray extends PrimitiveArray {
     if (wrappedArray != null) {
       System.arraycopy(wrappedArray, index, wrappedArray, index + 1, size - index);
     } else {
-      java.lang.foreign.MemorySegment.copy(array, (index) * 4L, array, (index + 1) * 4L, (size - index) * 4L);
+      java.lang.foreign.MemorySegment.copy(
+          array, (index) * 4L, array, (index + 1) * 4L, (size - index) * 4L);
     }
     size++;
     setArrayVal(index, value);
@@ -485,9 +491,10 @@ public class FloatArray extends PrimitiveArray {
                 + otherPA.size);
       ensureCapacity(size + nValues);
       {
-          FloatArray oPA = (FloatArray) ((FloatArray) otherPA);
-          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 4);
-        }
+        FloatArray oPA = (FloatArray) ((FloatArray) otherPA);
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 4);
+      }
       size += nValues;
       return this;
     }
@@ -585,24 +592,42 @@ public class FloatArray extends PrimitiveArray {
     if (wrappedArray != null) {
       System.arraycopy(wrappedArray, first, temp, 0, nToMove);
     } else {
-      java.lang.foreign.MemorySegment.copy(array, first * 4L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 4L);
+      java.lang.foreign.MemorySegment.copy(
+          array, first * 4L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 4L);
     }
 
     if (destination < first) {
       if (wrappedArray != null) {
-        System.arraycopy(wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
+        System.arraycopy(
+            wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
         System.arraycopy(temp, 0, wrappedArray, destination, nToMove);
       } else {
-        java.lang.foreign.MemorySegment.copy(array, destination * 4L, array, (destination + nToMove) * 4L, (first - destination) * 4L);
-        java.lang.foreign.MemorySegment.copy(java.lang.foreign.MemorySegment.ofArray(temp), 0, array, destination * 4L, nToMove * 4L);
+        java.lang.foreign.MemorySegment.copy(
+            array,
+            destination * 4L,
+            array,
+            (destination + nToMove) * 4L,
+            (first - destination) * 4L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            destination * 4L,
+            nToMove * 4L);
       }
     } else {
       if (wrappedArray != null) {
         System.arraycopy(wrappedArray, last, wrappedArray, first, destination - last);
         System.arraycopy(temp, 0, wrappedArray, destination - nToMove, nToMove);
       } else {
-        java.lang.foreign.MemorySegment.copy(array, last * 4L, array, first * 4L, (destination - last) * 4L);
-        java.lang.foreign.MemorySegment.copy(java.lang.foreign.MemorySegment.ofArray(temp), 0, array, (destination - nToMove) * 4L, nToMove * 4L);
+        java.lang.foreign.MemorySegment.copy(
+            array, last * 4L, array, first * 4L, (destination - last) * 4L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            (destination - nToMove) * 4L,
+            nToMove * 4L);
       }
     }
   }
@@ -637,7 +662,8 @@ public class FloatArray extends PrimitiveArray {
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(4L * newCapacity, "FloatArray");
       float[] newArray = new float[newCapacity];
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 4L);
       array = newSegment;
       wrappedArray = newArray;
@@ -1002,7 +1028,8 @@ public class FloatArray extends PrimitiveArray {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
       float[] newArray = new float[size];
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 4L);
       array = newSegment;
       wrappedArray = newArray;
@@ -1090,9 +1117,7 @@ public class FloatArray extends PrimitiveArray {
       if (size < 8192) Arrays.sort(temp, 0, size);
       else Arrays.parallelSort(temp, 0, size);
       java.lang.foreign.MemorySegment.copy(
-          java.lang.foreign.MemorySegment.ofArray(temp), 0,
-          array, 0,
-          size * 4L);
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 4L);
     }
   }
 
@@ -1106,7 +1131,8 @@ public class FloatArray extends PrimitiveArray {
    * @param otherPA the other PrimitiveArray which must be the same (or close) PAType.
    * @param index2 an index number 0 ... size-1
    * @return returns a negative integer, zero, or a positive integer if the value at index1 is less
-   *     than, equal to, or greater than the value at index2. Think "getArrayVal(index1) - getArrayVal(index2)".
+   *     than, equal to, or greater than the value at index2. Think "getArrayVal(index1) -
+   *     getArrayVal(index2)".
    */
   @Override
   public int compare(final int index1, final PrimitiveArray otherPA, final int index2) {
@@ -1155,7 +1181,8 @@ public class FloatArray extends PrimitiveArray {
   public void reverseBytes() {
     for (int i = 0; i < size; i++) {
       float val = array.getAtIndex(LAYOUT, i);
-      array.setAtIndex(LAYOUT, i, Float.intBitsToFloat(Integer.reverseBytes(Float.floatToIntBits(val))));
+      array.setAtIndex(
+          LAYOUT, i, Float.intBitsToFloat(Integer.reverseBytes(Float.floatToIntBits(val))));
     }
   }
 
@@ -1254,9 +1281,10 @@ public class FloatArray extends PrimitiveArray {
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof FloatArray fa) {
       {
-          FloatArray oPA = (FloatArray) fa;
-          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 4);
-        }
+        FloatArray oPA = (FloatArray) fa;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 4);
+      }
     } else {
       for (int i = 0; i < otherSize; i++)
         setArrayVal(size + i, Math2.doubleToFloatNaN(pa.getDouble(i))); // this converts mv's
@@ -1279,12 +1307,14 @@ public class FloatArray extends PrimitiveArray {
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof FloatArray fa) {
       {
-          FloatArray oPA = (FloatArray) fa;
-          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 4);
-        }
+        FloatArray oPA = (FloatArray) fa;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 4);
+      }
     } else {
       for (int i = 0; i < otherSize; i++)
-        setArrayVal(size + i, Math2.doubleToFloatNaN(pa.getRawDouble(i))); // this DOESN'T convert mv's
+        setArrayVal(
+            size + i, Math2.doubleToFloatNaN(pa.getRawDouble(i))); // this DOESN'T convert mv's
     }
     size += otherSize; // do last to minimize concurrency problems
   }
@@ -1453,7 +1483,8 @@ public class FloatArray extends PrimitiveArray {
       // do easier test if first 6 digits are same
       Math2.almostEqual(6, getArrayVal(i - 1) + average, getArrayVal(i))
           && Math2.almostEqual(2, getArrayVal(i) - getArrayVal(i - 1), average)) {
-        // String2.log(i + " passed second test " + (getArrayVal(i) - getArrayVal(i - 1)) + " " + diff);
+        // String2.log(i + " passed second test " + (getArrayVal(i) - getArrayVal(i - 1)) + " " +
+        // diff);
       } else {
         return MessageFormat.format(
             ArrayNotEvenlySpaced,
@@ -1486,7 +1517,8 @@ public class FloatArray extends PrimitiveArray {
       // do easier test if first 3 digits are same
       Math2.almostEqual(3, getArrayVal(i - 1) + diff, getArrayVal(i))
           && Math2.almostEqual(2, (getArrayVal(i) - getArrayVal(i - 1)) * 1e7, diff * 1e7)) {
-        // String2.log(i + " passed second test " + (getArrayVal(i) - getArrayVal(i - 1)) + " " + diff);
+        // String2.log(i + " passed second test " + (getArrayVal(i) - getArrayVal(i - 1)) + " " +
+        // diff);
       } else {
         return MessageFormat.format(
             ArrayNotEvenlySpaced,

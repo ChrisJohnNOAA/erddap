@@ -9274,12 +9274,14 @@ public class Table {
             // if littleEndian, store in integer type, then reverseBytes, then convert to float
             if (nBits <= 32) {
               FloatArray fa = new FloatArray(nFrames, true);
-              for (int f = 0; f < nFrames; f++) fa.setArrayVal(f, Float.intBitsToFloat(pa[c].getInt(f)));
+              for (int f = 0; f < nFrames; f++)
+                fa.setArrayVal(f, Float.intBitsToFloat(pa[c].getInt(f)));
               pa[c] = fa;
               setColumn(c, fa);
             } else if (nBits <= 64) {
               DoubleArray da = new DoubleArray(nFrames, true);
-              for (int f = 0; f < nFrames; f++) da.setArrayVal(f, Double.longBitsToDouble(pa[c].getLong(f)));
+              for (int f = 0; f < nFrames; f++)
+                da.setArrayVal(f, Double.longBitsToDouble(pa[c].getLong(f)));
               pa[c] = da;
               setColumn(c, da);
             }

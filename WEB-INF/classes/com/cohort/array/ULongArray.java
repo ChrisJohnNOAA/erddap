@@ -28,7 +28,8 @@ import ucar.ma2.StructureData;
  */
 public class ULongArray extends PrimitiveArray {
 
-  private static final java.lang.foreign.ValueLayout.OfLong LAYOUT = java.lang.foreign.ValueLayout.JAVA_LONG.withOrder(java.nio.ByteOrder.nativeOrder());
+  private static final java.lang.foreign.ValueLayout.OfLong LAYOUT =
+      java.lang.foreign.ValueLayout.JAVA_LONG.withOrder(java.nio.ByteOrder.nativeOrder());
 
   /** This is the minimum unsigned value, stored as a BigInteger. */
   public static final BigInteger MIN_VALUE = Math2.ULONG_MIN_VALUE;
@@ -170,11 +171,13 @@ public class ULongArray extends PrimitiveArray {
    * PrimitiveArray will use a different array for storage.
    */
   public java.lang.foreign.MemorySegment array;
+
   private long[] wrappedArray;
 
   public long getArrayVal(final int i) {
     return array.getAtIndex(LAYOUT, i);
   }
+
   public void setArrayVal(final int i, final long val) {
     array.setAtIndex(LAYOUT, i, val);
   }
@@ -258,7 +261,8 @@ public class ULongArray extends PrimitiveArray {
     if (wrappedArray != null) {
       System.arraycopy(wrappedArray, 0, ar, 0, size);
     } else {
-      java.lang.foreign.MemorySegment.copy(array, (0) * 8L, java.lang.foreign.MemorySegment.ofArray(ar), (0) * 8L, (size) * 8L);
+      java.lang.foreign.MemorySegment.copy(
+          array, (0) * 8L, java.lang.foreign.MemorySegment.ofArray(ar), (0) * 8L, (size) * 8L);
     }
     return new LongArray(ar);
   }
@@ -363,7 +367,8 @@ public class ULongArray extends PrimitiveArray {
     }
     da.setMaxIsMV(maxIsMV);
     if (stride == 1) {
-      PanamaHelper.copyElements(wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 8);
+      PanamaHelper.copyElements(
+          wrappedArray, array, startIndex, da.wrappedArray, da.array, 0, willFind, 8);
     } else {
       int po = 0;
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -500,7 +505,8 @@ public class ULongArray extends PrimitiveArray {
     if (wrappedArray != null) {
       System.arraycopy(wrappedArray, index, wrappedArray, index + 1, size - index);
     } else {
-      java.lang.foreign.MemorySegment.copy(array, (index) * 8L, array, (index + 1) * 8L, (size - index) * 8L);
+      java.lang.foreign.MemorySegment.copy(
+          array, (index) * 8L, array, (index + 1) * 8L, (size - index) * 8L);
     }
     size++;
     setArrayVal(index, packAndSetMaxIsMV(value));
@@ -627,9 +633,10 @@ public class ULongArray extends PrimitiveArray {
                 + otherPA.size);
       ensureCapacity(size + nValues);
       {
-          ULongArray oPA = (ULongArray) ((ULongArray) otherPA);
-          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 8);
-        }
+        ULongArray oPA = (ULongArray) ((ULongArray) otherPA);
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, otherIndex, wrappedArray, array, size, nValues, 8);
+      }
       size += nValues;
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
@@ -733,24 +740,42 @@ public class ULongArray extends PrimitiveArray {
     if (wrappedArray != null) {
       System.arraycopy(wrappedArray, first, temp, 0, nToMove);
     } else {
-      java.lang.foreign.MemorySegment.copy(array, first * 8L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 8L);
+      java.lang.foreign.MemorySegment.copy(
+          array, first * 8L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 8L);
     }
 
     if (destination < first) {
       if (wrappedArray != null) {
-        System.arraycopy(wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
+        System.arraycopy(
+            wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
         System.arraycopy(temp, 0, wrappedArray, destination, nToMove);
       } else {
-        java.lang.foreign.MemorySegment.copy(array, destination * 8L, array, (destination + nToMove) * 8L, (first - destination) * 8L);
-        java.lang.foreign.MemorySegment.copy(java.lang.foreign.MemorySegment.ofArray(temp), 0, array, destination * 8L, nToMove * 8L);
+        java.lang.foreign.MemorySegment.copy(
+            array,
+            destination * 8L,
+            array,
+            (destination + nToMove) * 8L,
+            (first - destination) * 8L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            destination * 8L,
+            nToMove * 8L);
       }
     } else {
       if (wrappedArray != null) {
         System.arraycopy(wrappedArray, last, wrappedArray, first, destination - last);
         System.arraycopy(temp, 0, wrappedArray, destination - nToMove, nToMove);
       } else {
-        java.lang.foreign.MemorySegment.copy(array, last * 8L, array, first * 8L, (destination - last) * 8L);
-        java.lang.foreign.MemorySegment.copy(java.lang.foreign.MemorySegment.ofArray(temp), 0, array, (destination - nToMove) * 8L, nToMove * 8L);
+        java.lang.foreign.MemorySegment.copy(
+            array, last * 8L, array, first * 8L, (destination - last) * 8L);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp),
+            0,
+            array,
+            (destination - nToMove) * 8L,
+            nToMove * 8L);
       }
     }
   }
@@ -785,7 +810,8 @@ public class ULongArray extends PrimitiveArray {
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
       Math2.ensureMemoryAvailable(8L * newCapacity, "ULongArray");
       long[] newArray = new long[newCapacity];
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 8L);
       array = newSegment;
       wrappedArray = newArray;
@@ -1192,7 +1218,8 @@ public class ULongArray extends PrimitiveArray {
     int currentCapacity = capacity();
     if (size < currentCapacity) {
       long[] newArray = new long[size];
-      java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
+      java.lang.foreign.MemorySegment newSegment =
+          java.lang.foreign.MemorySegment.ofArray(newArray);
       java.lang.foreign.MemorySegment.copy(array, 0, newSegment, 0, size * 8L);
       array = newSegment;
       wrappedArray = newArray;
@@ -1289,25 +1316,22 @@ public class ULongArray extends PrimitiveArray {
   public void sort() {
     // see switchover point and speed comparison in
     //  https://www.baeldung.com/java-arrays-sort-vs-parallelsort
-    if (size < 8192) if (wrappedArray != null) {
-      Arrays.sort(wrappedArray, 0, size);
-    } else {
-      long[] temp = array.asSlice(0, size * 8L).toArray(LAYOUT);
-      Arrays.sort(temp, 0, size);
-      java.lang.foreign.MemorySegment.copy(
-          java.lang.foreign.MemorySegment.ofArray(temp), 0,
-          array, 0,
-          size * 8L);
-    }
+    if (size < 8192)
+      if (wrappedArray != null) {
+        Arrays.sort(wrappedArray, 0, size);
+      } else {
+        long[] temp = array.asSlice(0, size * 8L).toArray(LAYOUT);
+        Arrays.sort(temp, 0, size);
+        java.lang.foreign.MemorySegment.copy(
+            java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
+      }
     else if (wrappedArray != null) {
       Arrays.parallelSort(wrappedArray, 0, size);
     } else {
       long[] temp = array.asSlice(0, size * 8L).toArray(LAYOUT);
       Arrays.parallelSort(temp, 0, size);
       java.lang.foreign.MemorySegment.copy(
-          java.lang.foreign.MemorySegment.ofArray(temp), 0,
-          array, 0,
-          size * 8L);
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
     }
 
     // Then find the first value >=0, and move it and subsequent to beginning of array.
@@ -1330,7 +1354,8 @@ public class ULongArray extends PrimitiveArray {
    * @param otherPA the other PrimitiveArray which must be the same (or close) PAType.
    * @param index2 an index number 0 ... size-1
    * @return returns a negative integer, zero, or a positive integer if the value at index1 is less
-   *     than, equal to, or greater than the value at index2. Think "getArrayVal(index1) - getArrayVal(index2)".
+   *     than, equal to, or greater than the value at index2. Think "getArrayVal(index1) -
+   *     getArrayVal(index2)".
    */
   @Override
   public int compare(final int index1, final PrimitiveArray otherPA, final int index2) {
@@ -1482,9 +1507,10 @@ public class ULongArray extends PrimitiveArray {
     if (pa instanceof ULongArray ua) {
       if (pa.getMaxIsMV()) setMaxIsMV(true);
       {
-          ULongArray oPA = (ULongArray) ua;
-          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 8);
-        }
+        ULongArray oPA = (ULongArray) ua;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 8);
+      }
       size += otherSize;
     } else {
       for (int i = 0; i < otherSize; i++) addString(pa.getString(i)); // this converts mv's
@@ -1505,16 +1531,19 @@ public class ULongArray extends PrimitiveArray {
     ensureCapacity(size + (long) otherSize);
     if (pa instanceof ULongArray ulpa) {
       {
-          ULongArray oPA = (ULongArray) ulpa;
-          PanamaHelper.copyElements(oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 8);
-        }
+        ULongArray oPA = (ULongArray) ulpa;
+        PanamaHelper.copyElements(
+            oPA.wrappedArray, oPA.array, 0, wrappedArray, array, size, otherSize, 8);
+      }
       if (pa.getMaxIsMV() && ulpa.indexOf(MAX_VALUE) >= 0) setMaxIsMV(true);
     } else if (pa instanceof StringArray) {
       for (int i = 0; i < otherSize; i++)
         setArrayVal(size + i, packAndSetMaxIsMV(pa.getULong(i))); // just parses the string
     } else {
       for (int i = 0; i < otherSize; i++)
-        setArrayVal(size + i, packAndSetMaxIsMV(
+        setArrayVal(
+            size + i,
+            packAndSetMaxIsMV(
                 Math2.roundToULong(pa.getRawDouble(i)))); // this DOESN'T convert smaller mv's
     }
     size += otherSize; // do last to minimize concurrency problems
