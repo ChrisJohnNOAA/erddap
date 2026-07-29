@@ -1197,12 +1197,28 @@ public class DoubleArray extends PrimitiveArray {
     }
     long byteCount = (long) size * elementSize();
     int elemSize = elementSize();
+    boolean swap = (byteOrder != java.nio.ByteOrder.nativeOrder());
+
+    if (!swap) {
+      java.nio.ByteBuffer buffer = null;
+      try {
+        buffer = array.asSlice(0, byteCount).asByteBuffer();
+      } catch (UnsupportedOperationException e) {
+        // Fallback for heap segments backed by non-byte arrays
+      }
+      if (buffer != null) {
+        while (buffer.hasRemaining()) {
+          channel.write(buffer);
+        }
+        return byteCount;
+      }
+    }
+
     PrimitiveArray.ScratchBuffer scratch = PrimitiveArray.SCRATCH_BUFFER.get();
     int chunkCapacity = scratch.bytes.length;
     java.lang.foreign.MemorySegment chunkSegment = scratch.segment;
     java.nio.ByteBuffer tempBuffer = scratch.buffer;
 
-    boolean swap = (byteOrder != java.nio.ByteOrder.nativeOrder());
     int offset = 0;
     while (offset < byteCount) {
       int len = (int) Math.min(byteCount - offset, chunkCapacity);
