@@ -1196,6 +1196,52 @@ public class FloatArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel) throws java.io.IOException {
+    return writeToChannel(channel, java.nio.ByteOrder.nativeOrder());
+  }
+
+  @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel, java.nio.ByteOrder byteOrder)
+      throws java.io.IOException {
+    if (size == 0) {
+      return 0L;
+    }
+    long byteCount = (long) size * elementSize();
+    int elemSize = elementSize();
+    int chunkCapacity = (int) Math.min(byteCount, 65536);
+    chunkCapacity = (chunkCapacity / elemSize) * elemSize;
+    byte[] chunkBytes = new byte[chunkCapacity];
+    java.lang.foreign.MemorySegment chunkSegment =
+        java.lang.foreign.MemorySegment.ofArray(chunkBytes);
+    java.nio.ByteBuffer tempBuffer = java.nio.ByteBuffer.wrap(chunkBytes);
+
+    boolean swap = (byteOrder != java.nio.ByteOrder.nativeOrder());
+    int offset = 0;
+    while (offset < byteCount) {
+      int len = (int) Math.min(byteCount - offset, chunkCapacity);
+      int numElems = len / elemSize;
+
+      java.lang.foreign.MemorySegment.copy(array, offset, chunkSegment, 0, len);
+
+      tempBuffer.clear();
+      tempBuffer.limit(len);
+
+      if (swap) {
+        java.nio.IntBuffer view = tempBuffer.asIntBuffer();
+        for (int i = 0; i < numElems; i++) {
+          view.put(i, Integer.reverseBytes(view.get(i)));
+        }
+      }
+
+      while (tempBuffer.hasRemaining()) {
+        channel.write(tempBuffer);
+      }
+      offset += len;
+    }
+    return byteCount;
+  }
+
+  @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
     for (int i = 0; i < size; i++) dos.writeFloat(getArrayVal(i));
     return size == 0 ? 0 : 4;

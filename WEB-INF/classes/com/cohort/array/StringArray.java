@@ -1590,6 +1590,59 @@ public class StringArray extends PrimitiveArray {
    *     size=0, this returns 0.
    * @throws Exception if trouble
    */
+  private static class NonClosingOutputStream extends java.io.OutputStream {
+    private final java.nio.channels.FileChannel channel;
+    private final byte[] oneByte = new byte[1];
+
+    public NonClosingOutputStream(java.nio.channels.FileChannel channel) {
+      this.channel = channel;
+    }
+
+    @Override
+    public void write(int b) throws java.io.IOException {
+      oneByte[0] = (byte) b;
+      write(oneByte, 0, 1);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws java.io.IOException {
+      java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(b, off, len);
+      while (buf.hasRemaining()) {
+        channel.write(buf);
+      }
+    }
+  }
+
+  @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel) throws java.io.IOException {
+    return writeToChannel(channel, java.nio.ByteOrder.nativeOrder());
+  }
+
+  @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel, java.nio.ByteOrder byteOrder)
+      throws java.io.IOException {
+    if (size == 0) {
+      return 0L;
+    }
+    long startPos = channel.position();
+    NonClosingOutputStream ncos = new NonClosingOutputStream(channel);
+    java.io.BufferedOutputStream bos = new java.io.BufferedOutputStream(ncos, 65536);
+    java.io.DataOutputStream dos = new java.io.DataOutputStream(bos);
+    try {
+      for (int i = 0; i < size; i++) {
+        dos.writeUTF(get(i));
+      }
+      dos.flush();
+    } catch (Exception e) {
+      if (e instanceof java.io.IOException) {
+        throw (java.io.IOException) e;
+      } else {
+        throw new java.io.IOException(e);
+      }
+    }
+    return channel.position() - startPos;
+  }
+
   @Override
   public int writeDos(final DataOutputStream dos) throws Exception {
     for (int i = 0; i < size; i++) dos.writeUTF(get(i));
