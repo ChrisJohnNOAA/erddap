@@ -17,10 +17,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import ucar.ma2.StructureData;
 
 /**
@@ -156,7 +152,10 @@ public class DoubleArray extends PrimitiveArray {
   public DoubleArray(final ImmutableList<Double> immutableList) {
     size = immutableList.size();
     Math2.ensureMemoryAvailable(8L * size, "DoubleArray");
-    double[] tempArray = immutableList.stream().mapToDouble(Double::doubleValue).toArray();
+    double[] tempArray = new double[size];
+    for (int i = 0; i < size; i++) {
+      tempArray[i] = immutableList.get(i);
+    }
     wrappedArray = tempArray;
     array = java.lang.foreign.MemorySegment.ofArray(tempArray);
   }
@@ -228,8 +227,14 @@ public class DoubleArray extends PrimitiveArray {
     // https://stackoverflow.com/questions/299304/why-does-javas-hashcode-in-string-use-31-as-a-multiplier
     // and java docs for Double.hashCode
     int code = 0;
-    for (int i = 0; i < size; i++) {
-      code = 31 * code + Double.hashCode(getArrayVal(i));
+    if (wrappedArray != null) {
+      for (int i = 0; i < size; i++) {
+        code = 31 * code + Double.hashCode(wrappedArray[i]);
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        code = 31 * code + Double.hashCode(getArrayVal(i));
+      }
     }
     return code;
   }
@@ -604,66 +609,7 @@ public class DoubleArray extends PrimitiveArray {
               + ") or >= last ("
               + last
               + ").");
-    if (first == last || destination == first || destination == last) return;
-
-    final int nToMove = last - first;
-    final double[] temp = new double[nToMove];
-    if (wrappedArray != null) {
-      System.arraycopy(wrappedArray, first, temp, 0, nToMove);
-    } else {
-      java.lang.foreign.MemorySegment.copy(
-          array, first * 8L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 8L);
-    }
-
-    if (destination < first) {
-      if (wrappedArray != null) {
-        System.arraycopy(
-            wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
-        System.arraycopy(temp, 0, wrappedArray, destination, nToMove);
-      } else {
-        java.lang.foreign.MemorySegment.copy(
-            array,
-            destination * 8L,
-            array,
-            (destination + nToMove) * 8L,
-            (first - destination) * 8L);
-        java.lang.foreign.MemorySegment.copy(
-            java.lang.foreign.MemorySegment.ofArray(temp),
-            0,
-            array,
-            destination * 8L,
-            nToMove * 8L);
-      }
-    } else {
-      if (wrappedArray != null) {
-        System.arraycopy(wrappedArray, last, wrappedArray, first, destination - last);
-        System.arraycopy(temp, 0, wrappedArray, destination - nToMove, nToMove);
-      } else {
-        java.lang.foreign.MemorySegment.copy(
-            array, last * 8L, array, first * 8L, (destination - last) * 8L);
-        java.lang.foreign.MemorySegment.copy(
-            java.lang.foreign.MemorySegment.ofArray(temp),
-            0,
-            array,
-            (destination - nToMove) * 8L,
-            nToMove * 8L);
-      }
-    }
-  }
-
-  /**
-   * This just keeps the rows for the 'true' values in the bitset. Rows that aren't kept are
-   * removed. The resulting PrimitiveArray is compacted (i.e., it has a smaller size()).
-   *
-   * @param bitset The BitSet indicating which rows (indices) should be kept.
-   */
-  @Override
-  public void justKeep(final BitSet bitset) {
-    int newSize = 0;
-    for (int row = 0; row < size; row++) {
-      if (bitset.get(row)) setArrayVal(newSize++, getArrayVal(row));
-    }
-    removeRange(newSize, size);
+    PanamaHelper.move(first, last, destination, 8, size, wrappedArray, array);
   }
 
   /**
@@ -676,9 +622,8 @@ public class DoubleArray extends PrimitiveArray {
   public void ensureCapacity(final long minCapacity) {
     long currentCapacity = array.byteSize() / 8;
     if (currentCapacity < minCapacity) {
-      Math2.ensureArraySizeOkay(minCapacity, "DoubleArray");
-      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
-      if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
+      int newCapacity =
+          PanamaHelper.calculateNewCapacity(currentCapacity, minCapacity, "DoubleArray");
       Math2.ensureMemoryAvailable(8L * newCapacity, "DoubleArray");
       double[] newArray = new double[newCapacity];
       java.lang.foreign.MemorySegment newSegment =
@@ -958,11 +903,19 @@ public class DoubleArray extends PrimitiveArray {
    */
   public int indexOf(final double lookFor, final int startIndex) {
     if (Double.isNaN(lookFor)) {
-      for (int i = startIndex; i < size; i++) if (Double.isNaN(getArrayVal(i))) return i;
+      if (wrappedArray != null) {
+        for (int i = startIndex; i < size; i++) if (Double.isNaN(wrappedArray[i])) return i;
+      } else {
+        for (int i = startIndex; i < size; i++) if (Double.isNaN(getArrayVal(i))) return i;
+      }
       return -1;
     }
 
-    for (int i = startIndex; i < size; i++) if (getArrayVal(i) == lookFor) return i;
+    if (wrappedArray != null) {
+      for (int i = startIndex; i < size; i++) if (wrappedArray[i] == lookFor) return i;
+    } else {
+      for (int i = startIndex; i < size; i++) if (getArrayVal(i) == lookFor) return i;
+    }
     return -1;
   }
 
@@ -995,7 +948,11 @@ public class DoubleArray extends PrimitiveArray {
               + ") >= size ("
               + size
               + ").");
-    for (int i = startIndex; i >= 0; i--) if (getArrayVal(i) == lookFor) return i;
+    if (wrappedArray != null) {
+      for (int i = startIndex; i >= 0; i--) if (wrappedArray[i] == lookFor) return i;
+    } else {
+      for (int i = startIndex; i >= 0; i--) if (getArrayVal(i) == lookFor) return i;
+    }
     return -1;
   }
 
@@ -1056,17 +1013,35 @@ public class DoubleArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
-      if (!Math2.equalsIncludingNanOrInfinite(getArrayVal(i), other.getArrayVal(i)))
-        return "The two DoubleArrays aren't equal: this["
-            + i
-            + "]="
-            + getArrayVal(i)
-            + "; other["
-            + i
-            + "]="
-            + other.getArrayVal(i)
-            + ".";
+    if (wrappedArray != null && other.wrappedArray != null) {
+      for (int i = 0; i < size; i++) {
+        if (!Math2.equalsIncludingNanOrInfinite(wrappedArray[i], other.wrappedArray[i])) {
+          return "The two DoubleArrays aren't equal: this["
+              + i
+              + "]="
+              + wrappedArray[i]
+              + "; other["
+              + i
+              + "]="
+              + other.wrappedArray[i]
+              + ".";
+        }
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        if (!Math2.equalsIncludingNanOrInfinite(getArrayVal(i), other.getArrayVal(i))) {
+          return "The two DoubleArrays aren't equal: this["
+              + i
+              + "]="
+              + getArrayVal(i)
+              + "; other["
+              + i
+              + "]="
+              + other.getArrayVal(i)
+              + ".";
+        }
+      }
+    }
     return "";
   }
 
@@ -1080,16 +1055,9 @@ public class DoubleArray extends PrimitiveArray {
     return String2.toCSSVString(toArray()); // toArray() gets just 'size' elements
   }
 
-  /**
-   * This converts the elements into an NCCSV attribute String, e.g.,: -128b, 127b
-   *
-   * @return an NCCSV attribute String
-   */
   @Override
-  public String toNccsvAttString() {
-    final StringBuilder sb = new StringBuilder(size * 15);
-    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + getArrayVal(i) + "d");
-    return sb.toString();
+  protected void appendNccsvElement(final StringBuilder sb, final int i) {
+    sb.append(wrappedArray != null ? wrappedArray[i] : getArrayVal(i)).append('d');
   }
 
   /**
@@ -1098,17 +1066,7 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void sort() {
-    if (size <= 1) return;
-    if (wrappedArray != null) {
-      if (size < 8192) Arrays.sort(wrappedArray, 0, size);
-      else Arrays.parallelSort(wrappedArray, 0, size);
-    } else {
-      double[] temp = array.asSlice(0, size * 8L).toArray(LAYOUT);
-      if (size < 8192) Arrays.sort(temp, 0, size);
-      else Arrays.parallelSort(temp, 0, size);
-      java.lang.foreign.MemorySegment.copy(
-          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
-    }
+    PanamaHelper.sort(size, wrappedArray, array, LAYOUT);
   }
 
   /**
@@ -1150,15 +1108,9 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public void reorder(final int rank[]) {
-    final int n = rank.length;
-    long currentCapacity = array.byteSize() / 8;
-    Math2.ensureMemoryAvailable(8L * currentCapacity, "DoubleArray");
-    double[] newArray = new double[(int) currentCapacity];
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
-    for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
-    }
-    array = newSegment;
+    double[] newArray =
+        PanamaHelper.reorder(rank, size, wrappedArray, array, LAYOUT, "DoubleArray");
+    array = java.lang.foreign.MemorySegment.ofArray(newArray);
     wrappedArray = newArray;
   }
 
@@ -1323,67 +1275,38 @@ public class DoubleArray extends PrimitiveArray {
       return new DoubleArray();
     }
 
-    // make a hashMap with all the unique values (associated values are initially all dummy)
-    final Integer dummy = -1;
-    final HashMap<Double, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    double lastValue = getArrayVal(0); // since lastValue often equals currentValue, cache it
-    hashMap.put(lastValue, dummy);
-    boolean alreadySorted = true;
-    for (int i = 1; i < size; i++) {
-      double currentValue = getArrayVal(i);
-      if (currentValue != lastValue) {
-        if (currentValue < lastValue) alreadySorted = false;
-        lastValue = currentValue;
-        hashMap.put(lastValue, dummy);
+    double[] tempUnique = new double[size];
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, 0, tempUnique, 0, size);
+    } else {
+      for (int i = 0; i < size; i++) {
+        tempUnique[i] = getArrayVal(i);
       }
     }
 
-    // quickly deal with: all unique and already sorted
-    final Set<Double> keySet = hashMap.keySet();
-    final int nUnique = keySet.size();
-    if (nUnique == size && alreadySorted) {
-      indices.ensureCapacity(size);
-      for (int i = 0; i < size; i++) indices.add(i);
-      // String2.log("DoubleArray.makeIndices all unique and already sorted.");
-      return this; // the PrimitiveArray with unique values
-    }
+    // Sort the copy to easily find unique elements
+    Arrays.sort(tempUnique);
 
-    // store all the elements in an array
-    final double[] unique = new double[nUnique];
-    final Iterator<Double> iterator = keySet.iterator();
-    int count = 0;
-    while (iterator.hasNext()) unique[count++] = iterator.next();
-    if (nUnique != count)
-      throw new RuntimeException(
-          "DoubleArray.makeRankArray nUnique(" + nUnique + ") != count(" + count + ")!");
-
-    // sort them
-    Arrays.sort(unique);
-
-    // put the unique values back in the hashMap with the ranks as the associated values
-    for (int i = 0; i < count; i++) {
-      hashMap.put(unique[i], i);
-    }
-
-    // convert original values to ranks
-    final int ranks[] = new int[size];
-    lastValue = getArrayVal(0);
-    ranks[0] = (Integer) hashMap.get(lastValue);
-    int lastRank = ranks[0];
+    // Compact in place to get unique elements
+    int nUnique = 0;
+    tempUnique[nUnique++] = tempUnique[0];
     for (int i = 1; i < size; i++) {
-      if (getArrayVal(i) == lastValue) {
-        ranks[i] = lastRank;
-      } else {
-        lastValue = getArrayVal(i);
-        ranks[i] = (Integer) hashMap.get(lastValue);
-        lastRank = ranks[i];
+      if (Double.compare(tempUnique[i], tempUnique[nUnique - 1]) != 0) {
+        tempUnique[nUnique++] = tempUnique[i];
       }
     }
 
-    // store the results in ranked
-    indices.append(new IntArray(ranks));
+    // binarySearch each original element to find its rank
+    indices.ensureCapacity(size);
+    for (int i = 0; i < size; i++) {
+      double val = wrappedArray != null ? wrappedArray[i] : getArrayVal(i);
+      int rank = Arrays.binarySearch(tempUnique, 0, nUnique, val);
+      indices.add(rank);
+    }
 
-    return new DoubleArray(unique);
+    double[] uniqueResult = new double[nUnique];
+    System.arraycopy(tempUnique, 0, uniqueResult, 0, nUnique);
+    return new DoubleArray(uniqueResult);
   }
 
   /**
@@ -1400,17 +1323,37 @@ public class DoubleArray extends PrimitiveArray {
     if ((Double.isNaN(from) && Double.isNaN(to)) || (from == to)) return 0;
     int count = 0;
     if (Double.isNaN(from)) {
-      for (int i = 0; i < size; i++) {
-        if (Double.isNaN(getArrayVal(i))) {
-          setArrayVal(i, to);
-          count++;
+      if (wrappedArray != null) {
+        for (int i = 0; i < size; i++) {
+          if (Double.isNaN(wrappedArray[i])) {
+            wrappedArray[i] = to;
+            setArrayVal(i, to);
+            count++;
+          }
+        }
+      } else {
+        for (int i = 0; i < size; i++) {
+          if (Double.isNaN(getArrayVal(i))) {
+            setArrayVal(i, to);
+            count++;
+          }
         }
       }
     } else {
-      for (int i = 0; i < size; i++) {
-        if (Math2.almostEqual(9, getArrayVal(i), from)) {
-          setArrayVal(i, to);
-          count++;
+      if (wrappedArray != null) {
+        for (int i = 0; i < size; i++) {
+          if (Math2.almostEqual(9, wrappedArray[i], from)) {
+            wrappedArray[i] = to;
+            setArrayVal(i, to);
+            count++;
+          }
+        }
+      } else {
+        for (int i = 0; i < size; i++) {
+          if (Math2.almostEqual(9, getArrayVal(i), from)) {
+            setArrayVal(i, to);
+            count++;
+          }
         }
       }
     }
@@ -1437,11 +1380,21 @@ public class DoubleArray extends PrimitiveArray {
    */
   @Override
   public int firstTie() {
-    for (int i = 1; i < size; i++) {
-      if (Double.isNaN(getArrayVal(i - 1))) {
-        if (Double.isNaN(getArrayVal(i))) return i - 1;
-      } else if (getArrayVal(i - 1) == getArrayVal(i)) {
-        return i - 1;
+    if (wrappedArray != null) {
+      for (int i = 1; i < size; i++) {
+        if (Double.isNaN(wrappedArray[i - 1])) {
+          if (Double.isNaN(wrappedArray[i])) return i - 1;
+        } else if (wrappedArray[i - 1] == wrappedArray[i]) {
+          return i - 1;
+        }
+      }
+    } else {
+      for (int i = 1; i < size; i++) {
+        if (Double.isNaN(getArrayVal(i - 1))) {
+          if (Double.isNaN(getArrayVal(i))) return i - 1;
+        } else if (getArrayVal(i - 1) == getArrayVal(i)) {
+          return i - 1;
+        }
       }
     }
     return -1;
@@ -1457,30 +1410,50 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public String isEvenlySpaced() {
     if (size <= 2) return "";
-    // This diff is closer to exact
-    // and usually detects not-evenly-spaced anywhere in the array on first test!
-    final double diff = (getArrayVal(size - 1) - getArrayVal(0)) / (size - 1);
-    for (int i = 1; i < size; i++) {
-      // This is a difficult test to do well. See tests below.
-      // 1e7 avoids dEps test in almostEqual
-      if (Math2.almostEqual(9, (getArrayVal(i) - getArrayVal(i - 1)) * 1e7, diff * 1e7)) {
-        // String2.log(i + " passed first test");
-      } else if (
-      // do easier test if first 12 digits are same
-      Math2.almostEqual(12, getArrayVal(i - 1) + diff, getArrayVal(i))
-          && Math2.almostEqual(2, (getArrayVal(i) - getArrayVal(i - 1)) * 1e7, diff * 1e7)) {
-        // String2.log(i + " passed second test " + (getArrayVal(i) - getArrayVal(i - 1)) + " " +
-        // diff);
-      } else {
-        return MessageFormat.format(
-            ArrayNotEvenlySpaced,
-            getClass().getSimpleName(),
-            "" + (i - 1),
-            "" + getArrayVal(i - 1),
-            "" + i,
-            "" + getArrayVal(i),
-            "" + (getArrayVal(i) - getArrayVal(i - 1)),
-            "" + diff);
+    double firstVal = wrappedArray != null ? wrappedArray[0] : getArrayVal(0);
+    double lastVal = wrappedArray != null ? wrappedArray[size - 1] : getArrayVal(size - 1);
+    final double diff = (lastVal - firstVal) / (size - 1);
+    if (wrappedArray != null) {
+      for (int i = 1; i < size; i++) {
+        double currentVal = wrappedArray[i];
+        double prevVal = wrappedArray[i - 1];
+        if (Math2.almostEqual(9, (currentVal - prevVal) * 1e7, diff * 1e7)) {
+          // passed
+        } else if (Math2.almostEqual(12, prevVal + diff, currentVal)
+            && Math2.almostEqual(2, (currentVal - prevVal) * 1e7, diff * 1e7)) {
+          // passed
+        } else {
+          return MessageFormat.format(
+              ArrayNotEvenlySpaced,
+              getClass().getSimpleName(),
+              "" + (i - 1),
+              "" + prevVal,
+              "" + i,
+              "" + currentVal,
+              "" + (currentVal - prevVal),
+              "" + diff);
+        }
+      }
+    } else {
+      for (int i = 1; i < size; i++) {
+        double currentVal = getArrayVal(i);
+        double prevVal = getArrayVal(i - 1);
+        if (Math2.almostEqual(9, (currentVal - prevVal) * 1e7, diff * 1e7)) {
+          // passed
+        } else if (Math2.almostEqual(12, prevVal + diff, currentVal)
+            && Math2.almostEqual(2, (currentVal - prevVal) * 1e7, diff * 1e7)) {
+          // passed
+        } else {
+          return MessageFormat.format(
+              ArrayNotEvenlySpaced,
+              getClass().getSimpleName(),
+              "" + (i - 1),
+              "" + prevVal,
+              "" + i,
+              "" + currentVal,
+              "" + (currentVal - prevVal),
+              "" + diff);
+        }
       }
     }
     return "";
@@ -1498,17 +1471,34 @@ public class DoubleArray extends PrimitiveArray {
     int n = 0, tmini = -1, tmaxi = -1;
     double tmin = Double.MAX_VALUE;
     double tmax = -Double.MAX_VALUE;
-    for (int i = 0; i < size; i++) {
-      final double v = getArrayVal(i);
-      if (Double.isFinite(v)) {
-        n++;
-        if (v <= tmin) {
-          tmini = i;
-          tmin = v;
+    if (wrappedArray != null) {
+      for (int i = 0; i < size; i++) {
+        final double v = wrappedArray[i];
+        if (Double.isFinite(v)) {
+          n++;
+          if (v <= tmin) {
+            tmini = i;
+            tmin = v;
+          }
+          if (v >= tmax) {
+            tmaxi = i;
+            tmax = v;
+          }
         }
-        if (v >= tmax) {
-          tmaxi = i;
-          tmax = v;
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        final double v = getArrayVal(i);
+        if (Double.isFinite(v)) {
+          n++;
+          if (v <= tmin) {
+            tmini = i;
+            tmin = v;
+          }
+          if (v >= tmax) {
+            tmaxi = i;
+            tmax = v;
+          }
         }
       }
     }

@@ -16,10 +16,6 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import ucar.ma2.StructureData;
 
 /**
@@ -352,7 +348,11 @@ public class ByteArray extends PrimitiveArray {
     // and
     // https://stackoverflow.com/questions/299304/why-does-javas-hashcode-in-string-use-31-as-a-multiplier
     int code = 0;
-    for (int i = 0; i < size; i++) code = 31 * code + getArrayVal(i);
+    if (wrappedArray != null) {
+      for (int i = 0; i < size; i++) code = 31 * code + wrappedArray[i];
+    } else {
+      for (int i = 0; i < size; i++) code = 31 * code + getArrayVal(i);
+    }
     return code;
   }
 
@@ -815,21 +815,6 @@ public class ByteArray extends PrimitiveArray {
   }
 
   /**
-   * This just keeps the rows for the 'true' values in the bitset. Rows that aren't kept are
-   * removed. The resulting PrimitiveArray is compacted (i.e., it has a smaller size()).
-   *
-   * @param bitset The BitSet indicating which rows (indices) should be kept.
-   */
-  @Override
-  public void justKeep(final BitSet bitset) {
-    int newSize = 0;
-    for (int row = 0; row < size; row++) {
-      if (bitset.get(row)) setArrayVal(newSize++, getArrayVal(row));
-    }
-    removeRange(newSize, size);
-  }
-
-  /**
    * This ensures that the capacity is at least 'minCapacity'.
    *
    * @param minCapacity the minimum acceptable capacity. minCapacity is type long, but &gt;=
@@ -839,9 +824,8 @@ public class ByteArray extends PrimitiveArray {
   public void ensureCapacity(final long minCapacity) {
     long currentCapacity = array.byteSize() / 1;
     if (currentCapacity < minCapacity) {
-      Math2.ensureArraySizeOkay(minCapacity, "ByteArray");
-      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
-      if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
+      int newCapacity =
+          PanamaHelper.calculateNewCapacity(currentCapacity, minCapacity, "ByteArray");
       Math2.ensureMemoryAvailable(1L * newCapacity, "ByteArray");
       byte[] newArray = new byte[newCapacity];
       java.lang.foreign.MemorySegment newSegment =
@@ -1214,7 +1198,11 @@ public class ByteArray extends PrimitiveArray {
    * @return the index where 'lookFor' is found, or -1 if not found.
    */
   public int indexOf(final byte lookFor, final int startIndex) {
-    for (int i = startIndex; i < size; i++) if (getArrayVal(i) == lookFor) return i;
+    if (wrappedArray != null) {
+      for (int i = startIndex; i < size; i++) if (wrappedArray[i] == lookFor) return i;
+    } else {
+      for (int i = startIndex; i < size; i++) if (getArrayVal(i) == lookFor) return i;
+    }
     return -1;
   }
 
@@ -1247,7 +1235,11 @@ public class ByteArray extends PrimitiveArray {
               + ") >= size ("
               + size
               + ").");
-    for (int i = startIndex; i >= 0; i--) if (getArrayVal(i) == lookFor) return i;
+    if (wrappedArray != null) {
+      for (int i = startIndex; i >= 0; i--) if (wrappedArray[i] == lookFor) return i;
+    } else {
+      for (int i = startIndex; i >= 0; i--) if (getArrayVal(i) == lookFor) return i;
+    }
     return -1;
   }
 
@@ -1307,20 +1299,36 @@ public class ByteArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
-      if (getInt(i) != other.getInt(i)) // int handles mv
-      return "The two ByteArrays aren't equal: this["
-            + i
-            + "]="
-            + getInt(i)
-            + "; other["
-            + i
-            + "]="
-            + other.getInt(i)
-            + ".";
-    // if (maxIsMV != other.maxIsMV)
-    //     return "The two ByteArrays aren't equal: this.maxIsMV=" + maxIsMV +
-    //                                          "; other.maxIsMV=" + other.maxIsMV + ".";
+    if (wrappedArray != null && other.wrappedArray != null && maxIsMV == other.maxIsMV) {
+      for (int i = 0; i < size; i++) {
+        if (wrappedArray[i] != other.wrappedArray[i]) {
+          return "The two ByteArrays aren't equal: this["
+              + i
+              + "]="
+              + wrappedArray[i]
+              + "; other["
+              + i
+              + "]="
+              + other.wrappedArray[i]
+              + ".";
+        }
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        if (getArrayVal(i) != other.getArrayVal(i)
+            || (getArrayVal(i) == Byte.MAX_VALUE && maxIsMV != other.maxIsMV)) {
+          return "The two ByteArrays aren't equal: this["
+              + i
+              + "]="
+              + getArrayVal(i)
+              + "; other["
+              + i
+              + "]="
+              + other.getArrayVal(i)
+              + ".";
+        }
+      }
+    }
     return "";
   }
 
@@ -1335,17 +1343,9 @@ public class ByteArray extends PrimitiveArray {
     return String2.toCSSVString(toArray()); // toArray() get just 'size' elements
   }
 
-  /**
-   * This converts the elements into an NCCSV attribute String, e.g.,: -128b, 127b Integer types
-   * show MAX_VALUE numbers (not "").
-   *
-   * @return an NCCSV attribute String
-   */
   @Override
-  public String toNccsvAttString() {
-    final StringBuilder sb = new StringBuilder(size * 6);
-    for (int i = 0; i < size; i++) sb.append((i == 0 ? "" : ",") + getArrayVal(i) + "b");
-    return sb.toString();
+  protected void appendNccsvElement(final StringBuilder sb, final int i) {
+    sb.append(wrappedArray != null ? wrappedArray[i] : getArrayVal(i)).append('b');
   }
 
   /**
@@ -1358,9 +1358,18 @@ public class ByteArray extends PrimitiveArray {
    */
   @Override
   public void changeSignedToFromUnsigned() {
-    for (int i = 0; i < size; i++) {
-      final int b = getArrayVal(i);
-      setArrayVal(i, (byte) (b < 0 ? b + 128 : b - 128));
+    if (wrappedArray != null) {
+      for (int i = 0; i < size; i++) {
+        final int b = wrappedArray[i];
+        byte newVal = (byte) (b < 0 ? b + 128 : b - 128);
+        wrappedArray[i] = newVal;
+        setArrayVal(i, newVal);
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        final int b = getArrayVal(i);
+        setArrayVal(i, (byte) (b < 0 ? b + 128 : b - 128));
+      }
     }
   }
 
@@ -1370,17 +1379,7 @@ public class ByteArray extends PrimitiveArray {
    */
   @Override
   public void sort() {
-    if (size <= 1) return;
-    if (wrappedArray != null) {
-      if (size < 8192) Arrays.sort(wrappedArray, 0, size);
-      else Arrays.parallelSort(wrappedArray, 0, size);
-    } else {
-      byte[] temp = array.asSlice(0, size * 1L).toArray(LAYOUT);
-      if (size < 8192) Arrays.sort(temp, 0, size);
-      else Arrays.parallelSort(temp, 0, size);
-      java.lang.foreign.MemorySegment.copy(
-          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 1L);
-    }
+    PanamaHelper.sort(size, wrappedArray, array, LAYOUT);
   }
 
   /**
@@ -1422,15 +1421,8 @@ public class ByteArray extends PrimitiveArray {
    */
   @Override
   public void reorder(final int rank[]) {
-    final int n = rank.length;
-    long currentCapacity = array.byteSize() / 1;
-    Math2.ensureMemoryAvailable(1L * currentCapacity, "ByteArray");
-    byte[] newArray = new byte[(int) currentCapacity];
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
-    for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
-    }
-    array = newSegment;
+    byte[] newArray = PanamaHelper.reorder(rank, size, wrappedArray, array, LAYOUT, "ByteArray");
+    array = java.lang.foreign.MemorySegment.ofArray(newArray);
     wrappedArray = newArray;
   }
 
@@ -1648,67 +1640,38 @@ public class ByteArray extends PrimitiveArray {
       return new ByteArray();
     }
 
-    // make a hashMap with all the unique values (associated values are initially all dummy)
-    // (actually bytes could be done more efficiently with a boolean array -128 to 127... )
-    final Integer dummy = -1;
-    final HashMap<Byte, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    byte lastValue = getArrayVal(0); // since lastValue often equals currentValue, cache it
-    hashMap.put(lastValue, dummy);
-    boolean alreadySorted = true;
-    for (int i = 1; i < size; i++) {
-      final byte currentValue = getArrayVal(i);
-      if (currentValue != lastValue) {
-        if (currentValue < lastValue) alreadySorted = false;
-        lastValue = currentValue;
-        hashMap.put(lastValue, dummy);
+    byte[] tempUnique = new byte[size];
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, 0, tempUnique, 0, size);
+    } else {
+      for (int i = 0; i < size; i++) {
+        tempUnique[i] = getArrayVal(i);
       }
     }
 
-    // quickly deal with: all unique and already sorted
-    final Set<Byte> keySet = hashMap.keySet();
-    final int nUnique = keySet.size();
-    if (nUnique == size && alreadySorted) {
-      indices.ensureCapacity(size);
-      for (int i = 0; i < size; i++) indices.add(i);
-      return this; // the PrimitiveArray with unique values
-    }
+    // Sort the copy to easily find unique elements
+    Arrays.sort(tempUnique);
 
-    // store all the elements in an array
-    final byte[] unique = new byte[nUnique];
-    final Iterator<Byte> iterator = keySet.iterator();
-    int count = 0;
-    while (iterator.hasNext()) unique[count++] = iterator.next();
-    if (nUnique != count)
-      throw new RuntimeException(
-          "ByteArray.makeRankArray nUnique(" + nUnique + ") != count(" + count + ")!");
-
-    // sort them
-    Arrays.sort(unique);
-
-    // put the unique values back in the hashMap with the ranks as the associated values
-    for (int i = 0; i < count; i++) {
-      hashMap.put(unique[i], i);
-    }
-
-    // convert original values to ranks
-    final int ranks[] = new int[size];
-    lastValue = getArrayVal(0);
-    ranks[0] = (Integer) hashMap.get(lastValue);
-    int lastRank = ranks[0];
+    // Compact in place to get unique elements
+    int nUnique = 0;
+    tempUnique[nUnique++] = tempUnique[0];
     for (int i = 1; i < size; i++) {
-      if (getArrayVal(i) == lastValue) {
-        ranks[i] = lastRank;
-      } else {
-        lastValue = getArrayVal(i);
-        ranks[i] = (Integer) hashMap.get(lastValue);
-        lastRank = ranks[i];
+      if (tempUnique[i] != tempUnique[nUnique - 1]) {
+        tempUnique[nUnique++] = tempUnique[i];
       }
     }
 
-    // store the results in ranked
-    indices.append(new IntArray(ranks));
+    // binarySearch each original element to find its rank
+    indices.ensureCapacity(size);
+    for (int i = 0; i < size; i++) {
+      byte val = wrappedArray != null ? wrappedArray[i] : getArrayVal(i);
+      int rank = Arrays.binarySearch(tempUnique, 0, nUnique, val);
+      indices.add(rank);
+    }
 
-    return new ByteArray(unique);
+    byte[] uniqueResult = new byte[nUnique];
+    System.arraycopy(tempUnique, 0, uniqueResult, 0, nUnique);
+    return new ByteArray(uniqueResult);
   }
 
   /**
@@ -1725,10 +1688,20 @@ public class ByteArray extends PrimitiveArray {
     final byte to = Math2.roundToByte(d);
     if (from == to) return 0;
     int count = 0;
-    for (int i = 0; i < size; i++) {
-      if (getArrayVal(i) == from) {
-        setArrayVal(i, to);
-        count++;
+    if (wrappedArray != null) {
+      for (int i = 0; i < size; i++) {
+        if (wrappedArray[i] == from) {
+          wrappedArray[i] = to;
+          setArrayVal(i, to);
+          count++;
+        }
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        if (getArrayVal(i) == from) {
+          setArrayVal(i, to);
+          count++;
+        }
       }
     }
     if (count > 0 && Double.isNaN(d)) maxIsMV = true;
@@ -1743,9 +1716,17 @@ public class ByteArray extends PrimitiveArray {
    */
   @Override
   public int firstTie() {
-    for (int i = 1; i < size; i++) {
-      if (getArrayVal(i - 1) == getArrayVal(i)) {
-        return i - 1;
+    if (wrappedArray != null) {
+      for (int i = 1; i < size; i++) {
+        if (wrappedArray[i - 1] == wrappedArray[i]) {
+          return i - 1;
+        }
+      }
+    } else {
+      for (int i = 1; i < size; i++) {
+        if (getArrayVal(i - 1) == getArrayVal(i)) {
+          return i - 1;
+        }
       }
     }
     return -1;
@@ -1763,18 +1744,36 @@ public class ByteArray extends PrimitiveArray {
     int n = 0, tmini = -1, tmaxi = -1;
     byte tmin = Byte.MAX_VALUE;
     byte tmax = Byte.MIN_VALUE;
-    for (int i = 0; i < size; i++) {
-      byte v = getArrayVal(i);
-      if (maxIsMV && v == Byte.MAX_VALUE) {
-      } else {
-        n++;
-        if (v <= tmin) {
-          tmini = i;
-          tmin = v;
+    if (wrappedArray != null) {
+      for (int i = 0; i < size; i++) {
+        byte v = wrappedArray[i];
+        if (maxIsMV && v == Byte.MAX_VALUE) {
+        } else {
+          n++;
+          if (v <= tmin) {
+            tmini = i;
+            tmin = v;
+          }
+          if (v >= tmax) {
+            tmaxi = i;
+            tmax = v;
+          }
         }
-        if (v >= tmax) {
-          tmaxi = i;
-          tmax = v;
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        byte v = getArrayVal(i);
+        if (maxIsMV && v == Byte.MAX_VALUE) {
+        } else {
+          n++;
+          if (v <= tmin) {
+            tmini = i;
+            tmin = v;
+          }
+          if (v >= tmax) {
+            tmaxi = i;
+            tmax = v;
+          }
         }
       }
     }

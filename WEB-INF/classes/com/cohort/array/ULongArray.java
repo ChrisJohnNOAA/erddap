@@ -14,10 +14,6 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import ucar.ma2.StructureData;
 
 /**
@@ -733,66 +729,7 @@ public class ULongArray extends PrimitiveArray {
               + ") or >= last ("
               + last
               + ").");
-    if (first == last || destination == first || destination == last) return;
-
-    final int nToMove = last - first;
-    final long[] temp = new long[nToMove];
-    if (wrappedArray != null) {
-      System.arraycopy(wrappedArray, first, temp, 0, nToMove);
-    } else {
-      java.lang.foreign.MemorySegment.copy(
-          array, first * 8L, java.lang.foreign.MemorySegment.ofArray(temp), 0, nToMove * 8L);
-    }
-
-    if (destination < first) {
-      if (wrappedArray != null) {
-        System.arraycopy(
-            wrappedArray, destination, wrappedArray, destination + nToMove, first - destination);
-        System.arraycopy(temp, 0, wrappedArray, destination, nToMove);
-      } else {
-        java.lang.foreign.MemorySegment.copy(
-            array,
-            destination * 8L,
-            array,
-            (destination + nToMove) * 8L,
-            (first - destination) * 8L);
-        java.lang.foreign.MemorySegment.copy(
-            java.lang.foreign.MemorySegment.ofArray(temp),
-            0,
-            array,
-            destination * 8L,
-            nToMove * 8L);
-      }
-    } else {
-      if (wrappedArray != null) {
-        System.arraycopy(wrappedArray, last, wrappedArray, first, destination - last);
-        System.arraycopy(temp, 0, wrappedArray, destination - nToMove, nToMove);
-      } else {
-        java.lang.foreign.MemorySegment.copy(
-            array, last * 8L, array, first * 8L, (destination - last) * 8L);
-        java.lang.foreign.MemorySegment.copy(
-            java.lang.foreign.MemorySegment.ofArray(temp),
-            0,
-            array,
-            (destination - nToMove) * 8L,
-            nToMove * 8L);
-      }
-    }
-  }
-
-  /**
-   * This just keeps the rows for the 'true' values in the bitset. Rows that aren't kept are
-   * removed. The resulting PrimitiveArray is compacted (i.e., it has a smaller size()).
-   *
-   * @param bitset The BitSet indicating which rows (indices) should be kept.
-   */
-  @Override
-  public void justKeep(final BitSet bitset) {
-    int newSize = 0;
-    for (int row = 0; row < size; row++) {
-      if (bitset.get(row)) setArrayVal(newSize++, getArrayVal(row));
-    }
-    removeRange(newSize, size);
+    PanamaHelper.move(first, last, destination, 8, size, wrappedArray, array);
   }
 
   /**
@@ -805,9 +742,8 @@ public class ULongArray extends PrimitiveArray {
   public void ensureCapacity(final long minCapacity) {
     long currentCapacity = array.byteSize() / 8;
     if (currentCapacity < minCapacity) {
-      Math2.ensureArraySizeOkay(minCapacity, "ULongArray");
-      int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
-      if (newCapacity < minCapacity) newCapacity = (int) minCapacity;
+      int newCapacity =
+          PanamaHelper.calculateNewCapacity(currentCapacity, minCapacity, "ULongArray");
       Math2.ensureMemoryAvailable(8L * newCapacity, "ULongArray");
       long[] newArray = new long[newCapacity];
       java.lang.foreign.MemorySegment newSegment =
@@ -1292,20 +1228,9 @@ public class ULongArray extends PrimitiveArray {
     return sb.toString();
   }
 
-  /**
-   * This converts the elements into an NCCSV attribute String, e.g.,: -128b, 127b Integer types
-   * show MAX_VALUE numbers (not "").
-   *
-   * @return an NCCSV attribute String
-   */
   @Override
-  public String toNccsvAttString() {
-    final StringBuilder sb = new StringBuilder(size * 16);
-    for (int i = 0; i < size; i++) {
-      if (i > 0) sb.append(",");
-      sb.append(unpackIgnoreMaxIsMV(getArrayVal(i)) + "uL");
-    }
-    return sb.toString();
+  protected void appendNccsvElement(final StringBuilder sb, final int i) {
+    sb.append(unpackIgnoreMaxIsMV(getArrayVal(i))).append("uL");
   }
 
   /**
@@ -1314,31 +1239,7 @@ public class ULongArray extends PrimitiveArray {
    */
   @Override
   public void sort() {
-    // see switchover point and speed comparison in
-    //  https://www.baeldung.com/java-arrays-sort-vs-parallelsort
-    if (size < 8192)
-      if (wrappedArray != null) {
-        Arrays.sort(wrappedArray, 0, size);
-      } else {
-        long[] temp = array.asSlice(0, size * 8L).toArray(LAYOUT);
-        Arrays.sort(temp, 0, size);
-        java.lang.foreign.MemorySegment.copy(
-            java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
-      }
-    else if (wrappedArray != null) {
-      Arrays.parallelSort(wrappedArray, 0, size);
-    } else {
-      long[] temp = array.asSlice(0, size * 8L).toArray(LAYOUT);
-      Arrays.parallelSort(temp, 0, size);
-      java.lang.foreign.MemorySegment.copy(
-          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
-    }
-
-    // Then find the first value >=0, and move it and subsequent to beginning of array.
-    // You can't use PrimitiveArray.binarySearch because it works on unsigned values
-    //  (via PAOne) and the array is sorted according to the signed values.
-    // This is not ideal, but this is rarely used.
-    // [Future: you could use Arrays.binarySearch() with extra effort to find *first* value >=0.]
+    PanamaHelper.sort(size, wrappedArray, array, LAYOUT);
     int which = 0;
     while (which < size && getArrayVal(which) < 0) which++;
     move(which, size, 0);
@@ -1387,15 +1288,8 @@ public class ULongArray extends PrimitiveArray {
    */
   @Override
   public void reorder(final int rank[]) {
-    final int n = rank.length;
-    long currentCapacity = array.byteSize() / 8;
-    Math2.ensureMemoryAvailable(8L * currentCapacity, "ULongArray");
-    long[] newArray = new long[(int) currentCapacity];
-    java.lang.foreign.MemorySegment newSegment = java.lang.foreign.MemorySegment.ofArray(newArray);
-    for (int i = 0; i < n; i++) {
-      newSegment.setAtIndex(LAYOUT, i, array.getAtIndex(LAYOUT, rank[i]));
-    }
-    array = newSegment;
+    long[] newArray = PanamaHelper.reorder(rank, size, wrappedArray, array, LAYOUT, "ULongArray");
+    array = java.lang.foreign.MemorySegment.ofArray(newArray);
     wrappedArray = newArray;
   }
 
@@ -1565,69 +1459,67 @@ public class ULongArray extends PrimitiveArray {
       return new ULongArray();
     }
 
-    // make a hashMap with all the unique values (associated values are initially all dummy)
-    final Integer dummy = -1;
-    final HashMap<BigInteger, Integer> hashMap =
-        new HashMap<>(Math2.roundToInt(1.4 * size)); // HashMap supports null keys
-    BigInteger lastValue =
-        unpackIgnoreMaxIsMV(getArrayVal(0)); // since lastValue often equals currentValue, cache it
-    hashMap.put(lastValue, dummy);
-    boolean alreadySorted = true;
-    for (int i = 1; i < size; i++) {
-      BigInteger currentValue = unpackIgnoreMaxIsMV(getArrayVal(i));
-      if (!currentValue.equals(lastValue)) {
-        if (currentValue.compareTo(lastValue) < 0) alreadySorted = false;
-        lastValue = currentValue;
-        hashMap.put(lastValue, dummy);
+    long[] tempUnique = new long[size];
+    if (wrappedArray != null) {
+      System.arraycopy(wrappedArray, 0, tempUnique, 0, size);
+    } else {
+      for (int i = 0; i < size; i++) {
+        tempUnique[i] = getArrayVal(i);
       }
     }
 
-    // quickly deal with: all unique and already sorted
-    final Set<BigInteger> keySet = hashMap.keySet();
-    final int nUnique = keySet.size();
-    if (nUnique == size && alreadySorted) {
-      indices.ensureCapacity(size);
-      for (int i = 0; i < size; i++) indices.add(i);
-      return this; // the PrimitiveArray with unique values
+    // Sort the copy signedly
+    Arrays.sort(tempUnique);
+
+    // Rotate to get unsigned sorted order
+    int boundary = 0;
+    while (boundary < size && tempUnique[boundary] < 0) {
+      boundary++;
+    }
+    if (boundary > 0 && boundary < size) {
+      long[] rotated = new long[size];
+      System.arraycopy(tempUnique, boundary, rotated, 0, size - boundary);
+      System.arraycopy(tempUnique, 0, rotated, size - boundary, boundary);
+      tempUnique = rotated;
     }
 
-    // store all the elements in an array
-    final BigInteger[] unique = new BigInteger[nUnique];
-    final Iterator<BigInteger> iterator = keySet.iterator();
-    int count = 0;
-    while (iterator.hasNext()) unique[count++] = iterator.next();
-    if (nUnique != count)
-      throw new RuntimeException(
-          "ULongArray.makeRankArray nUnique(" + nUnique + ") != count(" + count + ")!");
-
-    // sort them
-    Arrays.sort(unique);
-
-    // put the unique values back in the hashMap with the ranks as the associated values
-    // and make tUnique
-    for (int i = 0; i < count; i++) {
-      hashMap.put(unique[i], i);
-    }
-
-    // convert original values to ranks
-    final int[] ranks = new int[size];
-    lastValue = unpackIgnoreMaxIsMV(getArrayVal(0));
-    ranks[0] = hashMap.get(lastValue);
-    int lastRank = ranks[0];
+    // Compact in place to get unique elements
+    int nUnique = 0;
+    tempUnique[nUnique++] = tempUnique[0];
     for (int i = 1; i < size; i++) {
-      if (unpackIgnoreMaxIsMV(getArrayVal(i)).compareTo(lastValue) == 0) {
-        ranks[i] = lastRank;
-      } else {
-        lastValue = unpackIgnoreMaxIsMV(getArrayVal(i));
-        ranks[i] = hashMap.get(lastValue);
-        lastRank = ranks[i];
+      if (tempUnique[i] != tempUnique[nUnique - 1]) {
+        tempUnique[nUnique++] = tempUnique[i];
       }
     }
 
-    // store the results in ranked
-    indices.append(new IntArray(ranks));
+    // binarySearch each original element to find its rank
+    indices.ensureCapacity(size);
+    for (int i = 0; i < size; i++) {
+      long val = wrappedArray != null ? wrappedArray[i] : getArrayVal(i);
+      int low = 0;
+      int high = nUnique - 1;
+      int rank = -1;
+      while (low <= high) {
+        int mid = (low + high) >>> 1;
+        long midVal = tempUnique[mid];
+        int cmp = Long.compareUnsigned(midVal, val);
+        if (cmp < 0) {
+          low = mid + 1;
+        } else if (cmp > 0) {
+          high = mid - 1;
+        } else {
+          rank = mid;
+          break;
+        }
+      }
+      indices.add(rank);
+    }
 
-    return new ULongArray(unique);
+    BigInteger[] uniqueResult = new BigInteger[nUnique];
+    for (int i = 0; i < nUnique; i++) {
+      uniqueResult[i] = unpackIgnoreMaxIsMV(tempUnique[i]);
+    }
+    return new ULongArray(uniqueResult);
   }
 
   /**

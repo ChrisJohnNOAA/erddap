@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -1855,74 +1854,45 @@ public class StringArray extends PrimitiveArray {
       return new StringArray();
     }
 
-    // make a hashMap with all the unique values (associated values are initially all dummy)
-    final Integer dummy = -1;
-    final HashMap<String, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * size));
-    String lastValue = get(0); // since lastValue often equals currentValue, cache it
-    hashMap.put(lastValue, dummy); // special for String
-    boolean alreadySorted = true;
+    String[] tempUnique = new String[size];
+    System.arraycopy(array, 0, tempUnique, 0, size);
+
+    // Sort the copy to easily find unique elements
+    Arrays.sort(tempUnique);
+
+    // Compact in place to get unique elements
+    int nUnique = 0;
+    tempUnique[nUnique++] = tempUnique[0];
     for (int i = 1; i < size; i++) {
-      String currentValue = get(i);
-      int compare =
-          lastValue.compareTo(currentValue); // special for String,    read "is bigger than"
-      if (compare != 0) { // special for String
-        if (compare > 0) // special for String
-        alreadySorted = false;
-        lastValue = currentValue;
-        hashMap.put(lastValue, dummy);
+      if (!tempUnique[i].equals(tempUnique[nUnique - 1])) {
+        tempUnique[nUnique++] = tempUnique[i];
       }
     }
 
-    // quickly deal with: all unique and already sorted
-    final Set<String> keySet = hashMap.keySet();
-    final int nUnique = keySet.size();
-    if (nUnique == size && alreadySorted) {
-      indices.ensureCapacity(size);
-      for (int i = 0; i < size; i++) indices.add(i);
-      // String2.log("StringArray.makeIndices all unique and already sorted.");
-      return this; // the PrimitiveArray with unique values
+    // Special for StringArray: "" (missing value) sorts highest
+    boolean shifted = false;
+    if (tempUnique[0].length() == 0) {
+      shifted = true;
+      System.arraycopy(tempUnique, 1, tempUnique, 0, nUnique - 1);
+      tempUnique[nUnique - 1] = "";
     }
 
-    // store all the elements in an array
-    final String[] unique = new String[nUnique];
-    final Iterator<String> iterator = keySet.iterator();
-    int count = 0;
-    while (iterator.hasNext()) unique[count++] = (String) iterator.next();
-    if (nUnique != count)
-      throw new RuntimeException(
-          "StringArray.makeRankArray nUnique(" + nUnique + ") != count(" + count + ")!");
-
-    // sort them
-    Arrays.sort(unique); // a variant could use String2.STRING_COMPARATOR_IGNORE_CASE);
-
-    // special for StringArray: "" (missing value) sorts highest
-    if (unique[0].length() == 0) {
-      System.arraycopy(unique, 1, unique, 0, nUnique - 1);
-      unique[nUnique - 1] = "";
-    }
-
-    // put the unique values back in the hashMap with the ranks as the associated values
-    for (int i = 0; i < count; i++) hashMap.put(unique[i], i);
-
-    // convert original values to ranks
-    final int[] ranks = new int[size];
-    lastValue = get(0);
-    ranks[0] = (Integer) hashMap.get(lastValue);
-    int lastRank = ranks[0];
-    for (int i = 1; i < size; i++) {
-      if (get(i).equals(lastValue)) {
-        ranks[i] = lastRank;
+    // binarySearch each original element to find its rank
+    indices.ensureCapacity(size);
+    for (int i = 0; i < size; i++) {
+      String val = array[i];
+      int rank;
+      if (shifted && val.length() == 0) {
+        rank = nUnique - 1;
       } else {
-        lastValue = get(i);
-        ranks[i] = (Integer) hashMap.get(lastValue);
-        lastRank = ranks[i];
+        rank = Arrays.binarySearch(tempUnique, 0, shifted ? nUnique - 1 : nUnique, val);
       }
+      indices.add(rank);
     }
 
-    // store the results in ranked
-    indices.append(new IntArray(ranks));
-
-    return new StringArray(unique);
+    String[] uniqueResult = new String[nUnique];
+    System.arraycopy(tempUnique, 0, uniqueResult, 0, nUnique);
+    return new StringArray(uniqueResult);
   }
 
   /**

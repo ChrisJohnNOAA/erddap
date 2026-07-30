@@ -845,7 +845,15 @@ public abstract class PrimitiveArray {
    *
    * @param bitset The BitSet indicating which rows (indices) should be kept.
    */
-  public abstract void justKeep(BitSet bitset);
+  public void justKeep(final java.util.BitSet bitset) {
+    int newSize = 0;
+    for (int row = 0; row < size; row++) {
+      if (bitset.get(row)) {
+        copy(row, newSize++);
+      }
+    }
+    removeRange(newSize, size);
+  }
 
   /**
    * This ensures that the capacity is at least 'minCapacity'.
@@ -1240,6 +1248,10 @@ public abstract class PrimitiveArray {
     return sb.toString();
   }
 
+  protected void appendNccsvElement(StringBuilder sb, int i) {}
+
+  protected void appendNccsv127Element(StringBuilder sb, int i) {}
+
   /**
    * This converts the elements into an NCCSV attribute String, e.g.,: -128b, 127b Integer types
    * show MAX_VALUE numbers (not ""). Chars above 255 are left as unicode chars (not json encoded).
@@ -1247,7 +1259,24 @@ public abstract class PrimitiveArray {
    *
    * @return an NCCSV attribute String
    */
-  public abstract String toNccsvAttString();
+  public String toNccsvAttString() {
+    if (this instanceof StringArray stringArray) {
+      return String2.toNccsvAttString(String2.toSVString(stringArray.toArray(), "\n", false));
+    }
+    PAType type = elementType();
+    int size = size();
+    int approxCap = size * 10;
+    if (type == PAType.DOUBLE) approxCap = size * 15;
+    else if (type == PAType.LONG || type == PAType.ULONG) approxCap = size * 16;
+    final StringBuilder sb = new StringBuilder(approxCap);
+    for (int i = 0; i < size; i++) {
+      if (i > 0) {
+        sb.append(',');
+      }
+      appendNccsvElement(sb, i);
+    }
+    return sb.toString();
+  }
 
   /**
    * This is like the original version of toNccsvAttString, where chars &gt;127 are json127 encoded
@@ -1257,7 +1286,22 @@ public abstract class PrimitiveArray {
    * @return an NCCSV attribute String
    */
   public String toNccsv127AttString() {
-    return toNccsvAttString();
+    if (this instanceof StringArray stringArray) {
+      return String2.toNccsv127AttString(String2.toSVString(stringArray.toArray(), "\n", false));
+    }
+    PAType type = elementType();
+    if (type != PAType.CHAR) {
+      return toNccsvAttString();
+    }
+    int size = size();
+    final StringBuilder sb = new StringBuilder(size * 10);
+    for (int i = 0; i < size; i++) {
+      if (i > 0) {
+        sb.append(',');
+      }
+      appendNccsv127Element(sb, i);
+    }
+    return sb.toString();
   }
 
   /**
