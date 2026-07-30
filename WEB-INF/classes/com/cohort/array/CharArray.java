@@ -1409,19 +1409,12 @@ public class CharArray extends PrimitiveArray {
     int elemSize = elementSize();
     boolean swap = (byteOrder != java.nio.ByteOrder.nativeOrder());
 
-    if (!swap) {
-      java.nio.ByteBuffer buffer = null;
-      try {
-        buffer = array.asSlice(0, byteCount).asByteBuffer();
-      } catch (UnsupportedOperationException e) {
-        // Fallback for heap segments backed by non-byte arrays
+    if (!swap && wrappedArray == null) {
+      java.nio.ByteBuffer buffer = array.asSlice(0, byteCount).asByteBuffer();
+      while (buffer.hasRemaining()) {
+        channel.write(buffer);
       }
-      if (buffer != null) {
-        while (buffer.hasRemaining()) {
-          channel.write(buffer);
-        }
-        return byteCount;
-      }
+      return byteCount;
     }
 
     PrimitiveArray.ScratchBuffer scratch = PrimitiveArray.SCRATCH_BUFFER.get();
