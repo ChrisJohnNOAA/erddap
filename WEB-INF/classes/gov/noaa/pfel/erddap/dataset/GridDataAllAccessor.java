@@ -11,10 +11,7 @@ import com.cohort.util.Math2;
 import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import gov.noaa.pfel.erddap.variable.EDV;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
@@ -48,7 +45,7 @@ public class GridDataAllAccessor implements AutoCloseable {
   public GridDataAllAccessor(GridDataAccessor tGridDataAccessor) throws Throwable {
 
     int nDv = 0;
-    DataOutputStream dos[] = null;
+    java.nio.channels.FileChannel[] channels = null;
     gridDataAccessor = tGridDataAccessor;
     try {
       if (!gridDataAccessor.rowMajor())
@@ -70,25 +67,30 @@ public class GridDataAllAccessor implements AutoCloseable {
               + "_"; // so two identical queries don't interfere with each other
 
       dataPAType = new PAType[nDv];
-      dos = new DataOutputStream[nDv]; // 1 per data variable
+      channels = new java.nio.channels.FileChannel[nDv]; // 1 per data variable
       for (int dv = 0; dv < nDv; dv++) {
         dataPAType[dv] = dataVars[dv].destinationDataPAType();
-        dos[dv] =
-            new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(Paths.get(baseFileName + dv))));
+        channels[dv] =
+            java.nio.channels.FileChannel.open(
+                Paths.get(baseFileName + dv),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.WRITE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
       }
 
       // get all the data
       while (gridDataAccessor.incrementChunk()) {
         for (int dv = 0; dv < nDv; dv++) {
-          gridDataAccessor.getPartialDataValues(dv).writeDos(dos[dv]);
+          gridDataAccessor
+              .getPartialDataValues(dv)
+              .writeToChannel(channels[dv], java.nio.ByteOrder.BIG_ENDIAN);
         }
       }
     } finally {
-      if (dos != null) {
+      if (channels != null) {
         for (int dv = 0; dv < nDv; dv++)
           try {
-            if (dos[dv] != null) dos[dv].close();
+            if (channels[dv] != null) channels[dv].close();
           } catch (Exception e) {
           }
       }

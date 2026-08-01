@@ -13,6 +13,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -1819,6 +1821,25 @@ public abstract class PrimitiveArray {
    *     size=0, this returns 0.
    * @throws Exception if trouble
    */
+  /**
+   * Writes the active elements of this array directly to a FileChannel using native byte order.
+   *
+   * @param channel The open destination FileChannel.
+   * @return The total number of bytes written.
+   * @throws IOException If an I/O error occurs.
+   */
+  public abstract long writeToChannel(FileChannel channel) throws IOException;
+
+  /**
+   * Writes the active elements of this array directly to a FileChannel with specific byte ordering.
+   *
+   * @param channel The open destination FileChannel.
+   * @param byteOrder The desired ByteOrder (e.g., ByteOrder.BIG_ENDIAN or ByteOrder.LITTLE_ENDIAN).
+   * @return The total number of bytes written.
+   * @throws IOException If an I/O error occurs.
+   */
+  public abstract long writeToChannel(FileChannel channel, ByteOrder byteOrder) throws IOException;
+
   public abstract int writeDos(DataOutputStream dos) throws Exception;
 
   /**
@@ -3938,4 +3959,14 @@ public abstract class PrimitiveArray {
     }
     return null;
   }
+
+  public static class ScratchBuffer {
+    public final byte[] bytes = new byte[65536];
+    public final java.lang.foreign.MemorySegment segment =
+        java.lang.foreign.MemorySegment.ofArray(bytes);
+    public final java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
+  }
+
+  public static final ThreadLocal<ScratchBuffer> SCRATCH_BUFFER =
+      ThreadLocal.withInitial(ScratchBuffer::new);
 }

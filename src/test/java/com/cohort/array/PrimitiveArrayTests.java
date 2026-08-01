@@ -1487,4 +1487,83 @@ class PrimitiveArrayTests {
             + (System.currentTimeMillis() - tTime)
             + " (Java 1.8 31ms, 1.7M4700 32ms, 2012-06-29: 282 ms)");
   }
+
+  @org.junit.jupiter.api.Test
+  void testWriteToChannel() throws Throwable {
+    String2.log("*** PrimitiveArrayTests.testWriteToChannel");
+    PAType[] types = PAType.values();
+    for (PAType type : types) {
+      if (type == PAType.BOOLEAN) continue;
+      PrimitiveArray pa = PrimitiveArray.factory(type, 10, false);
+      if (type == PAType.STRING) {
+        pa.addString("Hello");
+        pa.addString("World");
+        pa.addString("Testing 1 2 3");
+      } else {
+        for (int i = 0; i < 10; i++) {
+          pa.addDouble(i * 1.5);
+        }
+      }
+
+      // 1. Test BIG_ENDIAN writeToChannel vs legacy writeDos
+      String fileDos = File2.getSystemTempDirectory() + "/testDos_" + type + ".bin";
+      String fileChannelBE = File2.getSystemTempDirectory() + "/testChannelBE_" + type + ".bin";
+
+      // legacy writeDos
+      try (java.io.DataOutputStream dos =
+          new java.io.DataOutputStream(
+              new java.io.BufferedOutputStream(
+                  java.nio.file.Files.newOutputStream(java.nio.file.Paths.get(fileDos))))) {
+        pa.writeDos(dos);
+      }
+
+      // new writeToChannel Big Endian
+      try (java.nio.channels.FileChannel channel =
+          java.nio.channels.FileChannel.open(
+              java.nio.file.Paths.get(fileChannelBE),
+              java.nio.file.StandardOpenOption.CREATE,
+              java.nio.file.StandardOpenOption.WRITE,
+              java.nio.file.StandardOpenOption.TRUNCATE_EXISTING)) {
+        pa.writeToChannel(channel, java.nio.ByteOrder.BIG_ENDIAN);
+      }
+
+      // assert binary identical
+      byte[] bytesDos = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(fileDos));
+      byte[] bytesChannelBE =
+          java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(fileChannelBE));
+      Test.ensureTrue(Arrays.equals(bytesDos, bytesChannelBE), "Mismatch in BE for type: " + type);
+
+      // Clean up files
+      File2.delete(fileDos);
+      File2.delete(fileChannelBE);
+
+      // 2. Test LITTLE_ENDIAN writeToChannel (not applicable to StringArray since it's UTF-8)
+      if (type != PAType.STRING) {
+        String fileChannelLE = File2.getSystemTempDirectory() + "/testChannelLE_" + type + ".bin";
+        try (java.nio.channels.FileChannel channel =
+            java.nio.channels.FileChannel.open(
+                java.nio.file.Paths.get(fileChannelLE),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.WRITE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING)) {
+          pa.writeToChannel(channel, java.nio.ByteOrder.LITTLE_ENDIAN);
+        }
+
+        // Compare by reading back and ensuring values are correct
+        PrimitiveArray paRead = PrimitiveArray.factory(type, 10, false);
+        try (java.io.DataInputStream dis =
+            new java.io.DataInputStream(
+                java.nio.file.Files.newInputStream(java.nio.file.Paths.get(fileChannelLE)))) {
+          paRead.readDis(dis, pa.size());
+        }
+        paRead.reverseBytes(); // reverse LITTLE_ENDIAN back to native
+        for (int i = 0; i < pa.size(); i++) {
+          Test.ensureEqual(
+              pa.getString(i), paRead.getString(i), "Mismatch at LE readback for type: " + type);
+        }
+        File2.delete(fileChannelLE);
+      }
+    }
+    String2.log("testWriteToChannel passed successfully!");
+  }
 }

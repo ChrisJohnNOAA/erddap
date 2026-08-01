@@ -1533,6 +1533,25 @@ public class UByteArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel) throws java.io.IOException {
+    return writeToChannel(channel, java.nio.ByteOrder.nativeOrder());
+  }
+
+  @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel, java.nio.ByteOrder byteOrder)
+      throws java.io.IOException {
+    if (size == 0) {
+      return 0L;
+    }
+    long byteCount = (long) size * elementSize();
+    java.nio.ByteBuffer buffer = array.asSlice(0, byteCount).asByteBuffer();
+    while (buffer.hasRemaining()) {
+      channel.write(buffer);
+    }
+    return byteCount;
+  }
+
+  @Override
   public int writeDos(final DataOutputStream dos, final int i) throws Exception {
     dos.writeByte(getArrayVal(i));
     return 1;

@@ -13,10 +13,7 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.erddap.util.EDStatic;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
@@ -41,7 +38,7 @@ public class TableWriterAll extends TableWriter {
   // set firstTime
   // POLICY: because this class may be used in more than one thread,
   // each instance makes unique temp files names by adding randomInt to name.
-  protected volatile DataOutputStream[] columnStreams;
+  protected volatile java.nio.channels.FileChannel[] columnChannels;
   protected volatile long totalNRows = 0;
 
   protected Table cumulativeTable; // set by writeAllAndFinish, if used
@@ -72,7 +69,7 @@ public class TableWriterAll extends TableWriter {
 
   private static final class CleanupTableWriterAction implements Runnable {
 
-    private DataOutputStream[] columnStreams;
+    private java.nio.channels.FileChannel[] columnChannels;
     private String[] columnNames;
     private final String dir;
     private final String fileNameNoExt;
@@ -84,25 +81,24 @@ public class TableWriterAll extends TableWriter {
       this.randomInt = randomInt;
     }
 
-    private void setColumnStreams(DataOutputStream[] columnStreams) {
-      this.columnStreams = columnStreams;
+    private void setColumnChannels(java.nio.channels.FileChannel[] columnChannels) {
+      this.columnChannels = columnChannels;
     }
 
     @Override
     public void run() {
       try {
-        // delete columnStreams (if it was still saving data)
-        if (columnStreams != null) {
-          for (int col = 0; col < columnStreams.length; col++) {
-            // close the stream
+        // delete columnChannels (if it was still saving data)
+        if (columnChannels != null) {
+          for (int col = 0; col < columnChannels.length; col++) {
+            // close the channel
             try {
-              if (columnStreams[col] != null) columnStreams[col].close();
+              if (columnChannels[col] != null) columnChannels[col].close();
             } catch (Exception e) {
             }
-            // an attempt to solve File2.delete problem on these files: it couldn't hurt
-            columnStreams[col] = null;
+            columnChannels[col] = null;
           }
-          columnStreams = null;
+          columnChannels = null;
         }
 
         // delete the files
@@ -150,14 +146,17 @@ public class TableWriterAll extends TableWriter {
     // do firstTime stuff
     int nColumns = table.nColumns();
     if (firstTime) {
-      columnStreams = new DataOutputStream[nColumns];
-      cleanupAction.setColumnStreams(columnStreams);
+      columnChannels = new java.nio.channels.FileChannel[nColumns];
+      cleanupAction.setColumnChannels(columnChannels);
       cleanupAction.setColumnNames(columnNames);
       for (int col = 0; col < nColumns; col++) {
         String tFileName = columnFileName(col);
-        columnStreams[col] =
-            new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(Paths.get(tFileName))));
+        columnChannels[col] =
+            java.nio.channels.FileChannel.open(
+                Paths.get(tFileName),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.WRITE,
+                java.nio.file.StandardOpenOption.APPEND);
         if (col == 0 && reallyVerbose)
           String2.log(
               "TableWriterAll nColumns="
@@ -180,9 +179,9 @@ public class TableWriterAll extends TableWriter {
     // write the data
     for (int col = 0; col < nColumns; col++) {
       Test.ensureNotNull(
-          columnStreams[col], "columnStreams[" + col + "] is null! nColumns=" + nColumns);
+          columnChannels[col], "columnChannels[" + col + "] is null! nColumns=" + nColumns);
       PrimitiveArray pa = table.getColumn(col);
-      pa.writeDos(columnStreams[col]);
+      pa.writeToChannel(columnChannels[col], java.nio.ByteOrder.BIG_ENDIAN);
     }
     totalNRows = newTotalNRows;
   }
@@ -198,18 +197,18 @@ public class TableWriterAll extends TableWriter {
     if (ignoreFinish) return;
 
     // check for MustBe.THERE_IS_NO_DATA
-    if (columnStreams == null) throw new SimpleException(MustBe.THERE_IS_NO_DATA + " (nRows = 0)");
-    // String2.log("TableWriterAll.finish  n columnStreams=" + columnStreams.length);
-    for (int col = 0; col < columnStreams.length; col++) {
+    if (columnChannels == null) throw new SimpleException(MustBe.THERE_IS_NO_DATA + " (nRows = 0)");
+    // String2.log("TableWriterAll.finish  n columnChannels=" + columnChannels.length);
+    for (int col = 0; col < columnChannels.length; col++) {
       // close the stream
       try {
-        if (columnStreams[col] != null) columnStreams[col].close();
+        if (columnChannels[col] != null) columnChannels[col].close();
       } catch (Exception e) {
       }
       // an attempt to solve File2.delete problem on these files: it couldn't hurt
-      columnStreams[col] = null;
+      columnChannels[col] = null;
     }
-    columnStreams = null;
+    columnChannels = null;
 
     // diagnostic
     if (verbose)
@@ -333,18 +332,18 @@ public class TableWriterAll extends TableWriter {
     try {
       cumulativeTable = null;
 
-      // delete columnStreams (if it was still saving data)
-      if (columnStreams != null) {
-        for (int col = 0; col < columnStreams.length; col++) {
+      // delete columnChannels (if it was still saving data)
+      if (columnChannels != null) {
+        for (int col = 0; col < columnChannels.length; col++) {
           // close the stream
           try {
-            if (columnStreams[col] != null) columnStreams[col].close();
+            if (columnChannels[col] != null) columnChannels[col].close();
           } catch (Exception e) {
           }
           // an attempt to solve File2.delete problem on these files: it couldn't hurt
-          columnStreams[col] = null;
+          columnChannels[col] = null;
         }
-        columnStreams = null;
+        columnChannels = null;
       }
 
       // delete the files
