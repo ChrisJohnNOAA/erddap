@@ -120,4 +120,343 @@ public final class PanamaHelper {
           nElements * elementSize);
     }
   }
+
+  public static int calculateNewCapacity(
+      final long currentCapacity, final long minCapacity, final String className) {
+    com.cohort.util.Math2.ensureArraySizeOkay(minCapacity, className);
+    int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, currentCapacity + currentCapacity);
+    if (newCapacity < minCapacity) {
+      newCapacity = (int) minCapacity;
+    }
+    return newCapacity;
+  }
+
+  // Double sort & reorder
+  public static void sort(
+      final int size,
+      final double[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfDouble layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      double[] temp = array.asSlice(0, size * 8L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
+    }
+  }
+
+  public static double[] reorder(
+      final int[] rank,
+      final int size,
+      final double[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfDouble layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 8;
+    com.cohort.util.Math2.ensureMemoryAvailable(8L * currentCapacity, arrayType);
+    double[] newArray = new double[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
+
+  // Float sort & reorder
+  public static void sort(
+      final int size,
+      final float[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfFloat layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      float[] temp = array.asSlice(0, size * 4L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 4L);
+    }
+  }
+
+  public static float[] reorder(
+      final int[] rank,
+      final int size,
+      final float[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfFloat layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 4;
+    com.cohort.util.Math2.ensureMemoryAvailable(4L * currentCapacity, arrayType);
+    float[] newArray = new float[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
+
+  // Int sort & reorder (IntArray, UIntArray)
+  public static void sort(
+      final int size,
+      final int[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfInt layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      int[] temp = array.asSlice(0, size * 4L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 4L);
+    }
+  }
+
+  public static int[] reorder(
+      final int[] rank,
+      final int size,
+      final int[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfInt layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 4;
+    com.cohort.util.Math2.ensureMemoryAvailable(4L * currentCapacity, arrayType);
+    int[] newArray = new int[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
+
+  // Long sort & reorder (LongArray, ULongArray)
+  public static void sort(
+      final int size,
+      final long[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfLong layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      long[] temp = array.asSlice(0, size * 8L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 8L);
+    }
+  }
+
+  public static long[] reorder(
+      final int[] rank,
+      final int size,
+      final long[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfLong layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 8;
+    com.cohort.util.Math2.ensureMemoryAvailable(8L * currentCapacity, arrayType);
+    long[] newArray = new long[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
+
+  // Short sort & reorder (ShortArray, UShortArray)
+  public static void sort(
+      final int size,
+      final short[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfShort layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      short[] temp = array.asSlice(0, size * 2L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 2L);
+    }
+  }
+
+  public static short[] reorder(
+      final int[] rank,
+      final int size,
+      final short[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfShort layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 2;
+    com.cohort.util.Math2.ensureMemoryAvailable(2L * currentCapacity, arrayType);
+    short[] newArray = new short[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
+
+  // Byte sort & reorder (ByteArray, UByteArray)
+  public static void sort(
+      final int size,
+      final byte[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfByte layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      byte[] temp = array.asSlice(0, size * 1L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 1L);
+    }
+  }
+
+  public static byte[] reorder(
+      final int[] rank,
+      final int size,
+      final byte[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfByte layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 1;
+    com.cohort.util.Math2.ensureMemoryAvailable(1L * currentCapacity, arrayType);
+    byte[] newArray = new byte[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
+
+  // Char sort & reorder (CharArray)
+  public static void sort(
+      final int size,
+      final char[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfChar layout) {
+    if (size <= 1) return;
+    if (wrappedArray != null) {
+      if (size < 8192) {
+        java.util.Arrays.sort(wrappedArray, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(wrappedArray, 0, size);
+      }
+    } else {
+      char[] temp = array.asSlice(0, size * 2L).toArray(layout);
+      if (size < 8192) {
+        java.util.Arrays.sort(temp, 0, size);
+      } else {
+        java.util.Arrays.parallelSort(temp, 0, size);
+      }
+      java.lang.foreign.MemorySegment.copy(
+          java.lang.foreign.MemorySegment.ofArray(temp), 0, array, 0, size * 2L);
+    }
+  }
+
+  public static char[] reorder(
+      final int[] rank,
+      final int size,
+      final char[] wrappedArray,
+      final java.lang.foreign.MemorySegment array,
+      final java.lang.foreign.ValueLayout.OfChar layout,
+      final String arrayType) {
+    long currentCapacity = array.byteSize() / 2;
+    com.cohort.util.Math2.ensureMemoryAvailable(2L * currentCapacity, arrayType);
+    char[] newArray = new char[(int) currentCapacity];
+    if (wrappedArray != null) {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = wrappedArray[rank[i]];
+      }
+    } else {
+      for (int i = 0; i < rank.length; i++) {
+        newArray[i] = array.getAtIndex(layout, rank[i]);
+      }
+    }
+    return newArray;
+  }
 }
