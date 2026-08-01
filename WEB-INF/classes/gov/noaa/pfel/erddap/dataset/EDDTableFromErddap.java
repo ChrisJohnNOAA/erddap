@@ -40,13 +40,14 @@ import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Queue;
-import opendap.dap.AttributeTable;
-import opendap.dap.BaseType;
-import opendap.dap.DAS;
-import opendap.dap.DDS;
-import opendap.dap.DSequence;
 import org.semver4j.Semver;
+import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
+import ucar.nc2.Variable;
+import ucar.nc2.Sequence;
+import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 
 /**
  * This class represents a table of data from an opendap sequence source.
@@ -299,64 +300,32 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
 
       } else { // if !useNccsv
         // get sourceTable from remote DAP
-        if (verbose) String2.log("  using info from remote dataset's DAP services");
+        if (verbose) String2.log("  using info from remote dataset's NetcdfDatasets services");
 
-        DAS das = new DAS();
-        das.parse(
-            new ByteArrayInputStream(
-                SSR.getUrlResponseBytes(
-                    localSourceUrl + ".das"))); // has timeout and descriptive error
-        DDS dds = new DDS();
-        dds.parse(
-            new ByteArrayInputStream(
-                SSR.getUrlResponseBytes(
-                    localSourceUrl + ".dds"))); // has timeout and descriptive error
+        try (NetcdfDataset dataset = NetcdfDatasets.openDataset(localSourceUrl)) {
+          NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 
-        // get global attributes
-        OpendapHelper.getAttributes(das, "GLOBAL", sourceGlobalAttributes);
+          Variable outerVariable = dataset.findVariable(SEQUENCE_NAME);
+          if (!(outerVariable instanceof ucar.nc2.Sequence outerSequence))
+            throw new IllegalArgumentException(
+                errorInMethod
+                    + "outerVariable not a Sequence: name="
+                    + SEQUENCE_NAME);
 
-        // delve into the outerSequence
-        BaseType outerVariable = dds.getVariable(SEQUENCE_NAME);
-        if (!(outerVariable instanceof DSequence outerSequence))
-          throw new IllegalArgumentException(
-              errorInMethod
-                  + "outerVariable not a DSequence: name="
-                  + outerVariable.getClearName()
-                  + " type="
-                  + outerVariable.getTypeName());
-        int nOuterColumns = outerSequence.elementCount();
-        AttributeTable outerAttributeTable = das.getAttributeTable(SEQUENCE_NAME);
-        for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
+          List<Variable> outerVars = outerSequence.getVariables();
+          int nOuterColumns = outerVars.size();
+          for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
+            Variable obt = outerVars.get(outerCol);
+            String tSourceName = obt.getShortName();
+            PAType tSourcePAType = NcHelper.getElementPAType(obt);
+            Attributes tSourceAtt = new Attributes();
+            NcHelper.getVariableAttributes(obt, tSourceAtt);
 
-          // look at the variables in the outer sequence
-          BaseType obt = outerSequence.getVar(outerCol);
-          String tSourceName = obt.getClearName();
-
-          // get the data sourcePAType
-          PAType tSourcePAType = OpendapHelper.getElementPAType(obt.newPrimitiveVector());
-
-          // get the attributes
-          Attributes tSourceAtt = new Attributes();
-          // note use of getName in this section
-          // if (reallyVerbose) String2.log("try getting attributes for outer " + tSourceName);
-          opendap.dap.Attribute attribute = outerAttributeTable.getAttribute(tSourceName);
-          // it should be a container with the attributes for this column
-          if (attribute == null) {
-            String2.log("WARNING!!! Unexpected: no attribute for outerVar=" + tSourceName + ".");
-          } else if (attribute.isContainer()) {
-            OpendapHelper.getAttributes(attribute.getContainer(), tSourceAtt);
-          } else {
-            String2.log(
-                "WARNING!!! Unexpected: attribute for outerVar="
-                    + tSourceName
-                    + " not a container: "
-                    + attribute.getClearName()
-                    + "="
-                    + attribute.getValueAt(0));
+            sourceTable.addColumn(
+                outerCol, tSourceName, PrimitiveArray.factory(tSourcePAType, 8, false), tSourceAtt);
           }
-
-          sourceTable.addColumn(
-              outerCol, tSourceName, PrimitiveArray.factory(tSourcePAType, 8, false), tSourceAtt);
+        } catch (Throwable t) {
+          throw new RuntimeException("Error while getting metadata from NetcdfDataset: " + localSourceUrl, t);
         }
       }
     }

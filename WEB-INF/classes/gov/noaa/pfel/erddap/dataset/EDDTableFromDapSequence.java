@@ -40,6 +40,10 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
+import ucar.nc2.Variable;
+import ucar.nc2.Sequence;
 import opendap.dap.AttributeTable;
 import opendap.dap.BaseType;
 import opendap.dap.DAS;
@@ -361,37 +365,6 @@ public class EDDTableFromDapSequence extends EDDTable {
       creationTimeMillis = quickRestartAttributes.getLong("creationTimeMillis");
     }
 
-    // DAS
-    byte dasBytes[] =
-        quickRestartAttributes == null
-            ? SSR.getUrlResponseBytes(localSourceUrl + ".das")
-            : // has timeout and descriptive error
-            ((ByteArray) quickRestartAttributes.get("dasBytes")).toArray();
-    DAS das = new DAS();
-    das.parse(new ByteArrayInputStream(dasBytes));
-
-    // DDS
-    byte ddsBytes[] =
-        quickRestartAttributes == null
-            ? SSR.getUrlResponseBytes(localSourceUrl + ".dds")
-            : // has timeout and descriptive error
-            ((ByteArray) quickRestartAttributes.get("ddsBytes")).toArray();
-    DDS dds = new DDS();
-    dds.parse(new ByteArrayInputStream(ddsBytes));
-
-    // get global attributes
-    sourceGlobalAttributes = new Attributes();
-    OpendapHelper.getAttributes(das, "GLOBAL", sourceGlobalAttributes);
-    combinedGlobalAttributes =
-        new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes); // order is important
-    String tLicense = combinedGlobalAttributes.getString(language, "license");
-    if (tLicense != null)
-      combinedGlobalAttributes.set(
-          language,
-          "license",
-          String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
-    combinedGlobalAttributes.removeValue("\"null\"");
-
     // create structures to hold the sourceAttributes temporarily
     int ndv = tDataVariables.size();
     Attributes tDataSourceAttributes[] = new Attributes[ndv];
@@ -402,122 +375,94 @@ public class EDDTableFromDapSequence extends EDDTable {
       tDataSourceNames[dv] = tDataVariables.get(dv).sourceName();
     }
 
-    // delve into the outerSequence
-    BaseType outerVariable = dds.getVariable(outerSequenceName);
-    if (!(outerVariable instanceof DSequence outerSequence))
-      throw new RuntimeException(
-          errorInMethod
-              + "outerVariable not a DSequence: name="
-              + outerVariable.getClearName()
-              + " type="
-              + outerVariable.getTypeName());
-    int nOuterColumns = outerSequence.elementCount();
-    AttributeTable outerAttributeTable = OpendapHelper.getAttributeTable(das, outerSequenceName);
-    for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
+    if (quickRestartAttributes != null) {
+      // 1. Restore sourceGlobalAttributes
+      sourceGlobalAttributes = new Attributes();
+      for (String name : quickRestartAttributes.getNames()) {
+        if (name.startsWith("global:")) {
+          sourceGlobalAttributes.set(name.substring(7), quickRestartAttributes.get(name));
+        }
+      }
 
-      // look at the variables in the outer sequence
-      BaseType obt = outerSequence.getVar(outerCol);
-      String oName = obt.getClearName();
-      if (innerSequenceName != null && oName.equals(innerSequenceName)) {
+      // 2. Restore variables
+      for (int dv = 0; dv < ndv; dv++) {
+        tDataSourceTypes[dv] = quickRestartAttributes.getString("var:" + dv + ":sourceType");
+        isOuterVar[dv] = quickRestartAttributes.getInt("var:" + dv + ":isOuterVar") == 1;
 
-        // look at the variables in the inner sequence
-        DSequence innerSequence = (DSequence) obt;
-        AttributeTable innerAttributeTable =
-            OpendapHelper.getAttributeTable(das, innerSequence.getClearName());
-        Enumeration<BaseType> ien = innerSequence.getVariables();
-        while (ien.hasMoreElements()) {
-          BaseType ibt = ien.nextElement();
-          String iName = ibt.getClearName();
-
-          // is iName in tDataVariableNames?  i.e., are we interested in this variable?
-          int dv = String2.indexOf(tDataSourceNames, iName);
-          if (dv < 0) {
-            if (reallyVerbose) String2.log("  ignoring source iName=" + iName);
-            continue;
+        tDataSourceAttributes[dv] = new Attributes();
+        String attrPrefix = "var:" + dv + ":attr:";
+        for (String name : quickRestartAttributes.getNames()) {
+          if (name.startsWith(attrPrefix)) {
+            tDataSourceAttributes[dv].set(name.substring(attrPrefix.length()), quickRestartAttributes.get(name));
           }
+        }
+      }
+    } else {
+      // Fetch from NetcdfDataset
+      try (NetcdfDataset dataset = NetcdfDatasets.openDataset(localSourceUrl)) {
+        sourceGlobalAttributes = new Attributes();
+        NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 
-          // get the sourceType
-          tDataSourceTypes[dv] =
-              PAType.toCohortString(OpendapHelper.getElementPAType(ibt.newPrimitiveVector()));
+        // delve into the outerSequence
+        Variable outerVariable = dataset.findVariable(outerSequenceName);
+        if (!(outerVariable instanceof ucar.nc2.Sequence outerSequence))
+          throw new RuntimeException(
+              errorInMethod
+                  + "outerVariable not a Sequence: name="
+                  + outerSequenceName);
 
-          // get the ibt attributes
-          // (some servers return innerAttributeTable, some don't -- see test cases)
-          Attributes tAtt = new Attributes();
-          if (innerAttributeTable == null) {
-            // Dapper needs this approach
-            // note use of getLongName here
-            OpendapHelper.getAttributes(das, ibt.getLongName(), tAtt);
-            // drds needs this approach
-            if (tAtt.size() == 0) OpendapHelper.getAttributes(das, iName, tAtt);
-          } else {
-            // note use of getName in this section
-            // if (reallyVerbose) String2.log("try getting attributes for inner " + iName);
-            opendap.dap.Attribute attribute = innerAttributeTable.getAttribute(iName);
-            // it should be a container with the attributes for this column
-            if (attribute == null) {
-              String2.log("WARNING!!! Unexpected: no attribute for innerVar=" + iName + ".");
-            } else if (attribute.isContainer()) {
-              OpendapHelper.getAttributes(attribute.getContainer(), tAtt);
-            } else {
-              String2.log(
-                  "WARNING!!! Unexpected: attribute for innerVar="
-                      + iName
-                      + " not a container: "
-                      + attribute.getClearName()
-                      + "="
-                      + attribute.getValueAt(0));
+        List<Variable> outerVars = outerSequence.getVariables();
+        int nOuterColumns = outerVars.size();
+        for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
+          Variable obt = outerVars.get(outerCol);
+          String oName = obt.getShortName();
+          if (innerSequenceName != null && oName.equals(innerSequenceName)) {
+            if (!(obt instanceof ucar.nc2.Sequence innerSequence)) {
+              throw new RuntimeException(
+                  errorInMethod
+                      + "innerVariable not a Sequence: name="
+                      + innerSequenceName);
             }
-          }
-          // tAtt.set("source_sequence", "inner");
-          tDataSourceAttributes[dv] = tAtt; // may be empty, that's ok
-        } // inner elements loop
+            List<Variable> innerVars = innerSequence.getVariables();
+            for (Variable ibt : innerVars) {
+              String iName = ibt.getShortName();
+              int dv = String2.indexOf(tDataSourceNames, iName);
+              if (dv < 0) {
+                if (reallyVerbose) String2.log("  ignoring source iName=" + iName);
+                continue;
+              }
 
-      } else {
-        // deal with an outer column
-        // is oName in tDataVariableNames?  i.e., are we interested in this variable?
-        int dv = String2.indexOf(tDataSourceNames, oName);
-        if (dv < 0) {
-          // for testing only:  throw new RuntimeException("  ignoring source oName=" + oName);
-          if (verbose) String2.log("  ignoring source outer variable name=" + oName);
-          continue;
-        }
-        isOuterVar[dv] = true;
-
-        // get the sourceDataType
-        tDataSourceTypes[dv] =
-            PAType.toCohortString(OpendapHelper.getElementPAType(obt.newPrimitiveVector()));
-
-        // get the attributes
-        Attributes tAtt = new Attributes();
-        if (outerAttributeTable == null) {
-          // Dapper needs this approach
-          // note use of getLongName here
-          OpendapHelper.getAttributes(das, obt.getLongName(), tAtt);
-          // drds needs this approach
-          if (tAtt.size() == 0) OpendapHelper.getAttributes(das, oName, tAtt);
-        } else {
-          // note use of getName in this section
-          // if (reallyVerbose) String2.log("try getting attributes for outer " + oName);
-          opendap.dap.Attribute attribute = outerAttributeTable.getAttribute(oName);
-          // it should be a container with the attributes for this column
-          if (attribute == null) {
-            String2.log("WARNING!!! Unexpected: no attribute for outerVar=" + oName + ".");
-          } else if (attribute.isContainer()) {
-            OpendapHelper.getAttributes(attribute.getContainer(), tAtt);
+              tDataSourceTypes[dv] = PAType.toCohortString(NcHelper.getElementPAType(ibt));
+              Attributes tAtt = new Attributes();
+              NcHelper.getVariableAttributes(ibt, tAtt);
+              tDataSourceAttributes[dv] = tAtt;
+            }
           } else {
-            String2.log(
-                "WARNING!!! Unexpected: attribute for outerVar="
-                    + oName
-                    + " not a container: "
-                    + attribute.getClearName()
-                    + "="
-                    + attribute.getValueAt(0));
+            int dv = String2.indexOf(tDataSourceNames, oName);
+            if (dv < 0) {
+              if (verbose) String2.log("  ignoring source outer variable name=" + oName);
+              continue;
+            }
+            isOuterVar[dv] = true;
+
+            tDataSourceTypes[dv] = PAType.toCohortString(NcHelper.getElementPAType(obt));
+            Attributes tAtt = new Attributes();
+            NcHelper.getVariableAttributes(obt, tAtt);
+            tDataSourceAttributes[dv] = tAtt;
           }
         }
-        // tAtt.set("source_sequence", "outer"); //just mark inner
-        tDataSourceAttributes[dv] = tAtt;
       }
     }
+
+    combinedGlobalAttributes =
+        new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes); // order is important
+    String tLicense = combinedGlobalAttributes.getString(language, "license");
+    if (tLicense != null)
+      combinedGlobalAttributes.set(
+          language,
+          "license",
+          String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
+    combinedGlobalAttributes.removeValue("\"null\"");
 
     // create dataVariables[]
     dataVariables = new EDV[ndv];
@@ -636,8 +581,18 @@ public class EDDTableFromDapSequence extends EDDTable {
       try {
         quickRestartAttributes = new Attributes();
         quickRestartAttributes.set("creationTimeMillis", "" + creationTimeMillis);
-        quickRestartAttributes.set("dasBytes", new ByteArray(dasBytes));
-        quickRestartAttributes.set("ddsBytes", new ByteArray(ddsBytes));
+        for (String key : sourceGlobalAttributes.getNames()) {
+          quickRestartAttributes.set("global:" + key, sourceGlobalAttributes.get(key));
+        }
+        for (int dv = 0; dv < ndv; dv++) {
+          quickRestartAttributes.set("var:" + dv + ":sourceType", tDataSourceTypes[dv]);
+          quickRestartAttributes.set("var:" + dv + ":isOuterVar", isOuterVar[dv] ? 1 : 0);
+          if (tDataSourceAttributes[dv] != null) {
+            for (String key : tDataSourceAttributes[dv].getNames()) {
+              quickRestartAttributes.set("var:" + dv + ":attr:" + key, tDataSourceAttributes[dv].get(key));
+            }
+          }
+        }
         File2.makeDirectory(File2.getDirectory(quickRestartFullFileName()));
         NcHelper.writeAttributesToNc3(quickRestartFullFileName(), quickRestartAttributes);
       } catch (Throwable t) {
