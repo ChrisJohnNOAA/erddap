@@ -991,9 +991,7 @@ public class StringArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
       Math2.ensureMemoryAvailable(8L * newCapacity, "StringArray"); // 8L is guess
-      String[] newArray = new String[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      array = Arrays.copyOf(array, newCapacity); // do last to minimize concurrency problems
     }
   }
 
@@ -1390,9 +1388,7 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void trimToSize() {
     if (size == array.length) return;
-    final String[] newArray = new String[size];
-    System.arraycopy(array, 0, newArray, 0, size);
-    array = newArray;
+    array = Arrays.copyOf(array, size);
   }
 
   /**
@@ -1425,7 +1421,10 @@ public class StringArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
+    final int mismatchIdx = Arrays.mismatch(array, 0, size, other.array, 0, size);
+    if (mismatchIdx == -1 && maxIsMV == other.maxIsMV) return "";
+    final int startIdx = (maxIsMV == other.maxIsMV) ? mismatchIdx : 0;
+    for (int i = startIdx; i < size; i++)
       if (!array[i].equals(other.array[i]))
         return "The two StringArrays aren't equal: this["
             + i

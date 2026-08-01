@@ -765,9 +765,7 @@ public class ByteArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
       Math2.ensureMemoryAvailable(newCapacity, "ByteArray");
-      final byte[] newArray = new byte[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      array = Arrays.copyOf(array, newCapacity); // do last to minimize concurrency problems
     }
   }
 
@@ -1179,7 +1177,8 @@ public class ByteArray extends PrimitiveArray {
   /** If size != capacity, this makes a new 'array' of size 'size' so capacity will equal size. */
   @Override
   public void trimToSize() {
-    array = toArray();
+    if (size == array.length) return;
+    array = Arrays.copyOf(array, size);
   }
 
   /**
@@ -1212,7 +1211,10 @@ public class ByteArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
+    final int mismatchIdx = Arrays.mismatch(array, 0, size, other.array, 0, size);
+    if (mismatchIdx == -1 && maxIsMV == other.maxIsMV) return "";
+    final int startIdx = (maxIsMV == other.maxIsMV) ? mismatchIdx : 0;
+    for (int i = startIdx; i < size; i++)
       if (getInt(i) != other.getInt(i)) // int handles mv
       return "The two ByteArrays aren't equal: this["
             + i
