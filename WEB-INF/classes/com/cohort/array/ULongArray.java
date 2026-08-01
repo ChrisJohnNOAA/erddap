@@ -317,7 +317,7 @@ public class ULongArray extends PrimitiveArray {
   @Override
   public PrimitiveArray subset(
       final PrimitiveArray pa, final int startIndex, final int stride, int stopIndex) {
-    if (pa != null) pa.clear();
+    if (pa != null && !(pa instanceof ULongArrayView)) pa.clear();
     if (startIndex < 0)
       throw new IndexOutOfBoundsException(
           MessageFormat.format(ArraySubsetStart, getClass().getSimpleName(), "" + startIndex));
@@ -325,20 +325,34 @@ public class ULongArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex)
-      return pa == null
-          ? new ULongArray(new long[0])
-          : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
+    if (stopIndex < startIndex) {
+      if (pa == null) {
+        return new ULongArrayView(this, startIndex, stride, 0);
+      } else if (pa instanceof ULongArrayView dav) {
+        dav.parent = this;
+        dav.offset = startIndex;
+        dav.stride = stride;
+        dav.size = 0;
+        return dav;
+      } else {
+        return pa;
+      }
+    }
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    ULongArray la = null;
     if (pa == null) {
-      la = new ULongArray(willFind, true);
-    } else {
-      la = (ULongArray) pa;
-      la.ensureCapacity(willFind);
-      la.size = willFind;
+      return new ULongArrayView(this, startIndex, stride, willFind).setMaxIsMV(maxIsMV);
     }
+    if (pa instanceof ULongArrayView dav) {
+      dav.parent = this;
+      dav.offset = startIndex;
+      dav.stride = stride;
+      dav.size = willFind;
+      return dav.setMaxIsMV(maxIsMV);
+    }
+    ULongArray la = (ULongArray) pa;
+    la.ensureCapacity(willFind);
+    la.size = willFind;
     final long tar[] = la.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);

@@ -257,7 +257,7 @@ public class CharArray extends PrimitiveArray {
   @Override
   public PrimitiveArray subset(
       final PrimitiveArray pa, final int startIndex, final int stride, int stopIndex) {
-    if (pa != null) pa.clear();
+    if (pa != null && !(pa instanceof CharArrayView)) pa.clear();
     if (startIndex < 0)
       throw new IndexOutOfBoundsException(
           MessageFormat.format(ArraySubsetStart, getClass().getSimpleName(), "" + startIndex));
@@ -265,17 +265,34 @@ public class CharArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex) return pa == null ? new CharArray(new char[0]) : pa;
+    if (stopIndex < startIndex) {
+      if (pa == null) {
+        return new CharArrayView(this, startIndex, stride, 0);
+      } else if (pa instanceof CharArrayView dav) {
+        dav.parent = this;
+        dav.offset = startIndex;
+        dav.stride = stride;
+        dav.size = 0;
+        return dav;
+      } else {
+        return pa;
+      }
+    }
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    CharArray ca = null;
     if (pa == null) {
-      ca = new CharArray(willFind, true);
-    } else {
-      ca = (CharArray) pa;
-      ca.ensureCapacity(willFind);
-      ca.size = willFind;
+      return new CharArrayView(this, startIndex, stride, willFind);
     }
+    if (pa instanceof CharArrayView dav) {
+      dav.parent = this;
+      dav.offset = startIndex;
+      dav.stride = stride;
+      dav.size = willFind;
+      return dav;
+    }
+    CharArray ca = (CharArray) pa;
+    ca.ensureCapacity(willFind);
+    ca.size = willFind;
     final char tar[] = ca.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);

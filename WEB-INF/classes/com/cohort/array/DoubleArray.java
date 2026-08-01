@@ -223,7 +223,7 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public PrimitiveArray subset(
       final PrimitiveArray pa, final int startIndex, final int stride, int stopIndex) {
-    if (pa != null) pa.clear();
+    if (pa != null && !(pa instanceof DoubleArrayView)) pa.clear();
     if (startIndex < 0)
       throw new IndexOutOfBoundsException(
           MessageFormat.format(ArraySubsetStart, getClass().getSimpleName(), "" + startIndex));
@@ -231,17 +231,34 @@ public class DoubleArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex) return pa == null ? new DoubleArray(new double[0]) : pa;
+    if (stopIndex < startIndex) {
+      if (pa == null) {
+        return new DoubleArrayView(this, startIndex, stride, 0);
+      } else if (pa instanceof DoubleArrayView dav) {
+        dav.parent = this;
+        dav.offset = startIndex;
+        dav.stride = stride;
+        dav.size = 0;
+        return dav;
+      } else {
+        return pa;
+      }
+    }
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    DoubleArray da = null;
     if (pa == null) {
-      da = new DoubleArray(willFind, true);
-    } else {
-      da = (DoubleArray) pa;
-      da.ensureCapacity(willFind);
-      da.size = willFind;
+      return new DoubleArrayView(this, startIndex, stride, willFind);
     }
+    if (pa instanceof DoubleArrayView dav) {
+      dav.parent = this;
+      dav.offset = startIndex;
+      dav.stride = stride;
+      dav.size = willFind;
+      return dav;
+    }
+    DoubleArray da = (DoubleArray) pa;
+    da.ensureCapacity(willFind);
+    da.size = willFind;
     double tar[] = da.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);

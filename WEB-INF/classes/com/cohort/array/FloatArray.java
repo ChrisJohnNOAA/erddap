@@ -206,7 +206,7 @@ public class FloatArray extends PrimitiveArray {
   @Override
   public PrimitiveArray subset(
       final PrimitiveArray pa, final int startIndex, final int stride, int stopIndex) {
-    if (pa != null) pa.clear();
+    if (pa != null && !(pa instanceof FloatArrayView)) pa.clear();
     if (startIndex < 0)
       throw new IndexOutOfBoundsException(
           MessageFormat.format(ArraySubsetStart, getClass().getSimpleName(), "" + startIndex));
@@ -214,17 +214,34 @@ public class FloatArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex) return pa == null ? new FloatArray(new float[0]) : pa;
+    if (stopIndex < startIndex) {
+      if (pa == null) {
+        return new FloatArrayView(this, startIndex, stride, 0);
+      } else if (pa instanceof FloatArrayView dav) {
+        dav.parent = this;
+        dav.offset = startIndex;
+        dav.stride = stride;
+        dav.size = 0;
+        return dav;
+      } else {
+        return pa;
+      }
+    }
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    FloatArray fa = null;
     if (pa == null) {
-      fa = new FloatArray(willFind, true);
-    } else {
-      fa = (FloatArray) pa;
-      fa.ensureCapacity(willFind);
-      fa.size = willFind;
+      return new FloatArrayView(this, startIndex, stride, willFind);
     }
+    if (pa instanceof FloatArrayView dav) {
+      dav.parent = this;
+      dav.offset = startIndex;
+      dav.stride = stride;
+      dav.size = willFind;
+      return dav;
+    }
+    FloatArray fa = (FloatArray) pa;
+    fa.ensureCapacity(willFind);
+    fa.size = willFind;
     final float tar[] = fa.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);

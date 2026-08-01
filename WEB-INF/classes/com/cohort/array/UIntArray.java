@@ -280,7 +280,7 @@ public class UIntArray extends PrimitiveArray {
   @Override
   public PrimitiveArray subset(
       final PrimitiveArray pa, final int startIndex, final int stride, int stopIndex) {
-    if (pa != null) pa.clear();
+    if (pa != null && !(pa instanceof UIntArrayView)) pa.clear();
     if (startIndex < 0)
       throw new IndexOutOfBoundsException(
           MessageFormat.format(ArraySubsetStart, getClass().getSimpleName(), "" + startIndex));
@@ -288,20 +288,34 @@ public class UIntArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           MessageFormat.format(ArraySubsetStride, getClass().getSimpleName(), "" + stride));
     if (stopIndex >= size) stopIndex = size - 1;
-    if (stopIndex < startIndex)
-      return pa == null
-          ? new UIntArray(new int[0])
-          : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
+    if (stopIndex < startIndex) {
+      if (pa == null) {
+        return new UIntArrayView(this, startIndex, stride, 0);
+      } else if (pa instanceof UIntArrayView dav) {
+        dav.parent = this;
+        dav.offset = startIndex;
+        dav.stride = stride;
+        dav.size = 0;
+        return dav;
+      } else {
+        return pa;
+      }
+    }
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    UIntArray ia = null;
     if (pa == null) {
-      ia = new UIntArray(willFind, true);
-    } else {
-      ia = (UIntArray) pa;
-      ia.ensureCapacity(willFind);
-      ia.size = willFind;
+      return new UIntArrayView(this, startIndex, stride, willFind).setMaxIsMV(maxIsMV);
     }
+    if (pa instanceof UIntArrayView dav) {
+      dav.parent = this;
+      dav.offset = startIndex;
+      dav.stride = stride;
+      dav.size = willFind;
+      return dav.setMaxIsMV(maxIsMV);
+    }
+    UIntArray ia = (UIntArray) pa;
+    ia.ensureCapacity(willFind);
+    ia.size = willFind;
     final int tar[] = ia.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);
