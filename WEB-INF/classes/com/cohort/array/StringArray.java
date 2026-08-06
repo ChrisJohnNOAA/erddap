@@ -13,6 +13,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
@@ -1578,6 +1581,87 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     // StringArray does nothing because insensitive to big/little-endian
+  }
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel, final int offset, final int length) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(String2.ERROR + " in StringArray.writeToChannel: FileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in StringArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    final long startPos = channel.position();
+    final DataOutputStream dos = new DataOutputStream(Channels.newOutputStream(channel));
+    for (int i = offset; i < offset + length; i++) {
+      dos.writeUTF(get(i));
+    }
+    dos.flush();
+    return channel.position() - startPos;
+  }
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws Exception if trouble
+   */
+  @Override
+  public void readFromChannel(final FileChannel channel, final int n) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(String2.ERROR + " in StringArray.readFromChannel: FileChannel is null.");
+    }
+    if (n < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.readFromChannel: n (" + n + ") < 0.");
+    }
+    if (n == 0) {
+      return;
+    }
+    ensureCapacity(size + (long) n);
+    final DataInputStream dis = new DataInputStream(Channels.newInputStream(channel));
+    for (int i = 0; i < n; i++) {
+      add(dis.readUTF());
+    }
   }
 
   /**
