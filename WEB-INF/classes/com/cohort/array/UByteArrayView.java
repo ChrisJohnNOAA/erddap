@@ -117,6 +117,7 @@ public class UByteArrayView extends UByteArray {
         return indexOf((short) String2.parseInt(lookFor), startIndex);
     }
 
+    @Override
     public int indexOf(final short lookFor, final int startIndex) {
         if (array != null && array.length >= size) {
             for (int i = startIndex; i < size; i++) {
@@ -135,6 +136,7 @@ public class UByteArrayView extends UByteArray {
         return lastIndexOf((short) String2.parseInt(lookFor), startIndex);
     }
 
+    @Override
     public int lastIndexOf(final short lookFor, final int startIndex) {
         if (startIndex >= size) {
             throw new IllegalArgumentException(

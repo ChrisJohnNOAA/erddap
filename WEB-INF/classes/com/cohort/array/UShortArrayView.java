@@ -117,6 +117,7 @@ public class UShortArrayView extends UShortArray {
         return indexOf(String2.parseInt(lookFor), startIndex);
     }
 
+    @Override
     public int indexOf(final int lookFor, final int startIndex) {
         if (array != null && array.length >= size) {
             for (int i = startIndex; i < size; i++) {
@@ -135,6 +136,7 @@ public class UShortArrayView extends UShortArray {
         return lastIndexOf(String2.parseInt(lookFor), startIndex);
     }
 
+    @Override
     public int lastIndexOf(final int lookFor, final int startIndex) {
         if (startIndex >= size) {
             throw new IllegalArgumentException(

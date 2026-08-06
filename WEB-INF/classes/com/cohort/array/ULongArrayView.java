@@ -130,6 +130,7 @@ public class ULongArrayView extends ULongArray {
         return indexOf(new BigInteger(lookFor), startIndex);
     }
 
+    @Override
     public int indexOf(final BigInteger lookFor, final int startIndex) {
         if (array != null && array.length >= size) {
             for (int i = startIndex; i < size; i++) {
@@ -158,6 +159,7 @@ public class ULongArrayView extends ULongArray {
         return lastIndexOf(new BigInteger(lookFor), startIndex);
     }
 
+    @Override
     public int lastIndexOf(final BigInteger lookFor, final int startIndex) {
         if (startIndex >= size) {
             throw new IllegalArgumentException(

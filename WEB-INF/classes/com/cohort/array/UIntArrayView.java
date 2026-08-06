@@ -117,6 +117,7 @@ public class UIntArrayView extends UIntArray {
         return indexOf(String2.parseLong(lookFor), startIndex);
     }
 
+    @Override
     public int indexOf(final long lookFor, final int startIndex) {
         if (array != null && array.length >= size) {
             for (int i = startIndex; i < size; i++) {
@@ -135,6 +136,7 @@ public class UIntArrayView extends UIntArray {
         return lastIndexOf(String2.parseLong(lookFor), startIndex);
     }
 
+    @Override
     public int lastIndexOf(final long lookFor, final int startIndex) {
         if (startIndex >= size) {
             throw new IllegalArgumentException(
