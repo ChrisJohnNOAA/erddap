@@ -4,10 +4,9 @@ import com.cohort.util.Math2;
 import com.cohort.util.String2;
 import java.io.DataOutputStream;
 import java.io.RandomAccessFile;
-import java.math.BigInteger;
 
 /**
- * ByteArrayView is a read-only virtual view over a ByteArray.
+ * ByteArrayView is a read-only-to-parent virtual view over a ByteArray that materializes on mutation (Copy-on-Write).
  */
 public class ByteArrayView extends ByteArray {
     ByteArray parent;
@@ -23,29 +22,47 @@ public class ByteArrayView extends ByteArray {
         this.array = new byte[0];
     }
 
+    private void materialize() {
+        if (array == null || array.length < size) {
+            byte[] realArray = new byte[size];
+            for (int i = 0; i < size; i++) {
+                realArray[i] = parent.get(offset + i * stride);
+            }
+            this.array = realArray;
+        }
+    }
+
     @Override
     public byte get(final int index) {
         if (index < 0 || index >= size) {
             throw new IllegalArgumentException(
                 String2.ERROR + " in ByteArrayView.get: index (" + index + ") >= size (" + size + ").");
         }
+        if (array != null && array.length >= size) {
+            return array[index];
+        }
         return parent.get(offset + index * stride);
     }
 
     @Override
     public void set(final int index, final byte value) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.set(index, value);
     }
 
     @Override
     public void ensureCapacity(final long minCapacity) {
         if (minCapacity > size) {
-            throw new UnsupportedOperationException("ByteArrayView is read-only and cannot be expanded.");
+            materialize();
+            super.ensureCapacity(minCapacity);
         }
     }
 
     @Override
     public byte[] toArray() {
+        if (array != null && array.length >= size) {
+            return super.toArray();
+        }
         byte[] result = new byte[size];
         for (int i = 0; i < size; i++) {
             result[i] = get(i);
@@ -60,6 +77,9 @@ public class ByteArrayView extends ByteArray {
 
     @Override
     public double[] toDoubleArray() {
+        if (array != null && array.length >= size) {
+            return super.toDoubleArray();
+        }
         double[] result = new double[size];
         for (int i = 0; i < size; i++) {
             result[i] = getDouble(i);
@@ -69,6 +89,9 @@ public class ByteArrayView extends ByteArray {
 
     @Override
     public String[] toStringArray() {
+        if (array != null && array.length >= size) {
+            return super.toStringArray();
+        }
         String[] result = new String[size];
         for (int i = 0; i < size; i++) {
             result[i] = getString(i);
@@ -82,7 +105,11 @@ public class ByteArrayView extends ByteArray {
         return indexOf((byte) String2.parseInt(lookFor), startIndex);
     }
 
+    @Override
     public int indexOf(final byte lookFor, final int startIndex) {
+        if (array != null && array.length >= size) {
+            return super.indexOf(lookFor, startIndex);
+        }
         for (int i = startIndex; i < size; i++) {
             if (get(i) == lookFor) return i;
         }
@@ -94,10 +121,14 @@ public class ByteArrayView extends ByteArray {
         return lastIndexOf((byte) String2.parseInt(lookFor), startIndex);
     }
 
+    @Override
     public int lastIndexOf(final byte lookFor, final int startIndex) {
         if (startIndex >= size) {
             throw new IllegalArgumentException(
                 String2.ERROR + " in ByteArrayView.lastIndexOf: startIndex (" + startIndex + ") >= size (" + size + ").");
+        }
+        if (array != null && array.length >= size) {
+            return super.lastIndexOf(lookFor, startIndex);
         }
         for (int i = startIndex; i >= 0; i--) {
             if (get(i) == lookFor) return i;
@@ -107,11 +138,16 @@ public class ByteArrayView extends ByteArray {
 
     @Override
     public void trimToSize() {
-        // no-op
+        if (array != null && array.length >= size) {
+            super.trimToSize();
+        }
     }
 
     @Override
     public int writeDos(final DataOutputStream dos) throws Exception {
+        if (array != null && array.length >= size) {
+            return super.writeDos(dos);
+        }
         for (int i = 0; i < size; i++) {
             dos.writeByte(get(i));
         }
@@ -120,62 +156,81 @@ public class ByteArrayView extends ByteArray {
 
     @Override
     public int writeDos(final DataOutputStream dos, final int i) throws Exception {
+        if (array != null && array.length >= size) {
+            return super.writeDos(dos, i);
+        }
         dos.writeByte(get(i));
         return 1;
     }
 
     @Override
     public void writeToRAF(final RandomAccessFile raf, final int index) throws Exception {
+        if (array != null && array.length >= size) {
+            super.writeToRAF(raf, index);
+            return;
+        }
         raf.writeByte(get(index));
     }
 
     @Override
     public void remove(final int index) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.remove(index);
     }
 
     @Override
     public void removeRange(final int from, final int to) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.removeRange(from, to);
     }
 
     @Override
     public void move(final int first, final int last, final int destination) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.move(first, last, destination);
     }
 
     @Override
     public void justKeep(final java.util.BitSet bitset) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.justKeep(bitset);
     }
 
     @Override
     public void sort() {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.sort();
     }
 
     @Override
     public void reorder(final int rank[]) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.reorder(rank);
     }
 
     @Override
     public void reverseBytes() {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.reverseBytes();
     }
 
     @Override
     public void append(final PrimitiveArray pa) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.append(pa);
     }
 
     @Override
     public void rawAppend(final PrimitiveArray pa) {
-        throw new UnsupportedOperationException("ByteArrayView is read-only.");
+        materialize();
+        super.rawAppend(pa);
     }
 
     @Override
     public int hashCode() {
+        if (array != null && array.length >= size) {
+            return super.hashCode();
+        }
         int code = 0;
         for (int i = 0; i < size; i++) {
             code = 31 * code + Byte.hashCode(get(i));

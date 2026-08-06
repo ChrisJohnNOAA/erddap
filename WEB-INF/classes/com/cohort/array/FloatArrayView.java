@@ -4,10 +4,9 @@ import com.cohort.util.Math2;
 import com.cohort.util.String2;
 import java.io.DataOutputStream;
 import java.io.RandomAccessFile;
-import java.math.BigInteger;
 
 /**
- * FloatArrayView is a read-only virtual view over a FloatArray.
+ * FloatArrayView is a read-only-to-parent virtual view over a FloatArray that materializes on mutation (Copy-on-Write).
  */
 public class FloatArrayView extends FloatArray {
     FloatArray parent;
@@ -23,29 +22,47 @@ public class FloatArrayView extends FloatArray {
         this.array = new float[0];
     }
 
+    private void materialize() {
+        if (array == null || array.length < size) {
+            float[] realArray = new float[size];
+            for (int i = 0; i < size; i++) {
+                realArray[i] = parent.get(offset + i * stride);
+            }
+            this.array = realArray;
+        }
+    }
+
     @Override
     public float get(final int index) {
         if (index < 0 || index >= size) {
             throw new IllegalArgumentException(
                 String2.ERROR + " in FloatArrayView.get: index (" + index + ") >= size (" + size + ").");
         }
+        if (array != null && array.length >= size) {
+            return array[index];
+        }
         return parent.get(offset + index * stride);
     }
 
     @Override
     public void set(final int index, final float value) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.set(index, value);
     }
 
     @Override
     public void ensureCapacity(final long minCapacity) {
         if (minCapacity > size) {
-            throw new UnsupportedOperationException("FloatArrayView is read-only and cannot be expanded.");
+            materialize();
+            super.ensureCapacity(minCapacity);
         }
     }
 
     @Override
     public float[] toArray() {
+        if (array != null && array.length >= size) {
+            return super.toArray();
+        }
         float[] result = new float[size];
         for (int i = 0; i < size; i++) {
             result[i] = get(i);
@@ -60,6 +77,9 @@ public class FloatArrayView extends FloatArray {
 
     @Override
     public double[] toDoubleArray() {
+        if (array != null && array.length >= size) {
+            return super.toDoubleArray();
+        }
         double[] result = new double[size];
         for (int i = 0; i < size; i++) {
             result[i] = getDouble(i);
@@ -69,6 +89,9 @@ public class FloatArrayView extends FloatArray {
 
     @Override
     public String[] toStringArray() {
+        if (array != null && array.length >= size) {
+            return super.toStringArray();
+        }
         String[] result = new String[size];
         for (int i = 0; i < size; i++) {
             result[i] = getString(i);
@@ -78,6 +101,9 @@ public class FloatArrayView extends FloatArray {
 
     @Override
     public int indexOf(final float lookFor, final int startIndex) {
+        if (array != null && array.length >= size) {
+            return super.indexOf(lookFor, startIndex);
+        }
         if (Float.isNaN(lookFor)) {
             for (int i = startIndex; i < size; i++) {
                 if (Float.isNaN(get(i))) return i;
@@ -102,6 +128,9 @@ public class FloatArrayView extends FloatArray {
             throw new IllegalArgumentException(
                 String2.ERROR + " in FloatArrayView.lastIndexOf: startIndex (" + startIndex + ") >= size (" + size + ").");
         }
+        if (array != null && array.length >= size) {
+            return super.lastIndexOf(lookFor, startIndex);
+        }
         for (int i = startIndex; i >= 0; i--) {
             if (get(i) == lookFor) return i;
         }
@@ -115,11 +144,16 @@ public class FloatArrayView extends FloatArray {
 
     @Override
     public void trimToSize() {
-        // no-op
+        if (array != null && array.length >= size) {
+            super.trimToSize();
+        }
     }
 
     @Override
     public int writeDos(final DataOutputStream dos) throws Exception {
+        if (array != null && array.length >= size) {
+            return super.writeDos(dos);
+        }
         for (int i = 0; i < size; i++) {
             dos.writeFloat(get(i));
         }
@@ -128,62 +162,81 @@ public class FloatArrayView extends FloatArray {
 
     @Override
     public int writeDos(final DataOutputStream dos, final int i) throws Exception {
+        if (array != null && array.length >= size) {
+            return super.writeDos(dos, i);
+        }
         dos.writeFloat(get(i));
         return 4;
     }
 
     @Override
     public void writeToRAF(final RandomAccessFile raf, final int index) throws Exception {
+        if (array != null && array.length >= size) {
+            super.writeToRAF(raf, index);
+            return;
+        }
         raf.writeFloat(get(index));
     }
 
     @Override
     public void remove(final int index) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.remove(index);
     }
 
     @Override
     public void removeRange(final int from, final int to) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.removeRange(from, to);
     }
 
     @Override
     public void move(final int first, final int last, final int destination) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.move(first, last, destination);
     }
 
     @Override
     public void justKeep(final java.util.BitSet bitset) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.justKeep(bitset);
     }
 
     @Override
     public void sort() {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.sort();
     }
 
     @Override
     public void reorder(final int rank[]) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.reorder(rank);
     }
 
     @Override
     public void reverseBytes() {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.reverseBytes();
     }
 
     @Override
     public void append(final PrimitiveArray pa) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.append(pa);
     }
 
     @Override
     public void rawAppend(final PrimitiveArray pa) {
-        throw new UnsupportedOperationException("FloatArrayView is read-only.");
+        materialize();
+        super.rawAppend(pa);
     }
 
     @Override
     public int hashCode() {
+        if (array != null && array.length >= size) {
+            return super.hashCode();
+        }
         int code = 0;
         for (int i = 0; i < size; i++) {
             code = 31 * code + Float.hashCode(get(i));

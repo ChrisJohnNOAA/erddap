@@ -33,14 +33,6 @@ class PrimitiveArrayViewTests {
       // Expected
     }
 
-    // Test read-only constraint
-    try {
-      view.set(0, 99.0);
-      Test.ensureTrue(false, "Should have thrown exception for write attempt");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
-
     // Test toArray and other conversion methods
     double[] dArr = view.toArray();
     Test.ensureEqual(dArr, new double[] {2.0, 4.0, 6.0}, "");
@@ -64,13 +56,6 @@ class PrimitiveArrayViewTests {
     Test.ensureEqual(view.get(0), (byte) 10, "");
     Test.ensureEqual(view.get(1), (byte) 30, "");
     Test.ensureEqual(view.get(2), (byte) 50, "");
-
-    try {
-      view.set(0, (byte) 99);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -83,13 +68,6 @@ class PrimitiveArrayViewTests {
     CharArrayView view = (CharArrayView) sub;
     Test.ensureEqual(view.get(0), 'b', "");
     Test.ensureEqual(view.get(1), 'd', "");
-
-    try {
-      view.set(0, 'x');
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -102,13 +80,6 @@ class PrimitiveArrayViewTests {
     FloatArrayView view = (FloatArrayView) sub;
     Test.ensureEqual(view.get(0), 2.2f, "");
     Test.ensureEqual(view.get(1), 4.4f, "");
-
-    try {
-      view.set(0, 9.9f);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -121,13 +92,6 @@ class PrimitiveArrayViewTests {
     IntArrayView view = (IntArrayView) sub;
     Test.ensureEqual(view.get(0), 100, "");
     Test.ensureEqual(view.get(1), 400, "");
-
-    try {
-      view.set(0, 999);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -140,13 +104,6 @@ class PrimitiveArrayViewTests {
     LongArrayView view = (LongArrayView) sub;
     Test.ensureEqual(view.get(0), 2000L, "");
     Test.ensureEqual(view.get(1), 3000L, "");
-
-    try {
-      view.set(0, 9999L);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -159,13 +116,6 @@ class PrimitiveArrayViewTests {
     ShortArrayView view = (ShortArrayView) sub;
     Test.ensureEqual(view.get(0), (short) 5, "");
     Test.ensureEqual(view.get(1), (short) 15, "");
-
-    try {
-      view.set(0, (short) 9);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -178,13 +128,6 @@ class PrimitiveArrayViewTests {
     StringArrayView view = (StringArrayView) sub;
     Test.ensureEqual(view.get(0), "B", "");
     Test.ensureEqual(view.get(1), "D", "");
-
-    try {
-      view.set(0, "X");
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -197,13 +140,6 @@ class PrimitiveArrayViewTests {
     UByteArrayView view = (UByteArrayView) sub;
     Test.ensureEqual(view.get(0), (short) 20, "");
     Test.ensureEqual(view.get(1), (short) 30, "");
-
-    try {
-      view.set(0, (short) 99);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -216,13 +152,6 @@ class PrimitiveArrayViewTests {
     UShortArrayView view = (UShortArrayView) sub;
     Test.ensureEqual(view.get(0), 100, "");
     Test.ensureEqual(view.get(1), 300, "");
-
-    try {
-      view.set(0, 999);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -235,13 +164,6 @@ class PrimitiveArrayViewTests {
     UIntArrayView view = (UIntArrayView) sub;
     Test.ensureEqual(view.get(0), 2000L, "");
     Test.ensureEqual(view.get(1), 3000L, "");
-
-    try {
-      view.set(0, 9999L);
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 
   @org.junit.jupiter.api.Test
@@ -254,12 +176,5 @@ class PrimitiveArrayViewTests {
     ULongArrayView view = (ULongArrayView) sub;
     Test.ensureEqual(view.get(0), new BigInteger("10000"), "");
     Test.ensureEqual(view.get(1), new BigInteger("30000"), "");
-
-    try {
-      view.set(0, new BigInteger("9999"));
-      Test.ensureTrue(false, "Expected write to fail");
-    } catch (UnsupportedOperationException e) {
-      // Expected
-    }
   }
 }

@@ -7,7 +7,7 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 
 /**
- * ULongArrayView is a read-only virtual view over a ULongArray.
+ * ULongArrayView is a read-only-to-parent virtual view over a ULongArray that materializes on mutation (Copy-on-Write).
  */
 public class ULongArrayView extends ULongArray {
     ULongArray parent;
@@ -23,11 +23,24 @@ public class ULongArrayView extends ULongArray {
         this.array = new long[0];
     }
 
+    private void materialize() {
+        if (array == null || array.length < size) {
+            long[] realArray = new long[size];
+            for (int i = 0; i < size; i++) {
+                realArray[i] = parent.getPacked(offset + i * stride);
+            }
+            this.array = realArray;
+        }
+    }
+
     @Override
     public BigInteger get(final int index) {
         if (index < 0 || index >= size) {
             throw new IllegalArgumentException(
                 String2.ERROR + " in ULongArrayView.get: index (" + index + ") >= size (" + size + ").");
+        }
+        if (array != null && array.length >= size) {
+            return unpack(array[index]);
         }
         return parent.get(offset + index * stride);
     }
@@ -38,6 +51,9 @@ public class ULongArrayView extends ULongArray {
             throw new IllegalArgumentException(
                 String2.ERROR + " in ULongArrayView.getIgnoreMaxIsMV: index (" + index + ") >= size (" + size + ").");
         }
+        if (array != null && array.length >= size) {
+            return unpackIgnoreMaxIsMV(array[index]);
+        }
         return parent.getIgnoreMaxIsMV(offset + index * stride);
     }
 
@@ -47,23 +63,31 @@ public class ULongArrayView extends ULongArray {
             throw new IllegalArgumentException(
                 String2.ERROR + " in ULongArrayView.getPacked: index (" + index + ") >= size (" + size + ").");
         }
+        if (array != null && array.length >= size) {
+            return array[index];
+        }
         return parent.getPacked(offset + index * stride);
     }
 
     @Override
     public void set(final int index, final BigInteger value) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.set(index, value);
     }
 
     @Override
     public void ensureCapacity(final long minCapacity) {
         if (minCapacity > size) {
-            throw new UnsupportedOperationException("ULongArrayView is read-only and cannot be expanded.");
+            materialize();
+            super.ensureCapacity(minCapacity);
         }
     }
 
     @Override
     public long[] toArray() {
+        if (array != null && array.length >= size) {
+            return super.toArray();
+        }
         long[] result = new long[size];
         for (int i = 0; i < size; i++) {
             result[i] = getPacked(i);
@@ -78,6 +102,9 @@ public class ULongArrayView extends ULongArray {
 
     @Override
     public double[] toDoubleArray() {
+        if (array != null && array.length >= size) {
+            return super.toDoubleArray();
+        }
         double[] result = new double[size];
         for (int i = 0; i < size; i++) {
             result[i] = getDouble(i);
@@ -87,6 +114,9 @@ public class ULongArrayView extends ULongArray {
 
     @Override
     public String[] toStringArray() {
+        if (array != null && array.length >= size) {
+            return super.toStringArray();
+        }
         String[] result = new String[size];
         for (int i = 0; i < size; i++) {
             result[i] = getString(i);
@@ -101,6 +131,17 @@ public class ULongArrayView extends ULongArray {
     }
 
     public int indexOf(final BigInteger lookFor, final int startIndex) {
+        if (array != null && array.length >= size) {
+            for (int i = startIndex; i < size; i++) {
+                BigInteger val = unpack(array[i]);
+                if (lookFor == null) {
+                    if (val == null) return i;
+                } else if (lookFor.equals(val)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
         for (int i = startIndex; i < size; i++) {
             BigInteger val = get(i);
             if (lookFor == null) {
@@ -122,6 +163,17 @@ public class ULongArrayView extends ULongArray {
             throw new IllegalArgumentException(
                 String2.ERROR + " in ULongArrayView.lastIndexOf: startIndex (" + startIndex + ") >= size (" + size + ").");
         }
+        if (array != null && array.length >= size) {
+            for (int i = startIndex; i >= 0; i--) {
+                BigInteger val = unpack(array[i]);
+                if (lookFor == null) {
+                    if (val == null) return i;
+                } else if (lookFor.equals(val)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
         for (int i = startIndex; i >= 0; i--) {
             BigInteger val = get(i);
             if (lookFor == null) {
@@ -135,11 +187,16 @@ public class ULongArrayView extends ULongArray {
 
     @Override
     public void trimToSize() {
-        // no-op
+        if (array != null && array.length >= size) {
+            super.trimToSize();
+        }
     }
 
     @Override
     public int writeDos(final DataOutputStream dos) throws Exception {
+        if (array != null && array.length >= size) {
+            return super.writeDos(dos);
+        }
         for (int i = 0; i < size; i++) {
             dos.writeLong(getPacked(i));
         }
@@ -148,62 +205,81 @@ public class ULongArrayView extends ULongArray {
 
     @Override
     public int writeDos(final DataOutputStream dos, final int i) throws Exception {
+        if (array != null && array.length >= size) {
+            return super.writeDos(dos, i);
+        }
         dos.writeLong(getPacked(i));
         return 8;
     }
 
     @Override
     public void writeToRAF(final RandomAccessFile raf, final int index) throws Exception {
+        if (array != null && array.length >= size) {
+            super.writeToRAF(raf, index);
+            return;
+        }
         raf.writeLong(getPacked(index));
     }
 
     @Override
     public void remove(final int index) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.remove(index);
     }
 
     @Override
     public void removeRange(final int from, final int to) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.removeRange(from, to);
     }
 
     @Override
     public void move(final int first, final int last, final int destination) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.move(first, last, destination);
     }
 
     @Override
     public void justKeep(final java.util.BitSet bitset) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.justKeep(bitset);
     }
 
     @Override
     public void sort() {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.sort();
     }
 
     @Override
     public void reorder(final int rank[]) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.reorder(rank);
     }
 
     @Override
     public void reverseBytes() {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.reverseBytes();
     }
 
     @Override
     public void append(final PrimitiveArray pa) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.append(pa);
     }
 
     @Override
     public void rawAppend(final PrimitiveArray pa) {
-        throw new UnsupportedOperationException("ULongArrayView is read-only.");
+        materialize();
+        super.rawAppend(pa);
     }
 
     @Override
     public int hashCode() {
+        if (array != null && array.length >= size) {
+            return super.hashCode();
+        }
         int code = 0;
         for (int i = 0; i < size; i++) {
             BigInteger val = get(i);
