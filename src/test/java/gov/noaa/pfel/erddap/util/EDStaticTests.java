@@ -302,7 +302,7 @@ public class EDStaticTests {
       Mockito.when(reqValid2.getScheme()).thenReturn("http");
       Test.ensureEqual(
           EDStatic.baseUrl(reqValid2, null),
-          "http://ERDDAP.EXAMPLE.ORG:8080",
+          "http://erddap.example.org:8080",
           "Case-insensitive allowed host match with port");
 
       // Test using X-Forwarded-Host

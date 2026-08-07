@@ -931,10 +931,29 @@ public class EDStatic {
     }
     if (EDStatic.config == null || !EDStatic.config.verifyHostNameErddapUrl) {
       String url = request.getHeader("Host");
-      if (request.getHeader("X-Forwarded-Prefix") != null) {
-        url += request.getHeader("X-Forwarded-Prefix");
+      String cleanUrl = "";
+      if (url != null) {
+         StringBuilder sb = new StringBuilder();
+         for (int i = 0; i < url.length(); i++) {
+           char c = url.charAt(i);
+           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == ':' || c == '-') {
+             sb.append(c);
+           }
+         }
+         cleanUrl = sb.toString();
       }
-      return url;
+      String prefix = request.getHeader("X-Forwarded-Prefix");
+      if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
+         StringBuilder sb = new StringBuilder();
+         for (int i = 0; i < prefix.length(); i++) {
+           char c = prefix.charAt(i);
+           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '/' || c == '-' || c == '_') {
+             sb.append(c);
+           }
+         }
+         cleanUrl += sb.toString();
+      }
+      return cleanUrl;
     }
 
     String candidateHostStr = request.getHeader("X-Forwarded-Host");
@@ -955,14 +974,34 @@ public class EDStatic {
       normalizedHost = normalizedHost.trim();
     }
 
-    boolean isValid = false;
+    String matchedHost = null;
     if (EDStatic.config != null && EDStatic.config.allowedHosts != null) {
-      isValid = EDStatic.config.allowedHosts.contains(normalizedHost);
+      for (String allowed : EDStatic.config.allowedHosts) {
+        if (allowed.equalsIgnoreCase(normalizedHost)) {
+          matchedHost = allowed;
+          break;
+        }
+      }
     }
 
     String returnedHostAndPath;
-    if (isValid) {
-      returnedHostAndPath = candidateHostStr;
+    if (matchedHost != null) {
+      int port = -1;
+      if (candidateHostStr != null) {
+        int colonIdx = candidateHostStr.indexOf(':');
+        if (colonIdx >= 0) {
+          try {
+            port = Integer.parseInt(candidateHostStr.substring(colonIdx + 1).trim());
+          } catch (NumberFormatException e) {
+            // ignore
+          }
+        }
+      }
+      String safeHost = matchedHost;
+      if (port >= 1 && port <= 65535) {
+        safeHost += ":" + port;
+      }
+      returnedHostAndPath = safeHost;
     } else {
       String rawAttempt = candidateHostStr != null ? candidateHostStr : "null";
       String2.log("WARNING: Unapproved host header attempt: " + rawAttempt);
@@ -1007,8 +1046,16 @@ public class EDStatic {
       returnedHostAndPath = fallbackHost;
     }
 
-    if (request.getHeader("X-Forwarded-Prefix") != null) {
-      returnedHostAndPath += request.getHeader("X-Forwarded-Prefix");
+    String prefix = request.getHeader("X-Forwarded-Prefix");
+    if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
+       StringBuilder sb = new StringBuilder();
+       for (int i = 0; i < prefix.length(); i++) {
+         char c = prefix.charAt(i);
+         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '/' || c == '-' || c == '_') {
+           sb.append(c);
+         }
+       }
+       returnedHostAndPath += sb.toString();
     }
 
     return returnedHostAndPath;
