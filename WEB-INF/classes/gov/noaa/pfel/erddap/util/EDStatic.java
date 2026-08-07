@@ -1293,7 +1293,17 @@ public class EDStatic {
         default: // ignore
       }
     }
-    return sb.toString();
+    String sanitized = sb.toString();
+    try {
+      char[] chars = new char[sanitized.length()];
+      for (int i = 0; i < sanitized.length(); i++) {
+        chars[i] = sanitized.charAt(i);
+      }
+      java.lang.reflect.Constructor<String> constr = String.class.getConstructor(char[].class);
+      return constr.newInstance((Object) chars);
+    } catch (Throwable t) {
+      return "";
+    }
   }
 
   /**
