@@ -1018,7 +1018,7 @@ public class EDStatic {
 
       // Fallback safely to baseUrl or baseHttpsUrl
       String fallbackUrl = EDStatic.config != null ? EDStatic.config.baseUrl : null;
-      String scheme = request.getScheme();
+      String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
       if ("https".equalsIgnoreCase(scheme)
           && EDStatic.config != null
           && EDStatic.config.baseHttpsUrl != null
@@ -1310,7 +1310,8 @@ public class EDStatic {
    */
   public static String baseUrl(HttpServletRequest request, String loggedInAs) {
     if (EDStatic.config.useHeadersForUrl && request != null && request.getHeader("Host") != null) {
-      return request.getScheme() + "://" + getHostAndPathFromRequest(request);
+      String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
+      return scheme + "://" + getHostAndPathFromRequest(request);
     }
     return loggedInAs == null ? config.baseUrl : config.baseHttpsUrl;
   }
