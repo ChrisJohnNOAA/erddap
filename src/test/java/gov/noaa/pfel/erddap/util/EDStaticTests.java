@@ -337,12 +337,16 @@ public class EDStaticTests {
 
       String expectedFallbackHttpsHost = expectedFallbackHttpHost;
       if (EDStatic.config.baseHttpsUrl != null
+          && !EDStatic.config.baseHttpsUrl.trim().isEmpty()
           && !EDStatic.config.baseHttpsUrl.equalsIgnoreCase("(not specified)")) {
         try {
           java.net.URI uri = new java.net.URI(EDStatic.config.baseHttpsUrl);
-          expectedFallbackHttpsHost = uri.getHost();
-          if (uri.getPort() != -1) {
-            expectedFallbackHttpsHost += ":" + uri.getPort();
+          String h = uri.getHost();
+          if (h != null) {
+            expectedFallbackHttpsHost = h;
+            if (uri.getPort() != -1) {
+              expectedFallbackHttpsHost += ":" + uri.getPort();
+            }
           }
         } catch (Exception e) {
         }
