@@ -5,7 +5,6 @@
 package gov.noaa.pfel.erddap.dataset;
 
 import com.cohort.array.Attributes;
-import com.cohort.array.ByteArray;
 import com.cohort.array.PAOne;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
@@ -19,7 +18,6 @@ import com.cohort.util.XML;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
-import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.Erddap;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
@@ -36,17 +34,9 @@ import gov.noaa.pfel.erddap.variable.EDVLat;
 import gov.noaa.pfel.erddap.variable.EDVLon;
 import gov.noaa.pfel.erddap.variable.EDVTime;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import ucar.nc2.dataset.NetcdfDataset;
-import ucar.nc2.dataset.NetcdfDatasets;
-import ucar.nc2.Variable;
-import ucar.nc2.Sequence;
-import ucar.nc2.dataset.DatasetUrl;
-import thredds.client.catalog.ServiceType;
-import opendap.dap.AttributeTable;
 import opendap.dap.BaseType;
 import opendap.dap.DAS;
 import opendap.dap.DConnect2;
@@ -54,6 +44,11 @@ import opendap.dap.DConstructor;
 import opendap.dap.DDS;
 import opendap.dap.DSequence;
 import opendap.dap.DVector;
+import thredds.client.catalog.ServiceType;
+import ucar.nc2.Variable;
+import ucar.nc2.dataset.DatasetUrl;
+import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
 
 /**
  * This class represents a table of data from an opendap sequence source.
@@ -395,7 +390,8 @@ public class EDDTableFromDapSequence extends EDDTable {
         String attrPrefix = "var:" + dv + ":attr:";
         for (String name : quickRestartAttributes.getNames()) {
           if (name.startsWith(attrPrefix)) {
-            tDataSourceAttributes[dv].set(name.substring(attrPrefix.length()), quickRestartAttributes.get(name));
+            tDataSourceAttributes[dv].set(
+                name.substring(attrPrefix.length()), quickRestartAttributes.get(name));
           }
         }
       }
@@ -408,11 +404,9 @@ public class EDDTableFromDapSequence extends EDDTable {
 
         // delve into the outerSequence
         Variable outerVariable = dataset.findVariable(outerSequenceName);
-        if (!(outerVariable instanceof ucar.nc2.Sequence outerSequence))
+        if (!(outerVariable instanceof ucar.nc2.Structure outerSequence))
           throw new RuntimeException(
-              errorInMethod
-                  + "outerVariable not a Sequence: name="
-                  + outerSequenceName);
+              errorInMethod + "outerVariable not a Sequence/Structure: name=" + outerSequenceName);
 
         List<Variable> outerVars = outerSequence.getVariables();
         int nOuterColumns = outerVars.size();
@@ -420,10 +414,10 @@ public class EDDTableFromDapSequence extends EDDTable {
           Variable obt = outerVars.get(outerCol);
           String oName = obt.getShortName();
           if (innerSequenceName != null && oName.equals(innerSequenceName)) {
-            if (!(obt instanceof ucar.nc2.Sequence innerSequence)) {
+            if (!(obt instanceof ucar.nc2.Structure innerSequence)) {
               throw new RuntimeException(
                   errorInMethod
-                      + "innerVariable not a Sequence: name="
+                      + "innerVariable not a Sequence/Structure: name="
                       + innerSequenceName);
             }
             List<Variable> innerVars = innerSequence.getVariables();
@@ -592,7 +586,8 @@ public class EDDTableFromDapSequence extends EDDTable {
           quickRestartAttributes.set("var:" + dv + ":isOuterVar", isOuterVar[dv] ? 1 : 0);
           if (tDataSourceAttributes[dv] != null) {
             for (String key : tDataSourceAttributes[dv].getNames()) {
-              quickRestartAttributes.set("var:" + dv + ":attr:" + key, tDataSourceAttributes[dv].get(key));
+              quickRestartAttributes.set(
+                  "var:" + dv + ":attr:" + key, tDataSourceAttributes[dv].get(key));
             }
           }
         }

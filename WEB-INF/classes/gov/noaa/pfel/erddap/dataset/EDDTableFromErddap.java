@@ -15,7 +15,7 @@ import com.cohort.util.MustBe;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
-import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
+import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.FileVisitorDNLS;
 import gov.noaa.pfel.coastwatch.util.SSR;
@@ -35,7 +35,6 @@ import gov.noaa.pfel.erddap.variable.EDVTime;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -43,13 +42,11 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Queue;
 import org.semver4j.Semver;
+import thredds.client.catalog.ServiceType;
+import ucar.nc2.Variable;
+import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.NetcdfDatasets;
-import ucar.nc2.Variable;
-import ucar.nc2.Sequence;
-import ucar.nc2.dataset.DatasetUrl;
-import thredds.client.catalog.ServiceType;
-import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 
 /**
  * This class represents a table of data from an opendap sequence source.
@@ -309,11 +306,9 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
           NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 
           Variable outerVariable = dataset.findVariable(SEQUENCE_NAME);
-          if (!(outerVariable instanceof ucar.nc2.Sequence outerSequence))
+          if (!(outerVariable instanceof ucar.nc2.Structure outerSequence))
             throw new IllegalArgumentException(
-                errorInMethod
-                    + "outerVariable not a Sequence: name="
-                    + SEQUENCE_NAME);
+                errorInMethod + "outerVariable not a Sequence/Structure: name=" + SEQUENCE_NAME);
 
           List<Variable> outerVars = outerSequence.getVariables();
           int nOuterColumns = outerVars.size();
@@ -328,7 +323,8 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
                 outerCol, tSourceName, PrimitiveArray.factory(tSourcePAType, 8, false), tSourceAtt);
           }
         } catch (Throwable t) {
-          throw new RuntimeException("Error while getting metadata from NetcdfDataset: " + localSourceUrl, t);
+          throw new RuntimeException(
+              "Error while getting metadata from NetcdfDataset: " + localSourceUrl, t);
         }
       }
     }

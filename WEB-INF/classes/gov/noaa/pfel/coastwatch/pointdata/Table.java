@@ -109,20 +109,20 @@ import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types.MessageTypeBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
+import thredds.client.catalog.ServiceType;
 import ucar.ma2.Array;
+import ucar.ma2.ArraySequence;
 import ucar.ma2.DataType;
+import ucar.ma2.StructureData;
+import ucar.ma2.StructureDataIterator;
 import ucar.nc2.Dimension;
 import ucar.nc2.Group;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
-import ucar.nc2.write.NetcdfFormatWriter;
+import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.NetcdfDatasets;
-import ucar.ma2.StructureData;
-import ucar.ma2.StructureDataIterator;
-import ucar.ma2.ArraySequence;
-import ucar.nc2.dataset.DatasetUrl;
-import thredds.client.catalog.ServiceType;
+import ucar.nc2.write.NetcdfFormatWriter;
 
 /**
  * This class holds tabular data as
@@ -10090,15 +10090,15 @@ public class Table {
     try (NetcdfDataset ncd = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
       NcHelper.getGroupAttributes(ncd.getRootGroup(), globalAttributes());
 
-      ucar.nc2.Sequence outerSequence = null;
+      ucar.nc2.Structure outerSequence = null;
       for (Variable var : ncd.getVariables()) {
-        if (var instanceof ucar.nc2.Sequence) {
-          outerSequence = (ucar.nc2.Sequence) var;
+        if (var instanceof ucar.nc2.Structure) {
+          outerSequence = (ucar.nc2.Structure) var;
           break;
         }
       }
       if (outerSequence == null) {
-        throw new Exception(errorInMethod + "No Sequence variable found in the dataset.");
+        throw new Exception(errorInMethod + "No Sequence/Structure variable found in the dataset.");
       }
 
       List<Variable> outerVars = outerSequence.getVariables();
@@ -10107,10 +10107,10 @@ public class Table {
       // create the columns
       int innerSequenceColumn = -1; // the outerCol with the inner sequence (or -1 if none)
       int nInnerColumns = 0; // 0 important if no innerSequenceColumn
-      ucar.nc2.Sequence innerSequence = null;
+      ucar.nc2.Structure innerSequence = null;
       for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
         Variable obt = outerVars.get(outerCol);
-        if (obt instanceof ucar.nc2.Sequence) {
+        if (obt instanceof ucar.nc2.Structure) {
           // *** Start Dealing With InnerSequence
           // Ensure this is the first innerSequence.
           // If there are two, the response can't be represented as a simple table.
@@ -10126,7 +10126,7 @@ public class Table {
           innerSequenceColumn = outerCol;
           if (reallyVerbose) String2.log("  innerSequenceColumn=" + innerSequenceColumn);
 
-          innerSequence = (ucar.nc2.Sequence) obt;
+          innerSequence = (ucar.nc2.Structure) obt;
           List<Variable> innerVars = innerSequence.getVariables();
           nInnerColumns = innerVars.size();
           for (int innerCol = 0; innerCol < nInnerColumns; innerCol++) {
