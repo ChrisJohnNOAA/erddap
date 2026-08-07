@@ -44,6 +44,8 @@ import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.Variable;
 import ucar.nc2.Sequence;
+import ucar.nc2.dataset.DatasetUrl;
+import thredds.client.catalog.ServiceType;
 import opendap.dap.AttributeTable;
 import opendap.dap.BaseType;
 import opendap.dap.DAS;
@@ -399,7 +401,8 @@ public class EDDTableFromDapSequence extends EDDTable {
       }
     } else {
       // Fetch from NetcdfDataset
-      try (NetcdfDataset dataset = NetcdfDatasets.openDataset(localSourceUrl)) {
+      DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, localSourceUrl);
+      try (NetcdfDataset dataset = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
         sourceGlobalAttributes = new Attributes();
         NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 

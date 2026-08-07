@@ -121,6 +121,8 @@ import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.ma2.StructureData;
 import ucar.ma2.StructureDataIterator;
 import ucar.ma2.ArraySequence;
+import ucar.nc2.dataset.DatasetUrl;
+import thredds.client.catalog.ServiceType;
 
 /**
  * This class holds tabular data as
@@ -10084,7 +10086,8 @@ public class Table {
     long time = System.currentTimeMillis();
     clear();
 
-    try (NetcdfDataset ncd = NetcdfDatasets.openDataset(url)) {
+    DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, url);
+    try (NetcdfDataset ncd = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
       NcHelper.getGroupAttributes(ncd.getRootGroup(), globalAttributes());
 
       ucar.nc2.Sequence outerSequence = null;

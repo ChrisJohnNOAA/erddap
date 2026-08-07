@@ -47,6 +47,8 @@ import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.Variable;
 import ucar.nc2.Sequence;
+import ucar.nc2.dataset.DatasetUrl;
+import thredds.client.catalog.ServiceType;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 
 /**
@@ -302,7 +304,8 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
         // get sourceTable from remote DAP
         if (verbose) String2.log("  using info from remote dataset's NetcdfDatasets services");
 
-        try (NetcdfDataset dataset = NetcdfDatasets.openDataset(localSourceUrl)) {
+        DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, localSourceUrl);
+        try (NetcdfDataset dataset = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
           NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 
           Variable outerVariable = dataset.findVariable(SEQUENCE_NAME);
