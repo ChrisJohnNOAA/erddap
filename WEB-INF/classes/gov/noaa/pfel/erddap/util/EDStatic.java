@@ -933,25 +933,35 @@ public class EDStatic {
       String url = request.getHeader("Host");
       String cleanUrl = "";
       if (url != null) {
-         StringBuilder sb = new StringBuilder();
-         for (int i = 0; i < url.length(); i++) {
-           char c = url.charAt(i);
-           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == ':' || c == '-') {
-             sb.append(c);
-           }
-         }
-         cleanUrl = sb.toString();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < url.length(); i++) {
+          char c = url.charAt(i);
+          if ((c >= 'a' && c <= 'z')
+              || (c >= 'A' && c <= 'Z')
+              || (c >= '0' && c <= '9')
+              || c == '.'
+              || c == ':'
+              || c == '-') {
+            sb.append(c);
+          }
+        }
+        cleanUrl = sb.toString();
       }
       String prefix = request.getHeader("X-Forwarded-Prefix");
       if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
-         StringBuilder sb = new StringBuilder();
-         for (int i = 0; i < prefix.length(); i++) {
-           char c = prefix.charAt(i);
-           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '/' || c == '-' || c == '_') {
-             sb.append(c);
-           }
-         }
-         cleanUrl += sb.toString();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < prefix.length(); i++) {
+          char c = prefix.charAt(i);
+          if ((c >= 'a' && c <= 'z')
+              || (c >= 'A' && c <= 'Z')
+              || (c >= '0' && c <= '9')
+              || c == '/'
+              || c == '-'
+              || c == '_') {
+            sb.append(c);
+          }
+        }
+        cleanUrl += sb.toString();
       }
       return cleanUrl;
     }
@@ -1048,17 +1058,22 @@ public class EDStatic {
 
     String prefix = request.getHeader("X-Forwarded-Prefix");
     if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
-       StringBuilder sb = new StringBuilder();
-       for (int i = 0; i < prefix.length(); i++) {
-         char c = prefix.charAt(i);
-         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '/' || c == '-' || c == '_') {
-           sb.append(c);
-         }
-       }
-       returnedHostAndPath += sb.toString();
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < prefix.length(); i++) {
+        char c = prefix.charAt(i);
+        if ((c >= 'a' && c <= 'z')
+            || (c >= 'A' && c <= 'Z')
+            || (c >= '0' && c <= '9')
+            || c == '/'
+            || c == '-'
+            || c == '_') {
+          sb.append(c);
+        }
+      }
+      returnedHostAndPath += sb.toString();
     }
 
-    return returnedHostAndPath;
+    return org.apache.commons.text.StringEscapeUtils.escapeHtml4(returnedHostAndPath);
   }
 
   /**
