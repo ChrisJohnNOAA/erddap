@@ -254,6 +254,8 @@ public class EDStaticTests {
       verify(request, atLeastOnce()).getHeader("Host");
       verify(request, atLeastOnce()).getHeader("X-Forwarded-Prefix");
       verify(request, atLeastOnce()).getScheme();
+      verify(request, Mockito.atLeast(0)).getHeader("X-Forwarded-Host");
+      verify(request, Mockito.atLeast(0)).getServerName();
       verifyNoMoreInteractions(request);
     }
   }

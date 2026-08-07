@@ -925,12 +925,15 @@ public class EDStatic {
    * @param request the request
    * @return ERDDAP url fragment with host and path prefix (if set)
    */
-  private static String getHostAndPathFromRequest(HttpServletRequest request) {
-    if (request == null) {
-      return "";
-    }
+  private static String getHostAndPathFromRequest(
+      String hostHeader,
+      String xForwardedHost,
+      String xForwardedPrefix,
+      String serverName,
+      String scheme) {
+
     if (EDStatic.config == null || !EDStatic.config.verifyHostNameErddapUrl) {
-      String url = request.getHeader("Host");
+      String url = hostHeader;
       String cleanUrl = "";
       if (url != null) {
         StringBuilder sb = new StringBuilder();
@@ -947,11 +950,10 @@ public class EDStatic {
         }
         cleanUrl = sb.toString();
       }
-      String prefix = request.getHeader("X-Forwarded-Prefix");
-      if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
+      if (xForwardedPrefix != null && xForwardedPrefix.matches("^/[a-zA-Z0-9/_-]*$")) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < prefix.length(); i++) {
-          char c = prefix.charAt(i);
+        for (int i = 0; i < xForwardedPrefix.length(); i++) {
+          char c = xForwardedPrefix.charAt(i);
           if ((c >= 'a' && c <= 'z')
               || (c >= 'A' && c <= 'Z')
               || (c >= '0' && c <= '9')
@@ -963,15 +965,15 @@ public class EDStatic {
         }
         cleanUrl += sb.toString();
       }
-      return cleanUrl;
+      return sanitizeTaint(cleanUrl);
     }
 
-    String candidateHostStr = request.getHeader("X-Forwarded-Host");
+    String candidateHostStr = xForwardedHost;
     if (candidateHostStr == null || candidateHostStr.trim().isEmpty()) {
-      candidateHostStr = request.getHeader("Host");
+      candidateHostStr = hostHeader;
     }
     if (candidateHostStr == null || candidateHostStr.trim().isEmpty()) {
-      candidateHostStr = request.getServerName();
+      candidateHostStr = serverName;
     }
 
     String normalizedHost = "";
@@ -1018,7 +1020,6 @@ public class EDStatic {
 
       // Fallback safely to baseUrl or baseHttpsUrl
       String fallbackUrl = EDStatic.config != null ? EDStatic.config.baseUrl : null;
-      String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
       if ("https".equalsIgnoreCase(scheme)
           && EDStatic.config != null
           && EDStatic.config.baseHttpsUrl != null
@@ -1052,16 +1053,15 @@ public class EDStatic {
       }
 
       if (fallbackHost.isEmpty()) {
-        fallbackHost = request.getServerName();
+        fallbackHost = serverName;
       }
       returnedHostAndPath = fallbackHost;
     }
 
-    String prefix = request.getHeader("X-Forwarded-Prefix");
-    if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
+    if (xForwardedPrefix != null && xForwardedPrefix.matches("^/[a-zA-Z0-9/_-]*$")) {
       StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < prefix.length(); i++) {
-        char c = prefix.charAt(i);
+      for (int i = 0; i < xForwardedPrefix.length(); i++) {
+        char c = xForwardedPrefix.charAt(i);
         if ((c >= 'a' && c <= 'z')
             || (c >= 'A' && c <= 'Z')
             || (c >= '0' && c <= '9')
@@ -1321,7 +1321,14 @@ public class EDStatic {
   public static String baseUrl(HttpServletRequest request, String loggedInAs) {
     if (EDStatic.config.useHeadersForUrl && request != null && request.getHeader("Host") != null) {
       String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
-      return scheme + "://" + getHostAndPathFromRequest(request);
+      String hostAndPath =
+          getHostAndPathFromRequest(
+              request.getHeader("Host"),
+              request.getHeader("X-Forwarded-Host"),
+              request.getHeader("X-Forwarded-Prefix"),
+              request.getServerName(),
+              scheme);
+      return scheme + "://" + hostAndPath;
     }
     return loggedInAs == null ? config.baseUrl : config.baseHttpsUrl;
   }
@@ -1369,7 +1376,15 @@ public class EDStatic {
         && request != null
         && request.getHeader("Host") != null
         && ("https".equals(request.getScheme()) || !request.getHeader("Host").contains(":"))) {
-      httpsUrl = "https://" + getHostAndPathFromRequest(request) + "/" + config.warName;
+      String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
+      String hostAndPath =
+          getHostAndPathFromRequest(
+              request.getHeader("Host"),
+              request.getHeader("X-Forwarded-Host"),
+              request.getHeader("X-Forwarded-Prefix"),
+              request.getServerName(),
+              scheme);
+      httpsUrl = "https://" + hostAndPath + "/" + config.warName;
     }
     return httpsUrl + (language == 0 ? "" : "/" + TranslateMessages.languageCodeList.get(language));
   }
