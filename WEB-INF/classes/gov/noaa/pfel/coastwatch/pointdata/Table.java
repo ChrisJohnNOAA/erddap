@@ -112,6 +112,7 @@ import org.xml.sax.XMLReader;
 import thredds.client.catalog.ServiceType;
 import ucar.ma2.Array;
 import ucar.ma2.ArraySequence;
+import ucar.ma2.ArrayStructure;
 import ucar.ma2.DataType;
 import ucar.ma2.StructureData;
 import ucar.ma2.StructureDataIterator;
@@ -10147,7 +10148,8 @@ public class Table {
       }
 
       // *** read the data (row-by-row, as it wants)
-      try (StructureDataIterator seqIter = outerSequence.getStructureIterator()) {
+      ArrayStructure outerSequenceArray = (ArrayStructure) outerSequence.read();
+      try (StructureDataIterator seqIter = outerSequenceArray.getStructureDataIterator()) {
         while (seqIter.hasNext()) {
           StructureData outerRowData = seqIter.next();
 
