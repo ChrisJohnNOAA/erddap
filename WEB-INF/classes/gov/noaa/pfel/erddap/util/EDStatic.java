@@ -926,11 +926,92 @@ public class EDStatic {
    * @return ERDDAP url fragment with host and path prefix (if set)
    */
   private static String getHostAndPathFromRequest(HttpServletRequest request) {
-    String url = request.getHeader("Host");
-    if (request.getHeader("X-Forwarded-Prefix") != null) {
-      url += request.getHeader("X-Forwarded-Prefix");
+    if (request == null) {
+      return "";
     }
-    return url;
+    if (EDStatic.config == null || !EDStatic.config.verifyHostNameErddapUrl) {
+      String url = request.getHeader("Host");
+      if (request.getHeader("X-Forwarded-Prefix") != null) {
+        url += request.getHeader("X-Forwarded-Prefix");
+      }
+      return url;
+    }
+
+    String candidateHostStr = request.getHeader("X-Forwarded-Host");
+    if (candidateHostStr == null || candidateHostStr.trim().isEmpty()) {
+      candidateHostStr = request.getHeader("Host");
+    }
+    if (candidateHostStr == null || candidateHostStr.trim().isEmpty()) {
+      candidateHostStr = request.getServerName();
+    }
+
+    String normalizedHost = "";
+    if (candidateHostStr != null) {
+      normalizedHost = candidateHostStr.trim().toLowerCase();
+      int colonIdx = normalizedHost.indexOf(':');
+      if (colonIdx >= 0) {
+        normalizedHost = normalizedHost.substring(0, colonIdx);
+      }
+      normalizedHost = normalizedHost.trim();
+    }
+
+    boolean isValid = false;
+    if (EDStatic.config != null && EDStatic.config.allowedHosts != null) {
+      isValid = EDStatic.config.allowedHosts.contains(normalizedHost);
+    }
+
+    String returnedHostAndPath;
+    if (isValid) {
+      returnedHostAndPath = candidateHostStr;
+    } else {
+      String rawAttempt = candidateHostStr != null ? candidateHostStr : "null";
+      String2.log("WARNING: Unapproved host header attempt: " + rawAttempt);
+
+      // Fallback safely to baseUrl or baseHttpsUrl
+      String fallbackUrl = EDStatic.config != null ? EDStatic.config.baseUrl : null;
+      String scheme = request.getScheme();
+      if ("https".equalsIgnoreCase(scheme)
+          && EDStatic.config != null
+          && EDStatic.config.baseHttpsUrl != null
+          && !EDStatic.config.baseHttpsUrl.equalsIgnoreCase("(not specified)")) {
+        fallbackUrl = EDStatic.config.baseHttpsUrl;
+      }
+
+      String fallbackHost = "";
+      if (fallbackUrl != null && !fallbackUrl.isEmpty()) {
+        try {
+          String s = fallbackUrl.trim();
+          if (!s.contains("://")) {
+            s = "http://" + s;
+          }
+          java.net.URI uri = new java.net.URI(s);
+          fallbackHost = uri.getHost();
+          if (fallbackHost == null) {
+            fallbackHost = "";
+          }
+          int port = uri.getPort();
+          if (port != -1) {
+            fallbackHost += ":" + port;
+          }
+        } catch (Exception e) {
+          int protoIdx = fallbackUrl.indexOf("://");
+          String remaining = protoIdx >= 0 ? fallbackUrl.substring(protoIdx + 3) : fallbackUrl;
+          int slashIdx = remaining.indexOf('/');
+          fallbackHost = slashIdx >= 0 ? remaining.substring(0, slashIdx) : remaining;
+        }
+      }
+
+      if (fallbackHost.isEmpty()) {
+        fallbackHost = request.getServerName();
+      }
+      returnedHostAndPath = fallbackHost;
+    }
+
+    if (request.getHeader("X-Forwarded-Prefix") != null) {
+      returnedHostAndPath += request.getHeader("X-Forwarded-Prefix");
+    }
+
+    return returnedHostAndPath;
   }
 
   /**

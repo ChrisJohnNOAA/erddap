@@ -39,6 +39,8 @@
     <url>https://coastwatch.pfeg.noaa.gov/erddap/index.html</url>
 
     <properties>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <erddapcontent.download.version>content1.0.1</erddapcontent.download.version>
         <erddapreffiles.download.version>1.0.0</erddapreffiles.download.version>
@@ -121,12 +123,13 @@
                 <version>3.15.0</version>
                 <configuration>
                     <failOnError>true</failOnError>
-                    <source>25</source>   <!-- java version -->
-                    <target>25</target>
+                    <source>${maven.compiler.source}</source>   <!-- java version -->
+                    <target>${maven.compiler.target}</target>
                     <encoding>UTF-8</encoding>
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
+                        <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
                         <arg>-Xplugin:ErrorProne -Xep:StatementSwitchToExpressionSwitch:OFF -Xep:StringCaseLocaleUsage:OFF -Xep:EmptyCatch:OFF -Xep:StringSplitter:OFF -Xep:JavaLangClash:OFF -Xep:CatchAndPrintStackTrace:OFF -Xep:NotJavadoc:OFF -Xep:InvalidBlockTag:OFF -Xep:MissingSummary:OFF -Xep:EmptyBlockTag:OFF -Xep:InvalidParam:OFF -Xep:InvalidThrows:OFF -Xep:ReturnFromVoid:OFF -Xep:MisleadingEscapedSpace:OFF</arg>
                     </compilerArgs>
                     <excludes>
