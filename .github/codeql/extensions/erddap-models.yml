@@ -38,4 +38,9 @@ extensions:
       # 4. EDSTATIC HOST/URL VALIDATION PATHWAY (Sanitizing Barrier Models)
       # ========================================================================
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "normalizeAndValidateHost", "", "", "ReturnValue", "xss", "manual"]
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "baseUrl", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getErddapUrlPrefix", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapUrl", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapHttpsUrl", "", "", "ReturnValue", "xss", "manual"]
