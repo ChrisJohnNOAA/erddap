@@ -948,7 +948,7 @@ public class EDStatic {
         sb.append(c);
       }
     }
-    return sb.toString();
+    return org.apache.commons.text.StringEscapeUtils.escapeHtml4(sb.toString());
   }
 
   private static String getHostAndPathFromRequest(HttpServletRequest request) {
@@ -961,7 +961,7 @@ public class EDStatic {
       if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
         url += cleanUrlChars(prefix, true);
       }
-      return url;
+      return cleanUrlChars(url, true);
     }
 
     String candidateHostStr = request.getHeader("X-Forwarded-Host");
@@ -1063,7 +1063,7 @@ public class EDStatic {
       returnedHostAndPath += cleanUrlChars(prefix, true);
     }
 
-    return returnedHostAndPath;
+    return cleanUrlChars(returnedHostAndPath, true);
   }
 
   /**
