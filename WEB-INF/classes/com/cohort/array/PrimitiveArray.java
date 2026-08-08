@@ -1769,6 +1769,7 @@ public abstract class PrimitiveArray {
 
   /**
    * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
+   * Note: This method modifies the FileChannel's current position.
    *
    * @param channel the FileChannel
    * @return the number of bytes written
@@ -1778,6 +1779,7 @@ public abstract class PrimitiveArray {
 
   /**
    * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
+   * Note: This method modifies the FileChannel's current position.
    *
    * @param channel the FileChannel
    * @param offset the starting index
@@ -1789,10 +1791,12 @@ public abstract class PrimitiveArray {
 
   /**
    * This reads/adds n elements from a FileChannel using native byte order.
+   * Note: This method modifies the FileChannel's current position.
    *
    * @param channel the FileChannel
    * @param n the number of elements to read
-   * @throws Exception if trouble
+   * @throws java.io.EOFException if EOF is reached before n elements are fully read
+   * @throws Exception if other trouble
    */
   public abstract void readFromChannel(FileChannel channel, int n) throws Exception;
 

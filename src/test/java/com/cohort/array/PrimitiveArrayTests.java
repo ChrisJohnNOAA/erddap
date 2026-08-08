@@ -378,6 +378,7 @@ class PrimitiveArrayTests {
         DoubleArray original = new DoubleArray(new double[]{1.1, 2.2, 3.3, 4.4, 5.5});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
 
           // test writing full channel
           long bytesWritten = original.writeToChannel(channel);
@@ -385,6 +386,7 @@ class PrimitiveArrayTests {
 
           // test writing subset
           channel.position(0);
+          channel.truncate(0);
           bytesWritten = original.writeToChannel(channel, 1, 3); // elements 2.2, 3.3, 4.4
           Test.ensureEqual(bytesWritten, 3L * 8L, "DoubleArray bytesWritten subset");
 
@@ -461,6 +463,7 @@ class PrimitiveArrayTests {
         ByteArray original = new ByteArray(new byte[]{10, 20, 30, 40});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel, 1, 2); // 20, 30
           Test.ensureEqual(bytesWritten, 2L, "ByteArray bytesWritten");
           channel.position(0);
@@ -477,6 +480,7 @@ class PrimitiveArrayTests {
         FloatArray original = new FloatArray(new float[]{1.5f, 2.5f, 3.5f});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel);
           Test.ensureEqual(bytesWritten, 3L * 4L, "FloatArray bytesWritten");
           channel.position(0);
@@ -492,6 +496,7 @@ class PrimitiveArrayTests {
         IntArray original = new IntArray(new int[]{100, 200, 300});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel);
           Test.ensureEqual(bytesWritten, 3L * 4L, "IntArray bytesWritten");
           channel.position(0);
@@ -507,6 +512,7 @@ class PrimitiveArrayTests {
         LongArray original = new LongArray(new long[]{1000L, 2000L});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel);
           Test.ensureEqual(bytesWritten, 2L * 8L, "LongArray bytesWritten");
           channel.position(0);
@@ -521,6 +527,7 @@ class PrimitiveArrayTests {
         ShortArray original = new ShortArray(new short[]{10, 20});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel);
           Test.ensureEqual(bytesWritten, 2L * 2L, "ShortArray bytesWritten");
           channel.position(0);
@@ -535,6 +542,7 @@ class PrimitiveArrayTests {
         CharArray original = new CharArray(new char[]{'a', 'b', 'c'});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel);
           Test.ensureEqual(bytesWritten, 3L * 2L, "CharArray bytesWritten");
           channel.position(0);
@@ -549,6 +557,7 @@ class PrimitiveArrayTests {
         StringArray original = new StringArray(new String[]{"hello", "world"});
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
           long bytesWritten = original.writeToChannel(channel);
           channel.position(0);
           StringArray target = new StringArray();
@@ -567,6 +576,7 @@ class PrimitiveArrayTests {
 
         try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
             java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
 
           uba.writeToChannel(channel);
           channel.position(0);
@@ -575,6 +585,7 @@ class PrimitiveArrayTests {
           Test.ensureEqual(ubaT.get(0), 1, "UByteArray val 0");
 
           channel.position(0);
+          channel.truncate(0);
           usa.writeToChannel(channel);
           channel.position(0);
           UShortArray usaT = new UShortArray();
@@ -582,6 +593,7 @@ class PrimitiveArrayTests {
           Test.ensureEqual(usaT.get(0), 1, "UShortArray val 0");
 
           channel.position(0);
+          channel.truncate(0);
           uia.writeToChannel(channel);
           channel.position(0);
           UIntArray uiaT = new UIntArray();
@@ -589,11 +601,49 @@ class PrimitiveArrayTests {
           Test.ensureEqual(uiaT.get(0), 1L, "UIntArray val 0");
 
           channel.position(0);
+          channel.truncate(0);
           ula.writeToChannel(channel);
           channel.position(0);
           ULongArray ulaT = new ULongArray();
           ulaT.readFromChannel(channel, 2);
           Test.ensureEqual(ulaT.get(0).toString(), "1", "ULongArray val 0");
+        }
+      }
+
+      // 10. EOFException check for DoubleArray and ByteArray
+      {
+        DoubleArray originalD = new DoubleArray(new double[]{1.1, 2.2});
+        try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
+            java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
+          originalD.writeToChannel(channel);
+
+          channel.position(0);
+          DoubleArray target = new DoubleArray();
+          boolean threwEOF = false;
+          try {
+            target.readFromChannel(channel, 3);
+          } catch (java.io.EOFException e) {
+            threwEOF = true;
+          }
+          Test.ensureTrue(threwEOF, "DoubleArray: should throw EOFException when reading more elements than available");
+        }
+
+        ByteArray originalB = new ByteArray(new byte[]{1, 2});
+        try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(tempFile,
+            java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.READ)) {
+          channel.truncate(0);
+          originalB.writeToChannel(channel);
+
+          channel.position(0);
+          ByteArray target = new ByteArray();
+          boolean threwEOF = false;
+          try {
+            target.readFromChannel(channel, 3);
+          } catch (java.io.EOFException e) {
+            threwEOF = true;
+          }
+          Test.ensureTrue(threwEOF, "ByteArray: should throw EOFException when reading more elements than available");
         }
       }
 
