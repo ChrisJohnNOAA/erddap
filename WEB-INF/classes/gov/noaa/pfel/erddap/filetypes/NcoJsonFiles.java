@@ -332,10 +332,10 @@ public class NcoJsonFiles extends TableWriterFileType {
         writer.write(atts.toNcoJsonString("      ", twawm != null, true));
         if (twawm != null) {
           writer.write("      \"data\": [");
+          String tFileName = new java.io.File(twawm.columnFileName(col)).getCanonicalPath();
           try (java.nio.channels.FileChannel channel =
               java.nio.channels.FileChannel.open(
-                  java.nio.file.Paths.get(twawm.columnFileName(col)),
-                  java.nio.file.StandardOpenOption.READ)) {
+                  java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
             // create the bufferPA
             PrimitiveArray pa = null;
             long nRowsRead = 0;
@@ -560,10 +560,10 @@ public class NcoJsonFiles extends TableWriterFileType {
             int max = 1;
             if (writeData) {
               long n = gda.totalIndex().size();
+              String tFileName = new java.io.File(gdaa.baseFileName + dvi).getCanonicalPath();
               try (java.nio.channels.FileChannel channel =
                   java.nio.channels.FileChannel.open(
-                      java.nio.file.Paths.get(gdaa.baseFileName + dvi),
-                      java.nio.file.StandardOpenOption.READ)) {
+                      java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
                 com.cohort.array.StringArray sa = new com.cohort.array.StringArray();
                 long startEl = 0;
                 while (startEl < n) {
@@ -677,10 +677,10 @@ public class NcoJsonFiles extends TableWriterFileType {
         if (writeData) {
           writer.write("      \"data\":\n");
           for (int avi = 0; avi < nAV; avi++) writer.write("[ ");
+          String tFileName = new java.io.File(gdaa.baseFileName + dvi).getCanonicalPath();
           try (java.nio.channels.FileChannel channel =
               java.nio.channels.FileChannel.open(
-                  java.nio.file.Paths.get(gdaa.baseFileName + dvi),
-                  java.nio.file.StandardOpenOption.READ)) {
+                  java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
 
             // create the bufferPA
             PrimitiveArray pa =

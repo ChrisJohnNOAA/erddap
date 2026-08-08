@@ -73,9 +73,10 @@ public class GridDataAllAccessor implements AutoCloseable {
       channels = new FileChannel[nDv]; // 1 per data variable
       for (int dv = 0; dv < nDv; dv++) {
         dataPAType[dv] = dataVars[dv].destinationDataPAType();
+        String tFileName = new java.io.File(baseFileName + dv).getCanonicalPath();
         channels[dv] =
             FileChannel.open(
-                Paths.get(baseFileName + dv),
+                Paths.get(tFileName),
                 StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.TRUNCATE_EXISTING);
@@ -111,8 +112,8 @@ public class GridDataAllAccessor implements AutoCloseable {
     long n = gridDataAccessor.totalIndex.size();
     Math2.ensureArraySizeOkay(n, "GridDataAllAccessor");
     PrimitiveArray pa = PrimitiveArray.factory(dataPAType[dv], (int) n, false);
-    try (FileChannel channel =
-        FileChannel.open(Paths.get(baseFileName + dv), StandardOpenOption.READ)) {
+    String tFileName = new java.io.File(baseFileName + dv).getCanonicalPath();
+    try (FileChannel channel = FileChannel.open(Paths.get(tFileName), StandardOpenOption.READ)) {
       pa.readFromChannel(channel, (int) n);
     }
     return pa;

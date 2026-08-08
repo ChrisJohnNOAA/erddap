@@ -728,10 +728,10 @@ public class EDDGridFromEDDTable extends EDDGrid {
     try {
       for (int col = 0; col < nCols; col++) {
         twaPA[col] = twa.columnEmptyPA(col);
+        String tFileName = new java.io.File(twa.columnFileName(col)).getCanonicalPath();
         twaChannels[col] =
             java.nio.channels.FileChannel.open(
-                java.nio.file.Paths.get(twa.columnFileName(col)),
-                java.nio.file.StandardOpenOption.READ);
+                java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ);
       }
 
       int oAxisIndex[] = new int[nav]; // all 0's

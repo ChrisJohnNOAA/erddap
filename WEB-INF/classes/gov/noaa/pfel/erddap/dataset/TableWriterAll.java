@@ -154,7 +154,7 @@ public class TableWriterAll extends TableWriter {
       cleanupAction.setColumnChannels(columnChannels);
       cleanupAction.setColumnNames(columnNames);
       for (int col = 0; col < nColumns; col++) {
-        String tFileName = columnFileName(col);
+        String tFileName = new java.io.File(columnFileName(col)).getCanonicalPath();
         columnChannels[col] =
             FileChannel.open(
                 Paths.get(tFileName),
@@ -240,8 +240,8 @@ public class TableWriterAll extends TableWriter {
         PrimitiveArray.factory(
             columnType(col), (int) totalNRows, false); // safe since checked above
     pa.setMaxIsMV(columnMaxIsMV[col]);
-    try (FileChannel channel =
-        FileChannel.open(Paths.get(columnFileName(col)), StandardOpenOption.READ)) {
+    String tFileName = new java.io.File(columnFileName(col)).getCanonicalPath();
+    try (FileChannel channel = FileChannel.open(Paths.get(tFileName), StandardOpenOption.READ)) {
       pa.readFromChannel(channel, (int) totalNRows); // safe since checked above
     }
     return pa;

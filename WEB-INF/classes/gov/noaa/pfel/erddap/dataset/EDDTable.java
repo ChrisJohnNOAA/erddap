@@ -3706,10 +3706,10 @@ public abstract class EDDTable extends EDD {
         int ncOffset = 0;
         int bufferSize = EDStatic.config.partialRequestMaxCells;
         PrimitiveArray pa = null;
+        String tFileName = new java.io.File(twawm.columnFileName(col)).getCanonicalPath();
         try (java.nio.channels.FileChannel channel =
             java.nio.channels.FileChannel.open(
-                java.nio.file.Paths.get(twawm.columnFileName(col)),
-                java.nio.file.StandardOpenOption.READ)) {
+                java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
           PAType colType = twawm.columnType(col);
           Array array;
 
