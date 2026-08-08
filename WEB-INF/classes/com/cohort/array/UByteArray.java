@@ -10,6 +10,10 @@ import com.cohort.util.Math2;
 import com.cohort.util.String2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -1412,6 +1416,106 @@ public class UByteArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     // UByteArray does nothing
+  }
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel, final int offset, final int length) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(String2.ERROR + " in UByteArray.writeToChannel: FileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in UByteArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in UByteArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in UByteArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    final int bytesPerElement = 1;
+    final int byteSize = length * bytesPerElement;
+    final ByteBuffer byteBuf = ByteBuffer.wrap(array, offset, length).order(ByteOrder.nativeOrder());
+    long totalBytesWritten = 0;
+    while (byteBuf.hasRemaining()) {
+      final int written = channel.write(byteBuf);
+      if (written == 0) {
+        Thread.sleep(1);
+      }
+      totalBytesWritten += written;
+    }
+    return totalBytesWritten;
+  }
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws Exception if trouble
+   */
+  @Override
+  public void readFromChannel(final FileChannel channel, final int n) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(String2.ERROR + " in UByteArray.readFromChannel: FileChannel is null.");
+    }
+    if (n < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in UByteArray.readFromChannel: n (" + n + ") < 0.");
+    }
+    if (n == 0) {
+      return;
+    }
+    ensureCapacity(size + (long) n);
+    final int bytesPerElement = 1;
+    final int bytesToRead = n * bytesPerElement;
+    final ByteBuffer byteBuf = ByteBuffer.wrap(array, size, n).order(ByteOrder.nativeOrder());
+    int totalBytesRead = 0;
+    while (totalBytesRead < bytesToRead) {
+      final int read = channel.read(byteBuf);
+      if (read == -1) {
+        throw new EOFException(
+            String2.ERROR
+                + " in UByteArray.readFromChannel: EOF reached after reading "
+                + totalBytesRead
+                + " of "
+                + bytesToRead
+                + " bytes.");
+      }
+      totalBytesRead += read;
+    }
+    size += n;
   }
 
   /**
