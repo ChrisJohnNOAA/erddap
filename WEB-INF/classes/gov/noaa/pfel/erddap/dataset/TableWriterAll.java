@@ -21,9 +21,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 /**
- * TableWriterAll provides a way to write a table to a series of FileChannels (one per column)
- * in chunks so that the whole table is available but doesn't have to be in memory at one time. This
- * is used by EDDTable.
+ * TableWriterAll provides a way to write a table to a series of FileChannels (one per column) in
+ * chunks so that the whole table is available but doesn't have to be in memory at one time. This is
+ * used by EDDTable.
  *
  * <p>This is different from most TableWriters in that finish() doesn't write the data anywhere (to
  * an outputStream or to another tableWriter), it just makes all of the data available.
@@ -240,7 +240,8 @@ public class TableWriterAll extends TableWriter {
         PrimitiveArray.factory(
             columnType(col), (int) totalNRows, false); // safe since checked above
     pa.setMaxIsMV(columnMaxIsMV[col]);
-    try (FileChannel channel = FileChannel.open(Paths.get(columnFileName(col)), StandardOpenOption.READ)) {
+    try (FileChannel channel =
+        FileChannel.open(Paths.get(columnFileName(col)), StandardOpenOption.READ)) {
       pa.readFromChannel(channel, (int) totalNRows); // safe since checked above
     }
     return pa;
@@ -318,7 +319,9 @@ public class TableWriterAll extends TableWriter {
    * @param maxRows the maximum number of rows to read
    * @return the actual number of rows read
    */
-  public int readColumnChunk(int col, FileChannel channel, PrimitiveArray destBuffer, long startRow, int maxRows) throws Exception {
+  public int readColumnChunk(
+      int col, FileChannel channel, PrimitiveArray destBuffer, long startRow, int maxRows)
+      throws Exception {
     destBuffer.clear();
     if (startRow >= totalNRows) {
       return 0;

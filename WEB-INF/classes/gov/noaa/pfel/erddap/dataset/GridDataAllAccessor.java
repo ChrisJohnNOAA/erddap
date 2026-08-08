@@ -19,8 +19,8 @@ import java.nio.file.StandardOpenOption;
 
 /**
  * This class gets all of the grid data requested by a grid data query to an EDDGrid and makes it
- * accessible one variable at a time as a PrimitiveArray or FileChannel. This works with all
- * data types (even Strings).
+ * accessible one variable at a time as a PrimitiveArray or FileChannel. This works with all data
+ * types (even Strings).
  *
  * @author Bob Simons (was bob.simons@noaa.gov, now BobSimons2.00@gmail.com) 2010-09-03
  */
@@ -105,14 +105,14 @@ public class GridDataAllAccessor implements AutoCloseable {
    *
    * @param dv a dataVariable number (within the request, not the EDD dataVariable number).
    * @return a PrimitiveArray
-   * @throws Exception if trouble, e.g., if gdaTotalIndex.size() is &gt;=
-   *     Integer.MAX_VALUE.
+   * @throws Exception if trouble, e.g., if gdaTotalIndex.size() is &gt;= Integer.MAX_VALUE.
    */
   public PrimitiveArray getPrimitiveArray(int dv) throws Exception {
     long n = gridDataAccessor.totalIndex.size();
     Math2.ensureArraySizeOkay(n, "GridDataAllAccessor");
     PrimitiveArray pa = PrimitiveArray.factory(dataPAType[dv], (int) n, false);
-    try (FileChannel channel = FileChannel.open(Paths.get(baseFileName + dv), StandardOpenOption.READ)) {
+    try (FileChannel channel =
+        FileChannel.open(Paths.get(baseFileName + dv), StandardOpenOption.READ)) {
       pa.readFromChannel(channel, (int) n);
     }
     return pa;
@@ -128,7 +128,9 @@ public class GridDataAllAccessor implements AutoCloseable {
    * @param maxElements the maximum number of elements to read
    * @return the actual number of elements read
    */
-  public int readDataChunk(int dv, FileChannel channel, PrimitiveArray destBuffer, long startElement, int maxElements) throws Exception {
+  public int readDataChunk(
+      int dv, FileChannel channel, PrimitiveArray destBuffer, long startElement, int maxElements)
+      throws Exception {
     destBuffer.clear();
     long totalElements = gridDataAccessor.totalIndex.size();
     if (startElement >= totalElements) {

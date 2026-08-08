@@ -13,14 +13,13 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -1596,7 +1595,8 @@ public class StringArray extends PrimitiveArray {
   }
 
   /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order.
    *
    * @param channel the FileChannel
    * @param offset the starting index
@@ -1605,9 +1605,11 @@ public class StringArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public long writeToChannel(final FileChannel channel, final int offset, final int length) throws Exception {
+  public long writeToChannel(final FileChannel channel, final int offset, final int length)
+      throws Exception {
     if (channel == null) {
-      throw new IllegalArgumentException(String2.ERROR + " in StringArray.writeToChannel: FileChannel is null.");
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: FileChannel is null.");
     }
     if (offset < 0) {
       throw new IllegalArgumentException(
@@ -1648,7 +1650,8 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void readFromChannel(final FileChannel channel, final int n) throws Exception {
     if (channel == null) {
-      throw new IllegalArgumentException(String2.ERROR + " in StringArray.readFromChannel: FileChannel is null.");
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.readFromChannel: FileChannel is null.");
     }
     if (n < 0) {
       throw new IllegalArgumentException(

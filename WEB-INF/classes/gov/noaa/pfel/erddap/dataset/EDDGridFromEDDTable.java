@@ -29,7 +29,6 @@ import gov.noaa.pfel.erddap.util.EDMessages.Message;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.variable.*;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.DataInputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -729,7 +728,10 @@ public class EDDGridFromEDDTable extends EDDGrid {
     try {
       for (int col = 0; col < nCols; col++) {
         twaPA[col] = twa.columnEmptyPA(col);
-        twaChannels[col] = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(twa.columnFileName(col)), java.nio.file.StandardOpenOption.READ);
+        twaChannels[col] =
+            java.nio.channels.FileChannel.open(
+                java.nio.file.Paths.get(twa.columnFileName(col)),
+                java.nio.file.StandardOpenOption.READ);
       }
 
       int oAxisIndex[] = new int[nav]; // all 0's

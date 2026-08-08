@@ -53,7 +53,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.xml.bind.JAXBException;
 import java.awt.Color;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -3707,7 +3706,10 @@ public abstract class EDDTable extends EDD {
         int ncOffset = 0;
         int bufferSize = EDStatic.config.partialRequestMaxCells;
         PrimitiveArray pa = null;
-        try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(twawm.columnFileName(col)), java.nio.file.StandardOpenOption.READ)) {
+        try (java.nio.channels.FileChannel channel =
+            java.nio.channels.FileChannel.open(
+                java.nio.file.Paths.get(twawm.columnFileName(col)),
+                java.nio.file.StandardOpenOption.READ)) {
           PAType colType = twawm.columnType(col);
           Array array;
 
