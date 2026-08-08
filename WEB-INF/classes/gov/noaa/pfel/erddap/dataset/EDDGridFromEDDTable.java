@@ -723,13 +723,13 @@ public class EDDGridFromEDDTable extends EDDGrid {
 
     // go through the tabular results in TableWriterAll
     PrimitiveArray twaPA[] = new PrimitiveArray[nCols];
-    DataInputStream twaDIS[] = new DataInputStream[nCols];
+    java.nio.channels.FileChannel twaChannels[] = new java.nio.channels.FileChannel[nCols];
     int nMatches = 0;
     long nRows = twa.nRows();
     try {
       for (int col = 0; col < nCols; col++) {
         twaPA[col] = twa.columnEmptyPA(col);
-        twaDIS[col] = twa.dataInputStream(col);
+        twaChannels[col] = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(twa.columnFileName(col)), java.nio.file.StandardOpenOption.READ);
       }
 
       int oAxisIndex[] = new int[nav]; // all 0's
@@ -739,8 +739,7 @@ public class EDDGridFromEDDTable extends EDDGrid {
       for (long row = 0; row < nRows; row++) {
         // read all of the twa values for this row
         for (int col = 0; col < nCols; col++) {
-          twaPA[col].clear();
-          twaPA[col].readDis(twaDIS[col], 1); // read 1 value
+          twa.readColumnChunk(col, twaChannels[col], twaPA[col], row, 1);
         }
 
         // see if this row matches a desired combo of axis values
@@ -790,7 +789,7 @@ public class EDDGridFromEDDTable extends EDDGrid {
       // release twa resources
       for (int col = 0; col < nCols; col++)
         try {
-          twaDIS[col].close();
+          if (twaChannels[col] != null) twaChannels[col].close();
         } catch (Exception e) {
         }
       try {

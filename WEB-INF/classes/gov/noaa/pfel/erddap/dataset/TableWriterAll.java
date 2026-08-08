@@ -4,6 +4,7 @@
  */
 package gov.noaa.pfel.erddap.dataset;
 
+import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.util.File2;
 import com.cohort.util.Math2;
@@ -13,14 +14,14 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.erddap.util.EDStatic;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.nio.file.Files;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
- * TableWriterAll provides a way to write a table to a series of DataOutputStreams (one per column)
+ * TableWriterAll provides a way to write a table to a series of FileChannels (one per column)
  * in chunks so that the whole table is available but doesn't have to be in memory at one time. This
  * is used by EDDTable.
  *
@@ -41,7 +42,7 @@ public class TableWriterAll extends TableWriter {
   // set firstTime
   // POLICY: because this class may be used in more than one thread,
   // each instance makes unique temp files names by adding randomInt to name.
-  protected volatile DataOutputStream[] columnStreams;
+  protected volatile FileChannel[] columnChannels;
   protected volatile long totalNRows = 0;
 
   protected Table cumulativeTable; // set by writeAllAndFinish, if used
@@ -72,7 +73,7 @@ public class TableWriterAll extends TableWriter {
 
   private static final class CleanupTableWriterAction implements Runnable {
 
-    private DataOutputStream[] columnStreams;
+    private FileChannel[] columnChannels;
     private String[] columnNames;
     private final String dir;
     private final String fileNameNoExt;
@@ -84,25 +85,24 @@ public class TableWriterAll extends TableWriter {
       this.randomInt = randomInt;
     }
 
-    private void setColumnStreams(DataOutputStream[] columnStreams) {
-      this.columnStreams = columnStreams;
+    private void setColumnChannels(FileChannel[] columnChannels) {
+      this.columnChannels = columnChannels;
     }
 
     @Override
     public void run() {
       try {
-        // delete columnStreams (if it was still saving data)
-        if (columnStreams != null) {
-          for (int col = 0; col < columnStreams.length; col++) {
-            // close the stream
+        // delete columnChannels (if it was still saving data)
+        if (columnChannels != null) {
+          for (int col = 0; col < columnChannels.length; col++) {
+            // close the channel
             try {
-              if (columnStreams[col] != null) columnStreams[col].close();
+              if (columnChannels[col] != null) columnChannels[col].close();
             } catch (Exception e) {
             }
-            // an attempt to solve File2.delete problem on these files: it couldn't hurt
-            columnStreams[col] = null;
+            columnChannels[col] = null;
           }
-          columnStreams = null;
+          columnChannels = null;
         }
 
         // delete the files
@@ -130,9 +130,9 @@ public class TableWriterAll extends TableWriter {
   }
 
   /**
-   * This adds the current contents of table (a chunk of data) to the columnStreams. This calls
+   * This adds the current contents of table (a chunk of data) to the columnChannels. This calls
    * ensureCompatible each time it is called. If this is the first time this is called, this does
-   * first time things (e.g., open the columnStreams). The number of columns, the column names, and
+   * first time things (e.g., open the columnChannels). The number of columns, the column names, and
    * the types of columns must be the same each time this is called.
    *
    * @param table with destinationValues. The table should have missing values stored as
@@ -150,14 +150,17 @@ public class TableWriterAll extends TableWriter {
     // do firstTime stuff
     int nColumns = table.nColumns();
     if (firstTime) {
-      columnStreams = new DataOutputStream[nColumns];
-      cleanupAction.setColumnStreams(columnStreams);
+      columnChannels = new FileChannel[nColumns];
+      cleanupAction.setColumnChannels(columnChannels);
       cleanupAction.setColumnNames(columnNames);
       for (int col = 0; col < nColumns; col++) {
         String tFileName = columnFileName(col);
-        columnStreams[col] =
-            new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(Paths.get(tFileName))));
+        columnChannels[col] =
+            FileChannel.open(
+                Paths.get(tFileName),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING);
         if (col == 0 && reallyVerbose)
           String2.log(
               "TableWriterAll nColumns="
@@ -180,9 +183,9 @@ public class TableWriterAll extends TableWriter {
     // write the data
     for (int col = 0; col < nColumns; col++) {
       Test.ensureNotNull(
-          columnStreams[col], "columnStreams[" + col + "] is null! nColumns=" + nColumns);
+          columnChannels[col], "columnChannels[" + col + "] is null! nColumns=" + nColumns);
       PrimitiveArray pa = table.getColumn(col);
-      pa.writeDos(columnStreams[col]);
+      pa.writeToChannel(columnChannels[col]);
     }
     totalNRows = newTotalNRows;
   }
@@ -198,18 +201,17 @@ public class TableWriterAll extends TableWriter {
     if (ignoreFinish) return;
 
     // check for MustBe.THERE_IS_NO_DATA
-    if (columnStreams == null) throw new SimpleException(MustBe.THERE_IS_NO_DATA + " (nRows = 0)");
-    // String2.log("TableWriterAll.finish  n columnStreams=" + columnStreams.length);
-    for (int col = 0; col < columnStreams.length; col++) {
-      // close the stream
+    if (columnChannels == null) throw new SimpleException(MustBe.THERE_IS_NO_DATA + " (nRows = 0)");
+    // String2.log("TableWriterAll.finish  n columnChannels=" + columnChannels.length);
+    for (int col = 0; col < columnChannels.length; col++) {
+      // close the channel
       try {
-        if (columnStreams[col] != null) columnStreams[col].close();
+        if (columnChannels[col] != null) columnChannels[col].close();
       } catch (Exception e) {
       }
-      // an attempt to solve File2.delete problem on these files: it couldn't hurt
-      columnStreams[col] = null;
+      columnChannels[col] = null;
     }
-    columnStreams = null;
+    columnChannels = null;
 
     // diagnostic
     if (verbose)
@@ -232,14 +234,14 @@ public class TableWriterAll extends TableWriter {
     // get it from cumulativeTable
     if (cumulativeTable != null) return cumulativeTable.getColumn(col);
 
-    // get it from DOSFile
+    // get it from Channel
     Math2.ensureArraySizeOkay(totalNRows, "TableWriterAll");
     PrimitiveArray pa =
         PrimitiveArray.factory(
             columnType(col), (int) totalNRows, false); // safe since checked above
     pa.setMaxIsMV(columnMaxIsMV[col]);
-    try (DataInputStream dis = dataInputStream(col)) {
-      pa.readDis(dis, (int) totalNRows); // safe since checked above
+    try (FileChannel channel = FileChannel.open(Paths.get(columnFileName(col)), StandardOpenOption.READ)) {
+      pa.readFromChannel(channel, (int) totalNRows); // safe since checked above
     }
     return pa;
   }
@@ -252,21 +254,6 @@ public class TableWriterAll extends TableWriter {
   public PrimitiveArray columnEmptyPA(int col) {
     return PrimitiveArray.factory(columnType(col), 1, false)
         .setMaxIsMV(columnMaxIsMV[col]); // safe since checked above
-  }
-
-  /**
-   * Call this after finish() to get the data from a DataInputStream with all of the data for one of
-   * the columns. IT IS UP TO THE CALLER TO CLOSE THE DataInputStream. THIS USES ALMOST NO MEMORY.
-   *
-   * <p>Missing values are still represented as destinationMissingValue or destinationFillValue. Use
-   * pa.table.convertToStandardMissingValues() if NaNs are needed.
-   *
-   * @param col 0.. the column number in the request (not the dataset)
-   * @return a DataInputStream ready to have the first element read
-   * @throws Throwable if trouble (e.g., totalNRows > Integer.MAX_VALUE)
-   */
-  public DataInputStream dataInputStream(int col) throws Throwable {
-    return new DataInputStream(File2.getDecompressedBufferedInputStream(columnFileName(col)));
   }
 
   public String columnFileName(int col) {
@@ -322,7 +309,44 @@ public class TableWriterAll extends TableWriter {
   }
 
   /**
-   * This deletes the columnStreams files and cumulativeTable (if any). This won't throw an
+   * Reads a chunk of a column from a FileChannel.
+   *
+   * @param col 0.. the column index
+   * @param channel the open FileChannel to read from
+   * @param destBuffer the PrimitiveArray buffer to store results
+   * @param startRow the logical starting row index
+   * @param maxRows the maximum number of rows to read
+   * @return the actual number of rows read
+   */
+  public int readColumnChunk(int col, FileChannel channel, PrimitiveArray destBuffer, long startRow, int maxRows) throws Exception {
+    destBuffer.clear();
+    if (startRow >= totalNRows) {
+      return 0;
+    }
+    int numToRead = (int) Math.min(maxRows, totalNRows - startRow);
+    if (numToRead <= 0) {
+      return 0;
+    }
+    if (destBuffer.elementType() == PAType.STRING) {
+      if (startRow == 0) {
+        channel.position(0);
+      } else if (channel.position() == 0) {
+        DataInputStream dis = new DataInputStream(Channels.newInputStream(channel));
+        for (long i = 0; i < startRow; i++) {
+          dis.readUTF();
+        }
+      }
+      destBuffer.readFromChannel(channel, numToRead);
+    } else {
+      long byteOffset = startRow * destBuffer.elementSize();
+      channel.position(byteOffset);
+      destBuffer.readFromChannel(channel, numToRead);
+    }
+    return numToRead;
+  }
+
+  /**
+   * This deletes the columnChannels files and cumulativeTable (if any). This won't throw an
    * exception.
    *
    * <p>It isn't essential that the user call this. It will be called automatically then java
@@ -333,18 +357,17 @@ public class TableWriterAll extends TableWriter {
     try {
       cumulativeTable = null;
 
-      // delete columnStreams (if it was still saving data)
-      if (columnStreams != null) {
-        for (int col = 0; col < columnStreams.length; col++) {
-          // close the stream
+      // delete columnChannels (if it was still saving data)
+      if (columnChannels != null) {
+        for (int col = 0; col < columnChannels.length; col++) {
+          // close the channel
           try {
-            if (columnStreams[col] != null) columnStreams[col].close();
+            if (columnChannels[col] != null) columnChannels[col].close();
           } catch (Exception e) {
           }
-          // an attempt to solve File2.delete problem on these files: it couldn't hurt
-          columnStreams[col] = null;
+          columnChannels[col] = null;
         }
-        columnStreams = null;
+        columnChannels = null;
       }
 
       // delete the files

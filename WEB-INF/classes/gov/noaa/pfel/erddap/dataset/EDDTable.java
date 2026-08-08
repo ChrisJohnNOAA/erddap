@@ -3707,7 +3707,7 @@ public abstract class EDDTable extends EDD {
         int ncOffset = 0;
         int bufferSize = EDStatic.config.partialRequestMaxCells;
         PrimitiveArray pa = null;
-        try (DataInputStream dis = twawm.dataInputStream(col)) {
+        try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(twawm.columnFileName(col)), java.nio.file.StandardOpenOption.READ)) {
           PAType colType = twawm.columnType(col);
           Array array;
 
@@ -3719,9 +3719,8 @@ public abstract class EDDTable extends EDD {
               pa = twawm.columnEmptyPA(col);
               pa.ensureCapacity(bufferSize);
             }
-            pa.clear();
-            pa.setMaxIsMV(twawm.columnMaxIsMV(col)); // reset it after clear()
-            pa.readDis(dis, bufferSize);
+            twawm.readColumnChunk(col, channel, pa, ncOffset, bufferSize);
+            pa.setMaxIsMV(twawm.columnMaxIsMV(col));
             if (debugMode)
               String2.log(
                   ">> col="

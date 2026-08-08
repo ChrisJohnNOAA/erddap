@@ -333,7 +333,7 @@ public class NcoJsonFiles extends TableWriterFileType {
         writer.write(atts.toNcoJsonString("      ", twawm != null, true));
         if (twawm != null) {
           writer.write("      \"data\": [");
-          try (DataInputStream dis = twawm.dataInputStream(col)) {
+          try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(twawm.columnFileName(col)), java.nio.file.StandardOpenOption.READ)) {
             // create the bufferPA
             PrimitiveArray pa = null;
             long nRowsRead = 0;
@@ -343,9 +343,8 @@ public class NcoJsonFiles extends TableWriterFileType {
                 pa = twawm.columnEmptyPA(col);
                 pa.ensureCapacity(nToRead);
               }
-              pa.clear();
-              pa.setMaxIsMV(twawm.columnMaxIsMV(col)); // reset after clear()
-              pa.readDis(dis, nToRead);
+              twawm.readColumnChunk(col, channel, pa, nRowsRead, nToRead);
+              pa.setMaxIsMV(twawm.columnMaxIsMV(col));
               if (isChar) {
                 // write it as one string with chars concatenated
                 // see "md5_abc" in in http://dust.ess.uci.edu/tmp/in.json.fmt2
@@ -559,8 +558,17 @@ public class NcoJsonFiles extends TableWriterFileType {
             int max = 1;
             if (writeData) {
               long n = gda.totalIndex().size();
-              try (DataInputStream dis = gdaa.getDataInputStream(dvi)) {
-                for (int i = 0; i < n; i++) max = Math.max(max, dis.readUTF().length());
+              try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(gdaa.baseFileName + dvi), java.nio.file.StandardOpenOption.READ)) {
+                com.cohort.array.StringArray sa = new com.cohort.array.StringArray();
+                long startEl = 0;
+                while (startEl < n) {
+                  int toRead = (int) Math.min(1000, n - startEl);
+                  gdaa.readDataChunk(dvi, channel, sa, startEl, toRead);
+                  for (int i = 0; i < sa.size(); i++) {
+                    max = Math.max(max, sa.get(i).length());
+                  }
+                  startEl += toRead;
+                }
               }
             }
             writer.write(
@@ -664,7 +672,7 @@ public class NcoJsonFiles extends TableWriterFileType {
         if (writeData) {
           writer.write("      \"data\":\n");
           for (int avi = 0; avi < nAV; avi++) writer.write("[ ");
-          try (DataInputStream dis = gdaa.getDataInputStream(dvi)) {
+          try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(java.nio.file.Paths.get(gdaa.baseFileName + dvi), java.nio.file.StandardOpenOption.READ)) {
 
             // create the bufferPA
             PrimitiveArray pa =
@@ -677,8 +685,7 @@ public class NcoJsonFiles extends TableWriterFileType {
             for (long nRowsRead = 0; nRowsRead < nRows; nRowsRead++) {
 
               // String2.log(">> preCurrent=" + String2.toCSSVString(preCurrent));
-              pa.clear();
-              pa.readDis(dis, 1);
+              gdaa.readDataChunk(dvi, channel, pa, nRowsRead, 1);
 
               // write one data value
               if (isChar) {
