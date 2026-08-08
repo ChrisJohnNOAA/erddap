@@ -925,56 +925,55 @@ public class EDStatic {
    * @param request the request
    * @return ERDDAP url fragment with host and path prefix (if set)
    */
-  private static String getHostAndPathFromRequest(
-      String hostHeader,
-      String xForwardedHost,
-      String xForwardedPrefix,
-      String serverName,
-      String scheme) {
+  /**
+   * Cleans a URL/host string by allowing only safe alphanumeric and standard special characters.
+   * Alphanumeric: A-Z, a-z, 0-9 Special characters: - (hyphen), _ (underscore), . (period), ~
+   * (tilde), and optionally : (colon) and / (slash).
+   */
+  public static String cleanUrlChars(String input, boolean allowColonAndSlash) {
+    if (input == null) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < input.length(); i++) {
+      char c = input.charAt(i);
+      if ((c >= 'a' && c <= 'z')
+          || (c >= 'A' && c <= 'Z')
+          || (c >= '0' && c <= '9')
+          || c == '-'
+          || c == '_'
+          || c == '.'
+          || c == '~'
+          || (allowColonAndSlash && (c == ':' || c == '/'))) {
+        sb.append(c);
+      }
+    }
+    return sb.toString();
+  }
 
+  private static String getHostAndPathFromRequest(HttpServletRequest request) {
+    if (request == null) {
+      return "";
+    }
     if (EDStatic.config == null || !EDStatic.config.verifyHostNameErddapUrl) {
-      String url = hostHeader;
-      String cleanUrl = "";
-      if (url != null) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < url.length(); i++) {
-          char c = url.charAt(i);
-          if ((c >= 'a' && c <= 'z')
-              || (c >= 'A' && c <= 'Z')
-              || (c >= '0' && c <= '9')
-              || c == '.'
-              || c == ':'
-              || c == '-') {
-            sb.append(c);
-          }
-        }
-        cleanUrl = sb.toString();
+      String url = cleanUrlChars(request.getHeader("Host"), true);
+      String prefix = request.getHeader("X-Forwarded-Prefix");
+      if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
+        url += cleanUrlChars(prefix, true);
       }
-      if (xForwardedPrefix != null && xForwardedPrefix.matches("^/[a-zA-Z0-9/_-]*$")) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < xForwardedPrefix.length(); i++) {
-          char c = xForwardedPrefix.charAt(i);
-          if ((c >= 'a' && c <= 'z')
-              || (c >= 'A' && c <= 'Z')
-              || (c >= '0' && c <= '9')
-              || c == '/'
-              || c == '-'
-              || c == '_') {
-            sb.append(c);
-          }
-        }
-        cleanUrl += sb.toString();
-      }
-      return sanitizeTaint(cleanUrl);
+      return url;
     }
 
-    String candidateHostStr = xForwardedHost;
+    String candidateHostStr = request.getHeader("X-Forwarded-Host");
     if (candidateHostStr == null || candidateHostStr.trim().isEmpty()) {
-      candidateHostStr = hostHeader;
+      candidateHostStr = request.getHeader("Host");
     }
     if (candidateHostStr == null || candidateHostStr.trim().isEmpty()) {
-      candidateHostStr = serverName;
+      candidateHostStr = request.getServerName();
     }
+
+    // Apply basic sanitization to candidate host string right away
+    candidateHostStr = cleanUrlChars(candidateHostStr, true);
 
     String normalizedHost = "";
     if (candidateHostStr != null) {
@@ -1020,6 +1019,7 @@ public class EDStatic {
 
       // Fallback safely to baseUrl or baseHttpsUrl
       String fallbackUrl = EDStatic.config != null ? EDStatic.config.baseUrl : null;
+      String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
       if ("https".equalsIgnoreCase(scheme)
           && EDStatic.config != null
           && EDStatic.config.baseHttpsUrl != null
@@ -1053,257 +1053,17 @@ public class EDStatic {
       }
 
       if (fallbackHost.isEmpty()) {
-        fallbackHost = serverName;
+        fallbackHost = request.getServerName();
       }
       returnedHostAndPath = fallbackHost;
     }
 
-    if (xForwardedPrefix != null && xForwardedPrefix.matches("^/[a-zA-Z0-9/_-]*$")) {
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < xForwardedPrefix.length(); i++) {
-        char c = xForwardedPrefix.charAt(i);
-        if ((c >= 'a' && c <= 'z')
-            || (c >= 'A' && c <= 'Z')
-            || (c >= '0' && c <= '9')
-            || c == '/'
-            || c == '-'
-            || c == '_') {
-          sb.append(c);
-        }
-      }
-      returnedHostAndPath += sb.toString();
+    String prefix = request.getHeader("X-Forwarded-Prefix");
+    if (prefix != null && prefix.matches("^/[a-zA-Z0-9/_-]*$")) {
+      returnedHostAndPath += cleanUrlChars(prefix, true);
     }
 
-    return sanitizeTaint(returnedHostAndPath);
-  }
-
-  /**
-   * Reconstructs the string char-by-char using hardcoded literals to break CodeQL taint flow
-   * completely.
-   */
-  private static String sanitizeTaint(String input) {
-    if (input == null) {
-      return "";
-    }
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < input.length(); i++) {
-      char c = input.charAt(i);
-      switch (c) {
-        case 'a':
-          sb.append('a');
-          break;
-        case 'b':
-          sb.append('b');
-          break;
-        case 'c':
-          sb.append('c');
-          break;
-        case 'd':
-          sb.append('d');
-          break;
-        case 'e':
-          sb.append('e');
-          break;
-        case 'f':
-          sb.append('f');
-          break;
-        case 'g':
-          sb.append('g');
-          break;
-        case 'h':
-          sb.append('h');
-          break;
-        case 'i':
-          sb.append('i');
-          break;
-        case 'j':
-          sb.append('j');
-          break;
-        case 'k':
-          sb.append('k');
-          break;
-        case 'l':
-          sb.append('l');
-          break;
-        case 'm':
-          sb.append('m');
-          break;
-        case 'n':
-          sb.append('n');
-          break;
-        case 'o':
-          sb.append('o');
-          break;
-        case 'p':
-          sb.append('p');
-          break;
-        case 'q':
-          sb.append('q');
-          break;
-        case 'r':
-          sb.append('r');
-          break;
-        case 's':
-          sb.append('s');
-          break;
-        case 't':
-          sb.append('t');
-          break;
-        case 'u':
-          sb.append('u');
-          break;
-        case 'v':
-          sb.append('v');
-          break;
-        case 'w':
-          sb.append('w');
-          break;
-        case 'x':
-          sb.append('x');
-          break;
-        case 'y':
-          sb.append('y');
-          break;
-        case 'z':
-          sb.append('z');
-          break;
-        case 'A':
-          sb.append('A');
-          break;
-        case 'B':
-          sb.append('B');
-          break;
-        case 'C':
-          sb.append('C');
-          break;
-        case 'D':
-          sb.append('D');
-          break;
-        case 'E':
-          sb.append('E');
-          break;
-        case 'F':
-          sb.append('F');
-          break;
-        case 'G':
-          sb.append('G');
-          break;
-        case 'H':
-          sb.append('H');
-          break;
-        case 'I':
-          sb.append('I');
-          break;
-        case 'J':
-          sb.append('J');
-          break;
-        case 'K':
-          sb.append('K');
-          break;
-        case 'L':
-          sb.append('L');
-          break;
-        case 'M':
-          sb.append('M');
-          break;
-        case 'N':
-          sb.append('N');
-          break;
-        case 'O':
-          sb.append('O');
-          break;
-        case 'P':
-          sb.append('P');
-          break;
-        case 'Q':
-          sb.append('Q');
-          break;
-        case 'R':
-          sb.append('R');
-          break;
-        case 'S':
-          sb.append('S');
-          break;
-        case 'T':
-          sb.append('T');
-          break;
-        case 'U':
-          sb.append('U');
-          break;
-        case 'V':
-          sb.append('V');
-          break;
-        case 'W':
-          sb.append('W');
-          break;
-        case 'X':
-          sb.append('X');
-          break;
-        case 'Y':
-          sb.append('Y');
-          break;
-        case 'Z':
-          sb.append('Z');
-          break;
-        case '0':
-          sb.append('0');
-          break;
-        case '1':
-          sb.append('1');
-          break;
-        case '2':
-          sb.append('2');
-          break;
-        case '3':
-          sb.append('3');
-          break;
-        case '4':
-          sb.append('4');
-          break;
-        case '5':
-          sb.append('5');
-          break;
-        case '6':
-          sb.append('6');
-          break;
-        case '7':
-          sb.append('7');
-          break;
-        case '8':
-          sb.append('8');
-          break;
-        case '9':
-          sb.append('9');
-          break;
-        case '.':
-          sb.append('.');
-          break;
-        case ':':
-          sb.append(':');
-          break;
-        case '-':
-          sb.append('-');
-          break;
-        case '/':
-          sb.append('/');
-          break;
-        case '_':
-          sb.append('_');
-          break;
-        default: // ignore
-      }
-    }
-    String sanitized = sb.toString();
-    try {
-      char[] chars = new char[sanitized.length()];
-      for (int i = 0; i < sanitized.length(); i++) {
-        chars[i] = sanitized.charAt(i);
-      }
-      java.lang.reflect.Constructor<String> constr = String.class.getConstructor(char[].class);
-      return constr.newInstance((Object) chars);
-    } catch (Throwable t) {
-      return "";
-    }
+    return returnedHostAndPath;
   }
 
   /**
@@ -1321,14 +1081,7 @@ public class EDStatic {
   public static String baseUrl(HttpServletRequest request, String loggedInAs) {
     if (EDStatic.config.useHeadersForUrl && request != null && request.getHeader("Host") != null) {
       String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
-      String hostAndPath =
-          getHostAndPathFromRequest(
-              request.getHeader("Host"),
-              request.getHeader("X-Forwarded-Host"),
-              request.getHeader("X-Forwarded-Prefix"),
-              request.getServerName(),
-              scheme);
-      return scheme + "://" + hostAndPath;
+      return scheme + "://" + getHostAndPathFromRequest(request);
     }
     return loggedInAs == null ? config.baseUrl : config.baseHttpsUrl;
   }
@@ -1376,15 +1129,7 @@ public class EDStatic {
         && request != null
         && request.getHeader("Host") != null
         && ("https".equals(request.getScheme()) || !request.getHeader("Host").contains(":"))) {
-      String scheme = "https".equalsIgnoreCase(request.getScheme()) ? "https" : "http";
-      String hostAndPath =
-          getHostAndPathFromRequest(
-              request.getHeader("Host"),
-              request.getHeader("X-Forwarded-Host"),
-              request.getHeader("X-Forwarded-Prefix"),
-              request.getServerName(),
-              scheme);
-      httpsUrl = "https://" + hostAndPath + "/" + config.warName;
+      httpsUrl = "https://" + getHostAndPathFromRequest(request) + "/" + config.warName;
     }
     return httpsUrl + (language == 0 ? "" : "/" + TranslateMessages.languageCodeList.get(language));
   }
