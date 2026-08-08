@@ -33,3 +33,9 @@ extensions:
       - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "sql-injection", "manual"]
       - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "command-injection", "manual"]
       - ["gov.noaa.pfel.erddap.util", "EDConfig", false, "", "", "", "ReturnValue", "request-ssrf", "manual"]
+
+      # ========================================================================
+      # 4. EDSTATIC HOST/URL VALIDATION PATHWAY (Sanitizing Barrier Models)
+      # ========================================================================
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "xss", "manual"]
