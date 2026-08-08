@@ -33,7 +33,7 @@ public class GridDataAllAccessor implements AutoCloseable {
   public static boolean verbose = false;
 
   // things passed into the constructor
-  protected final GridDataAccessor gridDataAccessor;
+  public final GridDataAccessor gridDataAccessor;
 
   // things the constructor sets
   public String baseFileName; // to which the dv number is added
@@ -61,8 +61,9 @@ public class GridDataAllAccessor implements AutoCloseable {
       EDV dataVars[] = gridDataAccessor.dataVariables();
       nDv = dataVars.length;
       String tQuery = gridDataAccessor.userDapQuery();
+      String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
       baseFileName =
-          gridDataAccessor.eddGrid().cacheDirectory()
+          baseDir
               + // dir created by EDD.ensureValid
               String2.md5Hex12(tQuery == null ? "" : tQuery)
               + "_"
@@ -74,6 +75,9 @@ public class GridDataAllAccessor implements AutoCloseable {
       for (int dv = 0; dv < nDv; dv++) {
         dataPAType[dv] = dataVars[dv].destinationDataPAType();
         String tFileName = new java.io.File(baseFileName + dv).getCanonicalPath();
+        if (!tFileName.startsWith(new java.io.File(baseDir).getCanonicalPath())) {
+          throw new SecurityException("Path traversal attempt detected!");
+        }
         channels[dv] =
             FileChannel.open(
                 Paths.get(tFileName),
@@ -112,7 +116,11 @@ public class GridDataAllAccessor implements AutoCloseable {
     long n = gridDataAccessor.totalIndex.size();
     Math2.ensureArraySizeOkay(n, "GridDataAllAccessor");
     PrimitiveArray pa = PrimitiveArray.factory(dataPAType[dv], (int) n, false);
+    String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
     String tFileName = new java.io.File(baseFileName + dv).getCanonicalPath();
+    if (!tFileName.startsWith(new java.io.File(baseDir).getCanonicalPath())) {
+      throw new SecurityException("Path traversal attempt detected!");
+    }
     try (FileChannel channel = FileChannel.open(Paths.get(tFileName), StandardOpenOption.READ)) {
       pa.readFromChannel(channel, (int) n);
     }

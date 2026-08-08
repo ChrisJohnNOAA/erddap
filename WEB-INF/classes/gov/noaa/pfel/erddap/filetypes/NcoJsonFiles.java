@@ -333,6 +333,9 @@ public class NcoJsonFiles extends TableWriterFileType {
         if (twawm != null) {
           writer.write("      \"data\": [");
           String tFileName = new java.io.File(twawm.columnFileName(col)).getCanonicalPath();
+          if (!tFileName.startsWith(new java.io.File(twawm.dir).getCanonicalPath())) {
+            throw new SecurityException("Path traversal attempt detected!");
+          }
           try (java.nio.channels.FileChannel channel =
               java.nio.channels.FileChannel.open(
                   java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
@@ -561,6 +564,10 @@ public class NcoJsonFiles extends TableWriterFileType {
             if (writeData) {
               long n = gda.totalIndex().size();
               String tFileName = new java.io.File(gdaa.baseFileName + dvi).getCanonicalPath();
+              String baseDir = gdaa.gridDataAccessor.eddGrid().cacheDirectory();
+              if (!tFileName.startsWith(new java.io.File(baseDir).getCanonicalPath())) {
+                throw new SecurityException("Path traversal attempt detected!");
+              }
               try (java.nio.channels.FileChannel channel =
                   java.nio.channels.FileChannel.open(
                       java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
@@ -678,6 +685,10 @@ public class NcoJsonFiles extends TableWriterFileType {
           writer.write("      \"data\":\n");
           for (int avi = 0; avi < nAV; avi++) writer.write("[ ");
           String tFileName = new java.io.File(gdaa.baseFileName + dvi).getCanonicalPath();
+          String baseDir = gdaa.gridDataAccessor.eddGrid().cacheDirectory();
+          if (!tFileName.startsWith(new java.io.File(baseDir).getCanonicalPath())) {
+            throw new SecurityException("Path traversal attempt detected!");
+          }
           try (java.nio.channels.FileChannel channel =
               java.nio.channels.FileChannel.open(
                   java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {

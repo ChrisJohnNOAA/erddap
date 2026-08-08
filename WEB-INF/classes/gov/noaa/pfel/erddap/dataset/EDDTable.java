@@ -3707,6 +3707,9 @@ public abstract class EDDTable extends EDD {
         int bufferSize = EDStatic.config.partialRequestMaxCells;
         PrimitiveArray pa = null;
         String tFileName = new java.io.File(twawm.columnFileName(col)).getCanonicalPath();
+        if (!tFileName.startsWith(new java.io.File(twawm.dir).getCanonicalPath())) {
+          throw new SecurityException("Path traversal attempt detected!");
+        }
         try (java.nio.channels.FileChannel channel =
             java.nio.channels.FileChannel.open(
                 java.nio.file.Paths.get(tFileName), java.nio.file.StandardOpenOption.READ)) {
