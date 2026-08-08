@@ -75,7 +75,11 @@ public class GridDataAllAccessor implements AutoCloseable {
       for (int dv = 0; dv < nDv; dv++) {
         dataPAType[dv] = dataVars[dv].destinationDataPAType();
         String tFileName = new java.io.File(baseFileName + dv).getCanonicalPath();
-        if (!tFileName.startsWith(new java.io.File(baseDir).getCanonicalPath())) {
+        String baseCanonical = new java.io.File(baseDir).getCanonicalPath();
+        if (!baseCanonical.endsWith(java.io.File.separator)) {
+          baseCanonical += java.io.File.separator;
+        }
+        if (!tFileName.startsWith(baseCanonical)) {
           throw new SecurityException("Path traversal attempt detected!");
         }
         channels[dv] =
@@ -118,7 +122,11 @@ public class GridDataAllAccessor implements AutoCloseable {
     PrimitiveArray pa = PrimitiveArray.factory(dataPAType[dv], (int) n, false);
     String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
     String tFileName = new java.io.File(baseFileName + dv).getCanonicalPath();
-    if (!tFileName.startsWith(new java.io.File(baseDir).getCanonicalPath())) {
+    String baseCanonical = new java.io.File(baseDir).getCanonicalPath();
+    if (!baseCanonical.endsWith(java.io.File.separator)) {
+      baseCanonical += java.io.File.separator;
+    }
+    if (!tFileName.startsWith(baseCanonical)) {
       throw new SecurityException("Path traversal attempt detected!");
     }
     try (FileChannel channel = FileChannel.open(Paths.get(tFileName), StandardOpenOption.READ)) {

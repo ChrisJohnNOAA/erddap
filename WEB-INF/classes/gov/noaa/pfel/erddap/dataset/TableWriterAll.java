@@ -155,7 +155,11 @@ public class TableWriterAll extends TableWriter {
       cleanupAction.setColumnNames(columnNames);
       for (int col = 0; col < nColumns; col++) {
         String tFileName = new java.io.File(columnFileName(col)).getCanonicalPath();
-        if (!tFileName.startsWith(new java.io.File(dir).getCanonicalPath())) {
+        String baseCanonical = new java.io.File(dir).getCanonicalPath();
+        if (!baseCanonical.endsWith(java.io.File.separator)) {
+          baseCanonical += java.io.File.separator;
+        }
+        if (!tFileName.startsWith(baseCanonical)) {
           throw new SecurityException("Path traversal attempt detected!");
         }
         columnChannels[col] =
@@ -244,7 +248,11 @@ public class TableWriterAll extends TableWriter {
             columnType(col), (int) totalNRows, false); // safe since checked above
     pa.setMaxIsMV(columnMaxIsMV[col]);
     String tFileName = new java.io.File(columnFileName(col)).getCanonicalPath();
-    if (!tFileName.startsWith(new java.io.File(dir).getCanonicalPath())) {
+    String baseCanonical = new java.io.File(dir).getCanonicalPath();
+    if (!baseCanonical.endsWith(java.io.File.separator)) {
+      baseCanonical += java.io.File.separator;
+    }
+    if (!tFileName.startsWith(baseCanonical)) {
       throw new SecurityException("Path traversal attempt detected!");
     }
     try (FileChannel channel = FileChannel.open(Paths.get(tFileName), StandardOpenOption.READ)) {

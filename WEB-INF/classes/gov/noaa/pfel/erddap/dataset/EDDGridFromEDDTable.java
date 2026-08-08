@@ -729,7 +729,11 @@ public class EDDGridFromEDDTable extends EDDGrid {
       for (int col = 0; col < nCols; col++) {
         twaPA[col] = twa.columnEmptyPA(col);
         String tFileName = new java.io.File(twa.columnFileName(col)).getCanonicalPath();
-        if (!tFileName.startsWith(new java.io.File(twa.dir).getCanonicalPath())) {
+        String baseCanonical = new java.io.File(twa.dir).getCanonicalPath();
+        if (!baseCanonical.endsWith(java.io.File.separator)) {
+          baseCanonical += java.io.File.separator;
+        }
+        if (!tFileName.startsWith(baseCanonical)) {
           throw new SecurityException("Path traversal attempt detected!");
         }
         twaChannels[col] =
