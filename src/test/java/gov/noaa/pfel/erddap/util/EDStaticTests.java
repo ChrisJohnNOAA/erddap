@@ -254,6 +254,7 @@ public class EDStaticTests {
       verify(request, atLeastOnce()).getHeader("Host");
       verify(request, atLeastOnce()).getHeader("X-Forwarded-Prefix");
       verify(request, atLeastOnce()).getScheme();
+      verify(request, Mockito.atLeast(0)).getHeader("X-Forwarded-Proto");
       verifyNoMoreInteractions(request);
     }
   }
@@ -279,6 +280,15 @@ public class EDStaticTests {
       String resultLegacy = EDStatic.baseUrl(reqLegacy, null);
       Test.ensureEqual(
           resultLegacy, "http://evil.com", "Legacy bypass should return the provided host");
+
+      // Check legacy/bypass handles underscores safely (regression test)
+      HttpServletRequest reqLegacyUnderscore = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqLegacyUnderscore.getHeader("Host")).thenReturn("local_dev:8080");
+      Mockito.when(reqLegacyUnderscore.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqLegacyUnderscore, null),
+          "http://local_dev:8080",
+          "Legacy bypass must preserve local hostnames containing underscores");
 
       // 2. Enable host verification and setup allowed hosts
       EDStatic.config.verifyHostNameErddapUrl = true;
@@ -361,6 +371,104 @@ public class EDStaticTests {
           "https://" + expectedFallbackHttpsHost,
           "Invalid host on https should fallback to baseHttpsUrl host and port");
 
+      // 4. Test Chained Proxies / Comma-separated X-Forwarded-Host
+      HttpServletRequest reqChainedProxy = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqChainedProxy.getHeader("X-Forwarded-Host"))
+          .thenReturn("erddap.example.org, proxy1.example.org, proxy2.example.org");
+      Mockito.when(reqChainedProxy.getHeader("Host")).thenReturn("erddap.example.org");
+      Mockito.when(reqChainedProxy.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqChainedProxy, null),
+          "http://erddap.example.org",
+          "Chained proxy: first element picked and matched");
+
+      // Check underscore hostname when verification is enabled
+      EDStatic.config.allowedHosts.add("local_dev");
+      HttpServletRequest reqUnderscoreValid = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqUnderscoreValid.getHeader("Host")).thenReturn("LOCAL_DEV:8080");
+      Mockito.when(reqUnderscoreValid.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqUnderscoreValid, null),
+          "http://local_dev:8080",
+          "Verification enabled must support local hostnames containing underscores if allowed");
+
+      // 5. Test Wildcard Allowed Hosts
+      EDStatic.config.allowedHosts.add("*.allowed-wild.com");
+      EDStatic.config.allowedHosts.add(".another-wild.org");
+
+      HttpServletRequest reqWildcard1 = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqWildcard1.getHeader("Host")).thenReturn("sub.allowed-wild.com");
+      Mockito.when(reqWildcard1.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqWildcard1, null),
+          "http://sub.allowed-wild.com",
+          "Wildcard prefix match (*.allowed-wild.com)");
+
+      HttpServletRequest reqWildcard2 = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqWildcard2.getHeader("Host")).thenReturn("deep.sub.another-wild.org");
+      Mockito.when(reqWildcard2.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqWildcard2, null),
+          "http://deep.sub.another-wild.org",
+          "Wildcard prefix match (.another-wild.org)");
+
+      HttpServletRequest reqWildcardEvil = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqWildcardEvil.getHeader("Host")).thenReturn("evil-allowed-wild.com");
+      Mockito.when(reqWildcardEvil.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqWildcardEvil, null),
+          "http://" + expectedFallbackHttpHost,
+          "Wildcard must not match substring without dot boundary");
+
+      // 6. Test IPv6 Handling
+      EDStatic.config.allowedHosts.add("[::1]");
+      EDStatic.config.allowedHosts.add("[2001:db8::1]");
+
+      HttpServletRequest reqIPv6_1 = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqIPv6_1.getHeader("Host")).thenReturn("[::1]");
+      Mockito.when(reqIPv6_1.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqIPv6_1, null), "http://[::1]", "Safe bracketed IPv6 match");
+
+      HttpServletRequest reqIPv6_2 = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqIPv6_2.getHeader("Host")).thenReturn("[2001:db8::1]:8080");
+      Mockito.when(reqIPv6_2.getScheme()).thenReturn("http");
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqIPv6_2, null),
+          "http://[2001:db8::1]:8080",
+          "Safe bracketed IPv6 with port match");
+
+      // 7. Test Attack String Sanitation (cleanUrlChars and normalizeAndValidateHost)
+      Test.ensureEqual(
+          EDStatic.cleanUrlChars("evil.com/../path", true),
+          "evil.com/../path",
+          "cleanUrlChars keeps safe chars");
+      // But normalizeAndValidateHost will discard anything with unsafe path segments or malformed
+      // hosts
+      Test.ensureEqual(
+          EDStatic.normalizeAndValidateHost("evil.com/../path"),
+          "",
+          "normalizeAndValidateHost blocks path traversal in domain");
+      Test.ensureEqual(
+          EDStatic.normalizeAndValidateHost("evil.com%2e%2e%2fpath"),
+          "",
+          "normalizeAndValidateHost blocks encoded path traversal in domain");
+      Test.ensureEqual(
+          EDStatic.normalizeAndValidateHost("<script>alert(1)</script>.example.org"),
+          "",
+          "normalizeAndValidateHost blocks XSS in domain");
+
+      // 8. Test X-Forwarded-Proto Aware Scheme
+      HttpServletRequest reqForwardedProto = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqForwardedProto.getHeader("Host")).thenReturn("evil.com");
+      Mockito.when(reqForwardedProto.getHeader("X-Forwarded-Proto")).thenReturn("https");
+      Mockito.when(reqForwardedProto.getScheme()).thenReturn("http");
+      // When validation fails on HTTPS request, we fallback to HTTPS baseUrl/baseHttpsUrl
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqForwardedProto, null),
+          "https://" + expectedFallbackHttpsHost,
+          "X-Forwarded-Proto overrides request.getScheme()");
+
       // 3. Test Domain Extraction helper method
       Test.ensureEqual(
           EDConfig.extractDomain("http://myhost.com:8080/erddap"),
@@ -375,6 +483,10 @@ public class EDStaticTests {
       Test.ensureEqual(
           EDConfig.extractDomain("(not specified)"), null, "extractDomain: (not specified)");
       Test.ensureEqual(EDConfig.extractDomain(null), null, "extractDomain: null input");
+      Test.ensureEqual(
+          EDConfig.extractDomain("http://[::1]:8080/erddap"),
+          "[::1]",
+          "extractDomain: bracketed IPv6 with port");
 
     } finally {
       // Restore cached configurations

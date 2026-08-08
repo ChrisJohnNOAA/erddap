@@ -691,9 +691,17 @@ public class EDConfig {
       for (String part : parts) {
         if (part != null) {
           String normalized = part.trim().toLowerCase();
-          int colonIdx = normalized.indexOf(':');
-          if (colonIdx >= 0) {
-            normalized = normalized.substring(0, colonIdx);
+          int closingBracket = normalized.indexOf(']');
+          if (closingBracket >= 0) {
+            int colonIdx = normalized.indexOf(':', closingBracket);
+            if (colonIdx >= 0) {
+              normalized = normalized.substring(0, colonIdx);
+            }
+          } else {
+            int colonIdx = normalized.indexOf(':');
+            if (colonIdx >= 0) {
+              normalized = normalized.substring(0, colonIdx);
+            }
           }
           normalized = normalized.trim();
           if (!normalized.isEmpty()) {
@@ -878,7 +886,11 @@ public class EDConfig {
       java.net.URI uri = new java.net.URI(s);
       String host = uri.getHost();
       if (host != null) {
-        return host.trim().toLowerCase();
+        String h = host.trim().toLowerCase();
+        if (h.contains(":") && !h.startsWith("[")) {
+          h = "[" + h + "]";
+        }
+        return h;
       }
     } catch (Exception e) {
       String2.log("Error parsing host from URL: " + urlString + " - " + e.toString());
