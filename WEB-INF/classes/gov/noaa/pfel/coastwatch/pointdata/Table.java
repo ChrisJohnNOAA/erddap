@@ -10089,7 +10089,13 @@ public class Table {
 
     DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, url);
     try (NetcdfDataset ncd = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
-      NcHelper.getGroupAttributes(ncd.getRootGroup(), globalAttributes());
+      Attributes rawGlobalAtts = new Attributes();
+      NcHelper.getGroupAttributes(ncd.getRootGroup(), rawGlobalAtts);
+      for (String name : rawGlobalAtts.getNames()) {
+        if (!name.contains(".")) {
+          globalAttributes().set(name, rawGlobalAtts.get(name));
+        }
+      }
 
       ucar.nc2.Structure outerSequence = null;
       for (Variable var : ncd.getVariables()) {
