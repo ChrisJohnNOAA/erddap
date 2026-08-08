@@ -404,9 +404,9 @@ public class EDDTableFromDapSequence extends EDDTable {
 
         // delve into the outerSequence
         Variable outerVariable = dataset.findVariable(outerSequenceName);
-        if (!(outerVariable instanceof ucar.nc2.Sequence outerSequence))
+        if (!(outerVariable instanceof ucar.nc2.Structure outerSequence))
           throw new RuntimeException(
-              errorInMethod + "outerVariable not a Sequence: name=" + outerSequenceName);
+              errorInMethod + "outerVariable not a Sequence/Structure: name=" + outerSequenceName);
 
         List<Variable> outerVars = outerSequence.getVariables();
         int nOuterColumns = outerVars.size();
@@ -414,9 +414,11 @@ public class EDDTableFromDapSequence extends EDDTable {
           Variable obt = outerVars.get(outerCol);
           String oName = obt.getShortName();
           if (innerSequenceName != null && oName.equals(innerSequenceName)) {
-            if (!(obt instanceof ucar.nc2.Sequence innerSequence)) {
+            if (!(obt instanceof ucar.nc2.Structure innerSequence)) {
               throw new RuntimeException(
-                  errorInMethod + "innerVariable not a Sequence: name=" + innerSequenceName);
+                  errorInMethod
+                      + "innerVariable not a Sequence/Structure: name="
+                      + innerSequenceName);
             }
             List<Variable> innerVars = innerSequence.getVariables();
             for (Variable ibt : innerVars) {

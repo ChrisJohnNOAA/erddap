@@ -306,9 +306,9 @@ public class EDDTableFromErddap extends EDDTable implements FromErddap {
           NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 
           Variable outerVariable = dataset.findVariable(SEQUENCE_NAME);
-          if (!(outerVariable instanceof ucar.nc2.Sequence outerSequence))
+          if (!(outerVariable instanceof ucar.nc2.Structure outerSequence))
             throw new IllegalArgumentException(
-                errorInMethod + "outerVariable not a Sequence: name=" + SEQUENCE_NAME);
+                errorInMethod + "outerVariable not a Sequence/Structure: name=" + SEQUENCE_NAME);
 
           List<Variable> outerVars = outerSequence.getVariables();
           int nOuterColumns = outerVars.size();
