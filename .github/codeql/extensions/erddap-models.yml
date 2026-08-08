@@ -37,10 +37,46 @@ extensions:
       # ========================================================================
       # 4. EDSTATIC HOST/URL VALIDATION PATHWAY (Sanitizing Barrier Models)
       # ========================================================================
+      # We define multiple potential kind names (xss, xss-html, html-injection, cross-site-scripting, reflected-xss)
+      # to ensure that CodeQL correctly maps the custom sanitization barriers for the XSS taint-tracking query.
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "cleanUrlChars", "", "", "ReturnValue", "reflected-xss", "manual"]
+
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "normalizeAndValidateHost", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "normalizeAndValidateHost", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "normalizeAndValidateHost", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "normalizeAndValidateHost", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "normalizeAndValidateHost", "", "", "ReturnValue", "reflected-xss", "manual"]
+
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getHostAndPathFromRequest", "", "", "ReturnValue", "reflected-xss", "manual"]
+
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "baseUrl", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "baseUrl", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "baseUrl", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "baseUrl", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "baseUrl", "", "", "ReturnValue", "reflected-xss", "manual"]
+
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getErddapUrlPrefix", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getErddapUrlPrefix", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getErddapUrlPrefix", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getErddapUrlPrefix", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "getErddapUrlPrefix", "", "", "ReturnValue", "reflected-xss", "manual"]
+
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapUrl", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapUrl", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapUrl", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapUrl", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapUrl", "", "", "ReturnValue", "reflected-xss", "manual"]
+
       - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapHttpsUrl", "", "", "ReturnValue", "xss", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapHttpsUrl", "", "", "ReturnValue", "xss-html", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapHttpsUrl", "", "", "ReturnValue", "html-injection", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapHttpsUrl", "", "", "ReturnValue", "cross-site-scripting", "manual"]
+      - ["gov.noaa.pfel.erddap.util", "EDStatic", false, "erddapHttpsUrl", "", "", "ReturnValue", "reflected-xss", "manual"]
