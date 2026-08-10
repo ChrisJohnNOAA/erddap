@@ -324,11 +324,12 @@ public class EDDTableFromHyraxFiles extends EDDTableFromFiles {
         }
 
         // see if up-to-date localFile exists  (keep name identical; don't add .nc)
-        String localFile = baseDir + sourceName.substring(lookForLength);
+        String localFile = File2.getSafePath(baseDir, sourceName.substring(lookForLength));
         String reason = "";
         try {
           // don't use File2 so more efficient for current purpose
-          File file = new File(localFile);
+          // Explicitly use getCanonicalPath to satisfy CodeQL
+          File file = new File(new File(localFile).getCanonicalPath());
           if (!file.isFile()) reason = "new file";
           else if (file.lastModified() != Math2.roundToLong(sourceFileLastMod.get(f) * 1000))
             reason = "lastModified changed";

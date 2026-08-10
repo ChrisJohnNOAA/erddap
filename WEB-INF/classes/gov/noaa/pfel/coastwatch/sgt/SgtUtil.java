@@ -450,24 +450,29 @@ public class SgtUtil {
    * @param fullPngName but without the .png at the end
    * @throws Exception if trouble
    */
-  public static void saveAsTransparentPng(BufferedImage bi, Color transparent, String fullPngName)
+  public static void saveAsTransparentPng(BufferedImage bi, Color transparent, String tFullPngName)
       throws Exception {
+    final String fullPngName = File2.getSafePath(tFullPngName);
+    final String dir = File2.getDirectory(fullPngName);
+    final String name = File2.getNameAndExtension(fullPngName);
 
     // POLICY: because this procedure may be used in more than one thread,
     // do work on unique temp files names using randomInt, then rename to proper file name.
     // If procedure fails half way through, there won't be a half-finished file.
     int randomInt = Math2.random(Integer.MAX_VALUE);
+    final String randomPngName = File2.getSafePath(dir, name + randomInt + ".png");
 
     // create fileOutputStream
     try (BufferedOutputStream bos =
         new BufferedOutputStream(
-            Files.newOutputStream(Paths.get(fullPngName + randomInt + ".png")))) {
+            // Explicitly use getCanonicalPath to satisfy CodeQL
+            Files.newOutputStream(Paths.get(new File(randomPngName).getCanonicalPath())))) {
       // save the image
       saveAsTransparentPng(bi, transparent, bos);
     }
 
     // last step: rename to final Png name
-    File2.rename(fullPngName + randomInt + ".png", fullPngName + ".png");
+    File2.rename(randomPngName, fullPngName + ".png");
   }
 
   /**

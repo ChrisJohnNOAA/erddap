@@ -228,15 +228,19 @@ public class SSR {
         if (entry.isDirectory()) {
           if (ignoreZipDirectories) {
           } else {
-            File tDir = new File(baseDir + name);
+            String safeDir = File2.getSafePath(baseDir, name);
+            File tDir = new File(safeDir);
             if (!tDir.exists()) tDir.mkdirs();
           }
         } else {
           // open an output file
           if (ignoreZipDirectories) name = File2.getNameAndExtension(name); // remove dir info
-          File2.makeDirectory(File2.getDirectory(baseDir + name)); // name may incude subdir names
+          String safeName = File2.getSafePath(baseDir, name);
+          File2.makeDirectory(File2.getDirectory(safeName)); // name may incude subdir names
           try (OutputStream out =
-              new BufferedOutputStream(Files.newOutputStream(Paths.get(baseDir + name)))) {
+              new BufferedOutputStream(
+                  // Explicitly use getCanonicalPath to satisfy CodeQL
+                  Files.newOutputStream(Paths.get(new File(safeName).getCanonicalPath())))) {
 
             // transfer bytes from the .zip file to the output file
             // in.read reads from current zipEntry
@@ -914,8 +918,9 @@ public class SSR {
    * @throws IOException if touble
    */
   public static void uploadFileToAwsS3(
-      S3TransferManager tm, String localFileName, String awsUrl, String contentType)
+      S3TransferManager tm, String tLocalFileName, String awsUrl, String contentType)
       throws IOException {
+    final String localFileName = File2.getSafePath(tLocalFileName);
 
     String bro[] = String2.parseAwsS3Url(awsUrl); // bucket, region, object key
     if (bro == null)
@@ -941,8 +946,11 @@ public class SSR {
               .key(bro[2])
               .contentLength(File2.length(localFileName));
       if (contentType != null) request.contentType(contentType);
+      // Explicitly use getCanonicalPath to satisfy CodeQL
+      final String safeLocalFileName = new File(localFileName).getCanonicalPath();
       FileUpload upload =
-          tm.uploadFile(u -> u.source(Paths.get(localFileName)).putObjectRequest(request.build()));
+          tm.uploadFile(
+              u -> u.source(Paths.get(safeLocalFileName)).putObjectRequest(request.build()));
       upload.completionFuture().join(); // wait for completion. exception if trouble
 
       if (verbose)
@@ -994,8 +1002,9 @@ public class SSR {
    *     fullFileName, if any, will still exist).
    */
   public static void downloadFile(
-      String attributeTo, String urlString, String fullFileName, boolean tryToUseCompression)
+      String attributeTo, String urlString, String tFullFileName, boolean tryToUseCompression)
       throws Exception {
+    final String fullFileName = File2.getSafePath(tFullFileName);
 
     // first, ensure destination dir exists
     File2.makeDirectory(File2.getDirectory(fullFileName));
@@ -1018,18 +1027,23 @@ public class SSR {
     // is it an AWS S3 URL?
     long time = System.currentTimeMillis();
     int random = Math2.random(Integer.MAX_VALUE);
+    final String dir = File2.getDirectory(fullFileName);
+    final String name = File2.getNameAndExtension(fullFileName);
+    final String safeRandomFileName = File2.getSafePath(dir, name + random);
     String bro[] = String2.parseAwsS3Url(urlString); // bucket, region, object key
     if (bro != null) {
       // sample code and javadoc:
       // https://sdk.amazonaws.com/java/api/latest/index.html?software/amazon/awssdk/transfer/s3/S3TransferManager.html
       try (S3TransferManager tm = buildS3TransferManager(bro[1]); ) {
+        // Explicitly use getCanonicalPath to satisfy CodeQL
+        final String canonicalRandomFileName = new File(safeRandomFileName).getCanonicalPath();
         FileDownload download =
             tm.downloadFile(
                 d ->
                     d.getObjectRequest(g -> g.bucket(bro[0]).key(bro[2]))
-                        .destination(Paths.get(fullFileName + random)));
+                        .destination(Paths.get(canonicalRandomFileName)));
         download.completionFuture().join(); // exception if trouble
-        File2.rename(fullFileName + random, fullFileName); // exception if trouble
+        File2.rename(safeRandomFileName, fullFileName); // exception if trouble
 
         if (verbose)
           String2.log(
@@ -1064,13 +1078,16 @@ public class SSR {
               : getUncompressedUrlBufferedInputStream(urlString)) {
 
         try (OutputStream out =
-            new BufferedOutputStream(Files.newOutputStream(Paths.get(fullFileName + random)))) {
+            new BufferedOutputStream(
+                // Explicitly use getCanonicalPath to satisfy CodeQL
+                Files.newOutputStream(
+                    Paths.get(new File(safeRandomFileName).getCanonicalPath())))) {
           byte buffer[] = new byte[8192]; // best if smaller than java buffered..stream sizes
           int nBytes;
           while ((nBytes = in.read(buffer)) > 0) out.write(buffer, 0, nBytes);
         }
       }
-      File2.rename(fullFileName + random, fullFileName); // exception if trouble
+      File2.rename(safeRandomFileName, fullFileName); // exception if trouble
       if (verbose)
         String2.log(
             attributeTo

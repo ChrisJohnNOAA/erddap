@@ -4,6 +4,7 @@
  */
 package gov.noaa.pfel.erddap.dataset;
 
+import com.cohort.util.File2;
 import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import java.io.BufferedOutputStream;
@@ -33,10 +34,14 @@ public class OutputStreamViaAwsS3 extends BufferedOutputStream {
    * @param tParent the OutputStreamFromHttpResponseViaAwsS3 that created this
    */
   public OutputStreamViaAwsS3(OutputStreamFromHttpResponseViaAwsS3 tParent) throws IOException {
+    this(tParent, File2.getSafePath(tParent.localDir, tParent.fileName + tParent.extension));
+  }
 
+  private OutputStreamViaAwsS3(OutputStreamFromHttpResponseViaAwsS3 tParent, String safePath)
+      throws IOException {
     // make the superclass's BufferedOutputStream from an OutputStream
-    super(
-        Files.newOutputStream(Paths.get(tParent.localDir + tParent.fileName + tParent.extension)));
+    // Explicitly use getCanonicalPath to satisfy CodeQL
+    super(Files.newOutputStream(Paths.get(new java.io.File(safePath).getCanonicalPath())));
     parent = tParent;
     fullLocalFileName = tParent.localDir + tParent.fileName + tParent.extension;
   }
