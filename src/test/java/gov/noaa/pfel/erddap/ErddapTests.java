@@ -1,6 +1,10 @@
 package gov.noaa.pfel.erddap;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -8,11 +12,14 @@ import static org.mockito.Mockito.when;
 import com.cohort.util.String2;
 import com.cohort.util.Test;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
+import gov.noaa.pfel.coastwatch.util.SSR;
 import gov.noaa.pfel.erddap.dataset.EDDGrid;
 import gov.noaa.pfel.erddap.dataset.EDDTable;
+import gov.noaa.pfel.erddap.util.EDStatic;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.BeforeAll;
 import tags.TagDisabledIncompleteTest;
@@ -86,6 +93,77 @@ class ErddapTests {
           result.contains("http://example.com/file1.nc"), "Result should contain the URL");
     } finally {
       erddap.tableDatasetHashMap.remove(datasetID);
+    }
+  }
+
+  @org.junit.jupiter.api.Test
+  void testDoLoginGoogle_Success() throws Throwable {
+    String2.log("\n*** ErddapTests.testDoLoginGoogle_Success()");
+    Erddap erddap = new Erddap();
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    java.io.StringWriter stringWriter = new java.io.StringWriter();
+    java.io.PrintWriter printWriter = new java.io.PrintWriter(stringWriter);
+    when(response.getWriter()).thenReturn(printWriter);
+    HttpSession session = mock(HttpSession.class);
+
+    when(request.getParameter("idtoken")).thenReturn("fake-token");
+    when(request.getSession(false)).thenReturn(null);
+    when(request.getSession()).thenReturn(session);
+
+    String mockJson =
+        "{"
+            + "\"email\":\"test@example.com\","
+            + "\"aud\":\"test-aud\","
+            + "\"email_verified\":\"true\","
+            + "\"exp\":\""
+            + (System.currentTimeMillis() / 1000 + 1000)
+            + "\""
+            + "}";
+
+    // We need to set the googleClientID to match the aud in the mock JSON
+    String originalClientID = EDStatic.config.googleClientID;
+    java.lang.reflect.Field field =
+        gov.noaa.pfel.erddap.util.EDConfig.class.getDeclaredField("googleClientID");
+    field.setAccessible(true);
+    field.set(EDStatic.config, "test-aud");
+
+    try (var mockedSSR = mockStatic(SSR.class)) {
+      mockedSSR
+          .when(() -> SSR.postFormGetResponseString(anyString(), anyInt()))
+          .thenReturn(mockJson);
+
+      erddap.doLoginGoogle(0, request, response, "loggedInAsHttps");
+
+      verify(session)
+          .setAttribute(eq("loggedInAs:" + EDStatic.config.warName), eq("test@example.com"));
+    } finally {
+      field.set(EDStatic.config, originalClientID);
+    }
+  }
+
+  @org.junit.jupiter.api.Test
+  void testDoLoginGoogle_Timeout() throws Throwable {
+    String2.log("\n*** ErddapTests.testDoLoginGoogle_Timeout()");
+    Erddap erddap = new Erddap();
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    java.io.StringWriter stringWriter = new java.io.StringWriter();
+    java.io.PrintWriter printWriter = new java.io.PrintWriter(stringWriter);
+    when(response.getWriter()).thenReturn(printWriter);
+
+    when(request.getParameter("idtoken")).thenReturn("fake-token");
+
+    try (var mockedSSR = mockStatic(SSR.class)) {
+      mockedSSR
+          .when(() -> SSR.postFormGetResponseString(anyString(), anyInt()))
+          .thenThrow(new java.net.SocketTimeoutException("Timeout"));
+
+      erddap.doLoginGoogle(0, request, response, "loggedInAsHttps");
+
+      verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      Test.ensureTrue(
+          stringWriter.toString().contains("Timeout"), "Error message should contain 'Timeout'");
     }
   }
 

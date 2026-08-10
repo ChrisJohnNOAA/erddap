@@ -1675,11 +1675,29 @@ public class SSR {
    */
   public static Object[] getPostInputStream(String urlString, String contentType, String content)
       throws Exception {
+    return getPostInputStream(urlString, contentType, content, -1);
+  }
+
+  /**
+   * This is like the other getPostInputStream, but allows setting a timeout.
+   *
+   * @param connectTimeOutMillis the time out for opening a connection in milliseconds (use -1 to
+   *     get the default 10 minutes).
+   */
+  public static Object[] getPostInputStream(
+      String urlString, String contentType, String content, int connectTimeOutMillis)
+      throws Exception {
     // modified from https://stackoverflow.com/questions/3324717/sending-http-post-request-in-java
 
     // create the connection where we're going to send the file
     URL url = URI.create(urlString).toURL();
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+    if (connectTimeOutMillis <= 0)
+      connectTimeOutMillis = 10 * Calendar2.SECONDS_PER_MINUTE * 1000; // ten minutes, in ms
+    con.setConnectTimeout(connectTimeOutMillis);
+    // I think setReadTimeout is any period of inactivity.
+    con.setReadTimeout(connectTimeOutMillis);
 
     // set the appropriate HTTP parameters
     // con.setRequestProperty("Content-Length", "" + content.length()); //not required, and I'm
@@ -1718,12 +1736,24 @@ public class SSR {
    *     submits via POST.
    */
   public static String postFormGetResponseString(String urlString) throws Exception {
+    return postFormGetResponseString(urlString, -1);
+  }
+
+  /**
+   * This is like the other postFormGetResponseString, but allows setting a timeout.
+   *
+   * @param connectTimeOutMillis the time out for opening a connection in milliseconds (use -1 to
+   *     get the default 10 minutes).
+   */
+  public static String postFormGetResponseString(String urlString, int connectTimeOutMillis)
+      throws Exception {
     int po = urlString.indexOf('?');
     Object ob3[] =
         getPostInputStream(
             po < 0 ? urlString : urlString.substring(0, po),
             "application/x-www-form-urlencoded; charset=UTF-8",
-            po < 0 ? "" : urlString.substring(po + 1));
+            po < 0 ? "" : urlString.substring(po + 1),
+            connectTimeOutMillis);
     try (BufferedReader bufReader =
         new BufferedReader(new InputStreamReader((InputStream) ob3[1], (String) ob3[2]))) {
       return readerToString(urlString, bufReader);
