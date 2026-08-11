@@ -1243,6 +1243,7 @@ public class LongArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in LongArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in LongArray.readFromChannel: n (" + n + ") < 0.");

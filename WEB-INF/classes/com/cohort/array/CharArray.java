@@ -1372,6 +1372,7 @@ public class CharArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in CharArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in CharArray.readFromChannel: n (" + n + ") < 0.");

@@ -1308,6 +1308,7 @@ public class ShortArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in ShortArray.readFromChannel: n (" + n + ") < 0.");

@@ -1395,6 +1395,7 @@ public class ULongArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in ULongArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in ULongArray.readFromChannel: n (" + n + ") < 0.");

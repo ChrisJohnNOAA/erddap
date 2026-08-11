@@ -1284,6 +1284,7 @@ public class IntArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in IntArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in IntArray.readFromChannel: n (" + n + ") < 0.");

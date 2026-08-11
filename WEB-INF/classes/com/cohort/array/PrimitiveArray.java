@@ -1789,22 +1789,52 @@ public abstract class PrimitiveArray {
    */
   public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
 
-  private static final java.util.Map<FileChannel, java.nio.ByteBuffer> channelBuffers =
+  private static final class ChannelBufferInfo {
+    final java.nio.ByteBuffer buffer;
+    long lastKnownPos;
+
+    ChannelBufferInfo(FileChannel channel) throws Exception {
+      this.buffer = java.nio.ByteBuffer.allocate(8192).order(java.nio.ByteOrder.nativeOrder());
+      this.lastKnownPos = channel.position();
+    }
+  }
+
+  private static final java.util.Map<FileChannel, ChannelBufferInfo> channelBuffers =
       java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
   public static void flushChannelBuffer(FileChannel channel) throws Exception {
-    java.nio.ByteBuffer buf = channelBuffers.get(channel);
-    if (buf != null && buf.position() > 0) {
-      buf.flip();
-      while (buf.hasRemaining()) {
-        channel.write(buf);
+    ChannelBufferInfo info = channelBuffers.get(channel);
+    if (info != null && info.buffer.position() > 0) {
+      info.buffer.flip();
+      long startPos = info.lastKnownPos - info.buffer.remaining();
+      long originalChannelPos = channel.position();
+      channel.position(startPos);
+      while (info.buffer.hasRemaining()) {
+        channel.write(info.buffer);
       }
-      buf.clear();
+      info.buffer.clear();
+      channel.position(originalChannelPos);
+      info.lastKnownPos = originalChannelPos;
     }
   }
 
   public static void discardChannelBuffer(FileChannel channel) {
     channelBuffers.remove(channel);
+  }
+
+  public static void prepareChannelForRead(FileChannel channel) throws Exception {
+    if (channel == null) {
+      return;
+    }
+    long currentPos = channel.position();
+    flushChannelBuffer(channel);
+    ChannelBufferInfo info = channelBuffers.get(channel);
+    if (info != null) {
+      info.lastKnownPos = currentPos;
+    }
+    if (channel.position() != currentPos) {
+      channel.position(currentPos);
+    }
   }
 
   public static long writeToChannelBuffered(FileChannel channel, java.nio.ByteBuffer src)
@@ -1816,21 +1846,44 @@ public abstract class PrimitiveArray {
     if (totalBytesWritten == 0) {
       return 0L;
     }
+
+    ChannelBufferInfo info = channelBuffers.get(channel);
+    long currentChannelPos = channel.position();
+
+    if (info != null) {
+      if (currentChannelPos != info.lastKnownPos) {
+        if (info.buffer.position() > 0) {
+          flushChannelBuffer(channel);
+        } else {
+          info.lastKnownPos = currentChannelPos;
+        }
+      }
+    }
+
     if (totalBytesWritten >= 8192) {
-      flushChannelBuffer(channel);
+      if (info != null && info.buffer.position() > 0) {
+        flushChannelBuffer(channel);
+      }
       while (src.hasRemaining()) {
         channel.write(src);
       }
+      info = channelBuffers.get(channel);
+      if (info != null) {
+        info.lastKnownPos = channel.position();
+      }
       return totalBytesWritten;
     }
-    java.nio.ByteBuffer buf =
-        channelBuffers.computeIfAbsent(
-            channel,
-            c -> java.nio.ByteBuffer.allocate(8192).order(java.nio.ByteOrder.nativeOrder()));
-    if (buf.remaining() < src.remaining()) {
+
+    if (info == null) {
+      info = new ChannelBufferInfo(channel);
+      channelBuffers.put(channel, info);
+    }
+
+    if (info.buffer.remaining() < src.remaining()) {
       flushChannelBuffer(channel);
     }
-    buf.put(src);
+    info.buffer.put(src);
+    info.lastKnownPos += totalBytesWritten;
     return totalBytesWritten;
   }
 

@@ -1177,6 +1177,7 @@ public class FloatArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in FloatArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in FloatArray.readFromChannel: n (" + n + ") < 0.");

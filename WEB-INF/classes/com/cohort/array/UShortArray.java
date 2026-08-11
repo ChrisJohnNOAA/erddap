@@ -1395,6 +1395,7 @@ public class UShortArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in UShortArray.readFromChannel: FileChannel is null.");
     }
+    PrimitiveArray.prepareChannelForRead(channel);
     if (n < 0) {
       throw new IllegalArgumentException(
           String2.ERROR + " in UShortArray.readFromChannel: n (" + n + ") < 0.");
