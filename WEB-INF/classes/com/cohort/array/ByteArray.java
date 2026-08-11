@@ -351,6 +351,14 @@ public class ByteArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
+    if (!(pa instanceof ByteArray)) {
+      pa.clear();
+      pa.ensureCapacity(willFind);
+      for (int i = startIndex; i <= stopIndex; i += stride) {
+        pa.addFromPA(this, i, 1);
+      }
+      return pa.setMaxIsMV(maxIsMV);
+    }
     ByteArray ba = (ByteArray) pa;
     ba.ensureCapacity(willFind);
     ba.size = willFind;

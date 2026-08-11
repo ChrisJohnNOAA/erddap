@@ -669,7 +669,7 @@ public abstract class EDDGridFromFiles extends EDDGrid implements WatchUpdateHan
     if (reallyVerbose) String2.log("sourceAxisNames=" + sourceAxisNames);
     if (axis0Type != AXIS0_REGULAR)
       sourceAxisNamesNoAxis0 =
-          (StringArray) sourceAxisNames.subset(1, 1, sourceAxisNames.size() - 1);
+          (StringArray) sourceAxisNames.subset(new StringArray(), 1, 1, sourceAxisNames.size() - 1);
 
     // note sourceDataNames, sourceDataTypes
     sourceDataNames = new StringArray();

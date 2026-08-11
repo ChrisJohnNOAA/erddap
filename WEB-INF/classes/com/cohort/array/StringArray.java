@@ -497,6 +497,14 @@ public class StringArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
+    if (!(pa instanceof StringArray)) {
+      pa.clear();
+      pa.ensureCapacity(willFind);
+      for (int i = startIndex; i <= stopIndex; i += stride) {
+        pa.addFromPA(this, i, 1);
+      }
+      return pa;
+    }
     StringArray sa = (StringArray) pa;
     sa.ensureCapacity(willFind);
     sa.size = willFind;

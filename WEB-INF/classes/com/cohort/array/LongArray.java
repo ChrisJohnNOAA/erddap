@@ -231,6 +231,14 @@ public class LongArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
+    if (!(pa instanceof LongArray)) {
+      pa.clear();
+      pa.ensureCapacity(willFind);
+      for (int i = startIndex; i <= stopIndex; i += stride) {
+        pa.addFromPA(this, i, 1);
+      }
+      return pa.setMaxIsMV(maxIsMV);
+    }
     LongArray la = (LongArray) pa;
     la.ensureCapacity(willFind);
     la.size = willFind;

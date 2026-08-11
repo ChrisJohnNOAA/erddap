@@ -462,12 +462,28 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
+  public String toCSVString() {
+    return materialize().toCSVString();
+  }
+
+  @Override
+  public String toString() {
+    return materialize().toString();
+  }
+
+  @Override
   public String toNccsvAttString() {
-    StringBuilder sb = new StringBuilder(size * 15);
-    for (int i = 0; i < size; i++) {
-      sb.append((i == 0 ? "" : ",") + getRawString(i));
-    }
-    return sb.toString();
+    return materialize().toNccsvAttString();
+  }
+
+  @Override
+  public String toNccsv127AttString() {
+    return materialize().toNccsv127AttString();
+  }
+
+  @Override
+  public String toJsonCsvString() {
+    return materialize().toJsonCsvString();
   }
 
   @Override
@@ -502,12 +518,6 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public long writeToChannel(FileChannel channel, int offset, int length) throws Exception {
-    long written = 0;
-    for (int i = offset; i < offset + length; i++) {
-      // Writing single elements or using a chunk buffer.
-      // E.g., leverage current()'s channel write capabilities or serialize via a temporary
-      // PrimitiveArray.
-    }
     // Simplest correct strategy: materialize first to write cleanly.
     return materialize().writeToChannel(channel, offset, length);
   }
@@ -569,10 +579,9 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public String testEquals(Object other) {
-    if (!(other instanceof PrimitiveArray)) {
+    if (!(other instanceof PrimitiveArray otherPA)) {
       return "The other object is not a PrimitiveArray.";
     }
-    PrimitiveArray otherPA = (PrimitiveArray) other;
     if (otherPA.size() != size) {
       return "The sizes are different: " + size + " != " + otherPA.size() + ".";
     }

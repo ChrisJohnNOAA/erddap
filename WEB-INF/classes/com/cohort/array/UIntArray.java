@@ -301,6 +301,14 @@ public class UIntArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
+    if (!(pa instanceof UIntArray)) {
+      pa.clear();
+      pa.ensureCapacity(willFind);
+      for (int i = startIndex; i <= stopIndex; i += stride) {
+        pa.addFromPA(this, i, 1);
+      }
+      return pa.setMaxIsMV(maxIsMV);
+    }
     UIntArray ia = (UIntArray) pa;
     ia.ensureCapacity(willFind);
     ia.size = willFind;

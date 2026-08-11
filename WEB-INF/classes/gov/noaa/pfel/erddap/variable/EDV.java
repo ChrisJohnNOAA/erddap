@@ -1554,13 +1554,13 @@ public class EDV {
   public static String getSliderCSVFromDistinctOptions(String[] distinct) {
     int n = distinct.length;
     int stride = Math.max(1, (n - 1) / SLIDER_MAX_NVALUES); // -1 because [0] will be removed
-    StringArray dsa = new StringArray(distinct);
+    PrimitiveArray dsa = new StringArray(distinct);
     if (stride == 1) {
-      dsa = (StringArray) dsa.subset(1, 1, n - 1); // make a copy without array[0]
+      dsa = dsa.subset(1, 1, n - 1); // make a copy without array[0]
     } else {
-      dsa = (StringArray) dsa.subset(1, stride, n - 1); // a copy, without array[0], with stride
+      dsa = dsa.subset(1, stride, n - 1); // a copy, without array[0], with stride
       // add the last value if not already there
-      if (!dsa.get(dsa.size() - 1).equals(distinct[n - 1])) dsa.add(distinct[n - 1]);
+      if (!dsa.getString(dsa.size() - 1).equals(distinct[n - 1])) dsa.addString(distinct[n - 1]);
     }
     return dsa.toJsonCsvString();
   }
