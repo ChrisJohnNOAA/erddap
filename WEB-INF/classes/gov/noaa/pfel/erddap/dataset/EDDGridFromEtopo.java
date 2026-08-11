@@ -308,13 +308,13 @@ public class EDDGridFromEtopo extends EDDGrid {
 
     long eTime = System.currentTimeMillis();
     PrimitiveArray lats =
-            axisVariables[0]
-                .sourceValues()
-                .subset(tConstraints.get(0), tConstraints.get(1), tConstraints.get(2));
+        axisVariables[0]
+            .sourceValues()
+            .subset(tConstraints.get(0), tConstraints.get(1), tConstraints.get(2));
     PrimitiveArray lons =
-            axisVariables[1]
-                .sourceValues()
-                .subset(tConstraints.get(3), tConstraints.get(4), tConstraints.get(5));
+        axisVariables[1]
+            .sourceValues()
+            .subset(tConstraints.get(3), tConstraints.get(4), tConstraints.get(5));
     int nLats = lats.size();
     int nLons = lons.size();
     int nLatsLons = nLats * nLons;
@@ -441,7 +441,8 @@ public class EDDGridFromEtopo extends EDDGrid {
    * @param lats the desired lats
    * @param data will receive the results.
    */
-  public void rawGetSourceData(PrimitiveArray lons, PrimitiveArray lats, short data[]) throws Throwable {
+  public void rawGetSourceData(PrimitiveArray lons, PrimitiveArray lats, short data[])
+      throws Throwable {
 
     // Currently ETOPO1
     // etopo1_ice_g_i2.bin (grid centered, LSB 16 bit signed integers)

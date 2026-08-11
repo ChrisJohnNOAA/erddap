@@ -497,7 +497,7 @@ public class StringArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof StringArray)) {
+    if (!(pa instanceof StringArray sa)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -505,7 +505,6 @@ public class StringArray extends PrimitiveArray {
       }
       return pa;
     }
-    StringArray sa = (StringArray) pa;
     sa.ensureCapacity(willFind);
     sa.size = willFind;
     String[] tar = sa.array;

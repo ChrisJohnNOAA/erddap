@@ -224,7 +224,7 @@ public class FloatArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof FloatArray)) {
+    if (!(pa instanceof FloatArray fa)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -232,7 +232,6 @@ public class FloatArray extends PrimitiveArray {
       }
       return pa;
     }
-    FloatArray fa = (FloatArray) pa;
     fa.ensureCapacity(willFind);
     fa.size = willFind;
     final float tar[] = fa.array;

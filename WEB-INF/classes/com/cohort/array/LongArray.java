@@ -231,7 +231,7 @@ public class LongArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof LongArray)) {
+    if (!(pa instanceof LongArray la)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -239,7 +239,6 @@ public class LongArray extends PrimitiveArray {
       }
       return pa.setMaxIsMV(maxIsMV);
     }
-    LongArray la = (LongArray) pa;
     la.ensureCapacity(willFind);
     la.size = willFind;
     final long tar[] = la.array;

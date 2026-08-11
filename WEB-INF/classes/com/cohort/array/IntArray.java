@@ -243,7 +243,7 @@ public class IntArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof IntArray)) {
+    if (!(pa instanceof IntArray ia)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -251,7 +251,6 @@ public class IntArray extends PrimitiveArray {
       }
       return pa.setMaxIsMV(maxIsMV);
     }
-    IntArray ia = (IntArray) pa;
     ia.ensureCapacity(willFind);
     ia.size = willFind;
     final int tar[] = ia.array;

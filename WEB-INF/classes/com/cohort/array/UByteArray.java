@@ -404,7 +404,7 @@ public class UByteArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof UByteArray)) {
+    if (!(pa instanceof UByteArray ba)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -412,7 +412,6 @@ public class UByteArray extends PrimitiveArray {
       }
       return pa.setMaxIsMV(maxIsMV);
     }
-    UByteArray ba = (UByteArray) pa;
     ba.ensureCapacity(willFind);
     ba.size = willFind;
     final byte tar[] = ba.array;

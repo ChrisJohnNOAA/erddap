@@ -274,7 +274,7 @@ public class ShortArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof ShortArray)) {
+    if (!(pa instanceof ShortArray sa)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -282,7 +282,6 @@ public class ShortArray extends PrimitiveArray {
       }
       return pa.setMaxIsMV(maxIsMV);
     }
-    ShortArray sa = (ShortArray) pa;
     sa.ensureCapacity(willFind);
     sa.size = willFind;
     final short tar[] = sa.array;

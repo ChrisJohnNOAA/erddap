@@ -241,7 +241,7 @@ public class DoubleArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof DoubleArray)) {
+    if (!(pa instanceof DoubleArray da)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -249,7 +249,6 @@ public class DoubleArray extends PrimitiveArray {
       }
       return pa;
     }
-    DoubleArray da = (DoubleArray) pa;
     da.ensureCapacity(willFind);
     da.size = willFind;
     double tar[] = da.array;

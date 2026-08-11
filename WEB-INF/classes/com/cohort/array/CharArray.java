@@ -275,7 +275,7 @@ public class CharArray extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     }
-    if (!(pa instanceof CharArray)) {
+    if (!(pa instanceof CharArray ca)) {
       pa.clear();
       pa.ensureCapacity(willFind);
       for (int i = startIndex; i <= stopIndex; i += stride) {
@@ -283,7 +283,6 @@ public class CharArray extends PrimitiveArray {
       }
       return pa;
     }
-    CharArray ca = (CharArray) pa;
     ca.ensureCapacity(willFind);
     ca.size = willFind;
     final char tar[] = ca.array;
