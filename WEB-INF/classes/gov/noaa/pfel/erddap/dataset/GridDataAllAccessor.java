@@ -100,7 +100,11 @@ public class GridDataAllAccessor implements AutoCloseable {
       if (channels != null) {
         for (int dv = 0; dv < nDv; dv++)
           try {
-            if (channels[dv] != null) channels[dv].close();
+            if (channels[dv] != null) {
+              PrimitiveArray.flushChannelBuffer(channels[dv]);
+              PrimitiveArray.discardChannelBuffer(channels[dv]);
+              channels[dv].close();
+            }
           } catch (Exception e) {
           }
       }

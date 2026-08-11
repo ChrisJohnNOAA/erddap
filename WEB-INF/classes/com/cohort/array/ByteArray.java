@@ -1395,15 +1395,7 @@ public class ByteArray extends PrimitiveArray {
     final int byteSize = length * bytesPerElement;
     final ByteBuffer byteBuf =
         ByteBuffer.wrap(array, offset, length).order(ByteOrder.nativeOrder());
-    long totalBytesWritten = 0;
-    while (byteBuf.hasRemaining()) {
-      final int written = channel.write(byteBuf);
-      if (written == 0) {
-        Thread.sleep(1);
-      }
-      totalBytesWritten += written;
-    }
-    return totalBytesWritten;
+    return PrimitiveArray.writeToChannelBuffered(channel, byteBuf);
   }
 
   /**

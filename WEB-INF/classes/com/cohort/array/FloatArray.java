@@ -1161,15 +1161,7 @@ public class FloatArray extends PrimitiveArray {
     byteBuf.asFloatBuffer().put(array, offset, length);
     byteBuf.position(0);
     byteBuf.limit(byteSize);
-    long totalBytesWritten = 0;
-    while (byteBuf.hasRemaining()) {
-      final int written = channel.write(byteBuf);
-      if (written == 0) {
-        Thread.sleep(1);
-      }
-      totalBytesWritten += written;
-    }
-    return totalBytesWritten;
+    return PrimitiveArray.writeToChannelBuffered(channel, byteBuf);
   }
 
   /**

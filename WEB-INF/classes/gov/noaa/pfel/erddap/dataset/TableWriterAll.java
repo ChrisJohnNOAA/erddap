@@ -97,7 +97,11 @@ public class TableWriterAll extends TableWriter {
           for (int col = 0; col < columnChannels.length; col++) {
             // close the channel
             try {
-              if (columnChannels[col] != null) columnChannels[col].close();
+              if (columnChannels[col] != null) {
+                PrimitiveArray.flushChannelBuffer(columnChannels[col]);
+                PrimitiveArray.discardChannelBuffer(columnChannels[col]);
+                columnChannels[col].close();
+              }
             } catch (Exception e) {
             }
             columnChannels[col] = null;
@@ -213,7 +217,11 @@ public class TableWriterAll extends TableWriter {
     for (int col = 0; col < columnChannels.length; col++) {
       // close the channel
       try {
-        if (columnChannels[col] != null) columnChannels[col].close();
+        if (columnChannels[col] != null) {
+          PrimitiveArray.flushChannelBuffer(columnChannels[col]);
+          PrimitiveArray.discardChannelBuffer(columnChannels[col]);
+          columnChannels[col].close();
+        }
       } catch (Exception e) {
       }
       columnChannels[col] = null;
@@ -379,7 +387,11 @@ public class TableWriterAll extends TableWriter {
         for (int col = 0; col < columnChannels.length; col++) {
           // close the channel
           try {
-            if (columnChannels[col] != null) columnChannels[col].close();
+            if (columnChannels[col] != null) {
+              PrimitiveArray.flushChannelBuffer(columnChannels[col]);
+              PrimitiveArray.discardChannelBuffer(columnChannels[col]);
+              columnChannels[col].close();
+            }
           } catch (Exception e) {
           }
           columnChannels[col] = null;

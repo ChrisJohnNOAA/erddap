@@ -1789,6 +1789,51 @@ public abstract class PrimitiveArray {
    */
   public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
 
+  private static final java.util.Map<FileChannel, java.nio.ByteBuffer> channelBuffers =
+      java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+  public static void flushChannelBuffer(FileChannel channel) throws Exception {
+    java.nio.ByteBuffer buf = channelBuffers.get(channel);
+    if (buf != null && buf.position() > 0) {
+      buf.flip();
+      while (buf.hasRemaining()) {
+        channel.write(buf);
+      }
+      buf.clear();
+    }
+  }
+
+  public static void discardChannelBuffer(FileChannel channel) {
+    channelBuffers.remove(channel);
+  }
+
+  public static long writeToChannelBuffered(FileChannel channel, java.nio.ByteBuffer src)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException("FileChannel is null.");
+    }
+    long totalBytesWritten = src.remaining();
+    if (totalBytesWritten == 0) {
+      return 0L;
+    }
+    if (totalBytesWritten >= 8192) {
+      flushChannelBuffer(channel);
+      while (src.hasRemaining()) {
+        channel.write(src);
+      }
+      return totalBytesWritten;
+    }
+    java.nio.ByteBuffer buf =
+        channelBuffers.computeIfAbsent(
+            channel,
+            c -> java.nio.ByteBuffer.allocate(8192).order(java.nio.ByteOrder.nativeOrder()));
+    if (buf.remaining() < src.remaining()) {
+      flushChannelBuffer(channel);
+    }
+    buf.put(src);
+    return totalBytesWritten;
+  }
+
   /**
    * This reads/adds n elements from a FileChannel using native byte order. Note: This method
    * modifies the FileChannel's current position.
