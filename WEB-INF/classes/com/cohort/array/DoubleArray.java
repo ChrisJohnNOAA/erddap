@@ -12,13 +12,13 @@ import com.google.common.collect.ImmutableList;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -238,14 +238,12 @@ public class DoubleArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new DoubleArray(new double[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    DoubleArray da = null;
     if (pa == null) {
-      da = new DoubleArray(willFind, true);
-    } else {
-      da = (DoubleArray) pa;
-      da.ensureCapacity(willFind);
-      da.size = willFind;
+      return new PrimitiveView(this, startIndex, stride, willFind);
     }
+    DoubleArray da = (DoubleArray) pa;
+    da.ensureCapacity(willFind);
+    da.size = willFind;
     double tar[] = da.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);
@@ -1105,7 +1103,8 @@ public class DoubleArray extends PrimitiveArray {
   }
 
   /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order.
    *
    * @param channel the FileChannel
    * @param offset the starting index
@@ -1114,9 +1113,11 @@ public class DoubleArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public long writeToChannel(final FileChannel channel, final int offset, final int length) throws Exception {
+  public long writeToChannel(final FileChannel channel, final int offset, final int length)
+      throws Exception {
     if (channel == null) {
-      throw new IllegalArgumentException(String2.ERROR + " in DoubleArray.writeToChannel: FileChannel is null.");
+      throw new IllegalArgumentException(
+          String2.ERROR + " in DoubleArray.writeToChannel: FileChannel is null.");
     }
     if (offset < 0) {
       throw new IllegalArgumentException(
@@ -1165,7 +1166,8 @@ public class DoubleArray extends PrimitiveArray {
   @Override
   public void readFromChannel(final FileChannel channel, final int n) throws Exception {
     if (channel == null) {
-      throw new IllegalArgumentException(String2.ERROR + " in DoubleArray.readFromChannel: FileChannel is null.");
+      throw new IllegalArgumentException(
+          String2.ERROR + " in DoubleArray.readFromChannel: FileChannel is null.");
     }
     if (n < 0) {
       throw new IllegalArgumentException(

@@ -10,12 +10,12 @@ import com.cohort.util.String2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -335,14 +335,12 @@ public class ULongArray extends PrimitiveArray {
           : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    ULongArray la = null;
     if (pa == null) {
-      la = new ULongArray(willFind, true);
-    } else {
-      la = (ULongArray) pa;
-      la.ensureCapacity(willFind);
-      la.size = willFind;
+      return new PrimitiveView(this, startIndex, stride, willFind);
     }
+    ULongArray la = (ULongArray) pa;
+    la.ensureCapacity(willFind);
+    la.size = willFind;
     final long tar[] = la.array;
     if (stride == 1) {
       System.arraycopy(array, startIndex, tar, 0, willFind);
@@ -1337,7 +1335,8 @@ public class ULongArray extends PrimitiveArray {
   }
 
   /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order.
    *
    * @param channel the FileChannel
    * @param offset the starting index
@@ -1346,9 +1345,11 @@ public class ULongArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public long writeToChannel(final FileChannel channel, final int offset, final int length) throws Exception {
+  public long writeToChannel(final FileChannel channel, final int offset, final int length)
+      throws Exception {
     if (channel == null) {
-      throw new IllegalArgumentException(String2.ERROR + " in ULongArray.writeToChannel: FileChannel is null.");
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ULongArray.writeToChannel: FileChannel is null.");
     }
     if (offset < 0) {
       throw new IllegalArgumentException(
@@ -1397,7 +1398,8 @@ public class ULongArray extends PrimitiveArray {
   @Override
   public void readFromChannel(final FileChannel channel, final int n) throws Exception {
     if (channel == null) {
-      throw new IllegalArgumentException(String2.ERROR + " in ULongArray.readFromChannel: FileChannel is null.");
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ULongArray.readFromChannel: FileChannel is null.");
     }
     if (n < 0) {
       throw new IllegalArgumentException(
