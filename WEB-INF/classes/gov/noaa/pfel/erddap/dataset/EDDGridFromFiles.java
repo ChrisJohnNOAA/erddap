@@ -2679,7 +2679,8 @@ public abstract class EDDGridFromFiles extends EDDGrid implements WatchUpdateHan
           decompFullName,
           tDataVariables, // start, stride, stop
           (IntArray)
-              tConstraints.subset(3, 1, tConstraints.size() - 1)); // remove the axis0 constraints
+              tConstraints.subset(
+                  new IntArray(), 3, 1, tConstraints.size() - 1)); // remove the axis0 constraints
     }
 
     throw new RuntimeException("Invalid axis0Type=" + axis0Type);
