@@ -48,10 +48,7 @@ public class PrimitiveView extends PrimitiveArray {
     if (materialized == null) {
       PrimitiveArray newArray = PrimitiveArray.factory(elementType(), size, false);
       for (int i = 0; i < size; i++) {
-        newArray.addObject(
-            source.toObjectArray() instanceof String[]
-                ? source.getString(offset + i * stride)
-                : source.getNiceDouble(offset + i * stride));
+        newArray.addFromPA(source, offset + i * stride, 1);
       }
       newArray.setMaxIsMV(maxIsMV);
       this.materialized = newArray;
@@ -248,16 +245,10 @@ public class PrimitiveView extends PrimitiveArray {
     int newSize = size - (to - from);
     PrimitiveArray newArray = PrimitiveArray.factory(elementType(), newSize, false);
     for (int i = 0; i < from; i++) {
-      newArray.addObject(
-          current().toObjectArray() instanceof String[]
-              ? current().getString(mapIndex(i))
-              : current().getNiceDouble(mapIndex(i)));
+      newArray.addFromPA(current(), mapIndex(i), 1);
     }
     for (int i = to; i < size; i++) {
-      newArray.addObject(
-          current().toObjectArray() instanceof String[]
-              ? current().getString(mapIndex(i))
-              : current().getNiceDouble(mapIndex(i)));
+      newArray.addFromPA(current(), mapIndex(i), 1);
     }
     newArray.setMaxIsMV(maxIsMV);
     this.materialized = newArray;
@@ -278,10 +269,7 @@ public class PrimitiveView extends PrimitiveArray {
     PrimitiveArray newArray = PrimitiveArray.factory(elementType(), newSize, false);
     for (int i = 0; i < size; i++) {
       if (bitset.get(i)) {
-        newArray.addObject(
-            current().toObjectArray() instanceof String[]
-                ? current().getString(mapIndex(i))
-                : current().getNiceDouble(mapIndex(i)));
+        newArray.addFromPA(current(), mapIndex(i), 1);
       }
     }
     newArray.setMaxIsMV(maxIsMV);
@@ -690,15 +678,7 @@ public class PrimitiveView extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, willFind);
     } else {
-      pa.ensureCapacity(willFind);
-      for (int i = startIndex; i <= stopIndex; i += stride) {
-        if (toObjectArray() instanceof String[]) {
-          pa.addObject(getString(i));
-        } else {
-          pa.addObject(getNiceDouble(i));
-        }
-      }
-      return pa;
+      return materialize().subset(pa, startIndex, stride, stopIndex);
     }
   }
 
