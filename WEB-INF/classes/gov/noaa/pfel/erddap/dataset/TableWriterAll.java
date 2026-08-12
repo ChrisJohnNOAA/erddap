@@ -172,6 +172,7 @@ public class TableWriterAll extends TableWriter {
                 StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.TRUNCATE_EXISTING);
+        PrimitiveArray.registerBufferedChannel(columnChannels[col]);
         if (col == 0 && reallyVerbose)
           String2.log(
               "TableWriterAll nColumns="

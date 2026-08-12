@@ -88,6 +88,7 @@ public class GridDataAllAccessor implements AutoCloseable {
                 StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.TRUNCATE_EXISTING);
+        PrimitiveArray.registerBufferedChannel(channels[dv]);
       }
 
       // get all the data

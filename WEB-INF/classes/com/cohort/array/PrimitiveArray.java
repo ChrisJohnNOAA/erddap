@@ -1802,6 +1802,19 @@ public abstract class PrimitiveArray {
   private static final java.util.Map<FileChannel, ChannelBufferInfo> channelBuffers =
       java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
+  private static final java.util.Set<FileChannel> bufferedChannels =
+      java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+
+  public static void registerBufferedChannel(FileChannel channel) {
+    if (channel != null) {
+      bufferedChannels.add(channel);
+    }
+  }
+
+  public static boolean isBufferedChannel(FileChannel channel) {
+    return channel != null && bufferedChannels.contains(channel);
+  }
+
   public static void flushChannelBuffer(FileChannel channel) throws Exception {
     ChannelBufferInfo info = channelBuffers.get(channel);
     if (info != null && info.buffer.position() > 0) {
@@ -1820,6 +1833,7 @@ public abstract class PrimitiveArray {
 
   public static void discardChannelBuffer(FileChannel channel) {
     channelBuffers.remove(channel);
+    bufferedChannels.remove(channel);
   }
 
   public static void prepareChannelForRead(FileChannel channel) throws Exception {
@@ -1845,6 +1859,13 @@ public abstract class PrimitiveArray {
     long totalBytesWritten = src.remaining();
     if (totalBytesWritten == 0) {
       return 0L;
+    }
+
+    if (!isBufferedChannel(channel)) {
+      while (src.hasRemaining()) {
+        channel.write(src);
+      }
+      return totalBytesWritten;
     }
 
     ChannelBufferInfo info = channelBuffers.get(channel);
