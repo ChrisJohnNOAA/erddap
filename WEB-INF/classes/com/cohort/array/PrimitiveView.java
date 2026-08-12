@@ -683,6 +683,14 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
+  public void clear() {
+    super.clear();
+    this.materialized = null;
+    this.offset = 0;
+    this.stride = 1;
+  }
+
+  @Override
   public PrimitiveArray setMaxIsMV(boolean tMaxIsMV) {
     super.setMaxIsMV(tMaxIsMV);
     if (materialized != null) {
