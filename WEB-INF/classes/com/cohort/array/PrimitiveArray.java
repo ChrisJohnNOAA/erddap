@@ -13,6 +13,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.nio.channels.FileChannel;
 import java.sql.Types;
 import java.text.MessageFormat;
@@ -1788,6 +1789,37 @@ public abstract class PrimitiveArray {
    * @throws Exception if trouble
    */
   public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
+
+  /**
+   * This writes all elements to a BufferedFileChannel using native byte order.
+   *
+   * @param channel the BufferedFileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public long writeToChannel(BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a BufferedFileChannel using
+   * native byte order.
+   *
+   * @param channel the BufferedFileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public long writeToChannel(BufferedFileChannel channel, int offset, int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in PrimitiveArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    channel.flush();
+    return writeToChannel(channel.fileChannel(), offset, length);
+  }
 
   /**
    * This reads/adds n elements from a FileChannel using native byte order. Note: This method

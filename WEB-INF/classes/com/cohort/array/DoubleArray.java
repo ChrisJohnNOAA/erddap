@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.nio.channels.FileChannel;
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -1099,6 +1100,47 @@ public class DoubleArray extends PrimitiveArray {
    * @return the number of bytes written
    * @throws Exception if trouble
    */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  @Override
+  public long writeToChannel(
+      final BufferedFileChannel channel, final int offset, final int length) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in DoubleArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in DoubleArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in DoubleArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in DoubleArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    final int bytesPerElement = 8;
+    final int byteSize = length * bytesPerElement;
+    final ByteBuffer byteBuf = ByteBuffer.allocate(byteSize).order(ByteOrder.nativeOrder());
+    byteBuf.asDoubleBuffer().put(array, offset, length);
+    byteBuf.position(0);
+    byteBuf.limit(byteSize);
+    return channel.write(byteBuf);
+  }
+
   @Override
   public long writeToChannel(final FileChannel channel) throws Exception {
     return writeToChannel(channel, 0, size);

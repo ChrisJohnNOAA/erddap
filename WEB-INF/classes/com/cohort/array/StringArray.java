@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.URL;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -1589,6 +1590,49 @@ public class StringArray extends PrimitiveArray {
    * @return the number of bytes written
    * @throws Exception if trouble
    */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  @Override
+  public long writeToChannel(
+      final BufferedFileChannel channel, final int offset, final int length) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in StringArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    channel.flush();
+    final FileChannel fc = channel.fileChannel();
+    final long startPos = fc.position();
+    final DataOutputStream dos = new DataOutputStream(Channels.newOutputStream(fc));
+    for (int i = offset; i < offset + length; i++) {
+      dos.writeUTF(get(i));
+    }
+    dos.flush();
+    return fc.position() - startPos;
+  }
+
   @Override
   public long writeToChannel(final FileChannel channel) throws Exception {
     return writeToChannel(channel, 0, size);
