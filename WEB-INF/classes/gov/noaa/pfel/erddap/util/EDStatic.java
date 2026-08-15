@@ -1206,7 +1206,10 @@ public class EDStatic {
    * @return ERDDAP base URL (example: http://erddap.yourdomain.com)
    */
   public static String baseUrl(HttpServletRequest request, String loggedInAs) {
-    if (EDStatic.config != null && EDStatic.config.useHeadersForUrl && request != null && request.getHeader("Host") != null) {
+    if (EDStatic.config != null
+        && EDStatic.config.useHeadersForUrl
+        && request != null
+        && request.getHeader("Host") != null) {
       String scheme = "http";
       String xProto = request.getHeader("X-Forwarded-Proto");
       if ("https".equalsIgnoreCase(xProto) || "https".equalsIgnoreCase(request.getScheme())) {
@@ -1214,7 +1217,9 @@ public class EDStatic {
       }
       return scheme + "://" + getHostAndPathFromRequest(request);
     }
-    return loggedInAs == null ? (config != null ? config.baseUrl : null) : (config != null ? config.baseHttpsUrl : null);
+    return loggedInAs == null
+        ? (config != null ? config.baseUrl : null)
+        : (config != null ? config.baseHttpsUrl : null);
   }
 
   /**
