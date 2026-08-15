@@ -10,10 +10,10 @@ import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.nio.channels.FileChannel;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.channels.FileChannel;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -1768,8 +1768,8 @@ public abstract class PrimitiveArray {
   public abstract void reverseBytes();
 
   /**
-   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
-   * Note: This method modifies the FileChannel's current position.
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order. Note:
+   * This method modifies the FileChannel's current position.
    *
    * @param channel the FileChannel
    * @return the number of bytes written
@@ -1778,8 +1778,8 @@ public abstract class PrimitiveArray {
   public abstract long writeToChannel(FileChannel channel) throws Exception;
 
   /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native byte order.
-   * Note: This method modifies the FileChannel's current position.
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order. Note: This method modifies the FileChannel's current position.
    *
    * @param channel the FileChannel
    * @param offset the starting index
@@ -1790,8 +1790,8 @@ public abstract class PrimitiveArray {
   public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
 
   /**
-   * This reads/adds n elements from a FileChannel using native byte order.
-   * Note: This method modifies the FileChannel's current position.
+   * This reads/adds n elements from a FileChannel using native byte order. Note: This method
+   * modifies the FileChannel's current position.
    *
    * @param channel the FileChannel
    * @param n the number of elements to read
