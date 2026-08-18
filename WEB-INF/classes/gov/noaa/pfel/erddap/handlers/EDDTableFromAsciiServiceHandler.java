@@ -15,7 +15,6 @@ public class EDDTableFromAsciiServiceHandler extends BaseTableHandler {
     this.datasetType = datasetType;
   }
 
-  private String tLocalSourceUrl = null;
   private final String[] tBeforeData = new String[11];
   private String tAfterData = null;
   private String tNoData = null;
@@ -46,7 +45,7 @@ public class EDDTableFromAsciiServiceHandler extends BaseTableHandler {
               tGlobalAttributes,
               tDataVariables,
               tReloadEveryNMinutes,
-              tLocalSourceUrl,
+              tSourceUrl,
               tBeforeData,
               tAfterData,
               tNoData);
@@ -65,7 +64,7 @@ public class EDDTableFromAsciiServiceHandler extends BaseTableHandler {
       return true;
     }
     switch (localName) {
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "beforeData1",
           "beforeData2",
           "beforeData3",

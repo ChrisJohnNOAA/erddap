@@ -16,7 +16,6 @@ public class EDDGridFromErddapHandler extends BaseGridHandler {
   private boolean tAccessibleViaFiles = EDStatic.config.defaultAccessibleViaFiles;
   private boolean tSubscribeToRemoteErddapDataset = EDStatic.config.subscribeToRemoteErddapDataset;
   private boolean tRedirect = true;
-  private String tLocalSourceUrl = null;
 
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes)
@@ -32,7 +31,7 @@ public class EDDGridFromErddapHandler extends BaseGridHandler {
       case "accessibleViaFiles" -> tAccessibleViaFiles = String2.parseBoolean(contentStr);
       case "subscribeToRemoteErddapDataset" ->
           tSubscribeToRemoteErddapDataset = String2.parseBoolean(contentStr);
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler but this is EDDGrid
       case "redirect" -> tRedirect = String2.parseBoolean(contentStr);
       default -> {
         return false;
@@ -56,7 +55,7 @@ public class EDDGridFromErddapHandler extends BaseGridHandler {
         tDefaultGraphQuery,
         tReloadEveryNMinutes,
         tUpdateEveryNMillis,
-        tLocalSourceUrl,
+        tSourceUrl,
         tSubscribeToRemoteErddapDataset,
         tRedirect,
         tnThreads,
