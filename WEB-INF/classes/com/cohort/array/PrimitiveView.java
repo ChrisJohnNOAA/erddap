@@ -789,6 +789,7 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public String testEquals(Object other) {
     if (this == other) return "";
     if (other == null || !(other instanceof PrimitiveArray otherPA)) {
