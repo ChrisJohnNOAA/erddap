@@ -11,9 +11,9 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
 /**
- * BufferedFileChannel wraps a FileChannel and buffers small writes using an 8 KB
- * ByteBuffer set to ByteOrder.nativeOrder(). Large writes (&gt;= 8 KB) flush the
- * buffer and write directly to the underlying FileChannel.
+ * BufferedFileChannel wraps a FileChannel and buffers small writes using an 8 KB ByteBuffer set to
+ * ByteOrder.nativeOrder(). Large writes (&gt;= 8 KB) flush the buffer and write directly to the
+ * underlying FileChannel.
  */
 public class BufferedFileChannel implements AutoCloseable {
 

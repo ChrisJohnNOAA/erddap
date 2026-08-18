@@ -160,7 +160,8 @@ public class GridDataAllAccessor implements AutoCloseable {
     String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
     String rawPath = baseFileName + dv;
     String sanitizedPath = TableWriterAll.sanitizePath(rawPath, baseDir);
-    try (FileChannel channel = FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ)) {
+    try (FileChannel channel =
+        FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ)) {
       readDataChunk(dv, channel, pa, 0, (int) n);
     }
     return pa;

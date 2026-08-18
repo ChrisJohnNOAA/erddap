@@ -21,8 +21,9 @@ public class BufferedFileChannelTests {
   @Test
   void testWriteSmallAndFlush(@TempDir Path tempDir) throws Exception {
     Path file = tempDir.resolve("test_small.bin");
-    try (FileChannel fc = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-         BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
+    try (FileChannel fc =
+            FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
       assertEquals(fc, bfc.fileChannel());
       assertEquals(fc, bfc.getChannel());
 
@@ -55,8 +56,9 @@ public class BufferedFileChannelTests {
   void testWriteLargeDirect(@TempDir Path tempDir) throws Exception {
     Path file = tempDir.resolve("test_large.bin");
     int size = 16384; // 16 KB > 8 KB
-    try (FileChannel fc = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-         BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
+    try (FileChannel fc =
+            FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
 
       ByteBuffer buf = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
       for (int i = 0; i < size / 4; i++) {
@@ -83,8 +85,9 @@ public class BufferedFileChannelTests {
   @Test
   void testNullWriteBuffer(@TempDir Path tempDir) throws Exception {
     Path file = tempDir.resolve("test_null.bin");
-    try (FileChannel fc = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-         BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
+    try (FileChannel fc =
+            FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
       assertThrows(IllegalArgumentException.class, () -> bfc.write(null));
     }
   }

@@ -9,6 +9,7 @@ import com.cohort.util.Math2;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.google.common.collect.ImmutableList;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -18,7 +19,6 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.URL;
-import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -1596,8 +1596,8 @@ public class StringArray extends PrimitiveArray {
   }
 
   @Override
-  public long writeToChannel(
-      final BufferedFileChannel channel, final int offset, final int length) throws Exception {
+  public long writeToChannel(final BufferedFileChannel channel, final int offset, final int length)
+      throws Exception {
     if (channel == null) {
       throw new IllegalArgumentException(
           String2.ERROR + " in StringArray.writeToChannel: BufferedFileChannel is null.");

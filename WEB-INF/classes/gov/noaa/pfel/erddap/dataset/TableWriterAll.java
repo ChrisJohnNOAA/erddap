@@ -20,9 +20,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 /**
- * TableWriterAll provides a way to write a table to a series of BufferedFileChannels (one per column)
- * in chunks so that the whole table is available but doesn't have to be in memory at one time. This
- * is used by EDDTable.
+ * TableWriterAll provides a way to write a table to a series of BufferedFileChannels (one per
+ * column) in chunks so that the whole table is available but doesn't have to be in memory at one
+ * time. This is used by EDDTable.
  *
  * <p>This is different from most TableWriters in that finish() doesn't write the data anywhere (to
  * an outputStream or to another tableWriter), it just makes all of the data available.
@@ -77,15 +77,18 @@ public class TableWriterAll extends TableWriter {
       String canonicalPath = new java.io.File(path).getCanonicalPath();
       if (!canonicalPath.startsWith(canonicalBaseDir)) {
         throw new SecurityException(
-            String2.ERROR + " in sanitizePath: path (" + canonicalPath
-                + ") is outside base directory (" + canonicalBaseDir + ")");
+            String2.ERROR
+                + " in sanitizePath: path ("
+                + canonicalPath
+                + ") is outside base directory ("
+                + canonicalBaseDir
+                + ")");
       }
       return canonicalPath;
     } catch (SecurityException se) {
       throw se;
     } catch (Exception e) {
-      throw new SecurityException(
-          String2.ERROR + " in sanitizePath: invalid path " + path, e);
+      throw new SecurityException(String2.ERROR + " in sanitizePath: invalid path " + path, e);
     }
   }
 
@@ -251,21 +254,19 @@ public class TableWriterAll extends TableWriter {
     if (cumulativeTable != null) return cumulativeTable.getColumn(col);
 
     Math2.ensureArraySizeOkay(totalNRows, "TableWriterAll");
-    PrimitiveArray pa =
-        PrimitiveArray.factory(
-            columnType(col), (int) totalNRows, false);
+    PrimitiveArray pa = PrimitiveArray.factory(columnType(col), (int) totalNRows, false);
     pa.setMaxIsMV(columnMaxIsMV[col]);
     String tFileName = columnFileName(col);
     String sanitizedFileName = sanitizePath(tFileName, dir);
-    try (FileChannel channel = FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ)) {
+    try (FileChannel channel =
+        FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ)) {
       readColumnChunk(col, channel, pa, 0, (int) totalNRows);
     }
     return pa;
   }
 
   public PrimitiveArray columnEmptyPA(int col) {
-    return PrimitiveArray.factory(columnType(col), 1, false)
-        .setMaxIsMV(columnMaxIsMV[col]);
+    return PrimitiveArray.factory(columnType(col), 1, false).setMaxIsMV(columnMaxIsMV[col]);
   }
 
   public DataInputStream dataInputStream(int col) throws Throwable {
@@ -292,8 +293,7 @@ public class TableWriterAll extends TableWriter {
   public void ensureMemoryForCumulativeTable() {
     Table table = makeEmptyTable();
     Math2.ensureMemoryAvailable(
-        nColumns() * nRows() * table.estimatedBytesPerRow(),
-        "TableWriterAll.cumulativeTable");
+        nColumns() * nRows() * table.estimatedBytesPerRow(), "TableWriterAll.cumulativeTable");
   }
 
   public Table cumulativeTable() throws Throwable {

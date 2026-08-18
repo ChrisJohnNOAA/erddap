@@ -7,6 +7,7 @@ package com.cohort.array;
 
 import com.cohort.util.Math2;
 import com.cohort.util.String2;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -15,7 +16,6 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.nio.channels.FileChannel;
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -1186,8 +1186,8 @@ public class LongArray extends PrimitiveArray {
   }
 
   @Override
-  public long writeToChannel(
-      final BufferedFileChannel channel, final int offset, final int length) throws Exception {
+  public long writeToChannel(final BufferedFileChannel channel, final int offset, final int length)
+      throws Exception {
     if (channel == null) {
       throw new IllegalArgumentException(
           String2.ERROR + " in LongArray.writeToChannel: BufferedFileChannel is null.");

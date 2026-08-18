@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
 import testDataset.Initialization;
 
 public class TableWriterAllTests {
@@ -37,7 +36,8 @@ public class TableWriterAllTests {
 
     // Invalid path traversal outside baseDir
     String traversalPath = tempDir.resolve("../outside.txt").toString();
-    assertThrows(SecurityException.class, () -> TableWriterAll.sanitizePath(traversalPath, baseDir));
+    assertThrows(
+        SecurityException.class, () -> TableWriterAll.sanitizePath(traversalPath, baseDir));
   }
 
   @Test
