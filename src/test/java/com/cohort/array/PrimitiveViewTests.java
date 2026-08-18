@@ -21,9 +21,12 @@ class PrimitiveViewTests {
 
   @org.junit.jupiter.api.Test
   void testChainingAndFlattening() {
-    DoubleArray da = new DoubleArray(new double[] {0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5});
-    PrimitiveView v1 = new PrimitiveView(da, 1, 2, 4); // indices 1, 3, 5, 7 -> values 1.5, 3.5, 5.5, 7.5
-    PrimitiveView v2 = new PrimitiveView(v1, 1, 2, 2); // v1 indices 1, 3 -> da indices 3, 7 -> values 3.5, 7.5
+    DoubleArray da =
+        new DoubleArray(new double[] {0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5});
+    PrimitiveView v1 =
+        new PrimitiveView(da, 1, 2, 4); // indices 1, 3, 5, 7 -> values 1.5, 3.5, 5.5, 7.5
+    PrimitiveView v2 =
+        new PrimitiveView(v1, 1, 2, 2); // v1 indices 1, 3 -> da indices 3, 7 -> values 3.5, 7.5
 
     Test.ensureEqual(v2.source, da, "v2 source flattened to original array");
     Test.ensureEqual(v2.offset, 3, "v2 offset");
