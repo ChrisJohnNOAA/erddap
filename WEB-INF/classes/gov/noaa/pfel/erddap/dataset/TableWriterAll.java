@@ -271,7 +271,8 @@ public class TableWriterAll extends TableWriter {
   public DataInputStream dataInputStream(int col) throws Throwable {
     String tFileName = columnFileName(col);
     String sanitizedFileName = sanitizePath(tFileName, dir);
-    return new DataInputStream(File2.getDecompressedBufferedInputStream(sanitizedFileName));
+    FileChannel fc = FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ);
+    return new gov.noaa.pfel.erddap.util.FileChannelDataInputStream(fc);
   }
 
   public String columnFileName(int col) {

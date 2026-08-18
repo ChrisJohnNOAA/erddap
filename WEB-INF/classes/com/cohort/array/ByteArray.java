@@ -1382,12 +1382,10 @@ public class ByteArray extends PrimitiveArray {
     if (length == 0) {
       return 0L;
     }
-    final int bytesPerElement = 1;
-    final int byteSize = length * bytesPerElement;
-    final ByteBuffer byteBuf = ByteBuffer.allocate(byteSize).order(ByteOrder.nativeOrder());
+    final ByteBuffer byteBuf = ByteBuffer.allocate(length).order(ByteOrder.nativeOrder());
     byteBuf.put(array, offset, length);
     byteBuf.position(0);
-    byteBuf.limit(byteSize);
+    byteBuf.limit(length);
     return channel.write(byteBuf);
   }
 
@@ -1526,6 +1524,10 @@ public class ByteArray extends PrimitiveArray {
    */
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
+    if (dis instanceof gov.noaa.pfel.erddap.util.FileChannelDataInputStream fcdis) {
+      readFromChannel(fcdis.getChannel(), n);
+      return;
+    }
     ensureCapacity(size + (long) n);
     dis.readFully(array, size, n);
     size += n;

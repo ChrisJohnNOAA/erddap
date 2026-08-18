@@ -142,7 +142,8 @@ public class GridDataAllAccessor implements AutoCloseable {
     String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
     String rawPath = baseFileName + dv;
     String sanitizedPath = TableWriterAll.sanitizePath(rawPath, baseDir);
-    return new DataInputStream(File2.getDecompressedBufferedInputStream(sanitizedPath));
+    FileChannel fc = FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ);
+    return new gov.noaa.pfel.erddap.util.FileChannelDataInputStream(fc);
   }
 
   /**
