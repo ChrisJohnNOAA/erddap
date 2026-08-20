@@ -2,6 +2,7 @@ package gov.noaa.pfel.erddap.util;
 
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.cohort.array.Attributes;
 import com.cohort.util.String2;
@@ -253,6 +254,8 @@ public class EDStaticTests {
       verify(request, atLeastOnce()).getHeader("Host");
       verify(request, atLeastOnce()).getHeader("X-Forwarded-Prefix");
       verify(request, atLeastOnce()).getScheme();
+      verify(request, Mockito.atLeast(0)).getHeader("X-Forwarded-Proto");
+      verifyNoMoreInteractions(request);
     }
   }
 
@@ -454,6 +457,17 @@ public class EDStaticTests {
           EDStatic.normalizeAndValidateHost("<script>alert(1)</script>.example.org"),
           "",
           "normalizeAndValidateHost blocks XSS in domain");
+
+      // 8. Test X-Forwarded-Proto Aware Scheme
+      HttpServletRequest reqForwardedProto = Mockito.mock(HttpServletRequest.class);
+      Mockito.when(reqForwardedProto.getHeader("Host")).thenReturn("evil.com");
+      Mockito.when(reqForwardedProto.getHeader("X-Forwarded-Proto")).thenReturn("https");
+      Mockito.when(reqForwardedProto.getScheme()).thenReturn("http");
+      // When validation fails on HTTPS request, we fallback to HTTPS baseUrl/baseHttpsUrl
+      Test.ensureEqual(
+          EDStatic.baseUrl(reqForwardedProto, null),
+          "https://" + expectedFallbackHttpsHost,
+          "X-Forwarded-Proto overrides request.getScheme()");
 
       // 3. Test Domain Extraction helper method
       Test.ensureEqual(
