@@ -16,6 +16,7 @@ import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import java.io.DataInputStream;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
@@ -68,27 +69,20 @@ public class TableWriterAll extends TableWriter {
     EDStatic.cleaner.register(this, cleanupAction);
   }
 
-  public static String sanitizePath(String path, String baseDir) throws SecurityException {
+  public static String sanitizePath(String relativeOrFullPath, String baseDir)
+      throws SecurityException {
     try {
-      String canonicalBaseDir = new java.io.File(baseDir).getCanonicalPath();
-      if (!canonicalBaseDir.endsWith(java.io.File.separator)) {
-        canonicalBaseDir += java.io.File.separator;
-      }
-      String canonicalPath = new java.io.File(path).getCanonicalPath();
-      if (!canonicalPath.startsWith(canonicalBaseDir)) {
+      Path basePath = Paths.get(baseDir).toAbsolutePath().normalize();
+      Path targetPath = basePath.resolve(relativeOrFullPath).toAbsolutePath().normalize();
+
+      if (!targetPath.startsWith(basePath)) {
         throw new SecurityException(
-            String2.ERROR
-                + " in sanitizePath: path ("
-                + canonicalPath
-                + ") is outside base directory ("
-                + canonicalBaseDir
-                + ")");
+            String2.ERROR + " in sanitizePath: Path traversal outside base directory");
       }
-      return canonicalPath;
-    } catch (SecurityException se) {
-      throw se;
+      return targetPath.toString();
     } catch (Exception e) {
-      throw new SecurityException(String2.ERROR + " in sanitizePath: invalid path " + path, e);
+      throw new SecurityException(
+          String2.ERROR + " in sanitizePath: Invalid path " + relativeOrFullPath, e);
     }
   }
 

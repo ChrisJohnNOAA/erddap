@@ -1811,14 +1811,8 @@ public abstract class PrimitiveArray {
    * @return the number of bytes written
    * @throws Exception if trouble
    */
-  public long writeToChannel(BufferedFileChannel channel, int offset, int length) throws Exception {
-    if (channel == null) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in PrimitiveArray.writeToChannel: BufferedFileChannel is null.");
-    }
-    channel.flush();
-    return writeToChannel(channel.fileChannel(), offset, length);
-  }
+  public abstract long writeToChannel(BufferedFileChannel channel, int offset, int length)
+      throws Exception;
 
   /**
    * This reads/adds n elements from a FileChannel using native byte order. Note: This method

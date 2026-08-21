@@ -1455,14 +1455,21 @@ public class UByteArray extends PrimitiveArray {
               + size
               + ").");
     }
-    if (length == 0) {
-      return 0L;
+    if (length == 0) return 0L;
+
+    final int CHUNK_BYTES = 64 * 1024;
+    long totalWritten = 0;
+    int remaining = length;
+    int currentOffset = offset;
+    while (remaining > 0) {
+      final int toWrite = Math.min(remaining, CHUNK_BYTES);
+      final ByteBuffer byteBuf =
+          ByteBuffer.wrap(array, currentOffset, toWrite).order(ByteOrder.nativeOrder());
+      totalWritten += channel.write(byteBuf);
+      currentOffset += toWrite;
+      remaining -= toWrite;
     }
-    final ByteBuffer byteBuf = ByteBuffer.allocate(length).order(ByteOrder.nativeOrder());
-    byteBuf.put(array, offset, length);
-    byteBuf.position(0);
-    byteBuf.limit(length);
-    return channel.write(byteBuf);
+    return totalWritten;
   }
 
   @Override

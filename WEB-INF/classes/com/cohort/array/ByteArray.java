@@ -1379,14 +1379,22 @@ public class ByteArray extends PrimitiveArray {
               + size
               + ").");
     }
-    if (length == 0) {
-      return 0L;
+    if (length == 0) return 0L;
+
+    final int CHUNK_BYTES = 64 * 1024;
+    long totalBytesWritten = 0;
+    int remaining = length;
+    int currentOffset = offset;
+    while (remaining > 0) {
+      final int toWrite = Math.min(remaining, CHUNK_BYTES);
+      final ByteBuffer byteBuf =
+          ByteBuffer.wrap(array, currentOffset, toWrite).order(ByteOrder.nativeOrder());
+      long written = channel.write(byteBuf);
+      totalBytesWritten += written;
+      currentOffset += toWrite;
+      remaining -= toWrite;
     }
-    final ByteBuffer byteBuf = ByteBuffer.allocate(length).order(ByteOrder.nativeOrder());
-    byteBuf.put(array, offset, length);
-    byteBuf.position(0);
-    byteBuf.limit(length);
-    return channel.write(byteBuf);
+    return totalBytesWritten;
   }
 
   @Override
