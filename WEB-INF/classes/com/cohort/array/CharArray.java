@@ -272,22 +272,27 @@ public class CharArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new CharArray(new char[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    CharArray ca = null;
     if (pa == null) {
-      ca = new CharArray(willFind, true);
-    } else {
-      ca = (CharArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof CharArray ca) {
       ca.ensureCapacity(willFind);
       ca.size = willFind;
+      final char tar[] = ca.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return ca;
     }
-    final char tar[] = ca.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return ca;
+    return pa;
   }
 
   /**

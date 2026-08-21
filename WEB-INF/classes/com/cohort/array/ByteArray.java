@@ -348,22 +348,27 @@ public class ByteArray extends PrimitiveArray {
           : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    ByteArray ba = null;
     if (pa == null) {
-      ba = new ByteArray(willFind, true);
-    } else {
-      ba = (ByteArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof ByteArray ba) {
       ba.ensureCapacity(willFind);
       ba.size = willFind;
+      final byte tar[] = ba.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return ba.setMaxIsMV(maxIsMV);
     }
-    final byte tar[] = ba.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return ba.setMaxIsMV(maxIsMV);
+    return pa.setMaxIsMV(maxIsMV);
   }
 
   /**

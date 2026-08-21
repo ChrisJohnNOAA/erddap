@@ -494,22 +494,27 @@ public class StringArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new StringArray(new String[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    StringArray sa = null; // for the results
     if (pa == null) {
-      sa = new StringArray(willFind, true);
-    } else {
-      sa = (StringArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof StringArray sa) {
       sa.ensureCapacity(willFind);
       sa.size = willFind;
+      String[] tar = sa.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return sa;
     }
-    String[] tar = sa.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return sa;
+    return pa;
   }
 
   /**
