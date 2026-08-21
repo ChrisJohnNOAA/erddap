@@ -1,8 +1,3 @@
-/* This file is part of the EMA project and is
- * Copyright (c) 2005 Robert Simons (CoHortSoftware@gmail.com).
- * See the MIT/X-like license in LICENSE.txt.
- * For more information visit www.cohortsoftware.com or contact CoHortSoftware@gmail.com.
- */
 package com.cohort.array;
 
 import com.cohort.util.String2;
@@ -20,7 +15,7 @@ public class PrimitiveView extends PrimitiveArray {
   public PrimitiveArray source;
   public int offset;
   public int stride;
-  public PrimitiveArray materialized;
+  public volatile PrimitiveArray materialized;
 
   /**
    * Constructs a PrimitiveView over a source PrimitiveArray.
@@ -66,6 +61,7 @@ public class PrimitiveView extends PrimitiveArray {
     this.stride = stride;
     this.size = length;
     this.materialized = null;
+    this.setMaxIsMV(source.getMaxIsMV());
   }
 
   /**
@@ -73,15 +69,45 @@ public class PrimitiveView extends PrimitiveArray {
    *
    * @return the materialized PrimitiveArray
    */
-  public PrimitiveArray materialize() {
+  public synchronized PrimitiveArray materialize() {
     if (materialized == null) {
       PrimitiveArray newArray = PrimitiveArray.factory(elementType(), size, false);
+      newArray.setMaxIsMV(getMaxIsMV());
       for (int i = 0; i < size; i++) {
         newArray.addFromPA(source, offset + i * stride, 1);
       }
       materialized = newArray;
     }
     return materialized;
+  }
+
+  private void checkIndex(int index) {
+    if (index < 0 || index >= size) {
+      throw new IndexOutOfBoundsException(
+          String2.ERROR
+              + " in PrimitiveView: index ("
+              + index
+              + ") out of bounds for view size ("
+              + size
+              + ").");
+    }
+  }
+
+  private void updateStateFromMaterialized() {
+    this.source = this.materialized;
+    this.size = this.materialized.size();
+    this.offset = 0;
+    this.stride = 1;
+  }
+
+  @Override
+  public PrimitiveArray setMaxIsMV(boolean tMaxIsMV) {
+    super.setMaxIsMV(tMaxIsMV);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.setMaxIsMV(tMaxIsMV);
+    }
+    return this;
   }
 
   @Override
@@ -111,7 +137,8 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public int capacity() {
-    return materialized != null ? materialized.capacity() : size;
+    PrimitiveArray m = materialized;
+    return m != null ? m.capacity() : size;
   }
 
   @Override
@@ -142,162 +169,169 @@ public class PrimitiveView extends PrimitiveArray {
   // Getters
   @Override
   public int getInt(int index) {
-    return materialized != null
-        ? materialized.getInt(index)
-        : source.getInt(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getInt(index) : source.getInt(offset + index * stride);
   }
 
   @Override
   public int getRawInt(int index) {
-    return materialized != null
-        ? materialized.getRawInt(index)
-        : source.getRawInt(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getRawInt(index) : source.getRawInt(offset + index * stride);
   }
 
   @Override
   public long getLong(int index) {
-    return materialized != null
-        ? materialized.getLong(index)
-        : source.getLong(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getLong(index) : source.getLong(offset + index * stride);
   }
 
   @Override
   public BigInteger getULong(int index) {
-    return materialized != null
-        ? materialized.getULong(index)
-        : source.getULong(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getULong(index) : source.getULong(offset + index * stride);
   }
 
   @Override
   public float getFloat(int index) {
-    return materialized != null
-        ? materialized.getFloat(index)
-        : source.getFloat(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getFloat(index) : source.getFloat(offset + index * stride);
   }
 
   @Override
   public double getDouble(int index) {
-    return materialized != null
-        ? materialized.getDouble(index)
-        : source.getDouble(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getDouble(index) : source.getDouble(offset + index * stride);
   }
 
   @Override
   public double getUnsignedDouble(int index) {
-    return materialized != null
-        ? materialized.getUnsignedDouble(index)
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null
+        ? m.getUnsignedDouble(index)
         : source.getUnsignedDouble(offset + index * stride);
   }
 
   @Override
   public double getRawDouble(int index) {
-    return materialized != null
-        ? materialized.getRawDouble(index)
-        : source.getRawDouble(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getRawDouble(index) : source.getRawDouble(offset + index * stride);
   }
 
   @Override
   public double getNiceDouble(int index) {
-    return materialized != null
-        ? materialized.getNiceDouble(index)
-        : source.getNiceDouble(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getNiceDouble(index) : source.getNiceDouble(offset + index * stride);
   }
 
   @Override
   public double getRawNiceDouble(int index) {
-    return materialized != null
-        ? materialized.getRawNiceDouble(index)
-        : source.getRawNiceDouble(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getRawNiceDouble(index) : source.getRawNiceDouble(offset + index * stride);
   }
 
   @Override
   public String getString(int index) {
-    return materialized != null
-        ? materialized.getString(index)
-        : source.getString(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getString(index) : source.getString(offset + index * stride);
   }
 
   @Override
   public String getJsonString(int index) {
-    return materialized != null
-        ? materialized.getJsonString(index)
-        : source.getJsonString(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getJsonString(index) : source.getJsonString(offset + index * stride);
   }
 
   @Override
   public String getNccsvDataString(int index) {
-    return materialized != null
-        ? materialized.getNccsvDataString(index)
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null
+        ? m.getNccsvDataString(index)
         : source.getNccsvDataString(offset + index * stride);
   }
 
   @Override
   public String getNccsv127DataString(int index) {
-    return materialized != null
-        ? materialized.getNccsv127DataString(index)
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null
+        ? m.getNccsv127DataString(index)
         : source.getNccsv127DataString(offset + index * stride);
   }
 
   @Override
   public String getSVString(int index) {
-    return materialized != null
-        ? materialized.getSVString(index)
-        : source.getSVString(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getSVString(index) : source.getSVString(offset + index * stride);
   }
 
   @Override
   public String getUtf8TsvString(int index) {
-    return materialized != null
-        ? materialized.getUtf8TsvString(index)
-        : source.getUtf8TsvString(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getUtf8TsvString(index) : source.getUtf8TsvString(offset + index * stride);
   }
 
   @Override
   public String getRawString(int index) {
-    return materialized != null
-        ? materialized.getRawString(index)
-        : source.getRawString(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getRawString(index) : source.getRawString(offset + index * stride);
   }
 
   @Override
   public String getRawestString(int index) {
-    return materialized != null
-        ? materialized.getRawestString(index)
-        : source.getRawestString(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getRawestString(index) : source.getRawestString(offset + index * stride);
   }
 
   @Override
   public PAOne getPAOne(int index) {
-    return materialized != null
-        ? materialized.getPAOne(index)
-        : source.getPAOne(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getPAOne(index) : source.getPAOne(offset + index * stride);
   }
 
   @Override
   public PAOne getPAOne(int index, PAOne paOne) {
-    return materialized != null
-        ? materialized.getPAOne(index, paOne)
-        : source.getPAOne(offset + index * stride, paOne);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.getPAOne(index, paOne) : source.getPAOne(offset + index * stride, paOne);
   }
 
   @Override
   public boolean isMaxValue(int index) {
-    return materialized != null
-        ? materialized.isMaxValue(index)
-        : source.isMaxValue(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.isMaxValue(index) : source.isMaxValue(offset + index * stride);
   }
 
   @Override
   public boolean isMissingValue(int index) {
-    return materialized != null
-        ? materialized.isMissingValue(index)
-        : source.isMissingValue(offset + index * stride);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    return m != null ? m.isMissingValue(index) : source.isMissingValue(offset + index * stride);
   }
 
   @Override
   public int indexOf(String lookFor, int startIndex) {
-    if (materialized != null) {
-      return materialized.indexOf(lookFor, startIndex);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.indexOf(lookFor, startIndex);
     }
     for (int i = Math.max(0, startIndex); i < size; i++) {
       String s = getString(i);
@@ -310,8 +344,9 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public int lastIndexOf(String lookFor, int startIndex) {
-    if (materialized != null) {
-      return materialized.lastIndexOf(lookFor, startIndex);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.lastIndexOf(lookFor, startIndex);
     }
     for (int i = Math.min(size - 1, startIndex); i >= 0; i--) {
       String s = getString(i);
@@ -325,115 +360,127 @@ public class PrimitiveView extends PrimitiveArray {
   // Point Setters & Mutating Methods
   @Override
   public void setInt(int index, int i) {
+    checkIndex(index);
     materialize().setInt(index, i);
   }
 
   @Override
   public void setLong(int index, long i) {
+    checkIndex(index);
     materialize().setLong(index, i);
   }
 
   @Override
   public void setULong(int index, BigInteger i) {
+    checkIndex(index);
     materialize().setULong(index, i);
   }
 
   @Override
   public void setFloat(int index, float d) {
+    checkIndex(index);
     materialize().setFloat(index, d);
   }
 
   @Override
   public void setDouble(int index, double d) {
+    checkIndex(index);
     materialize().setDouble(index, d);
   }
 
   @Override
   public void setString(int index, String s) {
+    checkIndex(index);
     materialize().setString(index, s);
   }
 
   @Override
   public void setPAOne(int index, PAOne paOne) {
+    checkIndex(index);
     materialize().setPAOne(index, paOne);
   }
 
   @Override
   public void setFromPA(int index, PrimitiveArray otherPA, int otherIndex) {
+    checkIndex(index);
     materialize().setFromPA(index, otherPA, otherIndex);
   }
 
   @Override
   public void atInsertString(int index, String value) {
+    if (index < 0 || index > size) {
+      throw new IndexOutOfBoundsException(
+          "Index (" + index + ") out of bounds for insertion into size (" + size + ").");
+    }
     materialize().atInsertString(index, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addObject(Object value) {
     materialize().addObject(value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void add(StructureData sd, String memberName) {
     materialize().add(sd, memberName);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addNPAOnes(int n, PAOne value) {
     materialize().addNPAOnes(n, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addNStrings(int n, String value) {
     materialize().addNStrings(n, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addNFloats(int n, float value) {
     materialize().addNFloats(n, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addNDoubles(int n, double value) {
     materialize().addNDoubles(n, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addNInts(int n, int value) {
     materialize().addNInts(n, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void addNLongs(int n, long value) {
     materialize().addNLongs(n, value);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public PrimitiveArray addFromPA(PrimitiveArray otherPA, int otherIndex, int nValues) {
     materialize().addFromPA(otherPA, otherIndex, nValues);
-    size = materialized.size();
+    updateStateFromMaterialized();
     return this;
   }
 
   @Override
   public void append(PrimitiveArray primitiveArray) {
     materialize().append(primitiveArray);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void rawAppend(PrimitiveArray primitiveArray) {
     materialize().rawAppend(primitiveArray);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
@@ -479,20 +526,14 @@ public class PrimitiveView extends PrimitiveArray {
   // Optimized Mutators (Rule 5)
   @Override
   public void remove(int index) {
-    if (index < 0 || index >= size) {
-      throw new IllegalArgumentException(
-          String2.ERROR
-              + " in PrimitiveView.remove: index ("
-              + index
-              + ") >= size ("
-              + size
-              + ").");
-    }
+    checkIndex(index);
     int targetSize = size - 1;
     PrimitiveArray target = PrimitiveArray.factory(elementType(), targetSize, false);
-    if (materialized != null) {
-      if (index > 0) target.addFromPA(materialized, 0, index);
-      if (index < targetSize) target.addFromPA(materialized, index + 1, targetSize - index);
+    target.setMaxIsMV(getMaxIsMV());
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      if (index > 0) target.addFromPA(m, 0, index);
+      if (index < targetSize) target.addFromPA(m, index + 1, targetSize - index);
     } else {
       for (int i = 0; i < index; i++) {
         target.addFromPA(source, offset + i * stride, 1);
@@ -501,10 +542,11 @@ public class PrimitiveView extends PrimitiveArray {
         target.addFromPA(source, offset + i * stride, 1);
       }
     }
-    materialized = target;
-    size = targetSize;
-    offset = 0;
-    stride = 1;
+    this.materialized = target;
+    this.source = target;
+    this.size = targetSize;
+    this.offset = 0;
+    this.stride = 1;
   }
 
   @Override
@@ -517,9 +559,11 @@ public class PrimitiveView extends PrimitiveArray {
     if (numToRemove == 0) return;
     int targetSize = size - numToRemove;
     PrimitiveArray target = PrimitiveArray.factory(elementType(), targetSize, false);
-    if (materialized != null) {
-      if (from > 0) target.addFromPA(materialized, 0, from);
-      if (to < size) target.addFromPA(materialized, to, size - to);
+    target.setMaxIsMV(getMaxIsMV());
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      if (from > 0) target.addFromPA(m, 0, from);
+      if (to < size) target.addFromPA(m, to, size - to);
     } else {
       for (int i = 0; i < from; i++) {
         target.addFromPA(source, offset + i * stride, 1);
@@ -528,10 +572,11 @@ public class PrimitiveView extends PrimitiveArray {
         target.addFromPA(source, offset + i * stride, 1);
       }
     }
-    materialized = target;
-    size = targetSize;
-    offset = 0;
-    stride = 1;
+    this.materialized = target;
+    this.source = target;
+    this.size = targetSize;
+    this.offset = 0;
+    this.stride = 1;
   }
 
   @Override
@@ -541,28 +586,32 @@ public class PrimitiveView extends PrimitiveArray {
       keepCount++;
     }
     PrimitiveArray target = PrimitiveArray.factory(elementType(), keepCount, false);
-    if (materialized != null) {
+    target.setMaxIsMV(getMaxIsMV());
+    PrimitiveArray m = materialized;
+    if (m != null) {
       for (int i = bitset.nextSetBit(0); i >= 0 && i < size; i = bitset.nextSetBit(i + 1)) {
-        target.addFromPA(materialized, i, 1);
+        target.addFromPA(m, i, 1);
       }
     } else {
       for (int i = bitset.nextSetBit(0); i >= 0 && i < size; i = bitset.nextSetBit(i + 1)) {
         target.addFromPA(source, offset + i * stride, 1);
       }
     }
-    materialized = target;
-    size = keepCount;
-    offset = 0;
-    stride = 1;
+    this.materialized = target;
+    this.source = target;
+    this.size = keepCount;
+    this.offset = 0;
+    this.stride = 1;
   }
 
   // State Re-Initialization (Rule 6)
   @Override
   public void clear() {
     super.clear();
-    materialized = null;
-    offset = 0;
-    stride = 1;
+    this.source = PrimitiveArray.factory(elementType(), 0, false);
+    this.materialized = null;
+    this.offset = 0;
+    this.stride = 1;
   }
 
   // Subsets
@@ -592,7 +641,12 @@ public class PrimitiveView extends PrimitiveArray {
     if (pa == null) {
       return new PrimitiveView(this, startIndex, stride, subLength);
     }
+
     pa.clear();
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.subset(pa, startIndex, stride, effectiveStop);
+    }
     for (int i = 0; i < subLength; i++) {
       pa.addFromPA(this, startIndex + i * stride, 1);
     }
@@ -644,10 +698,23 @@ public class PrimitiveView extends PrimitiveArray {
   // Comparison
   @Override
   public int compare(int index1, PrimitiveArray otherPA, int index2) {
-    if (materialized != null) {
-      return materialized.compare(index1, otherPA, index2);
+    checkIndex(index1);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.compare(index1, otherPA, index2);
     }
     return source.compare(offset + index1 * stride, otherPA, index2);
+  }
+
+  @Override
+  public int compare(int index1, int index2) {
+    checkIndex(index1);
+    checkIndex(index2);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.compare(index1, index2);
+    }
+    return source.compare(offset + index1 * stride, offset + index2 * stride);
   }
 
   // Write I/O Methods
@@ -658,8 +725,13 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public long writeToChannel(FileChannel channel, int off, int len) throws Exception {
-    if (materialized != null) {
-      return materialized.writeToChannel(channel, off, len);
+    if (off < 0 || len < 0 || (long) off + len > size) {
+      throw new IndexOutOfBoundsException(
+          "Invalid range: offset=" + off + ", len=" + len + ", view size=" + size);
+    }
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.writeToChannel(channel, off, len);
     }
     if (stride == 1) {
       return source.writeToChannel(channel, offset + off, len);
@@ -669,28 +741,33 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public int writeDos(DataOutputStream dos) throws Exception {
-    if (materialized != null) {
-      return materialized.writeDos(dos);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.writeDos(dos);
     }
-    int bytesWritten = 0;
+    int bytesPerElem = 0;
     for (int i = 0; i < size; i++) {
-      bytesWritten += writeDos(dos, i);
+      bytesPerElem = writeDos(dos, i);
     }
-    return bytesWritten;
+    return size == 0 ? 0 : bytesPerElem;
   }
 
   @Override
   public int writeDos(DataOutputStream dos, int i) throws Exception {
-    if (materialized != null) {
-      return materialized.writeDos(dos, i);
+    checkIndex(i);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.writeDos(dos, i);
     }
     return source.writeDos(dos, offset + i * stride);
   }
 
   @Override
   public void writeToRAF(RandomAccessFile raf, int index) throws Exception {
-    if (materialized != null) {
-      materialized.writeToRAF(raf, index);
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.writeToRAF(raf, index);
     } else {
       source.writeToRAF(raf, offset + index * stride);
     }
@@ -698,8 +775,9 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public void externalizeForDODS(DataOutputStream dos) throws Exception {
-    if (materialized != null) {
-      materialized.externalizeForDODS(dos);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.externalizeForDODS(dos);
     } else {
       dos.writeInt(size);
       dos.writeInt(size);
@@ -709,8 +787,10 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public void externalizeForDODS(DataOutputStream dos, int i) throws Exception {
-    if (materialized != null) {
-      materialized.externalizeForDODS(dos, i);
+    checkIndex(i);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.externalizeForDODS(dos, i);
     } else {
       source.externalizeForDODS(dos, offset + i * stride);
     }
@@ -720,25 +800,25 @@ public class PrimitiveView extends PrimitiveArray {
   @Override
   public void readFromChannel(FileChannel channel, int n) throws Exception {
     materialize().readFromChannel(channel, n);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void readDis(DataInputStream dis, int n) throws Exception {
     materialize().readDis(dis, n);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void readFromRAF(RandomAccessFile raf) throws Exception {
     materialize().readFromRAF(raf);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   @Override
   public void internalizeFromDODS(DataInputStream dis) throws java.io.IOException {
     materialize().internalizeFromDODS(dis);
-    size = materialized.size();
+    updateStateFromMaterialized();
   }
 
   // Analysis / Helper Methods
@@ -754,8 +834,9 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public int firstTie() {
-    if (materialized != null) {
-      return materialized.firstTie();
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.firstTie();
     }
     for (int i = 1; i < size; i++) {
       if (compare(i - 1, i) == 0) {
@@ -767,8 +848,9 @@ public class PrimitiveView extends PrimitiveArray {
 
   @Override
   public int[] getNMinMaxIndex() {
-    if (materialized != null) {
-      return materialized.getNMinMaxIndex();
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getNMinMaxIndex();
     }
     int nValid = 0;
     int minIndex = -1;
