@@ -77,7 +77,7 @@ public class TableWriterAllTests {
 
     // Test readColumnChunk for col0 starting at row 2 with maxRows 3
     DoubleArray chunk0 = new DoubleArray();
-    String file0 = twa.columnFileName(0);
+    String file0 = dir + "/" + twa.columnFileName(0);
     try (FileChannel fc = FileChannel.open(Path.of(file0), StandardOpenOption.READ)) {
       TableWriterAll.readColumnChunk(0, fc, chunk0, 2, 3);
     }
@@ -88,7 +88,7 @@ public class TableWriterAllTests {
 
     // Test readColumnChunk for StringArray col2 starting at row 3 with maxRows 2
     StringArray chunk2 = new StringArray();
-    String file2 = twa.columnFileName(2);
+    String file2 = dir + "/" + twa.columnFileName(2);
     try (FileChannel fc = FileChannel.open(Path.of(file2), StandardOpenOption.READ)) {
       TableWriterAll.readColumnChunk(2, fc, chunk2, 3, 2);
     }

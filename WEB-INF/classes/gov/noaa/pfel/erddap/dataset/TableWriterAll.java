@@ -271,8 +271,7 @@ public class TableWriterAll extends TableWriter {
   }
 
   public String columnFileName(int col) {
-    return dir
-        + fileNameNoExt
+    return fileNameNoExt
         + "."
         + randomInt
         + "."
@@ -325,7 +324,7 @@ public class TableWriterAll extends TableWriter {
       if (columnNames == null) return;
       int nColumns = nColumns();
       for (int col = 0; col < nColumns; col++) {
-        File2.simpleDelete(columnFileName(col));
+        File2.simpleDelete(sanitizePath(columnFileName(col), dir));
       }
     } catch (Throwable t) {
       String2.log("TableWriterAll.releaseResources caught:\n" + MustBe.throwableToString(t));

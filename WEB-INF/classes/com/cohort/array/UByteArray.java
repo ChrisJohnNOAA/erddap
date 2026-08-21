@@ -1607,10 +1607,6 @@ public class UByteArray extends PrimitiveArray {
    */
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
-    if (dis instanceof gov.noaa.pfel.erddap.util.FileChannelDataInputStream fcdis) {
-      readFromChannel(fcdis.getChannel(), n);
-      return;
-    }
     ensureCapacity(size + (long) n);
     dis.readFully(array, size, n);
     size += n;

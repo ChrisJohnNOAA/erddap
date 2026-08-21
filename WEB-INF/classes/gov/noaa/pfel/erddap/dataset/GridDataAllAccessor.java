@@ -54,8 +54,7 @@ public class GridDataAllAccessor implements AutoCloseable {
       String tQuery = gridDataAccessor.userDapQuery();
       String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
       baseFileName =
-          baseDir
-              + String2.md5Hex12(tQuery == null ? "" : tQuery)
+          String2.md5Hex12(tQuery == null ? "" : tQuery)
               + "_"
               + Math2.random(Integer.MAX_VALUE)
               + "_";
@@ -182,6 +181,22 @@ public class GridDataAllAccessor implements AutoCloseable {
         int nDv = dataPAType.length;
         for (int dv = 0; dv < nDv; dv++) {
           try {
+            // Prefer deleting the sanitized full path (baseDir + filename). If that fails,
+            // fall back to deleting whatever baseFileName+dv resolves to.
+            try {
+              String baseDir = null;
+              try {
+                if (gridDataAccessor != null) baseDir = gridDataAccessor.eddGrid().cacheDirectory();
+              } catch (Throwable t3) {
+                baseDir = null;
+              }
+              if (baseDir != null) {
+                String sanitized = TableWriterAll.sanitizePath(baseFileName + dv, baseDir);
+                File2.delete(sanitized);
+                continue;
+              }
+            } catch (Throwable t4) {
+            }
             File2.delete(baseFileName + dv);
           } catch (Throwable t2) {
             String2.log(

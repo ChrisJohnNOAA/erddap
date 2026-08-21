@@ -1484,6 +1484,7 @@ public class UShortArray extends PrimitiveArray {
       final int toRead = Math.min(remaining, CHUNK_ELEMENTS);
       final int bytesToRead = toRead * bytesPerElement;
       byteBuf.clear();
+      byteBuf.limit(bytesToRead);
       int totalBytesRead = 0;
       while (totalBytesRead < bytesToRead) {
         final int read = channel.read(byteBuf);
