@@ -279,6 +279,9 @@ public class EDConfig {
   @FeatureFlag public boolean useSisISO19115 = false;
   @FeatureFlag public boolean useSisISO19139 = false;
   @FeatureFlag public boolean useHeadersForUrl = true;
+  @FeatureFlag public boolean verifyHostNameErddapUrl = false;
+  public java.util.Set<String> allowedHosts =
+      java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
   @FeatureFlag public boolean generateCroissantSchema = true;
   @FeatureFlag public boolean touchThreadOnlyWhenItems = true;
   @FeatureFlag public boolean taskCacheClear = true;
@@ -680,6 +683,42 @@ public class EDConfig {
             String2.toLowerCase(getSetupEVString(setup, ev, "corsAllowOrigin", (String) null)),
             ',');
     useHeadersForUrl = getSetupEVBoolean(setup, ev, "useHeadersForUrl", true);
+    verifyHostNameErddapUrl = getSetupEVBoolean(setup, ev, "verifyHostNameErddapUrl", false);
+    String allowedHostsStr = getSetupEVString(setup, ev, "allowedHosts", "");
+    allowedHosts = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
+    if (String2.isSomething(allowedHostsStr)) {
+      String[] parts = String2.split(allowedHostsStr, ',');
+      for (String part : parts) {
+        if (part != null) {
+          String normalized = part.trim().toLowerCase();
+          int closingBracket = normalized.indexOf(']');
+          if (closingBracket >= 0) {
+            int colonIdx = normalized.indexOf(':', closingBracket);
+            if (colonIdx >= 0) {
+              normalized = normalized.substring(0, colonIdx);
+            }
+          } else {
+            int colonIdx = normalized.indexOf(':');
+            if (colonIdx >= 0) {
+              normalized = normalized.substring(0, colonIdx);
+            }
+          }
+          normalized = normalized.trim();
+          if (!normalized.isEmpty()) {
+            allowedHosts.add(normalized);
+          }
+        }
+      }
+    }
+    // Automatically parse domain names from baseUrl and baseHttpsUrl
+    String baseDomain = extractDomain(baseUrl);
+    if (baseDomain != null && !baseDomain.isEmpty()) {
+      allowedHosts.add(baseDomain);
+    }
+    String baseHttpsDomain = extractDomain(baseHttpsUrl);
+    if (baseHttpsDomain != null && !baseHttpsDomain.isEmpty()) {
+      allowedHosts.add(baseHttpsDomain);
+    }
     slideSorterActive = getSetupEVBoolean(setup, ev, "slideSorterActive", true);
     variablesMustHaveIoosCategory =
         getSetupEVBoolean(setup, ev, "variablesMustHaveIoosCategory", true);
@@ -827,5 +866,35 @@ public class EDConfig {
       return value;
     }
     return setup.getNotNothingString(paramName, errorInMethod);
+  }
+
+  /**
+   * Automatically extracts the domain name/host from a URL string, converting it to lowercase and
+   * removing any ports.
+   */
+  public static String extractDomain(String urlString) {
+    if (urlString == null
+        || urlString.trim().isEmpty()
+        || urlString.equalsIgnoreCase("(not specified)")) {
+      return null;
+    }
+    String s = urlString.trim();
+    if (!s.contains("://")) {
+      s = "http://" + s;
+    }
+    try {
+      java.net.URI uri = new java.net.URI(s);
+      String host = uri.getHost();
+      if (host != null) {
+        String h = host.trim().toLowerCase();
+        if (h.contains(":") && !h.startsWith("[")) {
+          h = "[" + h + "]";
+        }
+        return h;
+      }
+    } catch (Exception e) {
+      String2.log("Error parsing host from URL: " + urlString + " - " + e.toString());
+    }
+    return null;
   }
 }
