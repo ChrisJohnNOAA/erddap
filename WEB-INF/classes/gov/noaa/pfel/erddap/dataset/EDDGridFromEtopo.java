@@ -311,12 +311,12 @@ public class EDDGridFromEtopo extends EDDGrid {
         (DoubleArray)
             axisVariables[0]
                 .sourceValues()
-                .subset(tConstraints.get(0), tConstraints.get(1), tConstraints.get(2));
+                .subset(new DoubleArray(), tConstraints.get(0), tConstraints.get(1), tConstraints.get(2));
     DoubleArray lons =
         (DoubleArray)
             axisVariables[1]
                 .sourceValues()
-                .subset(tConstraints.get(3), tConstraints.get(4), tConstraints.get(5));
+                .subset(new DoubleArray(), tConstraints.get(3), tConstraints.get(4), tConstraints.get(5));
     int nLats = lats.size();
     int nLons = lons.size();
     int nLatsLons = nLats * nLons;
