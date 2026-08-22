@@ -71,8 +71,9 @@ public class BufferedFileChannel implements AutoCloseable {
       return 0;
     }
 
-    // If source chunk is >= BUFFER_SIZE and buffer is empty, write directly to channel
-    if (src.remaining() >= BUFFER_SIZE && buffer.position() == 0) {
+    // If source is large, flush pending buffer first, then write source directly
+    if (src.remaining() >= BUFFER_SIZE) {
+      flush();
       while (src.hasRemaining()) {
         channel.write(src);
       }
@@ -88,10 +89,6 @@ public class BufferedFileChannel implements AutoCloseable {
       src.limit(src.position() + toCopy);
       buffer.put(src);
       src.limit(oldLimit);
-    }
-
-    if (buffer.remaining() == 0) {
-      flush();
     }
 
     return totalWritten;

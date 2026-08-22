@@ -1423,7 +1423,6 @@ public class CharArray extends PrimitiveArray {
       byteBuf.limit(toWrite * bytesPerElement);
       while (byteBuf.hasRemaining()) {
         final int written = channel.write(byteBuf);
-        if (written == 0) Thread.sleep(1);
         totalBytesWritten += written;
       }
       currentOffset += toWrite;

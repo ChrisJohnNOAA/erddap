@@ -217,11 +217,12 @@ public class TableWriterAll extends TableWriter {
       return;
     }
     if (destBuffer instanceof com.cohort.array.StringArray sa) {
-      channel.position(0);
       DataInputStream dis = new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
       try {
-        for (long i = 0; i < startRow; i++) {
-          dis.readUTF();
+        if (channel.position() == 0 && startRow > 0) {
+          for (long i = 0; i < startRow; i++) {
+            dis.readUTF();
+          }
         }
         for (int i = 0; i < maxRows; i++) {
           sa.add(dis.readUTF());
