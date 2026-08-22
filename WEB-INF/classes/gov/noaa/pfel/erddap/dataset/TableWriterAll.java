@@ -217,13 +217,17 @@ public class TableWriterAll extends TableWriter {
       return;
     }
     if (destBuffer instanceof com.cohort.array.StringArray sa) {
+      if (startRow == 0) {
+        channel.position(0);
+      } else if (channel.position() == 0) {
+        DataInputStream dis =
+            new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
+        for (long i = 0; i < startRow; i++) {
+          dis.readUTF();
+        }
+      }
       DataInputStream dis = new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
       try {
-        if (channel.position() == 0 && startRow > 0) {
-          for (long i = 0; i < startRow; i++) {
-            dis.readUTF();
-          }
-        }
         for (int i = 0; i < maxRows; i++) {
           sa.add(dis.readUTF());
         }
@@ -264,11 +268,10 @@ public class TableWriterAll extends TableWriter {
     return PrimitiveArray.factory(columnType(col), 1, false).setMaxIsMV(columnMaxIsMV[col]);
   }
 
-  public DataInputStream dataInputStream(int col) throws Throwable {
+  public FileChannel openColumnChannel(int col) throws Exception {
     String tFileName = columnFileName(col);
     String sanitizedFileName = sanitizePath(tFileName, dir);
-    FileChannel fc = FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ);
-    return new gov.noaa.pfel.erddap.util.FileChannelDataInputStream(fc);
+    return FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ);
   }
 
   public String columnFileName(int col) {

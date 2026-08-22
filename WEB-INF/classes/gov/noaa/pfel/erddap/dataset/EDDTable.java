@@ -53,7 +53,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.xml.bind.JAXBException;
 import java.awt.Color;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -3707,21 +3706,21 @@ public abstract class EDDTable extends EDD {
         int ncOffset = 0;
         int bufferSize = EDStatic.config.partialRequestMaxCells;
         PrimitiveArray pa = null;
-        try (DataInputStream dis = twawm.dataInputStream(col)) {
+        try (java.nio.channels.FileChannel channel = twawm.openColumnChannel(col)) {
           PAType colType = twawm.columnType(col);
           Array array;
 
           while (nToGo > 0) {
-            bufferSize = Math.min(nToGo, bufferSize); // actual number to be transferred
+            int nToRead = Math.min(nToGo, bufferSize); // actual number to be transferred
             // use of != below (not <) lets toObjectArray below return internal array since
             // size=capacity
             if (pa == null || pa.elementType() != twawm.columnType(col)) {
               pa = twawm.columnEmptyPA(col);
-              pa.ensureCapacity(bufferSize);
+              pa.ensureCapacity(nToRead);
             }
             pa.clear();
             pa.setMaxIsMV(twawm.columnMaxIsMV(col)); // reset it after clear()
-            pa.readDis(dis, bufferSize);
+            TableWriterAll.readColumnChunk(col, channel, pa, ncOffset, nToRead);
             if (debugMode)
               String2.log(
                   ">> col="
@@ -3730,8 +3729,8 @@ public abstract class EDDTable extends EDD {
                       + nToGo
                       + " ncOffset="
                       + ncOffset
-                      + " bufferSize="
-                      + bufferSize
+                      + " nToRead="
+                      + nToRead
                       + " pa.capacity="
                       + pa.capacity()
                       + " pa.size="
