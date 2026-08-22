@@ -7,6 +7,7 @@ package com.cohort.array;
 
 import com.cohort.util.Math2;
 import com.cohort.util.String2;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -1221,6 +1222,62 @@ public class IntArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
+  public long writeToChannel(final BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in IntArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in IntArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in IntArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in IntArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    if (length == 0) return 0L;
+
+    final int bytesPerElement = 4;
+    final int CHUNK_BYTES = 64 * 1024;
+    final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
+    final ByteBuffer byteBuf =
+        ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+
+    long totalWritten = 0;
+    int remaining = length;
+    int currentOffset = offset;
+    while (remaining > 0) {
+      final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
+      byteBuf.clear();
+      byteBuf.asIntBuffer().put(array, currentOffset, toWrite);
+      byteBuf.position(0);
+      byteBuf.limit(toWrite * bytesPerElement);
+      totalWritten += channel.write(byteBuf);
+      currentOffset += toWrite;
+      remaining -= toWrite;
+    }
+    return totalWritten;
+  }
+
+  @Override
   public long writeToChannel(final FileChannel channel) throws Exception {
     return writeToChannel(channel, 0, size);
   }
@@ -1259,22 +1316,29 @@ public class IntArray extends PrimitiveArray {
               + size
               + ").");
     }
-    if (length == 0) {
-      return 0L;
-    }
+    if (length == 0) return 0L;
+
     final int bytesPerElement = 4;
-    final int byteSize = length * bytesPerElement;
-    final ByteBuffer byteBuf = ByteBuffer.allocate(byteSize).order(ByteOrder.nativeOrder());
-    byteBuf.asIntBuffer().put(array, offset, length);
-    byteBuf.position(0);
-    byteBuf.limit(byteSize);
+    final int CHUNK_BYTES = 64 * 1024;
+    final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
+    final ByteBuffer byteBuf =
+        ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+
     long totalBytesWritten = 0;
-    while (byteBuf.hasRemaining()) {
-      final int written = channel.write(byteBuf);
-      if (written == 0) {
-        Thread.sleep(1);
+    int remaining = length;
+    int currentOffset = offset;
+    while (remaining > 0) {
+      final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
+      byteBuf.clear();
+      byteBuf.asIntBuffer().put(array, currentOffset, toWrite);
+      byteBuf.position(0);
+      byteBuf.limit(toWrite * bytesPerElement);
+      while (byteBuf.hasRemaining()) {
+        final int written = channel.write(byteBuf);
+        totalBytesWritten += written;
       }
-      totalBytesWritten += written;
+      currentOffset += toWrite;
+      remaining -= toWrite;
     }
     return totalBytesWritten;
   }
@@ -1296,30 +1360,42 @@ public class IntArray extends PrimitiveArray {
       throw new IllegalArgumentException(
           String2.ERROR + " in IntArray.readFromChannel: n (" + n + ") < 0.");
     }
-    if (n == 0) {
-      return;
-    }
+    if (n == 0) return;
     ensureCapacity(size + (long) n);
+
     final int bytesPerElement = 4;
-    final int bytesToRead = n * bytesPerElement;
-    final ByteBuffer byteBuf = ByteBuffer.allocate(bytesToRead).order(ByteOrder.nativeOrder());
-    int totalBytesRead = 0;
-    while (totalBytesRead < bytesToRead) {
-      final int read = channel.read(byteBuf);
-      if (read == -1) {
-        throw new EOFException(
-            String2.ERROR
-                + " in IntArray.readFromChannel: EOF reached after reading "
-                + totalBytesRead
-                + " of "
-                + bytesToRead
-                + " bytes.");
+    final int CHUNK_BYTES = 64 * 1024;
+    final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
+    final ByteBuffer byteBuf =
+        ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+
+    int remaining = n;
+    int destOffset = size;
+    while (remaining > 0) {
+      final int toRead = Math.min(remaining, CHUNK_ELEMENTS);
+      final int bytesToRead = toRead * bytesPerElement;
+      byteBuf.clear();
+      byteBuf.limit(bytesToRead);
+      int totalBytesRead = 0;
+      while (totalBytesRead < bytesToRead) {
+        final int read = channel.read(byteBuf);
+        if (read == -1) {
+          throw new EOFException(
+              String2.ERROR
+                  + " in IntArray.readFromChannel: EOF reached after reading "
+                  + totalBytesRead
+                  + " of "
+                  + bytesToRead
+                  + " bytes.");
+        }
+        totalBytesRead += read;
       }
-      totalBytesRead += read;
+      byteBuf.position(0);
+      byteBuf.limit(bytesToRead);
+      byteBuf.asIntBuffer().get(array, destOffset, toRead);
+      destOffset += toRead;
+      remaining -= toRead;
     }
-    byteBuf.position(0);
-    byteBuf.limit(bytesToRead);
-    byteBuf.asIntBuffer().get(array, size, n);
     size += n;
   }
 
@@ -1362,6 +1438,10 @@ public class IntArray extends PrimitiveArray {
    */
   @Override
   public void readDis(final DataInputStream dis, final int n) throws Exception {
+    if (dis instanceof gov.noaa.pfel.erddap.util.FileChannelDataInputStream fcdis) {
+      readFromChannel(fcdis.getChannel(), n);
+      return;
+    }
     ensureCapacity(size + (long) n);
     for (int i = 0; i < n; i++) array[size++] = dis.readInt();
   }

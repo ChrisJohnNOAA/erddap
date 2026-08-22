@@ -8,6 +8,7 @@ package com.cohort.array;
 import com.cohort.util.File2;
 import com.cohort.util.Math2;
 import com.cohort.util.String2;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -1349,6 +1350,53 @@ public class ByteArray extends PrimitiveArray {
    * @return the number of bytes written
    * @throws Exception if trouble
    */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ByteArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ByteArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ByteArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in ByteArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) return 0L;
+
+    final int CHUNK_BYTES = 64 * 1024;
+    long totalBytesWritten = 0;
+    int remaining = length;
+    int currentOffset = offset;
+    while (remaining > 0) {
+      final int toWrite = Math.min(remaining, CHUNK_BYTES);
+      final ByteBuffer byteBuf =
+          ByteBuffer.wrap(array, currentOffset, toWrite).order(ByteOrder.nativeOrder());
+      long written = channel.write(byteBuf);
+      totalBytesWritten += written;
+      currentOffset += toWrite;
+      remaining -= toWrite;
+    }
+    return totalBytesWritten;
+  }
+
   @Override
   public long writeToChannel(final FileChannel channel) throws Exception {
     return writeToChannel(channel, 0, size);

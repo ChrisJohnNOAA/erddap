@@ -9,6 +9,7 @@ import com.cohort.util.Math2;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.google.common.collect.ImmutableList;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -16,8 +17,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.io.UTFDataFormatException;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -1589,6 +1592,120 @@ public class StringArray extends PrimitiveArray {
    * @return the number of bytes written
    * @throws Exception if trouble
    */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  // Helper method to write a String in Java Modified UTF-8 format directly into a ByteBuffer.
+  private static void writeUtfBytes(final String s, final ByteBuffer buf) {
+    final int sLen = s.length();
+    for (int i = 0; i < sLen; i++) {
+      final char c = s.charAt(i);
+      if (c >= 0x0001 && c <= 0x007F) {
+        buf.put((byte) c);
+      } else if (c > 0x07FF) {
+        buf.put((byte) (0xE0 | ((c >> 12) & 0x0F)));
+        buf.put((byte) (0x80 | ((c >> 6) & 0x3F)));
+        buf.put((byte) (0x80 | (c & 0x3F)));
+      } else {
+        buf.put((byte) (0xC0 | ((c >> 6) & 0x1F)));
+        buf.put((byte) (0x80 | (c & 0x3F)));
+      }
+    }
+  }
+
+  /**
+   * Writes a subset of elements (offset ... offset+length-1) to a BufferedFileChannel using chunked
+   * ByteBuffer serialization without bypassing channel buffering.
+   */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in StringArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+
+    long bytesWritten = 0;
+    final int CHUNK_SIZE = 65536; // 64 KB heap buffer for UTF string batching
+    final ByteBuffer byteBuf = ByteBuffer.allocate(CHUNK_SIZE);
+
+    for (int i = offset; i < offset + length; i++) {
+      String s = get(i);
+      if (s == null) {
+        s = "";
+      }
+
+      int utfLen = 0;
+      final int sLen = s.length();
+      for (int cIdx = 0; cIdx < sLen; cIdx++) {
+        final char c = s.charAt(cIdx);
+        if (c >= 0x0001 && c <= 0x007F) {
+          utfLen++;
+        } else if (c > 0x07FF) {
+          utfLen += 3;
+        } else {
+          utfLen += 2;
+        }
+      }
+
+      if (utfLen > 65535) {
+        throw new UTFDataFormatException(
+            String2.ERROR
+                + " in StringArray.writeToChannel: string length ("
+                + utfLen
+                + ") > 65535 bytes.");
+      }
+
+      final int totalStringBytes = 2 + utfLen;
+
+      if (byteBuf.remaining() < totalStringBytes) {
+        byteBuf.flip();
+        bytesWritten += channel.write(byteBuf);
+        byteBuf.clear();
+      }
+
+      if (totalStringBytes > CHUNK_SIZE) {
+        final ByteBuffer largeBuf = ByteBuffer.allocate(totalStringBytes);
+        largeBuf.putShort((short) utfLen);
+        writeUtfBytes(s, largeBuf);
+        largeBuf.flip();
+        bytesWritten += channel.write(largeBuf);
+      } else {
+        byteBuf.putShort((short) utfLen);
+        writeUtfBytes(s, byteBuf);
+      }
+    }
+
+    if (byteBuf.position() > 0) {
+      byteBuf.flip();
+      bytesWritten += channel.write(byteBuf);
+    }
+
+    return bytesWritten;
+  }
+
   @Override
   public long writeToChannel(final FileChannel channel) throws Exception {
     return writeToChannel(channel, 0, size);
