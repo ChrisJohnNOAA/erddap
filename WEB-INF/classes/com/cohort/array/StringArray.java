@@ -18,6 +18,8 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -492,22 +494,27 @@ public class StringArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new StringArray(new String[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    StringArray sa = null; // for the results
     if (pa == null) {
-      sa = new StringArray(willFind, true);
-    } else {
-      sa = (StringArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof StringArray sa) {
       sa.ensureCapacity(willFind);
       sa.size = willFind;
+      String[] tar = sa.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return sa;
     }
-    String[] tar = sa.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return sa;
+    return pa;
   }
 
   /**
@@ -991,9 +998,7 @@ public class StringArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
       Math2.ensureMemoryAvailable(8L * newCapacity, "StringArray"); // 8L is guess
-      String[] newArray = new String[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      array = Arrays.copyOf(array, newCapacity); // do last to minimize concurrency problems
     }
   }
 
@@ -1390,9 +1395,7 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void trimToSize() {
     if (size == array.length) return;
-    final String[] newArray = new String[size];
-    System.arraycopy(array, 0, newArray, 0, size);
-    array = newArray;
+    array = Arrays.copyOf(array, size);
   }
 
   /**
@@ -1425,7 +1428,10 @@ public class StringArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
+    final int mismatchIdx = Arrays.mismatch(array, 0, size, other.array, 0, size);
+    if (mismatchIdx == -1 && maxIsMV == other.maxIsMV) return "";
+    final int startIdx = (maxIsMV == other.maxIsMV) ? mismatchIdx : 0;
+    for (int i = startIdx; i < size; i++)
       if (!array[i].equals(other.array[i]))
         return "The two StringArrays aren't equal: this["
             + i
@@ -1579,6 +1585,91 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     // StringArray does nothing because insensitive to big/little-endian
+  }
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: FileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in StringArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    final long startPos = channel.position();
+    final DataOutputStream dos = new DataOutputStream(Channels.newOutputStream(channel));
+    for (int i = offset; i < offset + length; i++) {
+      dos.writeUTF(get(i));
+    }
+    dos.flush();
+    return channel.position() - startPos;
+  }
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws Exception if trouble
+   */
+  @Override
+  public void readFromChannel(final FileChannel channel, final int n) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.readFromChannel: FileChannel is null.");
+    }
+    if (n < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.readFromChannel: n (" + n + ") < 0.");
+    }
+    if (n == 0) {
+      return;
+    }
+    ensureCapacity(size + (long) n);
+    final DataInputStream dis = new DataInputStream(Channels.newInputStream(channel));
+    for (int i = 0; i < n; i++) {
+      add(dis.readUTF());
+    }
   }
 
   /**

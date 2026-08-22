@@ -13,6 +13,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.channels.FileChannel;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -211,7 +212,10 @@ public abstract class PrimitiveArray {
    */
   @Override
   public Object clone() {
-    return subset(null, 0, 1, size - 1);
+    PrimitiveArray pa = factory(elementType(), size, false);
+    pa.setMaxIsMV(getMaxIsMV());
+    pa.append(this);
+    return pa;
   }
 
   /**
@@ -1765,6 +1769,39 @@ public abstract class PrimitiveArray {
    * little-endian source.
    */
   public abstract void reverseBytes();
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order. Note:
+   * This method modifies the FileChannel's current position.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public abstract long writeToChannel(FileChannel channel) throws Exception;
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order. Note: This method modifies the FileChannel's current position.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order. Note: This method
+   * modifies the FileChannel's current position.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws java.io.EOFException if EOF is reached before n elements are fully read
+   * @throws Exception if other trouble
+   */
+  public abstract void readFromChannel(FileChannel channel, int n) throws Exception;
 
   /**
    * This writes 'size' elements to a DataOutputStream.

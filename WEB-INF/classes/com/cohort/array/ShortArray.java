@@ -9,9 +9,13 @@ import com.cohort.util.Math2;
 import com.cohort.util.String2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -267,22 +271,27 @@ public class ShortArray extends PrimitiveArray {
           : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    ShortArray sa = null;
     if (pa == null) {
-      sa = new ShortArray(willFind, true);
-    } else {
-      sa = (ShortArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof ShortArray sa) {
       sa.ensureCapacity(willFind);
       sa.size = willFind;
+      final short tar[] = sa.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return sa.setMaxIsMV(maxIsMV);
     }
-    final short tar[] = sa.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return sa.setMaxIsMV(maxIsMV);
+    return pa.setMaxIsMV(maxIsMV);
   }
 
   /**
@@ -677,9 +686,7 @@ public class ShortArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
       Math2.ensureMemoryAvailable(2L * newCapacity, "ShortArray");
-      final short[] newArray = new short[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      array = Arrays.copyOf(array, newCapacity); // do last to minimize concurrency problems
     }
   }
 
@@ -1090,7 +1097,8 @@ public class ShortArray extends PrimitiveArray {
   /** If size != capacity, this makes a new 'array' of size 'size' so capacity will equal size. */
   @Override
   public void trimToSize() {
-    array = toArray();
+    if (size == array.length) return;
+    array = Arrays.copyOf(array, size);
   }
 
   /**
@@ -1123,7 +1131,10 @@ public class ShortArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
+    final int mismatchIdx = Arrays.mismatch(array, 0, size, other.array, 0, size);
+    if (mismatchIdx == -1 && maxIsMV == other.maxIsMV) return "";
+    final int startIdx = (maxIsMV == other.maxIsMV) ? mismatchIdx : 0;
+    for (int i = startIdx; i < size; i++)
       if (getInt(i) != other.getInt(i)) // handles mv
       return "The two ShortArrays aren't equal: this["
             + i
@@ -1229,6 +1240,116 @@ public class ShortArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     for (int i = 0; i < size; i++) array[i] = Short.reverseBytes(array[i]);
+  }
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ShortArray.writeToChannel: FileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ShortArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ShortArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in ShortArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    final int bytesPerElement = 2;
+    final int byteSize = length * bytesPerElement;
+    final ByteBuffer byteBuf = ByteBuffer.allocate(byteSize).order(ByteOrder.nativeOrder());
+    byteBuf.asShortBuffer().put(array, offset, length);
+    byteBuf.position(0);
+    byteBuf.limit(byteSize);
+    long totalBytesWritten = 0;
+    while (byteBuf.hasRemaining()) {
+      final int written = channel.write(byteBuf);
+      if (written == 0) {
+        Thread.sleep(1);
+      }
+      totalBytesWritten += written;
+    }
+    return totalBytesWritten;
+  }
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws Exception if trouble
+   */
+  @Override
+  public void readFromChannel(final FileChannel channel, final int n) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ShortArray.readFromChannel: FileChannel is null.");
+    }
+    if (n < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in ShortArray.readFromChannel: n (" + n + ") < 0.");
+    }
+    if (n == 0) {
+      return;
+    }
+    ensureCapacity(size + (long) n);
+    final int bytesPerElement = 2;
+    final int bytesToRead = n * bytesPerElement;
+    final ByteBuffer byteBuf = ByteBuffer.allocate(bytesToRead).order(ByteOrder.nativeOrder());
+    int totalBytesRead = 0;
+    while (totalBytesRead < bytesToRead) {
+      final int read = channel.read(byteBuf);
+      if (read == -1) {
+        throw new EOFException(
+            String2.ERROR
+                + " in ShortArray.readFromChannel: EOF reached after reading "
+                + totalBytesRead
+                + " of "
+                + bytesToRead
+                + " bytes.");
+      }
+      totalBytesRead += read;
+    }
+    byteBuf.position(0);
+    byteBuf.limit(bytesToRead);
+    byteBuf.asShortBuffer().get(array, size, n);
+    size += n;
   }
 
   /**

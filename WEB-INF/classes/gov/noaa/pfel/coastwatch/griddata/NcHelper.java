@@ -377,7 +377,8 @@ public class NcHelper {
         // String2.log("***getAttribute string=\"" + ts + "\"");
         return new Attribute(name, ts);
       } else {
-        String s = ((StringArray) pa).toNewlineString();
+        StringArray sa = pa instanceof StringArray tsa ? tsa : new StringArray(pa);
+        String s = sa.toNewlineString();
         return new Attribute(name, s.length() == 0 ? "" : s.substring(0, s.length() - 1));
       }
     }
@@ -1987,14 +1988,15 @@ public class NcHelper {
         tpas[var] = pas[var];
         if (tpas[var].elementType() == PAType.CHAR) {
           // nc 'char' is 1 byte!  So store java char (2 bytes) as shorts.
-          tpas[var] = new ShortArray(((CharArray) pas[var]).toArray());
+          CharArray ca = pas[var] instanceof CharArray tca ? tca : new CharArray(pas[var]);
+          tpas[var] = new ShortArray(ca.toArray());
         } else if (tpas[var].elementType() == PAType.LONG
             || tpas[var].elementType() == PAType.ULONG) {
           // these will always be decoded by fromJson as-is; no need to encode with toJson
           tpas[var] = new StringArray(pas[var]);
         } else if (tpas[var].elementType() == PAType.STRING) {
           // .nc strings only support characters 1..255, so encode as Json strings
-          StringArray oldSa = (StringArray) pas[var];
+          StringArray oldSa = pas[var] instanceof StringArray tsa ? tsa : new StringArray(pas[var]);
           int tSize = oldSa.size();
           StringArray newSa = new StringArray(tSize, false);
           tpas[var] = newSa;
