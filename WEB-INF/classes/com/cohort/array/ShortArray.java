@@ -271,22 +271,27 @@ public class ShortArray extends PrimitiveArray {
           : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    ShortArray sa = null;
     if (pa == null) {
-      sa = new ShortArray(willFind, true);
-    } else {
-      sa = (ShortArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof ShortArray sa) {
       sa.ensureCapacity(willFind);
       sa.size = willFind;
+      final short tar[] = sa.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return sa.setMaxIsMV(maxIsMV);
     }
-    final short tar[] = sa.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return sa.setMaxIsMV(maxIsMV);
+    return pa.setMaxIsMV(maxIsMV);
   }
 
   /**

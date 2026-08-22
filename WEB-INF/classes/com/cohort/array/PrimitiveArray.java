@@ -212,7 +212,10 @@ public abstract class PrimitiveArray {
    */
   @Override
   public Object clone() {
-    return subset(null, 0, 1, size - 1);
+    PrimitiveArray pa = factory(elementType(), size, false);
+    pa.setMaxIsMV(getMaxIsMV());
+    pa.append(this);
+    return pa;
   }
 
   /**

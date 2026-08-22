@@ -722,37 +722,33 @@ public class Table {
   }
 
   /**
-   * This makes a deep clone of the current table (data and attributes).
-   *
-   * @param startRow
-   * @param stride
-   * @param endRow (inclusive) e.g., nRows()-1
-   * @return a new Table.
-   */
-  public Table subset(int startRow, int stride, int endRow) {
-    Table tTable = new Table();
-
-    int n = columns.size();
-    for (int i = 0; i < n; i++) tTable.columns.add(columns.get(i).subset(startRow, stride, endRow));
-
-    tTable.columnNames = (StringArray) columnNames.clone();
-
-    tTable.globalAttributes = (Attributes) globalAttributes.clone();
-
-    for (int col = 0; col < columnAttributes.size(); col++)
-      tTable.columnAttributes.add((Attributes) columnAttributes.get(col).clone());
-
-    return tTable;
-  }
-
-  /**
    * This makes a deep clone of the entire current table (data and attributes).
    *
    * @return a new Table.
    */
   @Override
-  public Object clone() {
-    return subset(0, 1, nRows() - 1);
+  public Table clone() {
+    Table t2 = new Table();
+
+    // 1. Deep copy global attributes
+    if (this.globalAttributes != null) {
+      t2.globalAttributes = (Attributes) this.globalAttributes.clone();
+    }
+
+    // 2. Deep copy column names, attributes, and primitive arrays
+    int nCols = this.nColumns();
+    for (int c = 0; c < nCols; c++) {
+      String colName = this.getColumnName(c);
+      PrimitiveArray paClone = (PrimitiveArray) this.getColumn(c).clone();
+
+      t2.addColumn(colName, paClone);
+    }
+
+    for (int col = 0; col < columnAttributes.size(); col++) {
+      t2.columnAttributes.add((Attributes) columnAttributes.get(col).clone());
+    }
+
+    return t2;
   }
 
   /**

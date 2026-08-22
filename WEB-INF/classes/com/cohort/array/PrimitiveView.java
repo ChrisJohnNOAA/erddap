@@ -823,6 +823,70 @@ public class PrimitiveView extends PrimitiveArray {
 
   // Analysis / Helper Methods
   @Override
+  public String isEvenlySpaced() {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.isEvenlySpaced();
+    }
+    return materialize().isEvenlySpaced();
+  }
+
+  @Override
+  public String almostEqual(PrimitiveArray other, int matchNDigits) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.almostEqual(other, matchNDigits);
+    }
+    return materialize().almostEqual(other, matchNDigits);
+  }
+
+  @Override
+  public double[] calculateStats(Attributes atts) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.calculateStats(atts);
+    }
+    return materialize().calculateStats(atts);
+  }
+
+  @Override
+  public PAOne[] calculatePAOneStats(Attributes atts) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.calculatePAOneStats(atts);
+    }
+    return materialize().calculatePAOneStats(atts);
+  }
+
+  @Override
+  public double[] calculateStats2(Attributes atts) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.calculateStats2(atts);
+    }
+    return materialize().calculateStats2(atts);
+  }
+
+  @Override
+  public double calculateMedian(Attributes atts) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.calculateMedian(atts);
+    }
+    return materialize().calculateMedian(atts);
+  }
+
+  @Override
+  public PrimitiveArray simplify(String colName) {
+    return materialize().simplify(colName);
+  }
+
+  @Override
+  public int switchFakeMissingValueToNaN(double fakeMissingValue) {
+    return materialize().switchFakeMissingValueToNaN(fakeMissingValue);
+  }
+
+  @Override
   public PrimitiveArray makeIndices(IntArray indices) {
     return materialize().makeIndices(indices);
   }

@@ -221,22 +221,27 @@ public class FloatArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new FloatArray(new float[0]) : pa;
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    FloatArray fa = null;
     if (pa == null) {
-      fa = new FloatArray(willFind, true);
-    } else {
-      fa = (FloatArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof FloatArray fa) {
       fa.ensureCapacity(willFind);
       fa.size = willFind;
+      final float tar[] = fa.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return fa;
     }
-    final float tar[] = fa.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return fa;
+    return pa;
   }
 
   /**

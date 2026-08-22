@@ -228,22 +228,27 @@ public class LongArray extends PrimitiveArray {
           : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    LongArray la = null;
     if (pa == null) {
-      la = new LongArray(willFind, true);
-    } else {
-      la = (LongArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof LongArray la) {
       la.ensureCapacity(willFind);
       la.size = willFind;
+      final long tar[] = la.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return la.setMaxIsMV(maxIsMV);
     }
-    final long tar[] = la.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return la.setMaxIsMV(maxIsMV);
+    return pa.setMaxIsMV(maxIsMV);
   }
 
   /**
