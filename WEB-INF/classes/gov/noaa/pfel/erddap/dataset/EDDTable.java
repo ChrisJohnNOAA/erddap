@@ -53,7 +53,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.xml.bind.JAXBException;
 import java.awt.Color;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
