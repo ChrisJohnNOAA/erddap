@@ -132,18 +132,17 @@ public class GridDataAllAccessor implements AutoCloseable {
   }
 
   /**
-   * Get all of the destination values for one dataVariable as a DataInputStream. IT IS THE CALLERS
+   * Get all of the destination values for one dataVariable as a FileChannel. IT IS THE CALLERS
    * RESPONSIBILITY TO CLOSE THESE!
    *
    * @param dv a dataVariable number (within the request, not the EDD dataVariable number).
-   * @return a DataInputStream
+   * @return a FileChannel
    */
-  public DataInputStream getDataInputStream(int dv) throws Exception {
+  public FileChannel openDataChannel(int dv) throws Exception {
     String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
     String rawPath = baseFileName + dv;
     String sanitizedPath = TableWriterAll.sanitizePath(rawPath, baseDir);
-    FileChannel fc = FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ);
-    return new gov.noaa.pfel.erddap.util.FileChannelDataInputStream(fc);
+    return FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ);
   }
 
   /**

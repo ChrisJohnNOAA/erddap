@@ -264,11 +264,10 @@ public class TableWriterAll extends TableWriter {
     return PrimitiveArray.factory(columnType(col), 1, false).setMaxIsMV(columnMaxIsMV[col]);
   }
 
-  public DataInputStream dataInputStream(int col) throws Throwable {
+  public FileChannel openColumnChannel(int col) throws Exception {
     String tFileName = columnFileName(col);
     String sanitizedFileName = sanitizePath(tFileName, dir);
-    FileChannel fc = FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ);
-    return new gov.noaa.pfel.erddap.util.FileChannelDataInputStream(fc);
+    return FileChannel.open(Paths.get(sanitizedFileName), StandardOpenOption.READ);
   }
 
   public String columnFileName(int col) {
