@@ -103,13 +103,17 @@ public class GridDataAllAccessor implements AutoCloseable {
       return;
     }
     if (destBuffer instanceof com.cohort.array.StringArray sa) {
+      if (startElement == 0) {
+        channel.position(0);
+      } else if (channel.position() == 0) {
+        DataInputStream dis =
+            new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
+        for (long i = 0; i < startElement; i++) {
+          dis.readUTF();
+        }
+      }
       DataInputStream dis = new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
       try {
-        if (channel.position() == 0 && startElement > 0) {
-          for (long i = 0; i < startElement; i++) {
-            dis.readUTF();
-          }
-        }
         for (int i = 0; i < maxElements; i++) {
           sa.add(dis.readUTF());
         }
