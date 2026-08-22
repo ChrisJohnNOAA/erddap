@@ -8,11 +8,13 @@ package com.cohort.array;
 import com.cohort.util.Math2;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.channels.FileChannel;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -1765,6 +1767,63 @@ public abstract class PrimitiveArray {
    * little-endian source.
    */
   public abstract void reverseBytes();
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order. Note:
+   * This method modifies the FileChannel's current position.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public abstract long writeToChannel(FileChannel channel) throws Exception;
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order. Note: This method modifies the FileChannel's current position.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
+
+  /**
+   * This writes all elements to a BufferedFileChannel using native byte order.
+   *
+   * @param channel the BufferedFileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public long writeToChannel(BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a BufferedFileChannel using
+   * native byte order.
+   *
+   * @param channel the BufferedFileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  public abstract long writeToChannel(BufferedFileChannel channel, int offset, int length)
+      throws Exception;
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order. Note: This method
+   * modifies the FileChannel's current position.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws java.io.EOFException if EOF is reached before n elements are fully read
+   * @throws Exception if other trouble
+   */
+  public abstract void readFromChannel(FileChannel channel, int n) throws Exception;
 
   /**
    * This writes 'size' elements to a DataOutputStream.

@@ -9,6 +9,7 @@ import com.cohort.util.Math2;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.google.common.collect.ImmutableList;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -16,8 +17,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.io.UTFDataFormatException;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -991,9 +996,7 @@ public class StringArray extends PrimitiveArray {
       int newCapacity = (int) Math.min(Integer.MAX_VALUE - 1, array.length + (long) array.length);
       if (newCapacity < minCapacity) newCapacity = (int) minCapacity; // safe since checked above
       Math2.ensureMemoryAvailable(8L * newCapacity, "StringArray"); // 8L is guess
-      String[] newArray = new String[newCapacity];
-      System.arraycopy(array, 0, newArray, 0, size);
-      array = newArray; // do last to minimize concurrency problems
+      array = Arrays.copyOf(array, newCapacity); // do last to minimize concurrency problems
     }
   }
 
@@ -1390,9 +1393,7 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void trimToSize() {
     if (size == array.length) return;
-    final String[] newArray = new String[size];
-    System.arraycopy(array, 0, newArray, 0, size);
-    array = newArray;
+    array = Arrays.copyOf(array, size);
   }
 
   /**
@@ -1425,7 +1426,10 @@ public class StringArray extends PrimitiveArray {
           + " value(s); the other has "
           + other.size()
           + " value(s).";
-    for (int i = 0; i < size; i++)
+    final int mismatchIdx = Arrays.mismatch(array, 0, size, other.array, 0, size);
+    if (mismatchIdx == -1 && maxIsMV == other.maxIsMV) return "";
+    final int startIdx = (maxIsMV == other.maxIsMV) ? mismatchIdx : 0;
+    for (int i = startIdx; i < size; i++)
       if (!array[i].equals(other.array[i]))
         return "The two StringArrays aren't equal: this["
             + i
@@ -1579,6 +1583,205 @@ public class StringArray extends PrimitiveArray {
   @Override
   public void reverseBytes() {
     // StringArray does nothing because insensitive to big/little-endian
+  }
+
+  /**
+   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  // Helper method to write a String in Java Modified UTF-8 format directly into a ByteBuffer.
+  private static void writeUtfBytes(final String s, final ByteBuffer buf) {
+    final int sLen = s.length();
+    for (int i = 0; i < sLen; i++) {
+      final char c = s.charAt(i);
+      if (c >= 0x0001 && c <= 0x007F) {
+        buf.put((byte) c);
+      } else if (c > 0x07FF) {
+        buf.put((byte) (0xE0 | ((c >> 12) & 0x0F)));
+        buf.put((byte) (0x80 | ((c >> 6) & 0x3F)));
+        buf.put((byte) (0x80 | (c & 0x3F)));
+      } else {
+        buf.put((byte) (0xC0 | ((c >> 6) & 0x1F)));
+        buf.put((byte) (0x80 | (c & 0x3F)));
+      }
+    }
+  }
+
+  /**
+   * Writes a subset of elements (offset ... offset+length-1) to a BufferedFileChannel using chunked
+   * ByteBuffer serialization without bypassing channel buffering.
+   */
+  @Override
+  public long writeToChannel(final BufferedFileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: BufferedFileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in StringArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+
+    long bytesWritten = 0;
+    final int CHUNK_SIZE = 65536; // 64 KB heap buffer for UTF string batching
+    final ByteBuffer byteBuf = ByteBuffer.allocate(CHUNK_SIZE);
+
+    for (int i = offset; i < offset + length; i++) {
+      String s = get(i);
+      if (s == null) {
+        s = "";
+      }
+
+      int utfLen = 0;
+      final int sLen = s.length();
+      for (int cIdx = 0; cIdx < sLen; cIdx++) {
+        final char c = s.charAt(cIdx);
+        if (c >= 0x0001 && c <= 0x007F) {
+          utfLen++;
+        } else if (c > 0x07FF) {
+          utfLen += 3;
+        } else {
+          utfLen += 2;
+        }
+      }
+
+      if (utfLen > 65535) {
+        throw new UTFDataFormatException(
+            String2.ERROR
+                + " in StringArray.writeToChannel: string length ("
+                + utfLen
+                + ") > 65535 bytes.");
+      }
+
+      final int totalStringBytes = 2 + utfLen;
+
+      if (byteBuf.remaining() < totalStringBytes) {
+        byteBuf.flip();
+        bytesWritten += channel.write(byteBuf);
+        byteBuf.clear();
+      }
+
+      if (totalStringBytes > CHUNK_SIZE) {
+        final ByteBuffer largeBuf = ByteBuffer.allocate(totalStringBytes);
+        largeBuf.putShort((short) utfLen);
+        writeUtfBytes(s, largeBuf);
+        largeBuf.flip();
+        bytesWritten += channel.write(largeBuf);
+      } else {
+        byteBuf.putShort((short) utfLen);
+        writeUtfBytes(s, byteBuf);
+      }
+    }
+
+    if (byteBuf.position() > 0) {
+      byteBuf.flip();
+      bytesWritten += channel.write(byteBuf);
+    }
+
+    return bytesWritten;
+  }
+
+  @Override
+  public long writeToChannel(final FileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  /**
+   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
+   * byte order.
+   *
+   * @param channel the FileChannel
+   * @param offset the starting index
+   * @param length the number of elements to write
+   * @return the number of bytes written
+   * @throws Exception if trouble
+   */
+  @Override
+  public long writeToChannel(final FileChannel channel, final int offset, final int length)
+      throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: FileChannel is null.");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
+    }
+    if (length < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
+    }
+    if (offset + (long) length > size) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in StringArray.writeToChannel: offset + length ("
+              + (offset + (long) length)
+              + ") > size ("
+              + size
+              + ").");
+    }
+    if (length == 0) {
+      return 0L;
+    }
+    final long startPos = channel.position();
+    final DataOutputStream dos = new DataOutputStream(Channels.newOutputStream(channel));
+    for (int i = offset; i < offset + length; i++) {
+      dos.writeUTF(get(i));
+    }
+    dos.flush();
+    return channel.position() - startPos;
+  }
+
+  /**
+   * This reads/adds n elements from a FileChannel using native byte order.
+   *
+   * @param channel the FileChannel
+   * @param n the number of elements to read
+   * @throws Exception if trouble
+   */
+  @Override
+  public void readFromChannel(final FileChannel channel, final int n) throws Exception {
+    if (channel == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.readFromChannel: FileChannel is null.");
+    }
+    if (n < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in StringArray.readFromChannel: n (" + n + ") < 0.");
+    }
+    if (n == 0) {
+      return;
+    }
+    ensureCapacity(size + (long) n);
+    final DataInputStream dis = new DataInputStream(Channels.newInputStream(channel));
+    for (int i = 0; i < n; i++) {
+      add(dis.readUTF());
+    }
   }
 
   /**
