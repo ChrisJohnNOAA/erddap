@@ -3711,16 +3711,16 @@ public abstract class EDDTable extends EDD {
           Array array;
 
           while (nToGo > 0) {
-            bufferSize = Math.min(nToGo, bufferSize); // actual number to be transferred
+            int nToRead = Math.min(nToGo, bufferSize); // actual number to be transferred
             // use of != below (not <) lets toObjectArray below return internal array since
             // size=capacity
             if (pa == null || pa.elementType() != twawm.columnType(col)) {
               pa = twawm.columnEmptyPA(col);
-              pa.ensureCapacity(bufferSize);
+              pa.ensureCapacity(nToRead);
             }
             pa.clear();
             pa.setMaxIsMV(twawm.columnMaxIsMV(col)); // reset it after clear()
-            TableWriterAll.readColumnChunk(col, channel, pa, ncOffset, bufferSize);
+            TableWriterAll.readColumnChunk(col, channel, pa, ncOffset, nToRead);
             if (debugMode)
               String2.log(
                   ">> col="
@@ -3729,8 +3729,8 @@ public abstract class EDDTable extends EDD {
                       + nToGo
                       + " ncOffset="
                       + ncOffset
-                      + " bufferSize="
-                      + bufferSize
+                      + " nToRead="
+                      + nToRead
                       + " pa.capacity="
                       + pa.capacity()
                       + " pa.size="
