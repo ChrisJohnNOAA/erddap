@@ -5,22 +5,22 @@ import com.cohort.util.String2;
 
 /**
  * OffsetScaleView provides a zero-copy virtual view over a PrimitiveArray (or PrimitiveView)
- * applying a linear transformation (y = scale * x + offset) lazily.
+ * applying a linear transformation (y = scale * x + addOffset) lazily.
  */
 public class OffsetScaleView extends PrimitiveView {
 
   public final double scale;
-  public final double offset;
+  public final double addOffset;
   public final double sourceMissingValue;
   public final boolean sourceIsUnsigned;
   private final PAType targetPAType;
 
-  public OffsetScaleView(PrimitiveArray source, double scale, double offset) {
-    this(source, false, source != null ? source.elementType() : PAType.DOUBLE, scale, offset);
+  public OffsetScaleView(PrimitiveArray source, double scale, double addOffset) {
+    this(source, false, source != null ? source.elementType() : PAType.DOUBLE, scale, addOffset);
   }
 
-  public OffsetScaleView(PrimitiveArray source, PAType targetPAType, double scale, double offset) {
-    this(source, false, targetPAType, scale, offset);
+  public OffsetScaleView(PrimitiveArray source, PAType targetPAType, double scale, double addOffset) {
+    this(source, false, targetPAType, scale, addOffset);
   }
 
   public OffsetScaleView(
@@ -28,13 +28,13 @@ public class OffsetScaleView extends PrimitiveView {
       boolean sourceIsUnsigned,
       PAType targetPAType,
       double scale,
-      double offset) {
+      double addOffset) {
     this(
         source,
         sourceIsUnsigned,
         targetPAType,
         scale,
-        offset,
+        addOffset,
         0,
         1,
         source != null ? source.size() : 0);
@@ -45,36 +45,32 @@ public class OffsetScaleView extends PrimitiveView {
       boolean sourceIsUnsigned,
       PAType targetPAType,
       double scale,
-      double offset,
+      double addOffset,
       int viewOffset,
       int viewStride,
       int viewLength) {
     super(source, viewOffset, viewStride, viewLength);
 
     double accumScale = scale;
-    double accumOffset = offset;
+    double accumOffset = addOffset;
     boolean accumUnsigned = sourceIsUnsigned;
     PrimitiveArray current = source;
 
-    while (current instanceof PrimitiveView pv) {
-      if (pv.materialized != null) {
-        break;
-      }
-      if (pv instanceof OffsetScaleView osv) {
-        accumOffset = accumScale * osv.offset + accumOffset;
-        accumScale = accumScale * osv.scale;
-        accumUnsigned = accumUnsigned || osv.sourceIsUnsigned;
-      }
-      current = pv.source;
+    while (current instanceof OffsetScaleView osv && osv.materialized == null) {
+      accumOffset = accumScale * osv.addOffset + accumOffset;
+      accumScale = accumScale * osv.scale;
+      accumUnsigned = accumUnsigned || osv.sourceIsUnsigned;
+      current = osv.source;
     }
 
     this.scale = accumScale;
-    this.offset = accumOffset;
+    this.addOffset = accumOffset;
     this.sourceIsUnsigned = accumUnsigned;
+
     this.targetPAType =
         targetPAType != null
             ? targetPAType
-            : (current != null ? current.elementType() : PAType.DOUBLE);
+            : (this.source != null ? this.source.elementType() : PAType.DOUBLE);
     this.sourceMissingValue =
         this.source != null ? this.source.missingValueAsDouble() : Double.NaN;
   }
@@ -111,14 +107,14 @@ public class OffsetScaleView extends PrimitiveView {
     }
     double val =
         sourceIsUnsigned
-            ? super.getUnsignedDouble(index)
-            : super.getDouble(index);
+            ? source.getUnsignedDouble(offset + index * stride)
+            : source.getDouble(offset + index * stride);
     if (Double.isNaN(val)
         || val == sourceMissingValue
-        || source.isMissingValue((int) (super.offset + (long) index * stride))) {
+        || source.isMissingValue(offset + index * stride)) {
       return Double.NaN;
     }
-    return val * scale + offset;
+    return val * scale + addOffset;
   }
 
   @Override
@@ -215,11 +211,11 @@ public class OffsetScaleView extends PrimitiveView {
     }
     double val =
         sourceIsUnsigned
-            ? super.getUnsignedDouble(index)
-            : super.getDouble(index);
+            ? source.getUnsignedDouble(offset + index * stride)
+            : source.getDouble(offset + index * stride);
     return Double.isNaN(val)
         || val == sourceMissingValue
-        || source.isMissingValue((int) (super.offset + (long) index * stride));
+        || source.isMissingValue(offset + index * stride);
   }
 
   @Override
@@ -258,7 +254,7 @@ public class OffsetScaleView extends PrimitiveView {
     if (stopIndex < startIndex) {
       if (pa == null)
         return new OffsetScaleView(
-            source, sourceIsUnsigned, targetPAType, scale, offset, 0, 1, 0);
+            source, sourceIsUnsigned, targetPAType, scale, addOffset, 0, 1, 0);
       pa.clear();
       return pa;
     }
@@ -274,8 +270,8 @@ public class OffsetScaleView extends PrimitiveView {
           sourceIsUnsigned,
           targetPAType,
           scale,
-          offset,
-          (int) (super.offset + (long) startIndex * this.stride),
+          addOffset,
+          (int) (this.offset + (long) startIndex * this.stride),
           stride * this.stride,
           subLength);
     }

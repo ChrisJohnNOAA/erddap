@@ -232,7 +232,7 @@ class PrimitiveViewTests {
     Test.ensureTrue(v2 instanceof OffsetScaleView, "v2 is OffsetScaleView");
     OffsetScaleView osv2 = (OffsetScaleView) v2;
     Test.ensureEqual(osv2.scale, 6.0, "composed scale = 2*3 = 6");
-    Test.ensureEqual(osv2.offset, 35.0, "composed offset = 3*10 + 5 = 35");
+    Test.ensureEqual(osv2.addOffset, 35.0, "composed offset = 3*10 + 5 = 35");
     Test.ensureEqual(osv2.getDouble(0), 41.0, "v2 getDouble(0) = 6*1 + 35 = 41");
     Test.ensureEqual(osv2.getDouble(1), 47.0, "v2 getDouble(1) = 6*2 + 35 = 47");
   }
