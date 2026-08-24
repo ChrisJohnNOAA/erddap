@@ -444,8 +444,7 @@ public class EDDGridLon0360 extends EDDGrid {
     // finish making newLonValues: append the m180 ... m1 lon values
     dlonim180 = newLonValues.size();
     PrimitiveArray tLonValues =
-        childLonValues.subset(slonim180, 1, slonim1); // always a new backing array
-    tLonValues.addOffsetScale(360, 1); // -180 ... -1 -> 180 ... 359
+        childLonValues.subset(slonim180, 1, slonim1).addOffsetScale(360, 1); // -180 ... -1 -> 180 ... 359
     newLonValues.append(tLonValues);
     int dlonim1 = newLonValues.size() - 1;
 
@@ -717,8 +716,7 @@ public class EDDGridLon0360 extends EDDGrid {
       PrimitiveArray results[] =
           tChildDataset.getSourceData(
               language, tDirTable, tFileTable, tDataVariables, newConstraints);
-      results[lonIndex] = (PrimitiveArray) results[lonIndex].clone();
-      results[lonIndex].addOffsetScale(360, 1);
+      results[lonIndex] = ((PrimitiveArray) results[lonIndex].clone()).addOffsetScale(360, 1);
       return results;
     }
 
@@ -746,8 +744,7 @@ public class EDDGridLon0360 extends EDDGrid {
       newLeftResults =
           tChildDataset.getSourceData(
               language, tDirTable, tFileTable, tDataVariables, newConstraints);
-      newLeftResults[lonIndex] = (PrimitiveArray) newLeftResults[lonIndex].clone();
-      newLeftResults[lonIndex].addOffsetScale(-360, 1);
+      newLeftResults[lonIndex] = ((PrimitiveArray) newLeftResults[lonIndex].clone()).addOffsetScale(-360, 1);
       if (debugMode)
         String2.log(
             ">> got newLeftResults from source lon["

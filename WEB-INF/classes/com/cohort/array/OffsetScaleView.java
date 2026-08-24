@@ -1,0 +1,293 @@
+package com.cohort.array;
+
+import com.cohort.util.Math2;
+import com.cohort.util.String2;
+
+/**
+ * OffsetScaleView provides a zero-copy virtual view over a PrimitiveArray (or PrimitiveView)
+ * applying a linear transformation (y = scale * x + offset) lazily.
+ */
+public class OffsetScaleView extends PrimitiveView {
+
+  public final double scale;
+  public final double offset;
+  public final double sourceMissingValue;
+  public final boolean sourceIsUnsigned;
+  private final PAType targetPAType;
+
+  public OffsetScaleView(PrimitiveArray source, double scale, double offset) {
+    this(source, false, source != null ? source.elementType() : PAType.DOUBLE, scale, offset);
+  }
+
+  public OffsetScaleView(PrimitiveArray source, PAType targetPAType, double scale, double offset) {
+    this(source, false, targetPAType, scale, offset);
+  }
+
+  public OffsetScaleView(
+      PrimitiveArray source,
+      boolean sourceIsUnsigned,
+      PAType targetPAType,
+      double scale,
+      double offset) {
+    this(
+        source,
+        sourceIsUnsigned,
+        targetPAType,
+        scale,
+        offset,
+        0,
+        1,
+        source != null ? source.size() : 0);
+  }
+
+  public OffsetScaleView(
+      PrimitiveArray source,
+      boolean sourceIsUnsigned,
+      PAType targetPAType,
+      double scale,
+      double offset,
+      int viewOffset,
+      int viewStride,
+      int viewLength) {
+    super(source, viewOffset, viewStride, viewLength);
+
+    double accumScale = scale;
+    double accumOffset = offset;
+    boolean accumUnsigned = sourceIsUnsigned;
+    PrimitiveArray current = source;
+
+    while (current instanceof PrimitiveView pv) {
+      if (pv.materialized != null) {
+        break;
+      }
+      if (pv instanceof OffsetScaleView osv) {
+        accumOffset = accumScale * osv.offset + accumOffset;
+        accumScale = accumScale * osv.scale;
+        accumUnsigned = accumUnsigned || osv.sourceIsUnsigned;
+      }
+      current = pv.source;
+    }
+
+    this.scale = accumScale;
+    this.offset = accumOffset;
+    this.sourceIsUnsigned = accumUnsigned;
+    this.targetPAType =
+        targetPAType != null
+            ? targetPAType
+            : (current != null ? current.elementType() : PAType.DOUBLE);
+    this.sourceMissingValue =
+        this.source != null ? this.source.missingValueAsDouble() : Double.NaN;
+  }
+
+  private void checkIndexBounds(int index) {
+    if (index < 0 || index >= size) {
+      throw new IndexOutOfBoundsException(
+          String2.ERROR
+              + " in OffsetScaleView: index ("
+              + index
+              + ") out of bounds for view size ("
+              + size
+              + ").");
+    }
+  }
+
+  @Override
+  public PAType elementType() {
+    PrimitiveArray m = materialized;
+    return m != null ? m.elementType() : targetPAType;
+  }
+
+  @Override
+  public double missingValueAsDouble() {
+    return targetPAType == PAType.FLOAT ? Float.NaN : Double.NaN;
+  }
+
+  @Override
+  public double getDouble(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getDouble(index);
+    }
+    double val =
+        sourceIsUnsigned
+            ? super.getUnsignedDouble(index)
+            : super.getDouble(index);
+    if (Double.isNaN(val)
+        || val == sourceMissingValue
+        || source.isMissingValue((int) (super.offset + (long) index * stride))) {
+      return Double.NaN;
+    }
+    return val * scale + offset;
+  }
+
+  @Override
+  public float getFloat(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getFloat(index);
+    }
+    double val = getDouble(index);
+    return Double.isNaN(val) ? Float.NaN : (float) val;
+  }
+
+  @Override
+  public int getInt(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getInt(index);
+    }
+    double d = getDouble(index);
+    if (Double.isNaN(d)) {
+      return Integer.MAX_VALUE;
+    }
+    return Math2.roundToInt(d);
+  }
+
+  @Override
+  public long getLong(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getLong(index);
+    }
+    double d = getDouble(index);
+    if (Double.isNaN(d)) {
+      return Long.MAX_VALUE;
+    }
+    return Math2.roundToLong(d);
+  }
+
+  @Override
+  public String getString(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getString(index);
+    }
+    if (targetPAType == PAType.FLOAT) {
+      float f = getFloat(index);
+      return Float.isNaN(f) ? "" : String.valueOf(f);
+    }
+    double d = getDouble(index);
+    return Double.isNaN(d) ? "" : String.valueOf(d);
+  }
+
+  @Override
+  public String getRawString(int index) {
+    return getString(index);
+  }
+
+  @Override
+  public String getRawestString(int index) {
+    return getString(index);
+  }
+
+  @Override
+  public PAOne getPAOne(int index) {
+    return getPAOne(index, new PAOne(elementType()));
+  }
+
+  @Override
+  public PAOne getPAOne(int index, PAOne paOne) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getPAOne(index, paOne);
+    }
+    if (paOne == null) {
+      paOne = new PAOne(elementType());
+    }
+    if (targetPAType == PAType.FLOAT) {
+      return paOne.setFloat(getFloat(index));
+    }
+    return paOne.setDouble(getDouble(index));
+  }
+
+  @Override
+  public boolean isMissingValue(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.isMissingValue(index);
+    }
+    double val =
+        sourceIsUnsigned
+            ? super.getUnsignedDouble(index)
+            : super.getDouble(index);
+    return Double.isNaN(val)
+        || val == sourceMissingValue
+        || source.isMissingValue((int) (super.offset + (long) index * stride));
+  }
+
+  @Override
+  public synchronized PrimitiveArray materialize() {
+    if (materialized == null) {
+      PrimitiveArray newArray = PrimitiveArray.factory(elementType(), size, false);
+      newArray.setMaxIsMV(getMaxIsMV());
+      for (int i = 0; i < size; i++) {
+        if (targetPAType == PAType.FLOAT) {
+          newArray.addFloat(getFloat(i));
+        } else {
+          newArray.addDouble(getDouble(i));
+        }
+      }
+      materialized = newArray;
+    }
+    return materialized;
+  }
+
+  @Override
+  public PrimitiveArray subset(PrimitiveArray pa, int startIndex, int stride, int stopIndex) {
+    if (startIndex < 0) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in OffsetScaleView.subset: startIndex="
+              + startIndex
+              + " must be at least 0.");
+    }
+    if (stride < 1) {
+      throw new IllegalArgumentException(
+          String2.ERROR
+              + " in OffsetScaleView.subset: stride="
+              + stride
+              + " must be greater than 0.");
+    }
+    if (stopIndex < startIndex) {
+      if (pa == null)
+        return new OffsetScaleView(
+            source, sourceIsUnsigned, targetPAType, scale, offset, 0, 1, 0);
+      pa.clear();
+      return pa;
+    }
+    int effectiveStop = Math.min(stopIndex, size - 1);
+    int subLength = PrimitiveArray.strideWillFind(effectiveStop - startIndex + 1, stride);
+    if (pa == null) {
+      PrimitiveArray m = materialized;
+      if (m != null) {
+        return m.subset(null, startIndex, stride, effectiveStop);
+      }
+      return new OffsetScaleView(
+          source,
+          sourceIsUnsigned,
+          targetPAType,
+          scale,
+          offset,
+          (int) (super.offset + (long) startIndex * this.stride),
+          stride * this.stride,
+          subLength);
+    }
+
+    pa.clear();
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.subset(pa, startIndex, stride, effectiveStop);
+    }
+    for (int i = 0; i < subLength; i++) {
+      pa.addFromPA(this, startIndex + i * stride, 1);
+    }
+    return pa;
+  }
+}

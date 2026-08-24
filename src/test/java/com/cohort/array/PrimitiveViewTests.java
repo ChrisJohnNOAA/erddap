@@ -149,4 +149,109 @@ class PrimitiveViewTests {
     Test.ensureEqual(view.toCSVString(), "2,3", "toCSVString format");
     Test.ensureEqual(view.toJsonCsvString(), "2, 3", "toJsonCsvString format");
   }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewBasicAndMath() {
+    DoubleArray da = new DoubleArray(new double[] {10.0, 20.0, 30.0, 40.0});
+    PrimitiveView baseView = new PrimitiveView(da, 0, 1, 4);
+
+    // scale = 2.0, offset = -5.0 -> y = 2.0 * x - 5.0
+    PrimitiveArray scaled = baseView.scaleAddOffset(2.0, -5.0);
+    Test.ensureTrue(scaled instanceof OffsetScaleView, "scaleAddOffset returns OffsetScaleView");
+    OffsetScaleView osv = (OffsetScaleView) scaled;
+
+    Test.ensureEqual(osv.size(), 4, "size");
+    Test.ensureEqual(osv.getDouble(0), 15.0, "getDouble(0) = 2*10 - 5");
+    Test.ensureEqual(osv.getDouble(1), 35.0, "getDouble(1) = 2*20 - 5");
+    Test.ensureEqual(osv.getDouble(2), 55.0, "getDouble(2) = 2*30 - 5");
+    Test.ensureEqual(osv.getDouble(3), 75.0, "getDouble(3) = 2*40 - 5");
+
+    // Negative scale & positive offset
+    PrimitiveArray scaledNeg = baseView.scaleAddOffset(-0.5, 100.0);
+    Test.ensureEqual(scaledNeg.getDouble(0), 95.0, "getDouble(0) = -0.5*10 + 100");
+    Test.ensureEqual(scaledNeg.getDouble(1), 90.0, "getDouble(1) = -0.5*20 + 100");
+
+    // addOffsetScale: y = (x + 360) * 1
+    PrimitiveArray packed = baseView.addOffsetScale(360.0, 1.0);
+    Test.ensureTrue(packed instanceof OffsetScaleView, "addOffsetScale returns OffsetScaleView");
+    Test.ensureEqual(packed.getDouble(0), 370.0, "addOffsetScale getDouble(0) = 10 + 360");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewMissingValuesAndNaN() {
+    ByteArray ba = new ByteArray(new byte[] {10, (byte) 127, 30}); // 127 is ByteArray missing value
+    PrimitiveView baseView = new PrimitiveView(ba, 0, 1, 3);
+    PrimitiveArray scaled = baseView.scaleAddOffset(0.1, 5.0);
+
+    Test.ensureEqual(scaled.getDouble(0), 6.0, "scaled[0] = 10*0.1 + 5");
+    Test.ensureTrue(Double.isNaN(scaled.getDouble(1)), "scaled[1] sentinel 127 returns NaN");
+    Test.ensureTrue(scaled.isMissingValue(1), "isMissingValue(1) returns true");
+    Test.ensureEqual(scaled.getDouble(2), 8.0, "scaled[2] = 30*0.1 + 5");
+
+    DoubleArray daNaN = new DoubleArray(new double[] {1.0, Double.NaN, 3.0});
+    PrimitiveView viewNaN = new PrimitiveView(daNaN, 0, 1, 3);
+    PrimitiveArray scaledNaN = viewNaN.scaleAddOffset(10.0, 1.0);
+
+    Test.ensureEqual(scaledNaN.getDouble(0), 11.0, "scaledNaN[0]");
+    Test.ensureTrue(Double.isNaN(scaledNaN.getDouble(1)), "scaledNaN[1] Double.NaN preserved");
+    Test.ensureTrue(scaledNaN.isMissingValue(1), "isMissingValue(1) returns true for NaN");
+    Test.ensureEqual(scaledNaN.getDouble(2), 31.0, "scaledNaN[2]");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewUnmaterializedRead() {
+    IntArray ia = new IntArray(new int[] {100, 200, 300, 400});
+    PrimitiveView baseView = new PrimitiveView(ia, 0, 1, 4);
+    PrimitiveArray scaled = baseView.scaleAddOffset(1.5, 10.0);
+
+    Test.ensureTrue(baseView.materialized == null, "baseView materialized null before reads");
+    Test.ensureTrue(scaled instanceof OffsetScaleView, "is OffsetScaleView");
+    OffsetScaleView osv = (OffsetScaleView) scaled;
+    Test.ensureTrue(osv.materialized == null, "osv materialized null before reads");
+
+    // Read all elements through view
+    for (int i = 0; i < osv.size(); i++) {
+      double v = osv.getDouble(i);
+      Test.ensureEqual(v, (100 * (i + 1)) * 1.5 + 10.0, "osv getDouble(" + i + ")");
+    }
+
+    Test.ensureTrue(baseView.materialized == null, "baseView materialized remains null after reads");
+    Test.ensureTrue(osv.materialized == null, "osv materialized remains null after reads");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewFlattening() {
+    DoubleArray da = new DoubleArray(new double[] {1.0, 2.0, 3.0, 4.0});
+    PrimitiveView v0 = new PrimitiveView(da, 0, 1, 4);
+
+    // Chain 1: scale by 2, add 10 -> y1 = 2*x + 10
+    PrimitiveArray v1 = v0.scaleAddOffset(2.0, 10.0);
+    // Chain 2: scale by 3, add 5  -> y2 = 3*(2*x + 10) + 5 = 6*x + 35
+    PrimitiveArray v2 = v1.scaleAddOffset(3.0, 5.0);
+
+    Test.ensureTrue(v2 instanceof OffsetScaleView, "v2 is OffsetScaleView");
+    OffsetScaleView osv2 = (OffsetScaleView) v2;
+    Test.ensureEqual(osv2.scale, 6.0, "composed scale = 2*3 = 6");
+    Test.ensureEqual(osv2.offset, 35.0, "composed offset = 3*10 + 5 = 35");
+    Test.ensureEqual(osv2.getDouble(0), 41.0, "v2 getDouble(0) = 6*1 + 35 = 41");
+    Test.ensureEqual(osv2.getDouble(1), 47.0, "v2 getDouble(1) = 6*2 + 35 = 47");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewMaterializeAndMutation() {
+    FloatArray fa = new FloatArray(new float[] {10f, 20f, 30f});
+    PrimitiveView baseView = new PrimitiveView(fa, 0, 1, 3);
+    PrimitiveArray scaled = baseView.scaleAddOffset(PAType.FLOAT, 0.5, 2.0);
+
+    Test.ensureTrue(scaled instanceof OffsetScaleView, "scaled is OffsetScaleView");
+    OffsetScaleView osv = (OffsetScaleView) scaled;
+    Test.ensureTrue(osv.materialized == null, "unmaterialized initially");
+
+    // Mutate an element via setFloat
+    osv.setFloat(1, 99.0f);
+    Test.ensureTrue(osv.materialized != null, "materialized after mutation");
+    Test.ensureEqual(osv.getFloat(0), 7.0f, "osv getFloat(0)");
+    Test.ensureEqual(osv.getFloat(1), 99.0f, "osv getFloat(1) updated");
+    Test.ensureEqual(fa.getFloat(1), 20f, "original array unaltered");
+  }
 }

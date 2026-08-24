@@ -393,8 +393,7 @@ public class EDDGridLonPM180 extends EDDGrid {
         childLonValues.getDouble(sloni0) == 0) // with value == 0
     sloni359--; // maxSourceLon is a duplicate of 0, so ignore it
     PrimitiveArray newLonValues =
-        childLonValues.subset(sloni180, 1, sloni359); // always a new backing array
-    newLonValues.addOffsetScale(-360, 1); // 180 ... 359 -> -180 ... -1
+        childLonValues.subset(sloni180, 1, sloni359).addOffsetScale(-360, 1); // 180 ... 359 -> -180 ... -1
 
     // set dloni: where are sloni after source values are rearranged to dest values
     int dloni180 = 0;
@@ -692,8 +691,7 @@ public class EDDGridLonPM180 extends EDDGrid {
       PrimitiveArray results[] =
           tChildDataset.getSourceData(
               language, tDirTable, tFileTable, tDataVariables, newConstraints);
-      results[lonIndex] = (PrimitiveArray) results[lonIndex].clone();
-      results[lonIndex].addOffsetScale(-360, 1);
+      results[lonIndex] = ((PrimitiveArray) results[lonIndex].clone()).addOffsetScale(-360, 1);
       return results;
     }
 
@@ -717,8 +715,7 @@ public class EDDGridLonPM180 extends EDDGrid {
       results180 =
           tChildDataset.getSourceData(
               language, tDirTable, tFileTable, tDataVariables, newConstraints);
-      results180[lonIndex] = (PrimitiveArray) results180[lonIndex].clone();
-      results180[lonIndex].addOffsetScale(-360, 1);
+      results180[lonIndex] = ((PrimitiveArray) results180[lonIndex].clone()).addOffsetScale(-360, 1);
       if (debugMode)
         String2.log(
             ">> got results180 from source lon["
