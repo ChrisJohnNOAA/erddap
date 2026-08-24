@@ -1879,11 +1879,20 @@ public class NcHelper {
     if (paType == PAType.CHAR) {
       // netcdf-java 3 & 4 just write 1 byte chars
       // (but nc4 will writes strings as utf-8 encoded
-      pa = new CharArray(pa).toIso88591();
+      if (pa instanceof CharArray tca) {
+        pa = tca.toIso88591();
+      } else {
+        pa = new CharArray(pa).toIso88591();
+      }
     } else if (nc3Mode) {
       if (paType == PAType.LONG || paType == PAType.ULONG) pa = new DoubleArray(pa);
-      else if (paType == PAType.STRING)
-        pa = new StringArray(pa).toIso88591(); // netcdf-java 3 just writes low byte
+      else if (paType == PAType.STRING) {
+        if (pa instanceof StringArray tsa) {
+          pa = tsa.toIso88591(); // netcdf-java 3 just writes low byte
+        } else {
+          pa = new StringArray(pa).toIso88591(); // netcdf-java 3 just writes low byte
+        }
+      }
     }
 
     if (nc3Mode && paType == PAType.STRING) {

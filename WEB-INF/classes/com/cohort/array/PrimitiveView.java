@@ -1,11 +1,13 @@
 package com.cohort.array;
 
+import com.cohort.util.Math2;
 import com.cohort.util.String2;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.nio.channels.FileChannel;
+import java.text.MessageFormat;
 import java.util.BitSet;
 import ucar.ma2.StructureData;
 
@@ -330,14 +332,18 @@ public class PrimitiveView extends PrimitiveArray {
   @Override
   public int indexOf(String lookFor, int startIndex) {
     PrimitiveArray m = materialized;
-    if (m != null) {
-      return m.indexOf(lookFor, startIndex);
+    if (m != null) return m.indexOf(lookFor, startIndex);
+
+    if (stride == 1) {
+      int sourceStart = offset + Math.max(0, startIndex);
+      if (sourceStart >= offset + size) return -1;
+      int found = source.indexOf(lookFor, sourceStart);
+      return (found >= 0 && found < offset + size) ? (found - offset) : -1;
     }
+
     for (int i = Math.max(0, startIndex); i < size; i++) {
       String s = getString(i);
-      if (s == null ? lookFor == null : s.equals(lookFor)) {
-        return i;
-      }
+      if (s == null ? lookFor == null : s.equals(lookFor)) return i;
     }
     return -1;
   }
@@ -345,14 +351,18 @@ public class PrimitiveView extends PrimitiveArray {
   @Override
   public int lastIndexOf(String lookFor, int startIndex) {
     PrimitiveArray m = materialized;
-    if (m != null) {
-      return m.lastIndexOf(lookFor, startIndex);
+    if (m != null) return m.lastIndexOf(lookFor, startIndex);
+
+    if (stride == 1) {
+      int sourceStart = offset + Math.min(size - 1, startIndex);
+      if (sourceStart < offset) return -1;
+      int found = source.lastIndexOf(lookFor, sourceStart);
+      return (found >= offset) ? (found - offset) : -1;
     }
+
     for (int i = Math.min(size - 1, startIndex); i >= 0; i--) {
       String s = getString(i);
-      if (s == null ? lookFor == null : s.equals(lookFor)) {
-        return i;
-      }
+      if (s == null ? lookFor == null : s.equals(lookFor)) return i;
     }
     return -1;
   }
@@ -653,46 +663,211 @@ public class PrimitiveView extends PrimitiveArray {
     return pa;
   }
 
-  // Formatters (Rule 7)
+  // Formatters
   @Override
   public String toString() {
-    return materialize().toString();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toString();
+    StringBuilder sb = new StringBuilder(size * 8);
+    for (int i = 0; i < size; i++) {
+      if (i > 0) sb.append(", ");
+      if (elementType() == PAType.CHAR) {
+        sb.append(String2.toNccsv127DataString(getRawestString(i)));
+      } else {
+        sb.append(getRawestString(i));
+      }
+    }
+    return sb.toString();
   }
 
   @Override
   public String toCSVString() {
-    return materialize().toCSVString();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toCSVString();
+    StringBuilder sb = new StringBuilder(size * 8);
+    for (int i = 0; i < size; i++) {
+      if (i > 0) sb.append(",");
+      sb.append(getSVString(i));
+    }
+    return sb.toString();
   }
 
   @Override
   public String toNccsvAttString() {
-    return materialize().toNccsvAttString();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toNccsvAttString();
+
+    PAType type = elementType();
+    if (type == PAType.STRING) {
+      StringBuilder sb = new StringBuilder(size * 12);
+      for (int i = 0; i < size; i++) {
+        if (i > 0) sb.append(",");
+        sb.append(String2.toNccsvAttString(getString(i)));
+      }
+      return sb.toString();
+    }
+
+    String suffix =
+        switch (type) {
+          case BYTE, UBYTE -> "b";
+          case SHORT, USHORT -> "s";
+          case INT, UINT -> "i";
+          case LONG, ULONG -> "L";
+          case FLOAT -> "f";
+          case DOUBLE -> "d";
+          default -> "";
+        };
+
+    StringBuilder sb = new StringBuilder(size * 10);
+    for (int i = 0; i < size; i++) {
+      if (i > 0) sb.append(",");
+      if (type == PAType.CHAR) {
+        sb.append("\"'").append(String2.toNccsvChar((char) getRawInt(i))).append("'\"");
+      } else {
+        sb.append(getRawestString(i)).append(suffix);
+      }
+    }
+    return sb.toString();
   }
 
   @Override
   public String toNccsv127AttString() {
-    return materialize().toNccsv127AttString();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toNccsv127AttString();
+
+    if (elementType() == PAType.CHAR) {
+      StringBuilder sb = new StringBuilder(size * 10);
+      for (int i = 0; i < size; i++) {
+        if (i > 0) sb.append(",");
+        sb.append("\"'").append(String2.toNccsv127Char((char) getRawInt(i))).append("'\"");
+      }
+      return sb.toString();
+    }
+    return toNccsvAttString();
   }
 
   @Override
   public String toJsonCsvString() {
-    return materialize().toJsonCsvString();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toJsonCsvString();
+    StringBuilder sb = new StringBuilder(size * 8);
+    for (int i = 0; i < size; i++) {
+      if (i > 0) sb.append(", ");
+      sb.append(getJsonString(i));
+    }
+    return sb.toString();
   }
 
   // Array conversion methods
-  @Override
+  /**
+   * Returns a 1D Java array (e.g., double[], float[], String[]) containing all elements in this
+   * view. If materialized, delegates to the backing PrimitiveArray. If unmaterialized, populates a
+   * raw primitive array directly without triggering copy-on-write materialization.
+   *
+   * @return A 1D primitive or object array matching this view's element type.
+   */
   public Object toObjectArray() {
-    return materialize().toObjectArray();
+    // 1. Delegate to PrimitiveArray if already materialized
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toObjectArray();
+
+    int size = size();
+    PAType type = elementType(); // or paType() / elementClass() depending on your class contract
+
+    // 2. Unmaterialized path: Allocate and populate raw Java primitive array directly
+    switch (type) {
+      case DOUBLE:
+        {
+          double[] array = new double[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = getDouble(i);
+          }
+          return array;
+        }
+      case FLOAT:
+        {
+          float[] array = new float[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = getFloat(i);
+          }
+          return array;
+        }
+      case INT:
+      case UINT:
+        {
+          int[] array = new int[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = getInt(i);
+          }
+          return array;
+        }
+      case LONG:
+      case ULONG:
+        {
+          long[] array = new long[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = getLong(i);
+          }
+          return array;
+        }
+      case SHORT:
+      case USHORT:
+        {
+          short[] array = new short[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = (short) getInt(i);
+          }
+          return array;
+        }
+      case BYTE:
+      case UBYTE:
+        {
+          byte[] array = new byte[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = (byte) getInt(i);
+          }
+          return array;
+        }
+      case CHAR:
+        {
+          char[] array = new char[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = (char) getRawInt(i);
+          }
+          return array;
+        }
+      case STRING:
+      default:
+        {
+          String[] array = new String[size];
+          for (int i = 0; i < size; i++) {
+            array[i] = getString(i);
+          }
+          return array;
+        }
+    }
   }
 
   @Override
   public double[] toDoubleArray() {
-    return materialize().toDoubleArray();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toDoubleArray();
+    double[] dar = new double[size];
+    for (int i = 0; i < size; i++) {
+      dar[i] = getDouble(i);
+    }
+    return dar;
   }
 
   @Override
   public String[] toStringArray() {
-    return materialize().toStringArray();
+    PrimitiveArray m = materialized;
+    if (m != null) return m.toStringArray();
+    String[] sar = new String[size];
+    for (int i = 0; i < size; i++) {
+      sar[i] = getString(i);
+    }
+    return sar;
   }
 
   // Comparison
@@ -825,28 +1000,86 @@ public class PrimitiveView extends PrimitiveArray {
   @Override
   public String isEvenlySpaced() {
     PrimitiveArray m = materialized;
-    if (m != null) {
-      return m.isEvenlySpaced();
-    }
-    return materialize().isEvenlySpaced();
-  }
+    if (m != null) return m.isEvenlySpaced();
+    if (size <= 2) return "";
 
-  @Override
-  public String almostEqual(PrimitiveArray other, int matchNDigits) {
-    PrimitiveArray m = materialized;
-    if (m != null) {
-      return m.almostEqual(other, matchNDigits);
+    // Adjust precision digits based on underlying type
+    int sigDigits = (elementType() == PAType.FLOAT) ? 4 : 9;
+
+    double first = getDouble(0);
+    double last = getDouble(size - 1);
+    double diff = (last - first) / (size - 1);
+
+    for (int i = 1; i < size; i++) {
+      double prev = getDouble(i - 1);
+      double curr = getDouble(i);
+      double step = curr - prev;
+
+      // Match DoubleArray/FloatArray's two-stage check using getDouble()
+      if (Math2.almostEqual(sigDigits, step * 1e7, diff * 1e7)) {
+        continue;
+      }
+      if (Math2.almostEqual(sigDigits + 3, prev + diff, curr)
+          && Math2.almostEqual(2, step * 1e7, diff * 1e7)) {
+        continue;
+      }
+
+      return MessageFormat.format(
+          ArrayNotEvenlySpaced,
+          getClass().getSimpleName(),
+          "" + (i - 1),
+          "" + prev,
+          "" + i,
+          "" + curr,
+          "" + step,
+          "" + diff);
     }
-    return materialize().almostEqual(other, matchNDigits);
+    return "";
   }
 
   @Override
   public double[] calculateStats(Attributes atts) {
+    // 1. Delegate if already materialized
     PrimitiveArray m = materialized;
     if (m != null) {
       return m.calculateStats(atts);
     }
-    return materialize().calculateStats(atts);
+
+    int n = size();
+    int count = 0;
+    double min = Double.NaN;
+    double max = Double.NaN;
+    double sum = 0;
+    double sumSqr = 0;
+
+    // 2. Unmaterialized path: Single-pass stats gathering via getDouble()
+    for (int i = 0; i < n; i++) {
+      double d = getDouble(i);
+      if (Double.isNaN(d)) {
+        continue;
+      }
+
+      if (count == 0) {
+        min = d;
+        max = d;
+      } else {
+        if (d < min) min = d;
+        if (d > max) max = d;
+      }
+
+      count++;
+      sum += d;
+      sumSqr += d * d;
+    }
+
+    // 3. Populate standard 5-element array [count, min, max, sum, sumSqr]
+    double[] stats = new double[5];
+    stats[0] = count;
+    stats[1] = min;
+    stats[2] = max;
+    stats[3] = sum;
+    stats[4] = sumSqr;
+    return stats;
   }
 
   @Override

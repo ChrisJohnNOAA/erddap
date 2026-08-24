@@ -8713,11 +8713,10 @@ public class Table {
                 rowSizesPA, "No row_size info for dim=" + dimName + " for var=" + vNames[v]);
             PrimitiveArray varPA = NcHelper.getPrimitiveArray(var);
             StringArray newPA = new StringArray(outerDimSize, false);
-            PrimitiveArray tSubset = null;
             int thisPo = 0;
             for (int outer = 0; outer < outerDimSize; outer++) {
               int thisChunkSize = rowSizesPA.getInt(outer);
-              tSubset = varPA.subset(tSubset, thisPo, 1, thisPo + thisChunkSize - 1);
+              PrimitiveArray tSubset = varPA.subset(thisPo, 1, thisPo + thisChunkSize - 1);
               // usually just 0 or 1 pi's, gld has more
               String tts = String2.toSVString(tSubset.toStringArray(), "/", false);
               newPA.add(tts);
@@ -8904,7 +8903,6 @@ public class Table {
         PrimitiveArray newPA = PrimitiveArray.factory(varPATypes[v], nActiveInnerRows, false);
 
         int thisPo = 0;
-        PrimitiveArray tSubset = null;
         for (int outer = 0; outer < outerDimSize; outer++) {
           int largestChunkSize = largestRowSizes.getInt(outer);
           int thisChunkSize = rowSizesPA.getInt(outer);
@@ -8922,12 +8920,12 @@ public class Table {
 
           } else if (thisChunkSize == largestChunkSize) {
             // copy values into newPA
-            tSubset = varPA.subset(tSubset, thisPo, 1, thisPo + thisChunkSize - 1);
+            // This used to use a single subset object for the loop, but with the new PrimitiveView
+            // implementation I think it's better to use views and not a full PrimitiveArray.
+            // If we truly want to optimize this we could add support for appendSubset() to
+            // PrimitiveArray.
+            PrimitiveArray tSubset = varPA.subset(thisPo, 1, thisPo + thisChunkSize - 1);
             newPA.append(tSubset);
-
-            // only need to do once, but not extant till here
-            tSubset.clear(); // speeds up ensureCapacity
-            tSubset.ensureCapacity(largestLargestChunkSize);
 
           } else {
             throw new RuntimeException(
