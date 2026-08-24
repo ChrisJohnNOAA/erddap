@@ -766,6 +766,7 @@ public class PrimitiveView extends PrimitiveArray {
    *
    * @return A 1D primitive or object array matching this view's element type.
    */
+  @Override
   public Object toObjectArray() {
     // 1. Delegate to PrimitiveArray if already materialized
     PrimitiveArray m = materialized;
