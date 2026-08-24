@@ -3743,7 +3743,7 @@ public abstract class EDDTable extends EDD {
               array =
                   Array.factory(
                       NcHelper.getNc3DataType(colType),
-                      new int[] {bufferSize},
+                      new int[] {nToRead},
                       tsa.toIso88591().toObjectArray());
               ncWriter.writeStringDataToChar(newVar, new int[] {ncOffset}, array);
 
@@ -3761,19 +3761,19 @@ public abstract class EDDTable extends EDD {
                 // pa is temporary, so ok to change chars
                 array =
                     Array.factory(
-                        DataType.CHAR, new int[] {bufferSize}, ca.toIso88591().toObjectArray());
+                        DataType.CHAR, new int[] {nToRead}, ca.toIso88591().toObjectArray());
               } else {
                 array =
                     Array.factory(
                         NcHelper.getNc3DataType(colType),
-                        new int[] {bufferSize},
+                        new int[] {nToRead},
                         pa.toObjectArray());
               }
               ncWriter.write(newVar, new int[] {ncOffset}, array);
             }
 
-            nToGo -= bufferSize;
-            ncOffset += bufferSize;
+            nToGo -= nToRead;
+            ncOffset += nToRead;
             // String2.log("col=" + col + " bufferSize=" + bufferSize + " isString?" + (colType ==
             // PAType.STRING));
           }
