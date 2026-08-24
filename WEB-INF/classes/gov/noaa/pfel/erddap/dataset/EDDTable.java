@@ -3765,9 +3765,7 @@ public abstract class EDDTable extends EDD {
               } else {
                 array =
                     Array.factory(
-                        NcHelper.getNc3DataType(colType),
-                        new int[] {nToRead},
-                        pa.toObjectArray());
+                        NcHelper.getNc3DataType(colType), new int[] {nToRead}, pa.toObjectArray());
               }
               ncWriter.write(newVar, new int[] {ncOffset}, array);
             }
