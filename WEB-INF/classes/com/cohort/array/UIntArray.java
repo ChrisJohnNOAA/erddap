@@ -298,22 +298,27 @@ public class UIntArray extends PrimitiveArray {
           : pa; // no need to call .setMaxIsMV(maxIsMV) since size=0
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    UIntArray ia = null;
     if (pa == null) {
-      ia = new UIntArray(willFind, true);
-    } else {
-      ia = (UIntArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof UIntArray ia) {
       ia.ensureCapacity(willFind);
       ia.size = willFind;
+      final int tar[] = ia.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return ia.setMaxIsMV(maxIsMV);
     }
-    final int tar[] = ia.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return ia.setMaxIsMV(maxIsMV);
+    return pa.setMaxIsMV(maxIsMV);
   }
 
   /**

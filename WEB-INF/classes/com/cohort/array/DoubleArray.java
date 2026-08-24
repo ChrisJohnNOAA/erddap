@@ -238,22 +238,27 @@ public class DoubleArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new DoubleArray(new double[0]) : pa;
 
     int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    DoubleArray da = null;
     if (pa == null) {
-      da = new DoubleArray(willFind, true);
-    } else {
-      da = (DoubleArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof DoubleArray da) {
       da.ensureCapacity(willFind);
       da.size = willFind;
+      double tar[] = da.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return da;
     }
-    double tar[] = da.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return da;
+    return pa;
   }
 
   /**
