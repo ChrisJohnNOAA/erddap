@@ -507,7 +507,7 @@ public class CharArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
+    if (otherPA instanceof CharArray otherCharArray) {
       if (otherIndex + nValues > otherPA.size)
         throw new IllegalArgumentException(
             String2.ERROR

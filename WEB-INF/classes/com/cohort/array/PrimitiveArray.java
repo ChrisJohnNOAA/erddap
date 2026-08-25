@@ -2840,42 +2840,26 @@ public abstract class PrimitiveArray {
    */
   public PrimitiveArray scaleAddOffset(
       boolean sourceIsUnsigned, PAType destElementPAType, double scale, double addOffset) {
-    if (this instanceof PrimitiveView pv && pv.materialized == null) {
-      return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
+    if (scale == 1 && addOffset == 0 && elementType() == destElementPAType && !sourceIsUnsigned) {
+      return this;
     }
-    // Don't create a new PA if we don't need to.
-    PrimitiveArray pa = this;
-    if (this.elementType() != destElementPAType) {
-      pa = factory(destElementPAType, size, true);
-    }
-    if (sourceIsUnsigned) {
-      for (int i = 0; i < size; i++)
-        pa.setDouble(i, getUnsignedDouble(i) * scale + addOffset); // NaNs remain NaNs
-    } else {
-      for (int i = 0; i < size; i++)
-        pa.setDouble(i, getDouble(i) * scale + addOffset); // NaNs remain NaNs
-    }
-    return pa;
+    return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
   }
 
   /**
-   * This returns a new (always) PrimitiveArray of type destElementPAType which has had the packed
-   * values (addOffset then scale values applied). Calculations are done as doubles then, if
-   * necessary, rounded and stored.
+   * This returns a new PrimitiveArray of type destElementPAType which has had the packed
+   * values (addOffset then scale values applied).
    *
    * @param destElementPAType
    * @param addOffset
    * @param scale
-   * @return a new (always) PrimitiveArray
+   * @return a new PrimitiveArray (an OffsetScaleView)
    */
   public PrimitiveArray addOffsetScale(PAType destElementPAType, double addOffset, double scale) {
-    if (this instanceof PrimitiveView pv && pv.materialized == null) {
-      return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
+    if (scale == 1 && addOffset == 0 && elementType() == destElementPAType) {
+      return this;
     }
-    PrimitiveArray pa = factory(destElementPAType, size, true);
-    for (int i = 0; i < size; i++)
-      pa.setDouble(i, (getDouble(i) + addOffset) * scale); // NaNs remain NaNs
-    return pa;
+    return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
   }
 
   /**
