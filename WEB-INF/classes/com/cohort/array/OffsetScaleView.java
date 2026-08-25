@@ -118,6 +118,37 @@ public class OffsetScaleView extends PrimitiveView {
   }
 
   @Override
+  public double getNiceDouble(int index) {
+    checkIndexBounds(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getNiceDouble(index);
+    }
+    double d = getDouble(index);
+    return targetPAType == PAType.FLOAT ? Math2.floatToDouble((float) d) : d;
+  }
+
+  @Override
+  public double getRawDouble(int index) {
+    return getDouble(index);
+  }
+
+  @Override
+  public double getUnsignedDouble(int index) {
+    return getDouble(index);
+  }
+
+  @Override
+  public double getRawNiceDouble(int index) {
+    return getNiceDouble(index);
+  }
+
+  @Override
+  public int getRawInt(int index) {
+    return getInt(index);
+  }
+
+  @Override
   public float getFloat(int index) {
     checkIndexBounds(index);
     PrimitiveArray m = materialized;
