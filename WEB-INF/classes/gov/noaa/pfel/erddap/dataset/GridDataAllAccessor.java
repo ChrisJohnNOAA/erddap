@@ -103,13 +103,17 @@ public class GridDataAllAccessor implements AutoCloseable {
       return;
     }
     if (destBuffer instanceof com.cohort.array.StringArray sa) {
+      if (startElement == 0) {
+        channel.position(0);
+      } else if (channel.position() == 0) {
+        DataInputStream dis =
+            new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
+        for (long i = 0; i < startElement; i++) {
+          dis.readUTF();
+        }
+      }
       DataInputStream dis = new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
       try {
-        if (channel.position() == 0 && startElement > 0) {
-          for (long i = 0; i < startElement; i++) {
-            dis.readUTF();
-          }
-        }
         for (int i = 0; i < maxElements; i++) {
           sa.add(dis.readUTF());
         }
@@ -132,18 +136,17 @@ public class GridDataAllAccessor implements AutoCloseable {
   }
 
   /**
-   * Get all of the destination values for one dataVariable as a DataInputStream. IT IS THE CALLERS
+   * Get all of the destination values for one dataVariable as a FileChannel. IT IS THE CALLERS
    * RESPONSIBILITY TO CLOSE THESE!
    *
    * @param dv a dataVariable number (within the request, not the EDD dataVariable number).
-   * @return a DataInputStream
+   * @return a FileChannel
    */
-  public DataInputStream getDataInputStream(int dv) throws Exception {
+  public FileChannel openDataChannel(int dv) throws Exception {
     String baseDir = gridDataAccessor.eddGrid().cacheDirectory();
     String rawPath = baseFileName + dv;
     String sanitizedPath = TableWriterAll.sanitizePath(rawPath, baseDir);
-    FileChannel fc = FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ);
-    return new gov.noaa.pfel.erddap.util.FileChannelDataInputStream(fc);
+    return FileChannel.open(Paths.get(sanitizedPath), StandardOpenOption.READ);
   }
 
   /**
