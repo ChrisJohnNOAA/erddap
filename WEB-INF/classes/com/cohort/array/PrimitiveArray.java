@@ -2843,7 +2843,18 @@ public abstract class PrimitiveArray {
     if (scale == 1 && addOffset == 0 && elementType() == destElementPAType && !sourceIsUnsigned) {
       return this;
     }
-    return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
+    if ((this instanceof PrimitiveView pv && pv.materialized == null)
+        || this.elementType() != destElementPAType) {
+      return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
+    }
+    if (sourceIsUnsigned) {
+      for (int i = 0; i < size; i++)
+        setDouble(i, getUnsignedDouble(i) * scale + addOffset); // NaNs remain NaNs
+    } else {
+      for (int i = 0; i < size; i++)
+        setDouble(i, getDouble(i) * scale + addOffset); // NaNs remain NaNs
+    }
+    return this;
   }
 
   /**
@@ -2853,13 +2864,19 @@ public abstract class PrimitiveArray {
    * @param destElementPAType
    * @param addOffset
    * @param scale
-   * @return a new PrimitiveArray (an OffsetScaleView)
+   * @return a new PrimitiveArray
    */
   public PrimitiveArray addOffsetScale(PAType destElementPAType, double addOffset, double scale) {
     if (scale == 1 && addOffset == 0 && elementType() == destElementPAType) {
       return this;
     }
-    return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
+    if ((this instanceof PrimitiveView pv && pv.materialized == null)
+        || this.elementType() != destElementPAType) {
+      return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
+    }
+    for (int i = 0; i < size; i++)
+      setDouble(i, (getDouble(i) + addOffset) * scale); // NaNs remain NaNs
+    return this;
   }
 
   /**
