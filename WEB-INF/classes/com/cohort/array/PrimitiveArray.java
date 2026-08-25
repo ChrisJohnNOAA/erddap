@@ -2840,21 +2840,13 @@ public abstract class PrimitiveArray {
    */
   public PrimitiveArray scaleAddOffset(
       boolean sourceIsUnsigned, PAType destElementPAType, double scale, double addOffset) {
-    if (scale == 1 && addOffset == 0 && elementType() == destElementPAType && !sourceIsUnsigned) {
-      return this;
+    if (scale == 1 && addOffset == 0 && !sourceIsUnsigned) {
+      if (elementType() == destElementPAType) {
+        return this;
+      }
+      return factory(destElementPAType, this);
     }
-    if ((this instanceof PrimitiveView pv && pv.materialized == null)
-        || this.elementType() != destElementPAType) {
-      return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
-    }
-    if (sourceIsUnsigned) {
-      for (int i = 0; i < size; i++)
-        setDouble(i, getUnsignedDouble(i) * scale + addOffset); // NaNs remain NaNs
-    } else {
-      for (int i = 0; i < size; i++)
-        setDouble(i, getDouble(i) * scale + addOffset); // NaNs remain NaNs
-    }
-    return this;
+    return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
   }
 
   /**
@@ -2864,19 +2856,16 @@ public abstract class PrimitiveArray {
    * @param destElementPAType
    * @param addOffset
    * @param scale
-   * @return a new PrimitiveArray
+   * @return a new PrimitiveArray (an OffsetScaleView)
    */
   public PrimitiveArray addOffsetScale(PAType destElementPAType, double addOffset, double scale) {
-    if (scale == 1 && addOffset == 0 && elementType() == destElementPAType) {
-      return this;
+    if (scale == 1 && addOffset == 0) {
+      if (elementType() == destElementPAType) {
+        return this;
+      }
+      return factory(destElementPAType, this);
     }
-    if ((this instanceof PrimitiveView pv && pv.materialized == null)
-        || this.elementType() != destElementPAType) {
-      return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
-    }
-    for (int i = 0; i < size; i++)
-      setDouble(i, (getDouble(i) + addOffset) * scale); // NaNs remain NaNs
-    return this;
+    return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
   }
 
   /**
