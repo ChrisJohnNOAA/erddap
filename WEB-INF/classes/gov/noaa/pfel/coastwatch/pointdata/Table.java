@@ -10212,11 +10212,8 @@ public class Table {
 
             Variable obt = outerVars.get(outerCol);
             PrimitiveArray pa = columns.get(col++);
-            if (nInnerRows > 0) {
+            for (int r = 0; r < nInnerRows; r++) {
               pa.add(outerRowData, obt.getShortName());
-              if (nInnerRows > 1) {
-                pa.addFromPA(pa, pa.size() - 1, nInnerRows - 1);
-              }
             }
           }
         }
