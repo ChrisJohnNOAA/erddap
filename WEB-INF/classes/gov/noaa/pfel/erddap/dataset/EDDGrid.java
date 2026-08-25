@@ -6139,7 +6139,7 @@ public abstract class EDDGrid extends EDD {
           stdShape[a] = pa.size();
           Dimension tDim = NcHelper.addDimension(rootGroup, avName, pa.size());
           axisDimensionList.add(tDim);
-          if (av == lonIndex) pa.scaleAddOffset(1, lonAdjust);
+          if (av == lonIndex) pa = pa.scaleAddOffset(1, lonAdjust);
           axisArrays[a] =
               Array.factory(
                   NcHelper.getNc3DataType(gda.axisValues(av).elementType()),

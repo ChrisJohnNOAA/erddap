@@ -9016,7 +9016,7 @@ public abstract class EDD {
           // their PATypes are numeric but different
           arPa = PrimitiveArray.factory(saPaPAType, arPa);
           if (arPa.isIntegerType() && saPa.isFloatingPointType()) // covers most cases
-          arPa.scaleAddOffset(tScaleFactor, tAddOffset);
+          arPa = arPa.scaleAddOffset(tScaleFactor, tAddOffset);
           addAtts.set("actual_range", arPa);
         }
       }
@@ -10316,7 +10316,7 @@ public abstract class EDD {
           isDegreesC = true;
           tUnits = "degree_C";
           ao = (PrimitiveArray) ao.clone(); // if from sourceAtts, don't change sourceAtts value
-          ao.scaleAddOffset(1.0, Math2.kelvinToC);
+          ao = ao.scaleAddOffset(1.0, Math2.kelvinToC);
           tAddOffset = ao.getDouble(0);
           addAtts.set("add_offset", ao);
         }

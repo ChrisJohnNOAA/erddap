@@ -1192,7 +1192,7 @@ public class Attributes {
 
         // apply scaleAddOffset
         if (scale != 1 || add != 0) {
-          dataPa.scaleAddOffset(
+          dataPa = dataPa.scaleAddOffset(
               scale, add); // it checks for (1,0).  CoHort missing values are unaffected.
           if (debugMode) String2.log(">> #1: scale_factor=" + scale + " add_offset=" + add);
         }
@@ -1213,7 +1213,7 @@ public class Attributes {
                 && pa.elementType() != PAType.FLOAT
                 && pa.elementType() != PAType.DOUBLE) {
               pa = PrimitiveArray.factory(destPAType, pa);
-              pa.scaleAddOffset(scale, add);
+              pa = pa.scaleAddOffset(scale, add);
               newAtts.set(name, pa);
             }
           }
@@ -1260,7 +1260,7 @@ public class Attributes {
         PrimitiveArray pa = newAtts.remove(name);
         if (pa != null) {
           pa = new DoubleArray(pa);
-          pa.scaleAddOffset(baseFactor[1], baseFactor[0]);
+          pa = pa.scaleAddOffset(baseFactor[1], baseFactor[0]);
           newAtts.add(name, pa);
         }
       }
@@ -1509,7 +1509,7 @@ public class Attributes {
       }
 
       // apply scaleAddOffset
-      dataPa2.scaleAddOffset(scale, add); // it checks for (1,0)
+      dataPa2 = dataPa2.scaleAddOffset(scale, add); // it checks for (1,0)
       if (debugMode)
         String2.log(
             ">>   Attributes.unpackPA applied scale_factor="

@@ -880,7 +880,7 @@ public class EDDTableFromFileNames extends EDDTable {
         // The proper query above converts lastMod to double epochSeconds
         // so convert back to long epochMillis.
         dnlsTable = twardt.cumulativeTable();
-        dnlsTable.getColumn(2).scaleAddOffset(1000, 0);
+        dnlsTable.setColumn(2, dnlsTable.getColumn(2).scaleAddOffset(1000, 0));
         dnlsTable.setColumn(2, new LongArray(dnlsTable.getColumn(2)));
         dnlsTable.columnAttributes(2).set("units", "milliseconds since 1970-01-01T00:00:00Z");
         dnlsTable.sortIgnoreCase(new int[] {1}, new boolean[] {true});
@@ -1377,7 +1377,7 @@ public class EDDTableFromFileNames extends EDDTable {
         // convert last mod from millis to seconds
         int lastModc = table.findColumnNumber("lastModified");
         PrimitiveArray lastModPA = table.getColumn(lastModc);
-        lastModPA.scaleAddOffset(0.001, 0);
+        lastModPA = lastModPA.scaleAddOffset(0.001, 0);
         table.columnAttributes(lastModc).set("units", Calendar2.SECONDS_SINCE_1970);
 
         // if (sti == 0) String2.log("\nbefore convert to urls:\n" + table.dataToString(5));

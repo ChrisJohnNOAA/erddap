@@ -11147,7 +11147,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         if (avi == eddGrid.depthIndex()) {
           // convert depth to elevation
           PrimitiveArray elevValues = (PrimitiveArray) av.destinationValues().clone();
-          elevValues.scaleAddOffset(-1, 0);
+          elevValues = elevValues.scaleAddOffset(-1, 0);
           if (elevValues.size() > 2 && av.isEvenlySpaced()) {
             // min/max/spacing
             writer.write(
@@ -11482,7 +11482,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         tpa = gaa[gai].destinationStringValues(); // ISO 8601
       } else {
         tpa = (PrimitiveArray) gaa[gai].destinationValues().clone();
-        if (gai == depthi) tpa.scaleAddOffset(-1, 0); // convert depth to elevation
+        if (gai == depthi) tpa = tpa.scaleAddOffset(-1, 0); // convert depth to elevation
         tpa.sort(); // people want + button to increase values and - button to decrease
       }
       options[gai] = tpa.toStringArray();

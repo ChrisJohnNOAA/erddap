@@ -798,8 +798,8 @@ public class Opendap {
           grid.lat, rightGrid.lat, errorInMethod + "Unexpected: The lat arrays don't match.");
       DoubleArray lonDA = new DoubleArray(grid.lon);
       DoubleArray rightLonDA = new DoubleArray(rightGrid.lon);
-      if (lonIsPM180) rightLonDA.scaleAddOffset(1, 360);
-      else lonDA.scaleAddOffset(1, -360);
+      if (lonIsPM180) rightLonDA = (DoubleArray) rightLonDA.scaleAddOffset(1, 360);
+      else lonDA = (DoubleArray) lonDA.scaleAddOffset(1, -360);
 
       DoubleArray dataDA = new DoubleArray(grid.data);
       DoubleArray rightDataDA = new DoubleArray(rightGrid.data);
