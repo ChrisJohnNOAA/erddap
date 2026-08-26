@@ -211,7 +211,8 @@ public class OpendapTest extends NetCheckTest {
           dds = dConnect.getDDS();
         }
       }
-      try (ucar.nc2.dataset.NetcdfDataset ncd = ucar.nc2.dataset.NetcdfDatasets.openDataset(opendap.url)) {
+      try (ucar.nc2.dataset.NetcdfDataset ncd =
+          ucar.nc2.dataset.NetcdfDatasets.openDataset(opendap.url)) {
         opendap.getGridInfo(ncd, variableName, missingValue);
       }
       opendap.getTimeOptions(
