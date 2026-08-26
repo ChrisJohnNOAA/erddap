@@ -450,7 +450,7 @@ class PrimitiveArrayTests {
 
           failed = false;
           try {
-            original.writeToChannel(null, 1, 1);
+            original.writeToChannel((java.nio.channels.FileChannel) null, 1, 1);
           } catch (IllegalArgumentException e) {
             failed = true;
           }

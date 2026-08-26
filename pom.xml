@@ -32,7 +32,7 @@
 
     <groupId>gov.noaa.pfel.erddap</groupId>
     <artifactId>ERDDAP</artifactId>
-    <version>2.31.0</version>
+    <version>2.32.0-alpha</version>
     <packaging>war</packaging>
 
     <name>erddap</name>
@@ -51,7 +51,7 @@
         <error-prone.version>2.50.0</error-prone.version>
         <prometheusVersion>1.8.0</prometheusVersion>
         <parquetVersion>1.18.0</parquetVersion>
-        <awssdkVersion>2.52.1</awssdkVersion>
+        <awssdkVersion>2.53.1</awssdkVersion>
         <luceneVersion>10.5.1</luceneVersion>
         <nettyVersion>4.2.17.Final</nettyVersion>
         <mavenTestPluginVersion>3.5.6</mavenTestPluginVersion>
@@ -769,7 +769,7 @@
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
-                <version>1.6.2</version>
+                <version>1.6.3</version>
             </dependency>
 
             <!--
@@ -781,7 +781,7 @@
             <dependency>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro</artifactId>
-                <version>1.12.1</version>
+                <version>1.12.2</version>
             </dependency>
             <!-- https://mvnrepository.com/artifact/dnsjava/dnsjava -->
             <dependency>
@@ -921,7 +921,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20260719</version>
+            <version>20260814</version>
         </dependency>
 
         <!-- I have private copy of source code in with my code.
@@ -1130,7 +1130,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>33.6.0-jre</version>
+            <version>33.7.1-jre</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/net.jpountz.lz4/lz4 
@@ -1235,7 +1235,7 @@
         <dependency>
             <groupId>io.github.classgraph</groupId>
             <artifactId>classgraph</artifactId>
-            <version>4.8.190</version>
+            <version>4.8.192</version>
         </dependency>
          <dependency>
             <groupId>org.apache.hadoop</groupId>
