@@ -2846,7 +2846,7 @@ public abstract class PrimitiveArray {
     // Don't create a new PA if we don't need to.
     PrimitiveArray pa = this;
     if (this.elementType() != destElementPAType) {
-      pa = factory(destElementPAType, size, true);
+      return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
     }
     if (sourceIsUnsigned) {
       for (int i = 0; i < size; i++)
@@ -2859,8 +2859,8 @@ public abstract class PrimitiveArray {
   }
 
   /**
-   * This returns a new PrimitiveArray of type destElementPAType which has had the packed
-   * values (addOffset then scale values applied).
+   * This returns a new PrimitiveArray of type destElementPAType which has had the packed values
+   * (addOffset then scale values applied).
    *
    * @param destElementPAType
    * @param addOffset
@@ -2868,13 +2868,7 @@ public abstract class PrimitiveArray {
    * @return a new PrimitiveArray
    */
   public PrimitiveArray addOffsetScale(PAType destElementPAType, double addOffset, double scale) {
-    if (this instanceof PrimitiveView pv && pv.materialized == null) {
-      return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
-    }
-    PrimitiveArray pa = factory(destElementPAType, size, true);
-    for (int i = 0; i < size; i++)
-      pa.setDouble(i, (getDouble(i) + addOffset) * scale); // NaNs remain NaNs
-    return pa;
+    return new OffsetScaleView(this, false, destElementPAType, scale, addOffset * scale);
   }
 
   /**

@@ -19,7 +19,8 @@ public class OffsetScaleView extends PrimitiveView {
     this(source, false, source != null ? source.elementType() : PAType.DOUBLE, scale, addOffset);
   }
 
-  public OffsetScaleView(PrimitiveArray source, PAType targetPAType, double scale, double addOffset) {
+  public OffsetScaleView(
+      PrimitiveArray source, PAType targetPAType, double scale, double addOffset) {
     this(source, false, targetPAType, scale, addOffset);
   }
 
@@ -71,8 +72,7 @@ public class OffsetScaleView extends PrimitiveView {
         targetPAType != null
             ? targetPAType
             : (this.source != null ? this.source.elementType() : PAType.DOUBLE);
-    this.sourceMissingValue =
-        this.source != null ? this.source.missingValueAsDouble() : Double.NaN;
+    this.sourceMissingValue = this.source != null ? this.source.missingValueAsDouble() : Double.NaN;
   }
 
   private void checkIndexBounds(int index) {
@@ -316,5 +316,82 @@ public class OffsetScaleView extends PrimitiveView {
       pa.addFromPA(this, startIndex + i * stride, 1);
     }
     return pa;
+  }
+
+  // Comparison: must use transformed (scaled/offset) values, so materialize when needed.
+  @Override
+  public int compare(int index1, PrimitiveArray otherPA, int index2) {
+    PrimitiveArray m = materialized;
+    if (m != null) return m.compare(index1, otherPA, index2);
+    return materialize().compare(index1, otherPA, index2);
+  }
+
+  @Override
+  public int compare(int index1, int index2) {
+    PrimitiveArray m = materialized;
+    if (m != null) return m.compare(index1, index2);
+    return materialize().compare(index1, index2);
+  }
+
+  // I/O: default PrimitiveView sometimes delegates directly to source which would bypass
+  // the scale/offset transformation. Ensure writes use the materialized (transformed)
+  // data to preserve semantics.
+  @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel, int off, int len)
+      throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) return m.writeToChannel(channel, off, len);
+    return materialize().writeToChannel(channel, off, len);
+  }
+
+  @Override
+  public long writeToChannel(java.nio.channels.FileChannel channel) throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) return m.writeToChannel(channel);
+    return materialize().writeToChannel(channel);
+  }
+
+  @Override
+  public int writeDos(java.io.DataOutputStream dos) throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) return m.writeDos(dos);
+    return materialize().writeDos(dos);
+  }
+
+  @Override
+  public int writeDos(java.io.DataOutputStream dos, int i) throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) return m.writeDos(dos, i);
+    return materialize().writeDos(dos, i);
+  }
+
+  @Override
+  public void writeToRAF(java.io.RandomAccessFile raf, int index) throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.writeToRAF(raf, index);
+      return;
+    }
+    materialize().writeToRAF(raf, index);
+  }
+
+  @Override
+  public void externalizeForDODS(java.io.DataOutputStream dos) throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.externalizeForDODS(dos);
+      return;
+    }
+    materialize().externalizeForDODS(dos);
+  }
+
+  @Override
+  public void externalizeForDODS(java.io.DataOutputStream dos, int i) throws Exception {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      m.externalizeForDODS(dos, i);
+      return;
+    }
+    materialize().externalizeForDODS(dos, i);
   }
 }
