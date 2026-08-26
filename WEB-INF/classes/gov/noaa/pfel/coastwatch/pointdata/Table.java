@@ -10212,9 +10212,7 @@ public class Table {
 
             Variable obt = outerVars.get(outerCol);
             PrimitiveArray pa = columns.get(col++);
-            for (int r = 0; r < nInnerRows; r++) {
-              pa.add(outerRowData, obt.getShortName());
-            }
+            pa.addN(outerRowData, obt.getShortName(), nInnerRows);
           }
         }
       }
