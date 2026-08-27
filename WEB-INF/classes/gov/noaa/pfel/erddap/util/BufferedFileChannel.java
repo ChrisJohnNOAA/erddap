@@ -42,15 +42,12 @@ public class BufferedFileChannel implements AutoCloseable {
    * @return the underlying FileChannel
    */
   public FileChannel fileChannel() {
-    return channel;
-  }
-
-  /**
-   * Returns the underlying FileChannel (alias for fileChannel()).
-   *
-   * @return the underlying FileChannel
-   */
-  public FileChannel getChannel() {
+    try {
+      flush();
+    } catch (IOException e) {
+      throw new RuntimeException(
+          String2.ERROR + " in BufferedFileChannel.fileChannel: IOException occurred.", e);
+    }
     return channel;
   }
 

@@ -1711,57 +1711,6 @@ public class StringArray extends PrimitiveArray {
     return bytesWritten;
   }
 
-  @Override
-  public long writeToChannel(final FileChannel channel) throws Exception {
-    return writeToChannel(channel, 0, size);
-  }
-
-  /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
-   * byte order.
-   *
-   * @param channel the FileChannel
-   * @param offset the starting index
-   * @param length the number of elements to write
-   * @return the number of bytes written
-   * @throws Exception if trouble
-   */
-  @Override
-  public long writeToChannel(final FileChannel channel, final int offset, final int length)
-      throws Exception {
-    if (channel == null) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in StringArray.writeToChannel: FileChannel is null.");
-    }
-    if (offset < 0) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in StringArray.writeToChannel: offset (" + offset + ") < 0.");
-    }
-    if (length < 0) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in StringArray.writeToChannel: length (" + length + ") < 0.");
-    }
-    if (offset + (long) length > size) {
-      throw new IllegalArgumentException(
-          String2.ERROR
-              + " in StringArray.writeToChannel: offset + length ("
-              + (offset + (long) length)
-              + ") > size ("
-              + size
-              + ").");
-    }
-    if (length == 0) {
-      return 0L;
-    }
-    final long startPos = channel.position();
-    final DataOutputStream dos = new DataOutputStream(Channels.newOutputStream(channel));
-    for (int i = offset; i < offset + length; i++) {
-      dos.writeUTF(get(i));
-    }
-    dos.flush();
-    return channel.position() - startPos;
-  }
-
   /**
    * This reads/adds n elements from a FileChannel using native byte order.
    *

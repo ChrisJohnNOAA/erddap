@@ -1772,28 +1772,6 @@ public abstract class PrimitiveArray {
   public abstract void reverseBytes();
 
   /**
-   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order. Note:
-   * This method modifies the FileChannel's current position.
-   *
-   * @param channel the FileChannel
-   * @return the number of bytes written
-   * @throws Exception if trouble
-   */
-  public abstract long writeToChannel(FileChannel channel) throws Exception;
-
-  /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
-   * byte order. Note: This method modifies the FileChannel's current position.
-   *
-   * @param channel the FileChannel
-   * @param offset the starting index
-   * @param length the number of elements to write
-   * @return the number of bytes written
-   * @throws Exception if trouble
-   */
-  public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
-
-  /**
    * This writes all elements to a BufferedFileChannel using native byte order.
    *
    * @param channel the BufferedFileChannel

@@ -2,6 +2,7 @@ package com.cohort.array;
 
 import com.cohort.util.Math2;
 import com.cohort.util.String2;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.RandomAccessFile;
@@ -894,12 +895,12 @@ public class PrimitiveView extends PrimitiveArray {
 
   // Write I/O Methods
   @Override
-  public long writeToChannel(FileChannel channel) throws Exception {
+  public long writeToChannel(BufferedFileChannel channel) throws Exception {
     return writeToChannel(channel, 0, size);
   }
 
   @Override
-  public long writeToChannel(FileChannel channel, int off, int len) throws Exception {
+  public long writeToChannel(BufferedFileChannel channel, int off, int len) throws Exception {
     if (off < 0 || len < 0 || (long) off + len > size) {
       throw new IndexOutOfBoundsException(
           "Invalid range: offset=" + off + ", len=" + len + ", view size=" + size);

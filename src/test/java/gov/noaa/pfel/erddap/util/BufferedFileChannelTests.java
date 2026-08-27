@@ -25,7 +25,6 @@ public class BufferedFileChannelTests {
             FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
         BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
       assertEquals(fc, bfc.fileChannel());
-      assertEquals(fc, bfc.getChannel());
 
       ByteBuffer buf = ByteBuffer.allocate(16).order(ByteOrder.nativeOrder());
       buf.putDouble(123.45);
