@@ -403,31 +403,6 @@ public abstract class PrimitiveArray {
     return pa;
   }
 
-  /** This variant assumes sourceIsUnsigned=false. */
-  public PrimitiveArray asOffsetScaleView(
-      PAType destElementPAType, double scale, double addOffset) {
-    return asOffsetScaleView(false, destElementPAType, scale, addOffset);
-  }
-
-  /**
-   * Returns a zero-copy OffsetScaleView over this PrimitiveArray if scale or addOffset or type conversion
-   * is required, or returns this if no modification is needed.
-   *
-   * @param sourceIsUnsigned if true, integer-type values will be interpreted as unsigned
-   * @param destElementPAType the target element PAType
-   * @param scale scale factor
-   * @param addOffset add offset
-   * @return this if scale == 1 && addOffset == 0 && elementType() == destElementPAType && !sourceIsUnsigned,
-   *     otherwise a new OffsetScaleView.
-   */
-  public PrimitiveArray asOffsetScaleView(
-      boolean sourceIsUnsigned, PAType destElementPAType, double scale, double addOffset) {
-    if (scale == 1 && addOffset == 0 && elementType() == destElementPAType && !sourceIsUnsigned) {
-      return this;
-    }
-    return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
-  }
-
   /**
    * Return the number of elements in the array.
    *

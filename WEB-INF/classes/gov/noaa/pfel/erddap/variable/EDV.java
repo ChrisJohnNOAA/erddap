@@ -542,7 +542,7 @@ public class EDV {
     int language = EDMessages.DEFAULT_LANGUAGE;
     // min max  from actual_range, actual_min, actual_max, data_min, or data_max
     PAOne mm[] = extractActualRange(language); // may be low,high or high,low,   or nulls
-    setDestinationMinMaxFromSource(mm[0], mm[1]);
+    setDestinationMinMax(mm[0], mm[1]);
   }
 
   /** This generates combined attributes from addAttributes and sourceAttributes. */
@@ -771,7 +771,7 @@ public class EDV {
    */
   public void extractAndSetActualRange(int language) {
     PAOne mm[] = extractActualRange(language);
-    setDestinationMinMaxFromSource(mm[0], mm[1]);
+    setDestinationMinMax(mm[0], mm[1]);
     setActualRangeFromDestinationMinMax(language);
   }
 
@@ -1280,9 +1280,6 @@ public class EDV {
    * files.
    */
   public void setDestinationMinMaxFromSource(PAOne sourceMin, PAOne sourceMax) {
-    if (sourceMin == null && sourceMax == null) return;
-    if (sourceMin == null) sourceMin = new PAOne(sourceMax.paType(), "");
-    if (sourceMax == null) sourceMax = new PAOne(sourceMin.paType(), "");
     if (scaleAddOffset)
       setDestinationMinMax(
           PAOne.fromDouble(sourceMin.getDouble() * scaleFactor + addOffset),
@@ -1421,12 +1418,12 @@ public class EDV {
     }
 
     // change to destType and scaleAddOffset if needed
-    // this is method is okay if asOffsetScaleView returns same PA (not a new one).
+    // this is method is okay if scaleAddOffset returns same PA (not a new one).
     // if already correct type, maxIsMV setting won't be changed
     return scaleAddOffset
-        ? (this instanceof EDVGridAxis
-            ? source.scaleAddOffset(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
-            : source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset))
+        ?
+        // this is method is okay if scaleAddOffset returns same PA (not a new one).
+        source.scaleAddOffset(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
         : PrimitiveArray.factory(destinationDataPAType, source);
   }
 

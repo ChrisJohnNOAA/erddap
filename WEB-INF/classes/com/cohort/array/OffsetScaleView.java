@@ -2,6 +2,9 @@ package com.cohort.array;
 
 import com.cohort.util.Math2;
 import com.cohort.util.String2;
+import gov.noaa.pfel.erddap.util.BufferedFileChannel;
+import java.io.DataOutputStream;
+import java.io.RandomAccessFile;
 
 /** OffsetScaleView provides a zero-copy virtual view over a PrimitiveArray with scale and offset. */
 public class OffsetScaleView extends PrimitiveView {
@@ -319,6 +322,73 @@ public class OffsetScaleView extends PrimitiveView {
       return m.isMissingValue(index);
     }
     return Double.isNaN(getDouble(index));
+  }
+
+  @Override
+  public int compare(int index1, PrimitiveArray otherPA, int index2) {
+    checkIndex(index1);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.compare(index1, otherPA, index2);
+    }
+    return Double.compare(getDouble(index1), otherPA.getDouble(index2));
+  }
+
+  @Override
+  public int compare(int index1, int index2) {
+    checkIndex(index1);
+    checkIndex(index2);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.compare(index1, index2);
+    }
+    return Double.compare(getDouble(index1), getDouble(index2));
+  }
+
+  @Override
+  public long writeToChannel(BufferedFileChannel channel) throws Exception {
+    return writeToChannel(channel, 0, size);
+  }
+
+  @Override
+  public long writeToChannel(BufferedFileChannel channel, int off, int len) throws Exception {
+    if (off < 0 || len < 0 || (long) off + len > size) {
+      throw new IndexOutOfBoundsException(
+          "Invalid range: offset=" + off + ", len=" + len + ", view size=" + size);
+    }
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.writeToChannel(channel, off, len);
+    }
+    return materialize().writeToChannel(channel, off, len);
+  }
+
+  @Override
+  public int writeDos(DataOutputStream dos) throws Exception {
+    return materialize().writeDos(dos);
+  }
+
+  @Override
+  public int writeDos(DataOutputStream dos, int i) throws Exception {
+    checkIndex(i);
+    return materialize().writeDos(dos, i);
+  }
+
+  @Override
+  public void writeToRAF(RandomAccessFile raf, int index) throws Exception {
+    checkIndex(index);
+    materialize().writeToRAF(raf, index);
+  }
+
+  @Override
+  public void externalizeForDODS(DataOutputStream dos) throws Exception {
+    materialize().externalizeForDODS(dos);
+  }
+
+  @Override
+  public void externalizeForDODS(DataOutputStream dos, int i) throws Exception {
+    checkIndex(i);
+    materialize().externalizeForDODS(dos, i);
   }
 
   @Override
