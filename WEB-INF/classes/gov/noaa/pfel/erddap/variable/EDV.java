@@ -771,7 +771,7 @@ public class EDV {
    */
   public void extractAndSetActualRange(int language) {
     PAOne mm[] = extractActualRange(language);
-    setDestinationMinMax(mm[0], mm[1]);
+    setDestinationMinMaxFromSource(mm[0], mm[1]);
     setActualRangeFromDestinationMinMax(language);
   }
 
@@ -1280,6 +1280,9 @@ public class EDV {
    * files.
    */
   public void setDestinationMinMaxFromSource(PAOne sourceMin, PAOne sourceMax) {
+    if (sourceMin == null && sourceMax == null) return;
+    if (sourceMin == null) sourceMin = new PAOne(sourceMax.paType(), "");
+    if (sourceMax == null) sourceMax = new PAOne(sourceMin.paType(), "");
     if (scaleAddOffset)
       setDestinationMinMax(
           PAOne.fromDouble(sourceMin.getDouble() * scaleFactor + addOffset),
