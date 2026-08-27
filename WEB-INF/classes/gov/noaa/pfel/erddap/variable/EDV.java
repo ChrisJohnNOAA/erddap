@@ -1418,12 +1418,10 @@ public class EDV {
     }
 
     // change to destType and scaleAddOffset if needed
-    // this is method is okay if scaleAddOffset returns same PA (not a new one).
+    // this is method is okay if asOffsetScaleView returns same PA (not a new one).
     // if already correct type, maxIsMV setting won't be changed
     return scaleAddOffset
-        ?
-        // this is method is okay if scaleAddOffset returns same PA (not a new one).
-        source.scaleAddOffset(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
+        ? source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
         : PrimitiveArray.factory(destinationDataPAType, source);
   }
 
