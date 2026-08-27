@@ -33,11 +33,7 @@ public class OffsetScaleView extends PrimitiveView {
       PAType targetPAType,
       double scale,
       double addOffset) {
-    super(
-        source,
-        offset,
-        stride,
-        length);
+    super(source, offset, stride, length);
 
     PrimitiveArray cur = source;
     double tScale = scale;
@@ -95,6 +91,31 @@ public class OffsetScaleView extends PrimitiveView {
   @Override
   public PAType elementType() {
     return targetPAType;
+  }
+
+  @Override
+  public boolean isIntegerType() {
+    return PAType.isIntegerType(targetPAType);
+  }
+
+  @Override
+  public boolean isFloatingPointType() {
+    return targetPAType == PAType.FLOAT || targetPAType == PAType.DOUBLE;
+  }
+
+  @Override
+  public boolean isUnsigned() {
+    return targetPAType.isUnsigned();
+  }
+
+  @Override
+  public int elementSize() {
+    return PAType.elementSize(targetPAType);
+  }
+
+  @Override
+  public double missingValueAsDouble() {
+    return Double.NaN;
   }
 
   @Override

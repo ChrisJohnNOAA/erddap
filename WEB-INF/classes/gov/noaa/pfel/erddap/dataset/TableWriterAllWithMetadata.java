@@ -110,6 +110,9 @@ public class TableWriterAllWithMetadata extends TableWriterAll {
       } else {
         // update columnMinValue and columnMaxValue
         PAOne stats[] = pa.calculatePAOneStats(columnAttributes[col]);
+        if ("longitude".equals(columnNames[col])) {
+          com.cohort.util.String2.log("DEBUG TWAWM longitude paClass=" + pa.getClass().getName() + " paType=" + pa.elementType() + " statsMin=" + stats[PrimitiveArray.STATS_MIN] + " statsMax=" + stats[PrimitiveArray.STATS_MAX] + " paContent=" + pa.toString());
+        }
         // String2.log(">> twawm " + String2.left(columnNames[col], 12) + " " +
         // PrimitiveArray.displayPAOneStats(stats) + "\n    " + pa.toString());
         if (stats[PrimitiveArray.STATS_N].getInt() > 0) {

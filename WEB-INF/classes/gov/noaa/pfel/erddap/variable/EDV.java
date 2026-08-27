@@ -542,7 +542,7 @@ public class EDV {
     int language = EDMessages.DEFAULT_LANGUAGE;
     // min max  from actual_range, actual_min, actual_max, data_min, or data_max
     PAOne mm[] = extractActualRange(language); // may be low,high or high,low,   or nulls
-    setDestinationMinMax(mm[0], mm[1]);
+    setDestinationMinMaxFromSource(mm[0], mm[1]);
   }
 
   /** This generates combined attributes from addAttributes and sourceAttributes. */
@@ -1424,7 +1424,9 @@ public class EDV {
     // this is method is okay if asOffsetScaleView returns same PA (not a new one).
     // if already correct type, maxIsMV setting won't be changed
     return scaleAddOffset
-        ? source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
+        ? (this instanceof EDVGridAxis
+            ? source.scaleAddOffset(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
+            : source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset))
         : PrimitiveArray.factory(destinationDataPAType, source);
   }
 
