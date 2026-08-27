@@ -222,22 +222,27 @@ public class FloatArray extends PrimitiveArray {
     if (stopIndex < startIndex) return pa == null ? new FloatArray(new float[0]) : pa;
 
     final int willFind = strideWillFind(stopIndex - startIndex + 1, stride);
-    FloatArray fa = null;
     if (pa == null) {
-      fa = new FloatArray(willFind, true);
-    } else {
-      fa = (FloatArray) pa;
+      return new PrimitiveView(this, startIndex, stride, willFind);
+    }
+    if (pa instanceof FloatArray fa) {
       fa.ensureCapacity(willFind);
       fa.size = willFind;
+      final float tar[] = fa.array;
+      if (stride == 1) {
+        System.arraycopy(array, startIndex, tar, 0, willFind);
+      } else {
+        int po = 0;
+        for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+      }
+      return fa;
     }
-    final float tar[] = fa.array;
-    if (stride == 1) {
-      System.arraycopy(array, startIndex, tar, 0, willFind);
-    } else {
-      int po = 0;
-      for (int i = startIndex; i <= stopIndex; i += stride) tar[po++] = array[i];
+    pa.clear();
+    pa.ensureCapacity(willFind);
+    for (int i = startIndex; i <= stopIndex; i += stride) {
+      pa.addFromPA(this, i, 1);
     }
-    return fa;
+    return pa;
   }
 
   /**
@@ -1167,72 +1172,6 @@ public class FloatArray extends PrimitiveArray {
       remaining -= toWrite;
     }
     return totalWritten;
-  }
-
-  @Override
-  public long writeToChannel(final FileChannel channel) throws Exception {
-    return writeToChannel(channel, 0, size);
-  }
-
-  /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
-   * byte order.
-   *
-   * @param channel the FileChannel
-   * @param offset the starting index
-   * @param length the number of elements to write
-   * @return the number of bytes written
-   * @throws Exception if trouble
-   */
-  @Override
-  public long writeToChannel(final FileChannel channel, final int offset, final int length)
-      throws Exception {
-    if (channel == null) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in FloatArray.writeToChannel: FileChannel is null.");
-    }
-    if (offset < 0) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in FloatArray.writeToChannel: offset (" + offset + ") < 0.");
-    }
-    if (length < 0) {
-      throw new IllegalArgumentException(
-          String2.ERROR + " in FloatArray.writeToChannel: length (" + length + ") < 0.");
-    }
-    if (offset + (long) length > size) {
-      throw new IllegalArgumentException(
-          String2.ERROR
-              + " in FloatArray.writeToChannel: offset + length ("
-              + (offset + (long) length)
-              + ") > size ("
-              + size
-              + ").");
-    }
-    if (length == 0) return 0L;
-
-    final int bytesPerElement = 4;
-    final int CHUNK_BYTES = 64 * 1024;
-    final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
-    final ByteBuffer byteBuf =
-        ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
-
-    long totalBytesWritten = 0;
-    int remaining = length;
-    int currentOffset = offset;
-    while (remaining > 0) {
-      final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
-      byteBuf.clear();
-      byteBuf.asFloatBuffer().put(array, currentOffset, toWrite);
-      byteBuf.position(0);
-      byteBuf.limit(toWrite * bytesPerElement);
-      while (byteBuf.hasRemaining()) {
-        final int written = channel.write(byteBuf);
-        totalBytesWritten += written;
-      }
-      currentOffset += toWrite;
-      remaining -= toWrite;
-    }
-    return totalBytesWritten;
   }
 
   /**

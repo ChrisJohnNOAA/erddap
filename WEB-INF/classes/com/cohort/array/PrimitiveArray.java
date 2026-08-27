@@ -213,7 +213,10 @@ public abstract class PrimitiveArray {
    */
   @Override
   public Object clone() {
-    return subset(null, 0, 1, size - 1);
+    PrimitiveArray pa = factory(elementType(), size, false);
+    pa.setMaxIsMV(getMaxIsMV());
+    pa.append(this);
+    return pa;
   }
 
   /**
@@ -1769,28 +1772,6 @@ public abstract class PrimitiveArray {
   public abstract void reverseBytes();
 
   /**
-   * This writes the active elements (0 ... size-1) to a FileChannel using native byte order. Note:
-   * This method modifies the FileChannel's current position.
-   *
-   * @param channel the FileChannel
-   * @return the number of bytes written
-   * @throws Exception if trouble
-   */
-  public abstract long writeToChannel(FileChannel channel) throws Exception;
-
-  /**
-   * This writes a subset of elements (offset ... offset+length-1) to a FileChannel using native
-   * byte order. Note: This method modifies the FileChannel's current position.
-   *
-   * @param channel the FileChannel
-   * @param offset the starting index
-   * @param length the number of elements to write
-   * @return the number of bytes written
-   * @throws Exception if trouble
-   */
-  public abstract long writeToChannel(FileChannel channel, int offset, int length) throws Exception;
-
-  /**
    * This writes all elements to a BufferedFileChannel using native byte order.
    *
    * @param channel the BufferedFileChannel
@@ -1952,7 +1933,7 @@ public abstract class PrimitiveArray {
     if (matchNDigits <= 0) // no testing
     return "";
 
-    if (this instanceof StringArray || other instanceof StringArray) {
+    if (this.elementType() == PAType.STRING || other.elementType() == PAType.STRING) {
       for (int i = 0; i < size; i++) {
         String s1 = getString(i);
         String s2 = other.getString(i);
@@ -1966,7 +1947,7 @@ public abstract class PrimitiveArray {
       return "";
     }
 
-    if (this instanceof FloatArray || other instanceof FloatArray) {
+    if (this.elementType() == PAType.FLOAT || other.elementType() == PAType.FLOAT) {
       matchNDigits = matchNDigits == Integer.MAX_VALUE ? 5 : matchNDigits;
       if (matchNDigits > 18) {
         for (int i = 0; i < size; i++) {
@@ -1996,7 +1977,7 @@ public abstract class PrimitiveArray {
       return "";
     }
 
-    if (this instanceof DoubleArray || other instanceof DoubleArray) {
+    if (this.elementType() == PAType.DOUBLE || other.elementType() == PAType.DOUBLE) {
       matchNDigits = matchNDigits == Integer.MAX_VALUE ? 9 : matchNDigits;
       if (matchNDigits > 18) {
         for (int i = 0; i < size; i++) {
@@ -2023,7 +2004,7 @@ public abstract class PrimitiveArray {
       return "";
     }
 
-    if (this instanceof ULongArray || other instanceof ULongArray) {
+    if (this.elementType() == PAType.ULONG || other.elementType() == PAType.ULONG) {
       for (int i = 0; i < size; i++) {
         BigInteger bi1 = getULong(i);
         BigInteger bi2 = other.getULong(i);

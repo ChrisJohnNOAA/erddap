@@ -4195,7 +4195,6 @@ public abstract class EDDTable extends EDD {
         } else if (nodcMode) {
           // write nodc obsVar[feature][obs]
           int origin[] = {0, 0};
-          PrimitiveArray subsetPa = null;
           for (int feature = 0; feature < nFeatures; feature++) {
             // write the data for this feature
             origin[0] = feature;
@@ -4203,7 +4202,7 @@ public abstract class EDDTable extends EDD {
             int firstRow = featureFirstRow.get(feature);
             int tNRows = featureNRows.get(feature);
             int stopRow = firstRow + tNRows - 1;
-            subsetPa = pa.subset(subsetPa, firstRow, 1, stopRow);
+            PrimitiveArray subsetPa = pa.subset(firstRow, 1, stopRow);
             NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tNRows}, subsetPa);
 
             // and write missing values
@@ -4667,7 +4666,6 @@ public abstract class EDDTable extends EDD {
             int origin[] = new int[2];
             int firstRow;
             int lastRow = -1;
-            PrimitiveArray tpa = null;
             for (int feature = 0; feature < nFeatures; feature++) {
               // write data
               origin[0] = feature;
@@ -4675,7 +4673,7 @@ public abstract class EDDTable extends EDD {
               int tnProfiles = nProfilesPerFeature.get(feature);
               firstRow = lastRow + 1;
               lastRow = firstRow + tnProfiles - 1;
-              tpa = pa.subset(tpa, firstRow, 1, lastRow);
+              PrimitiveArray tpa = pa.subset(firstRow, 1, lastRow);
               NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tnProfiles}, tpa);
 
               // write fill values
@@ -4723,7 +4721,7 @@ public abstract class EDDTable extends EDD {
             int firstRow = profileFirstObsRow.get(profile);
             int tNRows = nObsPerProfile.get(profile);
             int stopRow = firstRow + tNRows - 1;
-            subsetPa = pa.subset(subsetPa, firstRow, 1, stopRow);
+            subsetPa = pa.subset(firstRow, 1, stopRow);
             shape[2] = tNRows;
             NcHelper.write(nc3Mode, ncWriter, newVar, origin, shape, subsetPa);
           }
