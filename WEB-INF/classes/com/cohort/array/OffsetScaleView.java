@@ -5,6 +5,7 @@ import com.cohort.util.String2;
 import gov.noaa.pfel.erddap.util.BufferedFileChannel;
 import java.io.DataOutputStream;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 
 /** OffsetScaleView provides a zero-copy virtual view over a PrimitiveArray with scale and offset. */
 public class OffsetScaleView extends PrimitiveView {
@@ -249,6 +250,20 @@ public class OffsetScaleView extends PrimitiveView {
   }
 
   @Override
+  public BigInteger getULong(int index) {
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getULong(index);
+    }
+    double d = getDouble(index);
+    if (!Double.isFinite(d) || d < 0) {
+      return null;
+    }
+    return Math2.roundToULong(d);
+  }
+
+  @Override
   public String getString(int index) {
     checkIndex(index);
     PrimitiveArray m = materialized;
@@ -264,6 +279,64 @@ public class OffsetScaleView extends PrimitiveView {
       return Float.isFinite(f) ? String.valueOf(f) : "";
     }
     return String.valueOf(d);
+  }
+
+  @Override
+  public String getJsonString(int index) {
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getJsonString(index);
+    }
+    double d = getDouble(index);
+    if (!Double.isFinite(d)) {
+      return "null";
+    }
+    if (targetPAType == PAType.FLOAT) {
+      float f = (float) d;
+      return Float.isFinite(f) ? String.valueOf(f) : "null";
+    }
+    return String.valueOf(d);
+  }
+
+  @Override
+  public String getNccsvDataString(int index) {
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getNccsvDataString(index);
+    }
+    return getString(index);
+  }
+
+  @Override
+  public String getNccsv127DataString(int index) {
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getNccsv127DataString(index);
+    }
+    return getString(index);
+  }
+
+  @Override
+  public String getSVString(int index) {
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getSVString(index);
+    }
+    return getString(index);
+  }
+
+  @Override
+  public String getUtf8TsvString(int index) {
+    checkIndex(index);
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.getUtf8TsvString(index);
+    }
+    return getString(index);
   }
 
   @Override
@@ -322,6 +395,47 @@ public class OffsetScaleView extends PrimitiveView {
       return m.isMissingValue(index);
     }
     return Double.isNaN(getDouble(index));
+  }
+
+  @Override
+  public double[] calculateStats(Attributes atts) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.calculateStats(atts);
+    }
+    int n = size();
+    int count = 0;
+    double min = Double.NaN;
+    double max = Double.NaN;
+    double sum = 0;
+    double sumSqr = 0;
+
+    for (int i = 0; i < n; i++) {
+      double d = getDouble(i);
+      if (Double.isNaN(d)) {
+        continue;
+      }
+
+      if (count == 0) {
+        min = d;
+        max = d;
+      } else {
+        if (d < min) min = d;
+        if (d > max) max = d;
+      }
+
+      count++;
+      sum += d;
+      sumSqr += d * d;
+    }
+
+    double[] stats = new double[5];
+    stats[0] = count;
+    stats[1] = min;
+    stats[2] = max;
+    stats[3] = sum;
+    stats[4] = sumSqr;
+    return stats;
   }
 
   @Override
