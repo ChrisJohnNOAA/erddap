@@ -404,6 +404,22 @@ public abstract class PrimitiveArray {
   }
 
   /**
+   * Opt-in zero-copy virtual view method for scale and offset operations.
+   * Returns 'this' if scale == 1, addOffset == 0, elementType() == destElementPAType, and !sourceIsUnsigned.
+   * Otherwise returns a new OffsetScaleView.
+   */
+  public PrimitiveArray asOffsetScaleView(
+      boolean sourceIsUnsigned, PAType destElementPAType, double scale, double addOffset) {
+    if (scale == 1.0
+        && addOffset == 0.0
+        && elementType() == destElementPAType
+        && !sourceIsUnsigned) {
+      return this;
+    }
+    return new OffsetScaleView(this, sourceIsUnsigned, destElementPAType, scale, addOffset);
+  }
+
+  /**
    * Return the number of elements in the array.
    *
    * @return the number of elements in the array.
