@@ -325,6 +325,28 @@ public class OffsetScaleView extends PrimitiveView {
   }
 
   @Override
+  public PAOne[] calculatePAOneStats(Attributes atts) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.calculatePAOneStats(atts);
+    }
+    double[] stats = calculateStats(atts);
+    int n = (int) stats[0];
+    PAOne pMin = new PAOne(targetPAType);
+    PAOne pMax = new PAOne(targetPAType);
+    if (n > 0) {
+      pMin.setDouble(stats[1]);
+      pMax.setDouble(stats[2]);
+    }
+    return new PAOne[] {
+      PAOne.fromInt(n),
+      pMin,
+      pMax,
+      PAOne.fromDouble(stats[3])
+    };
+  }
+
+  @Override
   public int compare(int index1, PrimitiveArray otherPA, int index2) {
     checkIndex(index1);
     PrimitiveArray m = materialized;
