@@ -4881,14 +4881,23 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
     String dir = EDStatic.config.fullTestCacheDirectory;
     EDDTable eddTable = (EDDTable) EDDTestDataset.getArgoFloats();
 
-    // Query selecting only 1D/metadata variables without requesting 2D data variables (pres, temp, psal)
+    // Query selecting only 1D/metadata variables without requesting 2D data variables (pres, temp,
+    // psal)
     String userDapQuery = "platform_number,cycle_number,latitude,longitude&cycle_number<=2";
     String tName =
         eddTable.makeNewFileForDapQuery(
-            language, null, null, userDapQuery, dir, eddTable.className() + "_metadataOnly", ".csv");
+            language,
+            null,
+            null,
+            userDapQuery,
+            dir,
+            eddTable.className() + "_metadataOnly",
+            ".csv");
     String results = File2.directReadFrom88591File(dir + tName);
     String expectedPrefix = "platform_number,cycle_number,latitude,longitude\n";
-    assertTrue(results.startsWith(expectedPrefix), "Results should start with expected header but was: " + results);
+    assertTrue(
+        results.startsWith(expectedPrefix),
+        "Results should start with expected header but was: " + results);
     assertTrue(results.contains("6902733"), "Results should contain data for float 6902733");
   }
 
@@ -4901,8 +4910,7 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         EDDTableFromFilesCallable.isRethrowException(
             new IllegalArgumentException("Invalid query parameter")));
     assertTrue(
-        EDDTableFromFilesCallable.isRethrowException(
-            new NullPointerException("Null reference")));
+        EDDTableFromFilesCallable.isRethrowException(new NullPointerException("Null reference")));
     assertFalse(
         EDDTableFromFilesCallable.isRethrowException(
             new java.io.IOException("Corrupt netCDF file header")));

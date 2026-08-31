@@ -141,9 +141,15 @@ public class EDDTableFromFilesCallable implements Callable<Table> {
 
       } catch (Throwable t2) {
 
-        // if OutOfMemory or too much data or query/runtime exception, rethrow t so request fails without marking bad file
+        // if OutOfMemory or too much data or query/runtime exception, rethrow t so request fails
+        // without marking bad file
         String2.log(
-            identifier + ": caught while reading file=" + fileDir + fileName + ": " + t2.toString());
+            identifier
+                + ": caught while reading file="
+                + fileDir
+                + fileName
+                + ": "
+                + t2.toString());
         if (isRethrowException(t2)) {
           throw t2;
         }
@@ -169,7 +175,8 @@ public class EDDTableFromFilesCallable implements Callable<Table> {
                   true); // getMetadata, mustGetData  //???what about global att promoted to var?
 
         } catch (Throwable t3) {
-          if (debugMode) String2.log(identifier + ": caught while 2nd reading file: " + t3.toString());
+          if (debugMode)
+            String2.log(identifier + ": caught while 2nd reading file: " + t3.toString());
           if (isRethrowException(t3)) {
             throw t3;
           }
