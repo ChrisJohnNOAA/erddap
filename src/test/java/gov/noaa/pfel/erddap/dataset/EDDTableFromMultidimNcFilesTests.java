@@ -1,7 +1,9 @@
 package gov.noaa.pfel.erddap.dataset;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.cohort.util.File2;
 import com.cohort.util.Math2;
@@ -4871,5 +4873,38 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
             + //
             "https://data-erddap.emodnet-physics.eu/erddap/tabledap/EP_PLATFORMS_METADATA.htmlTable?&PLATFORMCODE=%22Mawson%22&integrator_id=%22aad%22&distinct()\n",
         results);
+  }
+
+  @org.junit.jupiter.api.Test
+  void testQueryMetadataOnlyVariables() throws Throwable {
+    int language = 0;
+    String dir = EDStatic.config.fullTestCacheDirectory;
+    EDDTable eddTable = (EDDTable) EDDTestDataset.getArgoFloats();
+
+    // Query selecting only 1D/metadata variables without requesting 2D data variables (pres, temp, psal)
+    String userDapQuery = "platform_number,cycle_number,latitude,longitude&cycle_number<=2";
+    String tName =
+        eddTable.makeNewFileForDapQuery(
+            language, null, null, userDapQuery, dir, eddTable.className() + "_metadataOnly", ".csv");
+    String results = File2.directReadFrom88591File(dir + tName);
+    String expectedPrefix = "platform_number,cycle_number,latitude,longitude\n";
+    assertTrue(results.startsWith(expectedPrefix), "Results should start with expected header but was: " + results);
+    assertTrue(results.contains("6902733"), "Results should contain data for float 6902733");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testIsRethrowException() {
+    assertTrue(
+        EDDTableFromFilesCallable.isRethrowException(
+            new RuntimeException("NDimensionalIndex constructor: shape=[0, 0]")));
+    assertTrue(
+        EDDTableFromFilesCallable.isRethrowException(
+            new IllegalArgumentException("Invalid query parameter")));
+    assertTrue(
+        EDDTableFromFilesCallable.isRethrowException(
+            new NullPointerException("Null reference")));
+    assertFalse(
+        EDDTableFromFilesCallable.isRethrowException(
+            new java.io.IOException("Corrupt netCDF file header")));
   }
 }
