@@ -36,7 +36,7 @@ jobs:
     # Set up the Java runtime specifically for the manual compilation step
     - name: Set up JDK
       if: matrix.build-mode == 'manual'
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v6
       with:
         java-version: '25' # Adjust to match ERDDAP's required target JDK
         distribution: 'temurin'
