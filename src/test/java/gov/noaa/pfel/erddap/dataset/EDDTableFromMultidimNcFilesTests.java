@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.cohort.array.StringArray;
 import com.cohort.util.File2;
 import com.cohort.util.Math2;
 import com.cohort.util.String2;
@@ -4879,13 +4880,40 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
   void testQueryMetadataOnlyVariables() throws Throwable {
     int language = 0;
     String dir = EDStatic.config.fullTestCacheDirectory;
-    EDDTable eddTable = (EDDTable) EDDTestDataset.getArgoFloats();
+    EDDTableFromMultidimNcFiles eddTable =
+        (EDDTableFromMultidimNcFiles) EDDTestDataset.getArgoFloats();
 
     // Ensure badFileMap is clean before query
     File2.delete(eddTable.badFileMapFileName());
 
-    // Query selecting only 1D/metadata variables without requesting 2D data variables (pres, temp,
-    // psal)
+    // 1. Direct call to TableFromMultidimNcFile.readMultidimNc with 1D/metadata variables
+    // and multi-dimensional loadDimNames ("N_PROF", "N_LEVELS").
+    // On unpatched code, this throws "NDimensionalIndex constructor: shape=[0, 0]".
+    String fileDir =
+        File2.addSlash(
+            Path.of(EDDTestDataset.class.getResource("/data/briand/").toURI()).toString());
+    String fileName = "6902733_prof.nc";
+    gov.noaa.pfel.coastwatch.pointdata.Table sourceTable =
+        new gov.noaa.pfel.coastwatch.pointdata.Table();
+    gov.noaa.pfel.coastwatch.pointdata.TableFromMultidimNcFile reader =
+        new gov.noaa.pfel.coastwatch.pointdata.TableFromMultidimNcFile(sourceTable);
+    reader.readMultidimNc(
+        fileDir + fileName,
+        new StringArray(new String[] {"platform_number", "cycle_number", "latitude", "longitude"}),
+        new StringArray(new String[] {"N_PROF", "N_LEVELS"}),
+        null,
+        true,
+        0,
+        false,
+        null,
+        null,
+        null);
+    assertNotNull(sourceTable, "Source table should not be null");
+    assertTrue(
+        sourceTable.nRows() > 0,
+        "Source table should have rows when requesting metadata variables with multi-dim loadDimNames");
+
+    // 2. High-level DAP query selecting only 1D/metadata variables without requesting 2D variables
     String userDapQuery = "platform_number,cycle_number,latitude,longitude&cycle_number<=2";
     String tName =
         eddTable.makeNewFileForDapQuery(
@@ -4903,7 +4931,7 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         "Results should start with expected header but was: " + results);
     assertTrue(results.contains("6902733"), "Results should contain data for float 6902733");
 
-    // Verify no files were added to badFiles list as a result of the query
+    // 3. Verify no files were added to badFiles list as a result of the query
     java.util.concurrent.ConcurrentHashMap<String, Object[]> badFileMap = eddTable.readBadFileMap();
     assertTrue(
         badFileMap == null || badFileMap.isEmpty(),

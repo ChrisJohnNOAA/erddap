@@ -364,7 +364,7 @@ public class TableFromMultidimNcFile {
       // allIndicesTable.dataToString(5));
 
       // apply constraints
-      int onRows = this.table.nRows();
+      int onRows = (firstVar != null) ? this.table.nRows() : allIndicesTable.nRows();
       BitSet keep;
       if (firstVar != null) {
         keep = getKeepForVar(firstVar, nd0, varToKeep);
