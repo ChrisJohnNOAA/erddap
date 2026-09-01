@@ -4880,28 +4880,42 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
   void testQueryMetadataOnlyVariables() throws Throwable {
     int language = 0;
     String dir = EDStatic.config.fullTestCacheDirectory;
-    EDDTableFromMultidimNcFiles eddTable =
-        (EDDTableFromMultidimNcFiles) EDDTestDataset.getArgoFloats();
 
-    // Ensure badFileMap is clean before query
-    File2.delete(eddTable.badFileMapFileName());
+    // Create a NetCDF file with 2 1D variables using different dimensions ("dim1", "dim2"),
+    // but NO 2D variable combining both dimensions.
+    // On unpatched code, when readMultidimNc searches for firstVar matching loadDims.size()==2,
+    // firstVar is assigned on every iteration before checking nDims != loadDims.size().
+    // When no variable matches, firstVar retains the last 1D variable instead of null.
+    // This populates this.table with 1D columns, skipping shape initialization (shape remains [0,
+    // 0]).
+    // Subsequently, new NDimensionalIndex(shape) throws "NDimensionalIndex constructor: shape=[0,
+    // 0]",
+    // and EDDTableFromFilesCallable catches it and adds the healthy file to badFiles.nc.
+    String testNcFile = dir + "test_no_2d_vars.nc";
+    File2.delete(testNcFile);
+    ucar.nc2.write.NetcdfFormatWriter.Builder ncOut =
+        ucar.nc2.write.NetcdfFormatWriter.createNewNetcdf3(testNcFile);
+    ucar.nc2.Group.Builder rootGroup = ncOut.getRootGroup();
+    ucar.nc2.Dimension dim1 = NcHelper.addDimension(rootGroup, "dim1", 3);
+    ucar.nc2.Dimension dim2 = NcHelper.addDimension(rootGroup, "dim2", 4);
+    NcHelper.addVariable(rootGroup, "var1", ucar.ma2.DataType.INT, java.util.List.of(dim1));
+    NcHelper.addVariable(rootGroup, "var2", ucar.ma2.DataType.FLOAT, java.util.List.of(dim2));
+    try (ucar.nc2.write.NetcdfFormatWriter writer = ncOut.build()) {
+      writer.write(writer.findVariable("var1"), NcHelper.get1DArray(new int[] {10, 20, 30}, false));
+      writer.write(
+          writer.findVariable("var2"),
+          NcHelper.get1DArray(new float[] {1.1f, 2.2f, 3.3f, 4.4f}, false));
+    }
 
-    // 1. Direct call to TableFromMultidimNcFile.readMultidimNc with empty loadVarNames
-    // and loadDimNames containing an unmatched dimension ("N_PROF", "N_LEVELS", "EXTRA_DIM").
-    // On unpatched main branch code, this throws "NDimensionalIndex constructor: shape=[0, 0, 0]"
-    // because firstVar retains the last VarData object and shape remains [0, 0, 0].
-    String fileDir =
-        File2.addSlash(
-            Path.of(EDDTestDataset.class.getResource("/data/briand/").toURI()).toString());
-    String fileName = "6902733_prof.nc";
+    // 1. Direct call to TableFromMultidimNcFile.readMultidimNc on the file without a 2D variable
     gov.noaa.pfel.coastwatch.pointdata.Table sourceTable =
         new gov.noaa.pfel.coastwatch.pointdata.Table();
     gov.noaa.pfel.coastwatch.pointdata.TableFromMultidimNcFile reader =
         new gov.noaa.pfel.coastwatch.pointdata.TableFromMultidimNcFile(sourceTable);
     reader.readMultidimNc(
-        fileDir + fileName,
+        testNcFile,
         new StringArray(),
-        new StringArray(new String[] {"N_PROF", "N_LEVELS", "EXTRA_DIM"}),
+        new StringArray(new String[] {"dim1", "dim2"}),
         null,
         true,
         0,
@@ -4910,8 +4924,13 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         null,
         null);
     assertNotNull(sourceTable, "Source table should not be null");
+    assertEquals(12, sourceTable.nRows(), "Source table should have 3*4 = 12 rows");
 
-    // 2. High-level DAP query selecting only 1D/metadata variables without requesting 2D variables
+    // 2. High-level DAP query on dataset selecting 1D/metadata variables
+    EDDTableFromMultidimNcFiles eddTable =
+        (EDDTableFromMultidimNcFiles) EDDTestDataset.getArgoFloats();
+    File2.delete(eddTable.badFileMapFileName());
+
     String userDapQuery = "platform_number,cycle_number,latitude,longitude&cycle_number<=2";
     String tName =
         eddTable.makeNewFileForDapQuery(
@@ -4935,6 +4954,8 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         badFileMap == null || badFileMap.isEmpty(),
         "badFileMap should be empty, healthy files must not be marked bad: "
             + (badFileMap == null ? "null" : badFileMap.keySet()));
+
+    File2.delete(testNcFile);
   }
 
   @org.junit.jupiter.api.Test
