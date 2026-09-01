@@ -4886,9 +4886,10 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
     // Ensure badFileMap is clean before query
     File2.delete(eddTable.badFileMapFileName());
 
-    // 1. Direct call to TableFromMultidimNcFile.readMultidimNc with 1D/metadata variables
-    // and multi-dimensional loadDimNames ("N_PROF", "N_LEVELS").
-    // On unpatched code, this throws "NDimensionalIndex constructor: shape=[0, 0]".
+    // 1. Direct call to TableFromMultidimNcFile.readMultidimNc with empty loadVarNames
+    // and loadDimNames containing an unmatched dimension ("N_PROF", "N_LEVELS", "EXTRA_DIM").
+    // On unpatched main branch code, this throws "NDimensionalIndex constructor: shape=[0, 0, 0]"
+    // because firstVar retains the last VarData object and shape remains [0, 0, 0].
     String fileDir =
         File2.addSlash(
             Path.of(EDDTestDataset.class.getResource("/data/briand/").toURI()).toString());
@@ -4899,8 +4900,8 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         new gov.noaa.pfel.coastwatch.pointdata.TableFromMultidimNcFile(sourceTable);
     reader.readMultidimNc(
         fileDir + fileName,
-        new StringArray(new String[] {"platform_number", "cycle_number", "latitude", "longitude"}),
-        new StringArray(new String[] {"N_PROF", "N_LEVELS"}),
+        new StringArray(),
+        new StringArray(new String[] {"N_PROF", "N_LEVELS", "EXTRA_DIM"}),
         null,
         true,
         0,
@@ -4909,9 +4910,6 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         null,
         null);
     assertNotNull(sourceTable, "Source table should not be null");
-    assertTrue(
-        sourceTable.nRows() > 0,
-        "Source table should have rows when requesting metadata variables with multi-dim loadDimNames");
 
     // 2. High-level DAP query selecting only 1D/metadata variables without requesting 2D variables
     String userDapQuery = "platform_number,cycle_number,latitude,longitude&cycle_number<=2";
