@@ -59,6 +59,7 @@
         <mavenTestPluginVersion>3.5.6</mavenTestPluginVersion>
         <jacocoMavenVersion>0.8.15</jacocoMavenVersion>
         <download.unpackWhenChanged>true</download.unpackWhenChanged>
+        <argLine.extra></argLine.extra>
     </properties>
 
     <repositories>
@@ -629,7 +630,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${mavenTestPluginVersion}</version>
                 <configuration>
-                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                     <environmentVariables>
                         <temp>${project.basedir}/target/temp/</temp>
                         <tmp>${project.basedir}/target/temp/</tmp>
@@ -652,7 +653,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <argLine>${failsafe.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                            <argLine>${failsafe.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                             <environmentVariables>
                                 <temp>${project.basedir}/target/temp/</temp>
                                 <tmp>${project.basedir}/target/temp/</tmp>
@@ -684,7 +685,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${mavenTestPluginVersion}</version>
                 <configuration>
-                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                     <environmentVariables>
                         <temp>${project.basedir}/target/temp/</temp>
                         <tmp>${project.basedir}/target/temp/</tmp>
@@ -708,7 +709,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${mavenTestPluginVersion}</version>
                 <configuration>
-                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                     <environmentVariables>
                         <temp>${project.basedir}/target/temp/</temp>
                         <tmp>${project.basedir}/target/temp/</tmp>
