@@ -36,12 +36,16 @@ jobs:
         java-version: '25'
         distribution: 'temurin'
     - name: Build and test with Maven
+      env:
+        JAVA_TOOL_OPTIONS: "-Xmx4g -XX:+UseG1GC"
       run: >
         mvn --batch-mode
         -Dgcf.skipInstallHooks=true
         -Dmaven.test.redirectTestOutputToFile=true
         -Ddownload.unpack=true
         -Ddownload.unpackWhenChanged=false
+        -DforkCount=1
+        -DreuseForks=true
         clean verify
 
   build-and-push-docker:
