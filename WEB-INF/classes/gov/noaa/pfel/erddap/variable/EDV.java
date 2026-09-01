@@ -699,7 +699,7 @@ public class EDV {
 
     // priority to actual_range
     pa = combinedAttributes.removeAndGetDefault("actual_range"); // always remove
-    if (pa != null && pa.elementType() != destPAType && willChange && !pa.isFloatingPointType())
+    if (pa != null && pa.elementType() != destPAType && pa.elementType() != sourceDataPAType && willChange && !pa.isFloatingPointType())
       throw new RuntimeException(msg);
     if (pa != null && pa.size() == 2) {
       if (reallyVerbose) String2.log("  actual_range metadata for " + destinationName + ": " + pa);
@@ -771,7 +771,7 @@ public class EDV {
    */
   public void extractAndSetActualRange(int language) {
     PAOne mm[] = extractActualRange(language);
-    setDestinationMinMax(mm[0], mm[1]);
+    setDestinationMinMaxFromSource(mm[0], mm[1]);
     setActualRangeFromDestinationMinMax(language);
   }
 
@@ -1280,11 +1280,18 @@ public class EDV {
    * files.
    */
   public void setDestinationMinMaxFromSource(PAOne sourceMin, PAOne sourceMax) {
-    if (scaleAddOffset)
-      setDestinationMinMax(
-          PAOne.fromDouble(sourceMin.getDouble() * scaleFactor + addOffset),
-          PAOne.fromDouble(sourceMax.getDouble() * scaleFactor + addOffset));
-    else setDestinationMinMax(sourceMin, sourceMax);
+    if (sourceMin == null && sourceMax == null) return;
+    if (scaleAddOffset) {
+      PAOne dMin = (sourceMin == null || sourceMin.isMissingValue())
+          ? null
+          : PAOne.fromDouble(sourceMin.getDouble() * scaleFactor + addOffset);
+      PAOne dMax = (sourceMax == null || sourceMax.isMissingValue())
+          ? null
+          : PAOne.fromDouble(sourceMax.getDouble() * scaleFactor + addOffset);
+      setDestinationMinMax(dMin, dMax);
+    } else {
+      setDestinationMinMax(sourceMin, sourceMax);
+    }
   }
 
   /**
