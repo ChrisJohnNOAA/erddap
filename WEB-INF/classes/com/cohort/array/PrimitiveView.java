@@ -440,6 +440,12 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
+  public void addN(StructureData sd, String memberName, int n) {
+    materialize().addN(sd, memberName, n);
+    updateStateFromMaterialized();
+  }
+
+  @Override
   public void addNPAOnes(int n, PAOne value) {
     materialize().addNPAOnes(n, value);
     updateStateFromMaterialized();
