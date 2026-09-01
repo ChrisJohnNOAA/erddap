@@ -1,5 +1,0 @@
-name: "ERDDAP Custom CodeQL Configuration"
-
-packs:
-  java-kotlin:
-    - ./.github/codeql/extensions

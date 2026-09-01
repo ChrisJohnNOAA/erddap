@@ -11802,18 +11802,6 @@ public class EDDTestDataset {
         + "</dataset>\n";
   }
 
-  public static String getResourcePath(String resource) {
-    try {
-      java.net.URL url = EDDTestDataset.class.getResource(resource);
-      if (url == null) {
-        return "test-data" + resource;
-      }
-      return Path.of(url.toURI()).toString();
-    } catch (Exception e) {
-      return "test-data" + resource;
-    }
-  }
-
   public static EDD gettestSuperPreciseTimeUnits() throws Throwable {
     return EDD.oneFromXmlFragment(null, xmlFragment_testSuperPreciseTimeUnits());
   }
@@ -11823,7 +11811,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/nc/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/nc/").toURI()).toString()
         + "</fileDir>\n"
         + "    <fileNameRegex>superPreciseTimeUnits.nc</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"
@@ -12393,7 +12381,7 @@ public class EDDTestDataset {
         + "<dataset type=\"EDDGridFromNcFiles\" datasetID=\"testGriddedNcFiles_COPY\">\n"
         + "    <reloadEveryNMinutes>60</reloadEveryNMinutes>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/erdQSwind1day/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/erdQSwind1day/").toURI()).toString()
         + "</fileDir>\n"
         + "    <!--fileTableInMemory>true</fileTableInMemory-->\n"
         + "    <recursive>true</recursive>\n"
@@ -19153,7 +19141,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>60</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>1</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/erdQSwind1day/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/erdQSwind1day/").toURI()).toString()
         + "</fileDir>\n"
         + "    <!--fileTableInMemory>true</fileTableInMemory-->\n"
         + "    <recursive>true</recursive>\n"
@@ -19284,7 +19272,7 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDGridFromNcFiles\" datasetID=\"testGrib2_42\">\n"
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/geosgrib/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/geosgrib/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>true</recursive>\n"
         + "    <fileNameRegex>.*\\.grb2</fileNameRegex>\n"
@@ -19302,7 +19290,7 @@ public class EDDTestDataset {
         + "        <att name=\"keywords_vocabulary\">GCMD Science Keywords</att>\n"
         + "        <att name=\"license\">[standard]</att>\n"
         + "        <att name=\"location\">"
-        + getResourcePath("/largeFiles/geosgrib/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/geosgrib/").toURI()).toString()
         + "/multi_1.glo_30m.all.grb2</att>\n"
         + "        <att name=\"standard_name_vocabulary\">CF Standard Name Table v70</att>\n"
         + "        <att name=\"summary\">???</att>\n"
@@ -19558,7 +19546,7 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDGridFromNcFiles\" datasetID=\"testGrib2_43\">\n"
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/geosgrib/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/geosgrib/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>true</recursive>\n"
         + "    <fileNameRegex>.*\\.grb2</fileNameRegex>\n"
@@ -19582,7 +19570,7 @@ public class EDDTestDataset {
         + "        <att name=\"keywords_vocabulary\">GCMD Science Keywords</att>\n"
         + "        <att name=\"license\">[standard]</att>\n"
         + "        <att name=\"location\">"
-        + getResourcePath("/largeFiles/geosgrib/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/geosgrib/").toURI()).toString()
         + "/multi_1.glo_30m.all.grb2</att>\n"
         + "        <att name=\"standard_name_vocabulary\">CF Standard Name Table v70</att>\n"
         + "        <att name=\"summary\">???</att>\n"
@@ -20138,7 +20126,7 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDGridFromNcFiles\" datasetID=\"testCwHdf\">\n"
         + "    <reloadEveryNMinutes>60</reloadEveryNMinutes>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/cwhdf/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/cwhdf/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>false</recursive>\n"
         + "    <fileNameRegex>.*\\.hdf</fileNameRegex>\n"
@@ -20541,7 +20529,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>10080</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/hdf/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/hdf/").toURI()).toString()
         + "/</fileDir>\n"
         + "    <fileNameRegex>Q2011237000100.L2_SCI_V4\\.0</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"
@@ -20701,7 +20689,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>10080</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/hdf/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/hdf/").toURI()).toString()
         + "/</fileDir>\n"
         + "    <fileNameRegex>Q2011237000100.L2_SCI_V4\\.0</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"
@@ -21599,7 +21587,7 @@ public class EDDTestDataset {
         + "    <defaultGraphQuery>elapsedTime,channel_1&amp;time=min(time)&amp;elapsedTime&gt;=0&amp;elapsedTime&lt;=1&amp;.draw=lines</defaultGraphQuery>\n"
         + "    <defaultDataQuery>&amp;time=min(time)</defaultDataQuery>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/audio/wav/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/audio/wav/").toURI()).toString()
         + "</fileDir> <!-- also /erddapTest/audio/wav/ -->\n"
         + "    <fileNameRegex>.*\\.wav</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"
@@ -24933,7 +24921,7 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDGridFromNcFiles\" datasetID=\"testUnsignedGrid\" active=\"true\">\n"
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/nc/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/nc/").toURI()).toString()
         + "</fileDir>\n"
         + "    <fileNameRegex>V20172742017304\\.L3m_MO_SNPP_CHL_chlor_a_4km\\.nc</fileNameRegex>\n"
         + "    <recursive>false</recursive>\n"
@@ -25418,7 +25406,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/justin/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/justin/").toURI()).toString()
         + "</fileDir>\n"
         + "    <fileNameRegex>test\\.h5</fileNameRegex> <!-- private file. do not share -->\n"
         + "    <recursive>true</recursive>\n"
@@ -26720,7 +26708,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>10080</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/hdf/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/hdf/").toURI()).toString()
         + "/</fileDir>\n"
         + "    <fileNameRegex>Q2011237000100.L2_SCI_V4\\.0</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"
@@ -35001,7 +34989,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/nccf/wod/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/nccf/wod/").toURI()).toString()
         + "</fileDir>\n"
         + "    <fileNameRegex>wod_drb_.*\\.nc</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"
@@ -35774,7 +35762,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/mergeIR/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/mergeIR/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>true</recursive>\n"
         + "    <fileNameRegex>merg_[0-9]{10}_4km-pixel</fileNameRegex>\n"
@@ -35848,7 +35836,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/mergeIR/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/mergeIR/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>true</recursive>\n"
         + "    <fileNameRegex>merg_[0-9]{10}_4km-pixel\\.Z</fileNameRegex>\n"
@@ -35939,7 +35927,7 @@ public class EDDTestDataset {
         + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
         + "    <updateEveryNMillis>10000</updateEveryNMillis>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/mergeIR/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/mergeIR/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>true</recursive>\n"
         + "    <fileNameRegex>merg_[0-9]{10}_4km-pixel\\.gz</fileNameRegex>\n"
@@ -36239,7 +36227,7 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDTableFromNcCFFiles\" datasetID=\"testKevin20130109\" active=\"true\">\n"
         + "    <reloadEveryNMinutes>10080</reloadEveryNMinutes>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/kevin/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/kevin/").toURI()).toString()
         + "</fileDir>\n"
         + "    <recursive>true</recursive>\n"
         + "    <fileNameRegex>interpolated_gld\\.20120620_045152_and_meta\\.nc</fileNameRegex>\n"
@@ -42832,7 +42820,7 @@ public class EDDTestDataset {
         + "    <defaultGraphQuery>channel_1[0][(0):(1)]&amp;.draw=lines&amp;.vars=elapsedTime|time</defaultGraphQuery>\n"
         + "    <defaultDataQuery>&amp;time=min(time)</defaultDataQuery>\n"
         + "    <fileDir>"
-        + getResourcePath("/largeFiles/audio/wav/")
+        + Path.of(EDDTestDataset.class.getResource("/largeFiles/audio/wav/").toURI()).toString()
         + "</fileDir> <!-- also /erddapTest/audio/wav/ -->\n"
         + "    <fileNameRegex>aco_acoustic\\.[0-9]{8}_[0-9]{6}\\.wav</fileNameRegex>\n"
         + "    <recursive>true</recursive>\n"

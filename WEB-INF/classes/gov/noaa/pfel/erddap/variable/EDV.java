@@ -1420,8 +1420,13 @@ public class EDV {
     // change to destType and scaleAddOffset if needed
     // this is method is okay if asOffsetScaleView returns same PA (not a new one).
     // if already correct type, maxIsMV setting won't be changed
+    // Note: EDVGridAxis represents grid coordinate axes which require concrete transformation
+    // arrays for axis sorting, binary searching, and longitude wrapping (EDDGridLonPM180/0360).
     return scaleAddOffset
-        ? source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
+        ? (this instanceof EDVGridAxis
+            ? source.scaleAddOffset(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
+            : source.asOffsetScaleView(
+                sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset))
         : PrimitiveArray.factory(destinationDataPAType, source);
   }
 

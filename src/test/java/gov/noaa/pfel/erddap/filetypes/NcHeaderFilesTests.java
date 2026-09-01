@@ -389,7 +389,6 @@ netcdf EDDGridFromDap.nc {
       :units = "degrees_east";
 
     float temp(time=1, depth=19, latitude=1, longitude=1);
-      :_CoordinateAxes = "time lev lat lon ";
       :_FillValue = -9.99E33f; // float
       :colorBarMaximum = 32.0; // double
       :colorBarMinimum = 0.0; // double
@@ -400,7 +399,6 @@ netcdf EDDGridFromDap.nc {
       :units = "degree_C";
 
     float salt(time=1, depth=19, latitude=1, longitude=1);
-      :_CoordinateAxes = "time lev lat lon ";
       :_FillValue = -9.99E33f; // float
       :colorBarMaximum = 37.0; // double
       :colorBarMinimum = 32.0; // double
@@ -411,7 +409,6 @@ netcdf EDDGridFromDap.nc {
       :units = "PSU";
 
     float u(time=1, depth=19, latitude=1, longitude=1);
-      :_CoordinateAxes = "time lev lat lon ";
       :_FillValue = -9.99E33f; // float
       :colorBarMaximum = 0.5; // double
       :colorBarMinimum = -0.5; // double
@@ -422,7 +419,6 @@ netcdf EDDGridFromDap.nc {
       :units = "m s-1";
 
     float v(time=1, depth=19, latitude=1, longitude=1);
-      :_CoordinateAxes = "time lev lat lon ";
       :_FillValue = -9.99E33f; // float
       :colorBarMaximum = 0.5; // double
       :colorBarMinimum = -0.5; // double
@@ -433,7 +429,6 @@ netcdf EDDGridFromDap.nc {
       :units = "m s-1";
 
     float w(time=1, depth=19, latitude=1, longitude=1);
-      :_CoordinateAxes = "time lev lat lon ";
       :_FillValue = -9.99E33f; // float
       :colorBarMaximum = 1.0E-5; // double
       :colorBarMinimum = -1.0E-5; // double

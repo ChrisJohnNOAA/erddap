@@ -42,13 +42,16 @@ public class OffsetScaleView extends PrimitiveView {
     super(source, offset, stride, length);
 
     PrimitiveArray cur = source;
+    int curOffset = offset;
+    int curStride = stride;
     double tScale = scale;
     double tAddOffset = addOffset;
     boolean tSourceIsUnsigned = sourceIsUnsigned;
-    double tSourceMissingValue =
-        this.source == null ? Double.NaN : this.source.missingValueAsDouble();
+    double tSourceMissingValue = source == null ? Double.NaN : source.missingValueAsDouble();
 
     while (cur instanceof PrimitiveView pv && pv.materialized == null) {
+      curOffset = pv.offset + (curOffset * pv.stride);
+      curStride = pv.stride * curStride;
       if (pv instanceof OffsetScaleView osv) {
         tAddOffset = tScale * osv.addOffset + tAddOffset;
         tScale = osv.scale * tScale;
@@ -58,6 +61,9 @@ public class OffsetScaleView extends PrimitiveView {
       cur = pv.source;
     }
 
+    this.source = cur;
+    this.offset = curOffset;
+    this.stride = curStride;
     this.scale = tScale;
     this.addOffset = tAddOffset;
     this.sourceIsUnsigned = tSourceIsUnsigned;
@@ -279,6 +285,8 @@ public class OffsetScaleView extends PrimitiveView {
     if (targetPAType == PAType.FLOAT) {
       float f = (float) d;
       return Float.isFinite(f) ? String.valueOf(f) : "";
+    } else if (PAType.isIntegerType(targetPAType)) {
+      return String.valueOf(Math2.roundToLong(d));
     }
     return String.valueOf(d);
   }
