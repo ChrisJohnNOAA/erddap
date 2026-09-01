@@ -7,7 +7,9 @@ import java.io.DataOutputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 
-/** OffsetScaleView provides a zero-copy virtual view over a PrimitiveArray with scale and offset. */
+/**
+ * OffsetScaleView provides a zero-copy virtual view over a PrimitiveArray with scale and offset.
+ */
 public class OffsetScaleView extends PrimitiveView {
 
   public final double scale;
@@ -452,12 +454,7 @@ public class OffsetScaleView extends PrimitiveView {
       pMin.setDouble(stats[1]);
       pMax.setDouble(stats[2]);
     }
-    return new PAOne[] {
-      PAOne.fromInt(n),
-      pMin,
-      pMax,
-      PAOne.fromDouble(stats[3])
-    };
+    return new PAOne[] {PAOne.fromInt(n), pMin, pMax, PAOne.fromDouble(stats[3])};
   }
 
   @Override
@@ -546,7 +543,14 @@ public class OffsetScaleView extends PrimitiveView {
     if (stopIndex < startIndex) {
       if (pa == null) {
         return new OffsetScaleView(
-            this, 0, 1, 0, sourceIsUnsigned, targetPAType, 1.0, 0.0);
+            this.source,
+            this.offset,
+            this.stride,
+            0,
+            sourceIsUnsigned,
+            targetPAType,
+            scale,
+            addOffset);
       }
       pa.clear();
       return pa;
@@ -554,8 +558,17 @@ public class OffsetScaleView extends PrimitiveView {
     int effectiveStop = Math.min(stopIndex, size - 1);
     int subLength = PrimitiveArray.strideWillFind(effectiveStop - startIndex + 1, stride);
     if (pa == null) {
+      int newOffset = offset + startIndex * this.stride;
+      int newStride = this.stride * stride;
       return new OffsetScaleView(
-          this, startIndex, stride, subLength, sourceIsUnsigned, targetPAType, 1.0, 0.0);
+          this.source,
+          newOffset,
+          newStride,
+          subLength,
+          sourceIsUnsigned,
+          targetPAType,
+          scale,
+          addOffset);
     }
 
     pa.clear();

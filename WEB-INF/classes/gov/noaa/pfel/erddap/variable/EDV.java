@@ -699,7 +699,7 @@ public class EDV {
 
     // priority to actual_range
     pa = combinedAttributes.removeAndGetDefault("actual_range"); // always remove
-    if (pa != null && pa.elementType() != destPAType && pa.elementType() != sourceDataPAType && willChange && !pa.isFloatingPointType())
+    if (pa != null && pa.elementType() != destPAType && willChange && !pa.isFloatingPointType())
       throw new RuntimeException(msg);
     if (pa != null && pa.size() == 2) {
       if (reallyVerbose) String2.log("  actual_range metadata for " + destinationName + ": " + pa);
@@ -771,7 +771,7 @@ public class EDV {
    */
   public void extractAndSetActualRange(int language) {
     PAOne mm[] = extractActualRange(language);
-    setDestinationMinMaxFromSource(mm[0], mm[1]);
+    setDestinationMinMax(mm[0], mm[1]);
     setActualRangeFromDestinationMinMax(language);
   }
 
@@ -1280,18 +1280,11 @@ public class EDV {
    * files.
    */
   public void setDestinationMinMaxFromSource(PAOne sourceMin, PAOne sourceMax) {
-    if (sourceMin == null && sourceMax == null) return;
-    if (scaleAddOffset) {
-      PAOne dMin = (sourceMin == null || sourceMin.isMissingValue())
-          ? null
-          : PAOne.fromDouble(sourceMin.getDouble() * scaleFactor + addOffset);
-      PAOne dMax = (sourceMax == null || sourceMax.isMissingValue())
-          ? null
-          : PAOne.fromDouble(sourceMax.getDouble() * scaleFactor + addOffset);
-      setDestinationMinMax(dMin, dMax);
-    } else {
-      setDestinationMinMax(sourceMin, sourceMax);
-    }
+    if (scaleAddOffset)
+      setDestinationMinMax(
+          PAOne.fromDouble(sourceMin.getDouble() * scaleFactor + addOffset),
+          PAOne.fromDouble(sourceMax.getDouble() * scaleFactor + addOffset));
+    else setDestinationMinMax(sourceMin, sourceMax);
   }
 
   /**
@@ -1427,12 +1420,8 @@ public class EDV {
     // change to destType and scaleAddOffset if needed
     // this is method is okay if asOffsetScaleView returns same PA (not a new one).
     // if already correct type, maxIsMV setting won't be changed
-    // Note: EDVGridAxis represents grid coordinate axes which require concrete transformation
-    // arrays for axis sorting, binary searching, and longitude wrapping (EDDGridLonPM180/0360).
     return scaleAddOffset
-        ? (this instanceof EDVGridAxis
-            ? source.scaleAddOffset(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
-            : source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset))
+        ? source.asOffsetScaleView(sourceIsUnsigned, destinationDataPAType, scaleFactor, addOffset)
         : PrimitiveArray.factory(destinationDataPAType, source);
   }
 

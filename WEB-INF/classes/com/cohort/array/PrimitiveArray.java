@@ -404,9 +404,9 @@ public abstract class PrimitiveArray {
   }
 
   /**
-   * Opt-in zero-copy virtual view method for scale and offset operations.
-   * Returns 'this' if scale == 1, addOffset == 0, elementType() == destElementPAType, and !sourceIsUnsigned.
-   * Otherwise returns a new OffsetScaleView.
+   * Opt-in zero-copy virtual view method for scale and offset operations. Returns 'this' if scale
+   * == 1, addOffset == 0, elementType() == destElementPAType, and !sourceIsUnsigned. Otherwise
+   * returns a new OffsetScaleView.
    */
   public PrimitiveArray asOffsetScaleView(
       boolean sourceIsUnsigned, PAType destElementPAType, double scale, double addOffset) {
