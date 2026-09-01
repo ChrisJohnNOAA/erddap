@@ -4881,6 +4881,9 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
     String dir = EDStatic.config.fullTestCacheDirectory;
     EDDTable eddTable = (EDDTable) EDDTestDataset.getArgoFloats();
 
+    // Ensure badFileMap is clean before query
+    File2.delete(eddTable.badFileMapFileName());
+
     // Query selecting only 1D/metadata variables without requesting 2D data variables (pres, temp,
     // psal)
     String userDapQuery = "platform_number,cycle_number,latitude,longitude&cycle_number<=2";
@@ -4899,6 +4902,13 @@ class EDDTableFromMultidimNcFilesTests extends WireMockLifecycle {
         results.startsWith(expectedPrefix),
         "Results should start with expected header but was: " + results);
     assertTrue(results.contains("6902733"), "Results should contain data for float 6902733");
+
+    // Verify no files were added to badFiles list as a result of the query
+    java.util.concurrent.ConcurrentHashMap<String, Object[]> badFileMap = eddTable.readBadFileMap();
+    assertTrue(
+        badFileMap == null || badFileMap.isEmpty(),
+        "badFileMap should be empty, healthy files must not be marked bad: "
+            + (badFileMap == null ? "null" : badFileMap.keySet()));
   }
 
   @org.junit.jupiter.api.Test

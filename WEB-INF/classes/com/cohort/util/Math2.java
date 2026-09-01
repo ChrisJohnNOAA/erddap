@@ -570,13 +570,6 @@ public class Math2 {
     if (memoryInUse + nBytes <= maxSafeMemory) // it'll work
     return;
 
-    // Force System.gc() if gcAndWait skipped System.gc() due to shortSleep throttling
-    System.gc();
-    Math2.sleep(200);
-    memoryInUse = getMemoryInUse();
-    if (memoryInUse + nBytes <= maxSafeMemory) // it'll work
-    return;
-
     // not currently enough memory
     String msg =
         memoryTooMuchData
