@@ -440,8 +440,8 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
-  public void addN(StructureData sd, String memberName, int count) {
-    materialize().addN(sd, memberName, count);
+  public void addN(StructureData sd, String memberName, int n) {
+    materialize().addN(sd, memberName, n);
     updateStateFromMaterialized();
   }
 
