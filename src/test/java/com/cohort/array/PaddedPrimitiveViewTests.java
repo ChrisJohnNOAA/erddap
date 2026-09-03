@@ -93,9 +93,12 @@ class PaddedPrimitiveViewTests {
     double[] viewStats = pDa.calculateStats();
 
     Test.ensureEqual(viewStats[PrimitiveArray.STATS_N], daStats[PrimitiveArray.STATS_N], "stats N");
-    Test.ensureEqual(viewStats[PrimitiveArray.STATS_MIN], daStats[PrimitiveArray.STATS_MIN], "stats MIN");
-    Test.ensureEqual(viewStats[PrimitiveArray.STATS_MAX], daStats[PrimitiveArray.STATS_MAX], "stats MAX");
-    Test.ensureEqual(viewStats[PrimitiveArray.STATS_SUM], daStats[PrimitiveArray.STATS_SUM], "stats SUM");
+    Test.ensureEqual(
+        viewStats[PrimitiveArray.STATS_MIN], daStats[PrimitiveArray.STATS_MIN], "stats MIN");
+    Test.ensureEqual(
+        viewStats[PrimitiveArray.STATS_MAX], daStats[PrimitiveArray.STATS_MAX], "stats MAX");
+    Test.ensureEqual(
+        viewStats[PrimitiveArray.STATS_SUM], daStats[PrimitiveArray.STATS_SUM], "stats SUM");
 
     int[] nmmDa = da.getNMinMaxIndex();
     int[] nmmView = pDa.getNMinMaxIndex();
@@ -143,8 +146,10 @@ class PaddedPrimitiveViewTests {
     Test.ensureEqual(table.getColumn(0).size(), 5, "col1 size after makeColumnsSameSize");
     Test.ensureEqual(table.getColumn(1).size(), 5, "col2 size after makeColumnsSameSize");
 
-    Test.ensureTrue(!(table.getColumn(0) instanceof PaddedPrimitiveView), "col1 was already maxSize");
-    Test.ensureTrue(table.getColumn(1) instanceof PaddedPrimitiveView, "col2 is PaddedPrimitiveView");
+    Test.ensureTrue(
+        !(table.getColumn(0) instanceof PaddedPrimitiveView), "col1 was already maxSize");
+    Test.ensureTrue(
+        table.getColumn(1) instanceof PaddedPrimitiveView, "col2 is PaddedPrimitiveView");
 
     PaddedPrimitiveView viewCol2 = (PaddedPrimitiveView) table.getColumn(1);
     Test.ensureEqual(viewCol2.getString(0), "A", "row 0");
@@ -154,7 +159,8 @@ class PaddedPrimitiveViewTests {
 
     // Check stats safeguard
     double[] col2Stats = viewCol2.calculateStats();
-    Test.ensureEqual(col2Stats[PrimitiveArray.STATS_N], 0.0, "col2 stats N (strings give 0 valid doubles)");
+    Test.ensureEqual(
+        col2Stats[PrimitiveArray.STATS_N], 0.0, "col2 stats N (strings give 0 valid doubles)");
 
     // Test formatting output
     String csv = table.saveAsCsvASCIIString();

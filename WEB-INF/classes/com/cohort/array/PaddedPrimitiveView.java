@@ -7,8 +7,8 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 
 /**
- * PaddedPrimitiveView provides a zero-copy virtual view that pads a PrimitiveArray to a target
- * size with missing values.
+ * PaddedPrimitiveView provides a zero-copy virtual view that pads a PrimitiveArray to a target size
+ * with missing values.
  */
 public class PaddedPrimitiveView extends PrimitiveView {
 
@@ -35,10 +35,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
    */
   public PaddedPrimitiveView(PrimitiveArray source, int targetSize, double missingDouble) {
     super(
-        unwrapSource(source),
-        0,
-        1,
-        unwrapSource(source) == null ? 0 : unwrapSource(source).size());
+        unwrapSource(source), 0, 1, unwrapSource(source) == null ? 0 : unwrapSource(source).size());
 
     PrimitiveArray realSource = unwrapSource(source);
     if (realSource == null) {
@@ -305,7 +302,8 @@ public class PaddedPrimitiveView extends PrimitiveView {
     if (index < source.size()) return source.getPAOne(index, paOne);
     if (paOne == null) paOne = new PAOne(source.elementType());
     if (source.elementType() == PAType.STRING) return paOne.setString("");
-    return paOne.fromDouble(Double.isNaN(missingDouble) ? source.missingValueAsDouble() : missingDouble);
+    return paOne.fromDouble(
+        Double.isNaN(missingDouble) ? source.missingValueAsDouble() : missingDouble);
   }
 
   @Override
