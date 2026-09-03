@@ -1398,20 +1398,7 @@ public class ByteArray extends PrimitiveArray {
     }
     if (length == 0) return 0L;
 
-    final int CHUNK_BYTES = 64 * 1024;
-    long totalBytesWritten = 0;
-    int remaining = length;
-    int currentOffset = offset;
-    while (remaining > 0) {
-      final int toWrite = Math.min(remaining, CHUNK_BYTES);
-      final ByteBuffer byteBuf =
-          ByteBuffer.wrap(array, currentOffset, toWrite).order(ByteOrder.nativeOrder());
-      long written = channel.write(byteBuf);
-      totalBytesWritten += written;
-      currentOffset += toWrite;
-      remaining -= toWrite;
-    }
-    return totalBytesWritten;
+    return channel.write(array, offset, length);
   }
 
   /**

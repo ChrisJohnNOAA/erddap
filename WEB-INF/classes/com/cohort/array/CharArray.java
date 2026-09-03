@@ -1358,13 +1358,13 @@ public class CharArray extends PrimitiveArray {
     if (length == 0) {
       return 0L;
     }
-    if (length == 0) return 0L;
 
     final int bytesPerElement = 2;
     final int CHUNK_BYTES = 64 * 1024;
     final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
     final ByteBuffer byteBuf =
         ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+    final java.nio.CharBuffer charBuf = byteBuf.asCharBuffer();
 
     long totalWritten = 0;
     int remaining = length;
@@ -1372,8 +1372,8 @@ public class CharArray extends PrimitiveArray {
     while (remaining > 0) {
       final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
       byteBuf.clear();
-      byteBuf.asCharBuffer().put(array, currentOffset, toWrite);
-      byteBuf.position(0);
+      charBuf.clear();
+      charBuf.put(array, currentOffset, toWrite);
       byteBuf.limit(toWrite * bytesPerElement);
       totalWritten += channel.write(byteBuf);
       currentOffset += toWrite;

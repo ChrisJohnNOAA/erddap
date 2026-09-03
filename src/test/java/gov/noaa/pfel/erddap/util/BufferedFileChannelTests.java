@@ -87,7 +87,52 @@ public class BufferedFileChannelTests {
     try (FileChannel fc =
             FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
         BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
-      assertThrows(IllegalArgumentException.class, () -> bfc.write(null));
+      assertThrows(IllegalArgumentException.class, () -> bfc.write((ByteBuffer) null));
+      assertThrows(IllegalArgumentException.class, () -> bfc.write((byte[]) null));
+      assertThrows(IllegalArgumentException.class, () -> bfc.write((byte[]) null, 0, 10));
+    }
+  }
+
+  @Test
+  void testWriteByteArraySmallAndLarge(@TempDir Path tempDir) throws Exception {
+    Path file = tempDir.resolve("test_byte_array.bin");
+    byte[] dataSmall = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
+    byte[] dataLarge = new byte[10000]; // 10 KB > 8 KB
+    for (int i = 0; i < dataLarge.length; i++) {
+      dataLarge[i] = (byte) (i & 0xFF);
+    }
+
+    try (FileChannel fc =
+            FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        BufferedFileChannel bfc = new BufferedFileChannel(fc)) {
+      // Small write
+      int writtenSmall = bfc.write(dataSmall);
+      assertEquals(dataSmall.length, writtenSmall);
+      assertEquals(0, fc.size()); // buffered
+
+      // Large write triggers flush and direct write
+      int writtenLarge = bfc.write(dataLarge, 0, dataLarge.length);
+      assertEquals(dataLarge.length, writtenLarge);
+      assertEquals(dataSmall.length + dataLarge.length, fc.size());
+    }
+
+    // Read back and verify
+    try (FileChannel fc = FileChannel.open(file, StandardOpenOption.READ)) {
+      ByteBuffer readBuf = ByteBuffer.allocate(dataSmall.length + dataLarge.length);
+      fc.read(readBuf);
+      readBuf.flip();
+
+      byte[] readSmall = new byte[dataSmall.length];
+      readBuf.get(readSmall);
+      for (int i = 0; i < dataSmall.length; i++) {
+        assertEquals(dataSmall[i], readSmall[i]);
+      }
+
+      byte[] readLarge = new byte[dataLarge.length];
+      readBuf.get(readLarge);
+      for (int i = 0; i < dataLarge.length; i++) {
+        assertEquals(dataLarge[i], readLarge[i]);
+      }
     }
   }
 }
