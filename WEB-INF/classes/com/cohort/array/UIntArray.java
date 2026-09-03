@@ -1369,6 +1369,7 @@ public class UIntArray extends PrimitiveArray {
     final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
     final ByteBuffer byteBuf =
         ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+    final java.nio.IntBuffer intBuf = byteBuf.asIntBuffer();
 
     long totalWritten = 0;
     int remaining = length;
@@ -1376,8 +1377,8 @@ public class UIntArray extends PrimitiveArray {
     while (remaining > 0) {
       final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
       byteBuf.clear();
-      byteBuf.asIntBuffer().put(array, currentOffset, toWrite);
-      byteBuf.position(0);
+      intBuf.clear();
+      intBuf.put(array, currentOffset, toWrite);
       byteBuf.limit(toWrite * bytesPerElement);
       totalWritten += channel.write(byteBuf);
       currentOffset += toWrite;

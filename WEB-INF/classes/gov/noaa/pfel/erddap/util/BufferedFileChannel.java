@@ -33,7 +33,7 @@ public class BufferedFileChannel implements AutoCloseable {
           String2.ERROR + " in BufferedFileChannel constructor: FileChannel is null.");
     }
     this.channel = channel;
-    this.buffer = ByteBuffer.allocate(BUFFER_SIZE).order(ByteOrder.nativeOrder());
+    this.buffer = ByteBuffer.allocateDirect(BUFFER_SIZE).order(ByteOrder.nativeOrder());
   }
 
   /**
@@ -89,6 +89,67 @@ public class BufferedFileChannel implements AutoCloseable {
     }
 
     return totalWritten;
+  }
+
+  /**
+   * Writes bytes from the specified byte array to the buffered channel.
+   *
+   * @param b the byte array
+   * @param off the start offset in the data
+   * @param len the number of bytes to write
+   * @return total bytes written
+   * @throws IOException if an I/O error occurs
+   */
+  public int write(byte[] b, int off, int len) throws IOException {
+    if (b == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in BufferedFileChannel.write: byte array is null.");
+    }
+    if (off < 0 || len < 0 || off + len > b.length) {
+      throw new IndexOutOfBoundsException(
+          String2.ERROR + " in BufferedFileChannel.write: invalid offset/length.");
+    }
+    if (len == 0) {
+      return 0;
+    }
+
+    if (len >= BUFFER_SIZE) {
+      flush();
+      ByteBuffer src = ByteBuffer.wrap(b, off, len);
+      while (src.hasRemaining()) {
+        channel.write(src);
+      }
+      return len;
+    }
+
+    int offset = off;
+    int remaining = len;
+    while (remaining > 0) {
+      if (buffer.remaining() == 0) {
+        flush();
+      }
+      int toCopy = Math.min(remaining, buffer.remaining());
+      buffer.put(b, offset, toCopy);
+      offset += toCopy;
+      remaining -= toCopy;
+    }
+
+    return len;
+  }
+
+  /**
+   * Writes all bytes from the specified byte array to the buffered channel.
+   *
+   * @param b the byte array
+   * @return total bytes written
+   * @throws IOException if an I/O error occurs
+   */
+  public int write(byte[] b) throws IOException {
+    if (b == null) {
+      throw new IllegalArgumentException(
+          String2.ERROR + " in BufferedFileChannel.write: byte array is null.");
+    }
+    return write(b, 0, b.length);
   }
 
   /**

@@ -1229,13 +1229,13 @@ public class LongArray extends PrimitiveArray {
     if (length == 0) {
       return 0L;
     }
-    if (length == 0) return 0L;
 
     final int bytesPerElement = 8;
     final int CHUNK_BYTES = 64 * 1024;
     final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
     final ByteBuffer byteBuf =
         ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+    final java.nio.LongBuffer longBuf = byteBuf.asLongBuffer();
 
     long totalWritten = 0;
     int remaining = length;
@@ -1243,8 +1243,8 @@ public class LongArray extends PrimitiveArray {
     while (remaining > 0) {
       final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
       byteBuf.clear();
-      byteBuf.asLongBuffer().put(array, currentOffset, toWrite);
-      byteBuf.position(0);
+      longBuf.clear();
+      longBuf.put(array, currentOffset, toWrite);
       byteBuf.limit(toWrite * bytesPerElement);
       totalWritten += channel.write(byteBuf);
       currentOffset += toWrite;
