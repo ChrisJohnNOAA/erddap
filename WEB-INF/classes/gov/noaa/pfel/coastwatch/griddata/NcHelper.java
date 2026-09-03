@@ -554,9 +554,13 @@ public class NcHelper {
     if (buildStringsFromChars && nc2Array instanceof ArrayChar na) {
       ArrayObject ao = na.make1DStringArray();
       Object[] oa = (Object[]) ao.copyTo1DJavaArray();
-      StringArray sa = new StringArray(oa.length, false);
-      for (Object o : oa) sa.add(o == null ? null : String2.trimEnd(o.toString()));
-      return sa;
+      int n = oa.length;
+      String[] sa = new String[n];
+      for (int i = 0; i < n; i++) {
+        Object o = oa[i];
+        sa[i] = o == null ? null : String2.trimEnd(o.toString());
+      }
+      return StringArray.fromArray(sa);
     }
 
     // byte[] from ArrayBoolean.Dn
@@ -565,8 +569,7 @@ public class NcHelper {
       int n = boolAr.length;
       byte byteAr[] = new byte[n];
       for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
-      return PrimitiveArray.factory(
-          byteAr, false); // never unsigned (not needed, and unsigned is often trouble)
+      return new com.cohort.array.ByteArray(byteAr);
     }
 
     // ArrayXxxnumeric
