@@ -1231,9 +1231,9 @@ public class EDDGridFromDap extends EDDGrid {
       Attributes globalAtts = axisSourceTable.globalAttributes();
       for (String attName : globalAtts.getNames()) {
         PrimitiveArray pa = globalAtts.get(attName);
-        if (pa instanceof StringArray sa) {
-          for (int i = 0; i < sa.size(); i++) {
-            sa.set(i, sa.getString(i).trim());
+        if (pa != null && pa.elementType() == PAType.STRING) {
+          for (int i = 0; i < pa.size(); i++) {
+            pa.setString(i, pa.getString(i).trim());
           }
         }
       }
@@ -1261,9 +1261,9 @@ public class EDDGridFromDap extends EDDGrid {
               sourceAtts.remove(attName);
             } else {
               PrimitiveArray pa = sourceAtts.get(attName);
-              if (pa instanceof StringArray sa) {
-                for (int i = 0; i < sa.size(); i++) {
-                  sa.set(i, sa.getString(i).trim());
+              if (pa != null && pa.elementType() == PAType.STRING) {
+                for (int i = 0; i < pa.size(); i++) {
+                  pa.setString(i, pa.getString(i).trim());
                 }
               }
             }
@@ -1382,9 +1382,9 @@ public class EDDGridFromDap extends EDDGrid {
                     aSourceAtts.remove(attName);
                   } else {
                     PrimitiveArray pa = aSourceAtts.get(attName);
-                    if (pa instanceof StringArray sa) {
-                      for (int i = 0; i < sa.size(); i++) {
-                        sa.set(i, sa.getString(i).trim());
+                    if (pa != null && pa.elementType() == PAType.STRING) {
+                      for (int i = 0; i < pa.size(); i++) {
+                        pa.setString(i, pa.getString(i).trim());
                       }
                     }
                   }
