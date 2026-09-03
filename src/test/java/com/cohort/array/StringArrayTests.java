@@ -876,43 +876,4 @@ class StringArrayTests {
     // it?
 
   }
-
-  @org.junit.jupiter.api.Test
-  void testAddBenchmark() {
-    int iterations = 1000000;
-    String[] duplicateData = new String[iterations];
-    String[] uniqueData = new String[iterations];
-    for (int i = 0; i < iterations; i++) {
-      duplicateData[i] = "station_category_" + (i / 100);
-      uniqueData[i] = "unique_value_" + i;
-    }
-
-    // Warmup
-    StringArray sa = new StringArray();
-    for (int i = 0; i < 50000; i++) sa.add(duplicateData[i]);
-
-    // Benchmark sequential duplicates
-    long t0 = System.currentTimeMillis();
-    sa = new StringArray();
-    for (int i = 0; i < iterations; i++) {
-      sa.add(duplicateData[i]);
-    }
-    long elapsedDuplicates = System.currentTimeMillis() - t0;
-
-    // Benchmark distinct values
-    t0 = System.currentTimeMillis();
-    sa = new StringArray();
-    for (int i = 0; i < iterations; i++) {
-      sa.add(uniqueData[i]);
-    }
-    long elapsedUnique = System.currentTimeMillis() - t0;
-
-    String2.log(
-        "*** StringArrayBenchmark (1M items): sequential duplicates = "
-            + elapsedDuplicates
-            + " ms, unique values = "
-            + elapsedUnique
-            + " ms");
-    Test.ensureTrue(elapsedDuplicates >= 0, "");
-  }
 }
