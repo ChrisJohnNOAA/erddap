@@ -169,6 +169,20 @@ public class StringArray extends PrimitiveArray {
   }
 
   /**
+   * Constructs a StringArray that directly wraps the provided String[] array without copying.
+   *
+   * @param sa the String[] array to wrap
+   * @return a new StringArray wrapping sa
+   */
+  public static StringArray fromArray(final String[] sa) {
+    if (sa == null) return new StringArray();
+    StringArray stringArray = new StringArray();
+    stringArray.array = sa;
+    stringArray.size = sa.length;
+    return stringArray;
+  }
+
+  /**
    * A constructor which gets values from an ImmutableList<String>.
    *
    * @param anArray
