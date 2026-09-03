@@ -554,13 +554,19 @@ public class NcHelper {
     if (buildStringsFromChars && nc2Array instanceof ArrayChar na) {
       ArrayObject ao = na.make1DStringArray();
       Object[] oa = (Object[]) ao.copyTo1DJavaArray();
-      int n = oa.length;
-      String[] sa = new String[n];
-      for (int i = 0; i < n; i++) {
-        Object o = oa[i];
-        sa[i] = o == null ? null : String2.trimEnd(o.toString());
+      if (oa instanceof String[] sa) {
+        for (int i = 0; i < sa.length; i++) {
+          String s = sa[i];
+          sa[i] =
+              s == null
+                  ? null
+                  : (s.length() == 0 ? "" : String2.canonical(String2.trimEnd(s)));
+        }
+        return StringArray.fromArray(sa);
       }
-      return StringArray.fromArray(sa);
+      StringArray sa = new StringArray(oa.length, false);
+      for (Object o : oa) sa.add(o == null ? null : String2.trimEnd(o.toString()));
+      return sa;
     }
 
     // byte[] from ArrayBoolean.Dn
