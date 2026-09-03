@@ -556,11 +556,8 @@ public class NcHelper {
       Object[] oa = (Object[]) ao.copyTo1DJavaArray();
       if (oa instanceof String[] sa) {
         for (int i = 0; i < sa.length; i++) {
-          String s = sa[i];
-          sa[i] =
-              s == null
-                  ? null
-                  : (s.length() == 0 ? "" : String2.canonical(String2.trimEnd(s)));
+          String s = String2.trimEnd(sa[i]);
+          sa[i] = s == null ? null : (s.length() == 0 ? "" : String2.canonical(s));
         }
         return StringArray.fromArray(sa);
       }
