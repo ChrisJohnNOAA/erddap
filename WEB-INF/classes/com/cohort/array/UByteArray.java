@@ -697,8 +697,8 @@ public class UByteArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof UByteArray uba) {
+      if (otherIndex + nValues > uba.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in UByteArray.addFromPA: otherIndex="
@@ -706,10 +706,28 @@ public class UByteArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + uba.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((UByteArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(uba.array, otherIndex, array, size, nValues);
       size += nValues;
+      if (uba.getMaxIsMV()) maxIsMV = true;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in UByteArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = (byte) otherPA.getInt(otherIndex++);
+      }
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
     }

@@ -815,8 +815,8 @@ public class StringArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof StringArray sa) {
+      if (otherIndex + nValues > sa.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in StringArray.addFromPA: otherIndex="
@@ -824,10 +824,27 @@ public class StringArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + sa.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((StringArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(sa.array, otherIndex, array, size, nValues);
       size += nValues;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in StringArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        add(otherPA.getString(otherIndex++));
+      }
       return this;
     }
 

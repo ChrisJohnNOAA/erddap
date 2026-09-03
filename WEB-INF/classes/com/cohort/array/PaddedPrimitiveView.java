@@ -23,10 +23,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
    * @param targetSize the target size after padding
    */
   public PaddedPrimitiveView(PrimitiveArray source, int targetSize) {
-    this(
-        source,
-        targetSize,
-        unwrapSource(source) == null ? Double.NaN : unwrapSource(source).missingValueAsDouble());
+    this(source, targetSize, Double.NaN);
   }
 
   /**
@@ -54,10 +51,13 @@ public class PaddedPrimitiveView extends PrimitiveView {
 
     this.source = realSource;
     this.targetSize = Math.max(realSource.size(), targetSize);
-    this.missingDouble =
-        Double.isNaN(missingDouble) ? realSource.missingValueAsDouble() : missingDouble;
+    this.missingDouble = missingDouble;
     this.size = this.targetSize;
-    this.setMaxIsMV(realSource.getMaxIsMV());
+    if (realSource.supportsMaxIsMV()) {
+      this.setMaxIsMV(true);
+    } else {
+      this.setMaxIsMV(realSource.getMaxIsMV());
+    }
   }
 
   private static PrimitiveArray unwrapSource(PrimitiveArray pa) {
@@ -72,8 +72,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     if (materialized == null) {
       PrimitiveArray newArray = PrimitiveArray.factory(elementType(), targetSize, false);
       newArray.setMaxIsMV(getMaxIsMV());
-      newArray.addFromPA(source, 0, source.size());
-      int padCount = targetSize - source.size();
+      int sourceSize = source.size();
+      for (int i = 0; i < sourceSize; i++) {
+        newArray.addFromPA(source, i, 1);
+      }
+      int padCount = targetSize - sourceSize;
       if (padCount > 0) {
         if (elementType() == PAType.STRING) {
           newArray.addNStrings(padCount, "");
@@ -169,7 +172,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getFloat(index);
     if (index < source.size()) return source.getFloat(index);
-    return (float) missingDoubleForType();
+    return Double.isNaN(missingDouble) ? Float.NaN : (float) missingDouble;
   }
 
   @Override
@@ -178,7 +181,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getDouble(index);
     if (index < source.size()) return source.getDouble(index);
-    return missingDoubleForType();
+    return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
   @Override
@@ -187,7 +190,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getUnsignedDouble(index);
     if (index < source.size()) return source.getUnsignedDouble(index);
-    return missingDoubleForType();
+    return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
   @Override
@@ -196,7 +199,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawDouble(index);
     if (index < source.size()) return source.getRawDouble(index);
-    return missingDoubleForType();
+    return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
   @Override
@@ -205,7 +208,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getNiceDouble(index);
     if (index < source.size()) return source.getNiceDouble(index);
-    return missingDoubleForType();
+    return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
   @Override
@@ -214,7 +217,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawNiceDouble(index);
     if (index < source.size()) return source.getRawNiceDouble(index);
-    return missingDoubleForType();
+    return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
   @Override
@@ -223,10 +226,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getString(index);
     if (index < source.size()) return source.getString(index);
-    if (source.elementType() == PAType.STRING) return "";
-    double mv = missingDoubleForType();
-    if (Double.isNaN(mv)) return "";
-    return String2.genEFormat10(mv);
+    return Double.isNaN(missingDouble) ? "" : String2.genEFormat10(missingDouble);
   }
 
   @Override
@@ -235,10 +235,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getJsonString(index);
     if (index < source.size()) return source.getJsonString(index);
-    if (source.elementType() == PAType.STRING) return "null";
-    double mv = missingDoubleForType();
-    if (Double.isNaN(mv)) return "null";
-    return String2.genEFormat10(mv);
+    return Double.isNaN(missingDouble) ? "null" : String2.genEFormat10(missingDouble);
   }
 
   @Override
@@ -247,10 +244,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getNccsvDataString(index);
     if (index < source.size()) return source.getNccsvDataString(index);
-    if (source.elementType() == PAType.STRING) return "\"\"";
-    double mv = missingDoubleForType();
-    if (Double.isNaN(mv)) return "\"\"";
-    return String2.genEFormat10(mv);
+    return Double.isNaN(missingDouble) ? "" : String2.genEFormat10(missingDouble);
   }
 
   @Override
@@ -259,7 +253,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) return m.getNccsv127DataString(index);
     if (index < source.size()) return source.getNccsv127DataString(index);
-    return getNccsvDataString(index);
+    return Double.isNaN(missingDouble) ? "" : String2.genEFormat10(missingDouble);
   }
 
   @Override
@@ -311,7 +305,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
     if (index < source.size()) return source.getPAOne(index, paOne);
     if (paOne == null) paOne = new PAOne(source.elementType());
     if (source.elementType() == PAType.STRING) return paOne.setString("");
-    return paOne.fromDouble(missingDoubleForType());
+    return paOne.fromDouble(Double.isNaN(missingDouble) ? source.missingValueAsDouble() : missingDouble);
   }
 
   @Override
