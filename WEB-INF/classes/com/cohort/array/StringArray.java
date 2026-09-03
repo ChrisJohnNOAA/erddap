@@ -176,6 +176,18 @@ public class StringArray extends PrimitiveArray {
    */
   public static StringArray fromArray(final String[] sa) {
     if (sa == null) return new StringArray();
+    for (int i = 0; i < sa.length; i++) {
+      String s = String2.trimEnd(sa[i]);
+      if (s == null) {
+        sa[i] = null;
+      } else if (s.length() == 0) {
+        sa[i] = "";
+      } else if (i > 0 && s.equals(sa[i - 1])) {
+        sa[i] = sa[i - 1];
+      } else {
+        sa[i] = String2.canonical(s);
+      }
+    }
     StringArray stringArray = new StringArray();
     stringArray.array = sa;
     stringArray.size = sa.length;
@@ -563,7 +575,7 @@ public class StringArray extends PrimitiveArray {
    */
   public void add(final String value) {
     if (size == array.length) // if we're at capacity
-      ensureCapacity(size + 1L);
+    ensureCapacity(size + 1L);
     if (value == null) {
       array[size++] = null;
     } else if (value.length() == 0) {
