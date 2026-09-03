@@ -177,7 +177,7 @@ public class StringArray extends PrimitiveArray {
   public static StringArray fromArray(final String[] sa) {
     if (sa == null) return new StringArray();
     for (int i = 0; i < sa.length; i++) {
-      String s = String2.trimEnd(sa[i]);
+      String s = sa[i];
       if (s == null) {
         sa[i] = null;
       } else if (s.length() == 0) {
