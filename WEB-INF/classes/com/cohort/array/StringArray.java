@@ -549,12 +549,17 @@ public class StringArray extends PrimitiveArray {
    */
   public void add(final String value) {
     if (size == array.length) // if we're at capacity
-    ensureCapacity(size + 1L);
-    array[size++] =
-        value == null
-            ? null
-            : // quick, saves time
-            value.length() == 0 ? "" : String2.canonical(value);
+      ensureCapacity(size + 1L);
+    if (value == null) {
+      array[size++] = null;
+    } else if (value.length() == 0) {
+      array[size++] = "";
+    } else if (size > 0 && value.equals(array[size - 1])) {
+      array[size] = array[size - 1];
+      size++;
+    } else {
+      array[size++] = String2.canonical(value);
+    }
   }
 
   /**
