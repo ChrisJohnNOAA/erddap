@@ -155,43 +155,32 @@ public class StringArray extends PrimitiveArray {
   }
 
   /**
-   * A constructor which gets values from anArray[i]. THERE IS NO StringArray CONSTRUCTOR WHICH
-   * LET'S YOU SPECIFY THE BACKING ARRAY! The values anArray are stored in a different way in a
-   * different data structure.
+   * A constructor which uses the provided array as the backing array. The initial 'size' will be
+   * anArray.length. The array is not copied, so if the caller changes the array, this StringArray
+   * will be affected.
    *
    * @param anArray
    */
   public StringArray(final String[] anArray) {
-    int al = anArray.length;
-    array = new String[al];
-    size = 0;
-    for (String s : anArray) add(s);
-  }
-
-  /**
-   * Constructs a StringArray that directly wraps the provided String[] array without copying.
-   *
-   * @param sa the String[] array to wrap
-   * @return a new StringArray wrapping sa
-   */
-  public static StringArray fromArray(final String[] sa) {
-    if (sa == null) return new StringArray();
-    for (int i = 0; i < sa.length; i++) {
-      String s = sa[i];
+    if (anArray == null) {
+      array = new String[8];
+      size = 0;
+      return;
+    }
+    for (int i = 0; i < anArray.length; i++) {
+      String s = anArray[i];
       if (s == null) {
-        sa[i] = null;
+        anArray[i] = null;
       } else if (s.length() == 0) {
-        sa[i] = "";
-      } else if (i > 0 && s.equals(sa[i - 1])) {
-        sa[i] = sa[i - 1];
+        anArray[i] = "";
+      } else if (i > 0 && s.equals(anArray[i - 1])) {
+        anArray[i] = anArray[i - 1];
       } else {
-        sa[i] = String2.canonical(s);
+        anArray[i] = String2.canonical(s);
       }
     }
-    StringArray stringArray = new StringArray();
-    stringArray.array = sa;
-    stringArray.size = sa.length;
-    return stringArray;
+    array = anArray;
+    size = anArray.length;
   }
 
   /**

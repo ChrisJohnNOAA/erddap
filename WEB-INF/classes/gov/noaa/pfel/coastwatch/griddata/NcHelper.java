@@ -555,7 +555,7 @@ public class NcHelper {
       ArrayObject ao = na.make1DStringArray();
       Object[] oa = (Object[]) ao.copyTo1DJavaArray();
       if (oa instanceof String[] sa) {
-        return StringArray.fromArray(sa);
+        return new StringArray(sa);
       }
       StringArray sa = new StringArray(oa.length, false);
       for (Object o : oa) sa.add(o == null ? null : String2.trimEnd(o.toString()));
