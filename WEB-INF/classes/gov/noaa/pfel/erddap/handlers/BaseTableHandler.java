@@ -4,6 +4,7 @@ public abstract class BaseTableHandler extends BaseDatasetHandler {
 
   protected String tSosOfferingPrefix = null;
   protected String tAddVariablesWhere = null;
+  protected String tSourceUrl = null;
 
   public BaseTableHandler(SaxHandler saxHandler, String datasetID, State completeState) {
     super(saxHandler, datasetID, completeState);
@@ -14,6 +15,7 @@ public abstract class BaseTableHandler extends BaseDatasetHandler {
     switch (localName) {
       case "sosOfferingPrefix" -> tSosOfferingPrefix = contentStr;
       case "addVariablesWhere" -> tAddVariablesWhere = contentStr;
+      case "sourceUrl" -> tSourceUrl = contentStr;
       default -> {
         return false;
       }

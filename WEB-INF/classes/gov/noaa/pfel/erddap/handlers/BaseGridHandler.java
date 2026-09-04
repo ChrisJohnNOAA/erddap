@@ -10,6 +10,7 @@ public abstract class BaseGridHandler extends BaseDatasetHandler {
   protected boolean tAccessibleViaWMS = true;
   protected boolean tDimensionValuesInMemory = true;
   protected final ArrayList<AxisVariableInfo> tAxisVariables = new ArrayList<>();
+  protected String tSourceUrl = null;
 
   public BaseGridHandler(SaxHandler saxHandler, String datasetID, State completeState) {
     super(saxHandler, datasetID, completeState);
@@ -28,6 +29,7 @@ public abstract class BaseGridHandler extends BaseDatasetHandler {
       case "accessibleViaWMS" -> tAccessibleViaWMS = String2.parseBoolean(contentStr);
       case "nThreads" -> tnThreads = String2.parseInt(contentStr);
       case "dimensionValuesInMemory" -> tDimensionValuesInMemory = String2.parseBoolean(contentStr);
+      case "sourceUrl" -> tSourceUrl = contentStr;
       default -> {
         return false;
       }
