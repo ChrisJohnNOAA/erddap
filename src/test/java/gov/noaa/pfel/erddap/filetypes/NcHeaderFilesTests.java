@@ -339,6 +339,7 @@ completeness, or usefulness, of this information.";
     results =
         results.replaceAll("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", "YYYY-MM-DDTHH:mm:ssZ");
     results = results.replaceFirst("^netcdf\\s+(.+?)\\s*\\{", "netcdf EDDGridFromDap.nc {");
+    results = results.replace("http://localhost:8089", "http://apdrc.soest.hawaii.edu");
     expected =
 """
 netcdf EDDGridFromDap.nc {
@@ -507,7 +508,7 @@ the current year using available altimetry).";
   :Westernmost_Easting = 185.25; // double
 }
 """
-            .formatted(base, base, base);
+            .formatted("http://apdrc.soest.hawaii.edu", "http://apdrc.soest.hawaii.edu", "http://apdrc.soest.hawaii.edu");
     expected = expected.replaceAll("\r\n", "\n");
     results = results.replaceAll("\r\n", "\n");
     expected =
