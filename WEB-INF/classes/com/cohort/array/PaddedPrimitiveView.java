@@ -15,25 +15,55 @@ public class PaddedPrimitiveView extends PrimitiveView {
   public final PrimitiveArray source;
   public final int targetSize;
   public final double missingDouble;
+  public final boolean padAtFront;
+  private final int frontPaddingCount;
 
   /**
-   * Constructs a PaddedPrimitiveView padding the source to targetSize with default missing value.
+   * Constructs a PaddedPrimitiveView padding the source to targetSize with default missing value
+   * at the end (back padding).
    *
    * @param source the source PrimitiveArray
    * @param targetSize the target size after padding
    */
   public PaddedPrimitiveView(PrimitiveArray source, int targetSize) {
-    this(source, targetSize, Double.NaN);
+    this(source, targetSize, Double.NaN, false);
   }
 
   /**
-   * Constructs a PaddedPrimitiveView padding the source to targetSize with a custom missing value.
+   * Constructs a PaddedPrimitiveView padding the source to targetSize with a custom missing value
+   * at the end (back padding).
    *
    * @param source the source PrimitiveArray
    * @param targetSize the target size after padding
    * @param missingDouble custom missing value as double
    */
   public PaddedPrimitiveView(PrimitiveArray source, int targetSize, double missingDouble) {
+    this(source, targetSize, missingDouble, false);
+  }
+
+  /**
+   * Constructs a PaddedPrimitiveView padding the source to targetSize with default missing value
+   * and specifies whether padding is applied at the front or back.
+   *
+   * @param source the source PrimitiveArray
+   * @param targetSize the target size after padding
+   * @param padAtFront true if missing values should pad at front (indices 0..padCount-1)
+   */
+  public PaddedPrimitiveView(PrimitiveArray source, int targetSize, boolean padAtFront) {
+    this(source, targetSize, Double.NaN, padAtFront);
+  }
+
+  /**
+   * Constructs a PaddedPrimitiveView padding the source to targetSize with a custom missing value
+   * and specifies whether padding is applied at the front or back.
+   *
+   * @param source the source PrimitiveArray
+   * @param targetSize the target size after padding
+   * @param missingDouble custom missing value as double
+   * @param padAtFront true if missing values should pad at front (indices 0..padCount-1)
+   */
+  public PaddedPrimitiveView(
+      PrimitiveArray source, int targetSize, double missingDouble, boolean padAtFront) {
     super(
         unwrapSource(source), 0, 1, unwrapSource(source) == null ? 0 : unwrapSource(source).size());
 
@@ -49,12 +79,25 @@ public class PaddedPrimitiveView extends PrimitiveView {
     this.source = realSource;
     this.targetSize = Math.max(realSource.size(), targetSize);
     this.missingDouble = missingDouble;
+    this.padAtFront = padAtFront;
+    this.frontPaddingCount = padAtFront ? (this.targetSize - realSource.size()) : 0;
     this.size = this.targetSize;
     if (realSource.supportsMaxIsMV()) {
       this.setMaxIsMV(true);
     } else {
       this.setMaxIsMV(realSource.getMaxIsMV());
     }
+  }
+
+  /**
+   * Static helper method to construct a front-padded PaddedPrimitiveView.
+   *
+   * @param source the source PrimitiveArray
+   * @param targetSize the target size after padding
+   * @return a new PaddedPrimitiveView with front padding
+   */
+  public static PaddedPrimitiveView padFront(PrimitiveArray source, int targetSize) {
+    return new PaddedPrimitiveView(source, targetSize, Double.NaN, true);
   }
 
   private static PrimitiveArray unwrapSource(PrimitiveArray pa) {
@@ -70,15 +113,28 @@ public class PaddedPrimitiveView extends PrimitiveView {
       PrimitiveArray newArray = PrimitiveArray.factory(elementType(), targetSize, false);
       newArray.setMaxIsMV(getMaxIsMV());
       int sourceSize = source.size();
-      for (int i = 0; i < sourceSize; i++) {
-        newArray.addFromPA(source, i, 1);
-      }
-      int padCount = targetSize - sourceSize;
-      if (padCount > 0) {
-        if (elementType() == PAType.STRING) {
-          newArray.addNStrings(padCount, "");
-        } else {
-          newArray.addNDoubles(padCount, missingDoubleForType());
+      if (padAtFront) {
+        if (frontPaddingCount > 0) {
+          if (elementType() == PAType.STRING) {
+            newArray.addNStrings(frontPaddingCount, "");
+          } else {
+            newArray.addNDoubles(frontPaddingCount, missingDoubleForType());
+          }
+        }
+        for (int i = 0; i < sourceSize; i++) {
+          newArray.addFromPA(source, i, 1);
+        }
+      } else {
+        for (int i = 0; i < sourceSize; i++) {
+          newArray.addFromPA(source, i, 1);
+        }
+        int padCount = targetSize - sourceSize;
+        if (padCount > 0) {
+          if (elementType() == PAType.STRING) {
+            newArray.addNStrings(padCount, "");
+          } else {
+            newArray.addNDoubles(padCount, missingDoubleForType());
+          }
         }
       }
       materialized = newArray;
@@ -117,7 +173,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getInt(index);
-    if (index < source.size()) return source.getInt(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getInt(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getInt(index);
+    }
     double mv = missingDoubleForType();
     if (Double.isNaN(mv)) {
       return switch (source.elementType()) {
@@ -139,7 +199,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawInt(index);
-    if (index < source.size()) return source.getRawInt(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getRawInt(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getRawInt(index);
+    }
     return getInt(index);
   }
 
@@ -148,7 +212,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getLong(index);
-    if (index < source.size()) return source.getLong(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getLong(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getLong(index);
+    }
     double mv = missingDoubleForType();
     if (Double.isNaN(mv)) return Long.MAX_VALUE;
     return (long) mv;
@@ -159,7 +227,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getULong(index);
-    if (index < source.size()) return source.getULong(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getULong(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getULong(index);
+    }
     return ULongArray.MAX_VALUE;
   }
 
@@ -168,7 +240,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getFloat(index);
-    if (index < source.size()) return source.getFloat(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getFloat(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getFloat(index);
+    }
     return Double.isNaN(missingDouble) ? Float.NaN : (float) missingDouble;
   }
 
@@ -177,7 +253,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getDouble(index);
-    if (index < source.size()) return source.getDouble(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getDouble(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getDouble(index);
+    }
     return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
@@ -186,7 +266,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getUnsignedDouble(index);
-    if (index < source.size()) return source.getUnsignedDouble(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getUnsignedDouble(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getUnsignedDouble(index);
+    }
     return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
@@ -195,7 +279,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawDouble(index);
-    if (index < source.size()) return source.getRawDouble(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getRawDouble(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getRawDouble(index);
+    }
     return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
@@ -204,7 +292,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getNiceDouble(index);
-    if (index < source.size()) return source.getNiceDouble(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getNiceDouble(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getNiceDouble(index);
+    }
     return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
@@ -213,7 +305,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawNiceDouble(index);
-    if (index < source.size()) return source.getRawNiceDouble(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getRawNiceDouble(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getRawNiceDouble(index);
+    }
     return Double.isNaN(missingDouble) ? Double.NaN : missingDouble;
   }
 
@@ -222,7 +318,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getString(index);
-    if (index < source.size()) return source.getString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getString(index);
+    }
     return Double.isNaN(missingDouble) ? "" : String2.genEFormat10(missingDouble);
   }
 
@@ -231,7 +331,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getJsonString(index);
-    if (index < source.size()) return source.getJsonString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getJsonString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getJsonString(index);
+    }
     return Double.isNaN(missingDouble) ? "null" : String2.genEFormat10(missingDouble);
   }
 
@@ -240,7 +344,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getNccsvDataString(index);
-    if (index < source.size()) return source.getNccsvDataString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getNccsvDataString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getNccsvDataString(index);
+    }
     return Double.isNaN(missingDouble) ? "" : String2.genEFormat10(missingDouble);
   }
 
@@ -249,7 +357,12 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getNccsv127DataString(index);
-    if (index < source.size()) return source.getNccsv127DataString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount)
+        return source.getNccsv127DataString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getNccsv127DataString(index);
+    }
     return Double.isNaN(missingDouble) ? "" : String2.genEFormat10(missingDouble);
   }
 
@@ -258,7 +371,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getSVString(index);
-    if (index < source.size()) return source.getSVString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getSVString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getSVString(index);
+    }
     return getString(index);
   }
 
@@ -267,7 +384,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getUtf8TsvString(index);
-    if (index < source.size()) return source.getUtf8TsvString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getUtf8TsvString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getUtf8TsvString(index);
+    }
     return getString(index);
   }
 
@@ -276,7 +397,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawString(index);
-    if (index < source.size()) return source.getRawString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getRawString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getRawString(index);
+    }
     return getString(index);
   }
 
@@ -285,7 +410,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getRawestString(index);
-    if (index < source.size()) return source.getRawestString(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getRawestString(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.getRawestString(index);
+    }
     return getString(index);
   }
 
@@ -299,7 +428,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.getPAOne(index, paOne);
-    if (index < source.size()) return source.getPAOne(index, paOne);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.getPAOne(index - frontPaddingCount, paOne);
+    } else {
+      if (index < source.size()) return source.getPAOne(index, paOne);
+    }
     if (paOne == null) paOne = new PAOne(source.elementType());
     if (source.elementType() == PAType.STRING) return paOne.setString("");
     return paOne.fromDouble(
@@ -311,7 +444,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.isMaxValue(index);
-    if (index < source.size()) return source.isMaxValue(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.isMaxValue(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.isMaxValue(index);
+    }
     return source.getMaxIsMV();
   }
 
@@ -320,7 +457,11 @@ public class PaddedPrimitiveView extends PrimitiveView {
     checkIndex(index);
     PrimitiveArray m = materialized;
     if (m != null) return m.isMissingValue(index);
-    if (index < source.size()) return source.isMissingValue(index);
+    if (padAtFront) {
+      if (index >= frontPaddingCount) return source.isMissingValue(index - frontPaddingCount);
+    } else {
+      if (index < source.size()) return source.isMissingValue(index);
+    }
     return true;
   }
 
@@ -371,17 +512,29 @@ public class PaddedPrimitiveView extends PrimitiveView {
     if (m != null) {
       return m.writeToChannel(channel, off, len);
     }
-    int sourceSize = source.size();
     long totalWritten = 0;
-    int sourceOff = Math.min(off, sourceSize);
-    int sourceLen = Math.min(len, Math.max(0, sourceSize - off));
-    if (sourceLen > 0) {
-      totalWritten += source.writeToChannel(channel, sourceOff, sourceLen);
-    }
-    int padLen = len - sourceLen;
-    if (padLen > 0) {
-      int padOff = off + sourceLen;
-      totalWritten += materialize().writeToChannel(channel, padOff, padLen);
+    if (padAtFront) {
+      int frontPadLen = Math.min(len, Math.max(0, frontPaddingCount - off));
+      if (frontPadLen > 0) {
+        totalWritten += materialize().writeToChannel(channel, off, frontPadLen);
+      }
+      int sourceOff = Math.max(0, off - frontPaddingCount);
+      int sourceLen = Math.min(len - frontPadLen, Math.max(0, source.size() - sourceOff));
+      if (sourceLen > 0) {
+        totalWritten += source.writeToChannel(channel, sourceOff, sourceLen);
+      }
+    } else {
+      int sourceSize = source.size();
+      int sourceOff = Math.min(off, sourceSize);
+      int sourceLen = Math.min(len, Math.max(0, sourceSize - off));
+      if (sourceLen > 0) {
+        totalWritten += source.writeToChannel(channel, sourceOff, sourceLen);
+      }
+      int padLen = len - sourceLen;
+      if (padLen > 0) {
+        int padOff = off + sourceLen;
+        totalWritten += materialize().writeToChannel(channel, padOff, padLen);
+      }
     }
     return totalWritten;
   }
@@ -393,8 +546,14 @@ public class PaddedPrimitiveView extends PrimitiveView {
     if (m != null) {
       return m.writeDos(dos, i);
     }
-    if (i < source.size()) {
-      return source.writeDos(dos, i);
+    if (padAtFront) {
+      if (i >= frontPaddingCount) {
+        return source.writeDos(dos, i - frontPaddingCount);
+      }
+    } else {
+      if (i < source.size()) {
+        return source.writeDos(dos, i);
+      }
     }
     return materialize().writeDos(dos, i);
   }
@@ -405,6 +564,12 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) {
       m.writeToRAF(raf, index);
+    } else if (padAtFront) {
+      if (index >= frontPaddingCount) {
+        source.writeToRAF(raf, index - frontPaddingCount);
+      } else {
+        materialize().writeToRAF(raf, index);
+      }
     } else if (index < source.size()) {
       source.writeToRAF(raf, index);
     } else {
@@ -430,6 +595,12 @@ public class PaddedPrimitiveView extends PrimitiveView {
     PrimitiveArray m = materialized;
     if (m != null) {
       m.externalizeForDODS(dos, i);
+    } else if (padAtFront) {
+      if (i >= frontPaddingCount) {
+        source.externalizeForDODS(dos, i - frontPaddingCount);
+      } else {
+        materialize().externalizeForDODS(dos, i);
+      }
     } else if (i < source.size()) {
       source.externalizeForDODS(dos, i);
     } else {
