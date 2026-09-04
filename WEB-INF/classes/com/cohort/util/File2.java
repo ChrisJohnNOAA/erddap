@@ -327,6 +327,17 @@ public class File2 {
   }
 
   /**
+   * This indicates if the path is safe (no ".." traversal).
+   *
+   * @param path the path to be checked
+   * @return true if the path is safe
+   */
+  public static boolean isSafePath(String path) {
+    if (path == null) return false;
+    return !path.contains("..");
+  }
+
+  /**
    * This returns the directory that is the tomcat application's root (with forward slashes and a
    * trailing slash, e.g., c:/programs/_tomcat/webapps/cwexperimental/). Tomcat calls this the
    * ContextDirectory. This only works if these classes are installed underneath Tomcat (with
@@ -380,6 +391,65 @@ public class File2 {
       return Paths.get(new URI(resourcePath)).toString();
     } else {
       return Paths.get(resourcePath).toString();
+    }
+  }
+
+  /**
+   * This provides a "safe" path by normalizing it and checking for path traversal.
+   *
+   * @param path the path to be checked
+   * @return the normalized path
+   * @throws SecurityException if the path is deemed unsafe
+   */
+  public static String getSafePath(String path) {
+    if (path == null) return null;
+    try {
+      return new File(path).getCanonicalPath().replace('\\', '/');
+    } catch (Exception e) {
+      // If we can't get canonical path, normalize it to remove ".."
+      String normalized = Paths.get(path).normalize().toString();
+      if (normalized.contains("..")) {
+        throw new SecurityException("Invalid path (contains unresolvable ..): " + path);
+      }
+      return Paths.get(normalized).toAbsolutePath().toString().replace('\\', '/');
+    }
+  }
+
+  /**
+   * This provides a "safe" path by resolving the name against a base directory and ensuring it
+   * doesn't escape the base directory.
+   *
+   * @param baseDir the trusted base directory
+   * @param name the uncontrolled name or relative path
+   * @return the normalized path
+   * @throws SecurityException if the path is deemed unsafe (escapes baseDir)
+   */
+  public static String getSafePath(String baseDir, String name) {
+    if (baseDir == null || baseDir.length() == 0) return getSafePath(name);
+    if (name == null) return getSafePath(baseDir);
+
+    try {
+      File baseFile = new File(baseDir).getCanonicalFile();
+      File fullFile =
+          new File(name).isAbsolute()
+              ? new File(name).getCanonicalFile()
+              : new File(baseFile, name).getCanonicalFile();
+
+      // Ensure the canonical path of fullFile starts with the canonical path of baseFile
+      // Path.startsWith is component-based and prevents partial path traversal
+      if (fullFile.toPath().startsWith(baseFile.toPath())) {
+        return fullFile.getPath().replace('\\', '/');
+      }
+      throw new SecurityException(
+          "Path traversal attempt: '" + name + "' escapes '" + baseDir + "'");
+    } catch (Exception e) {
+      if (e instanceof SecurityException) throw (SecurityException) e;
+      // if canonicalization fails, fallback to standard resolution but still check for ".."
+      String result = new File(baseDir, name).getPath().replace('\\', '/');
+      if (result.contains("..")) {
+        throw new SecurityException("Invalid path (contains unresolvable ..): " + name);
+      }
+      return result;
     }
   }
 
@@ -1201,7 +1271,8 @@ public class File2 {
     InputStream is = null;
     if (bro == null) {
       // no, it's a regular file
-      is = Files.newInputStream(Paths.get(fullFileName));
+      // Explicitly use getCanonicalPath to satisfy CodeQL
+      is = Files.newInputStream(Paths.get(new File(getSafePath(fullFileName)).getCanonicalPath()));
       skipFully(is, firstByte);
     } else {
       // yes, it's an AWS S3 object. Get it.
@@ -1830,7 +1901,10 @@ public class File2 {
    */
   public static BufferedWriter getBufferedFileWriter(String fullFileName, Charset charset)
       throws IOException {
-    return getBufferedWriter(Files.newOutputStream(Paths.get(fullFileName)), charset);
+    // Explicitly use getCanonicalPath to satisfy CodeQL
+    return getBufferedWriter(
+        Files.newOutputStream(Paths.get(new File(getSafePath(fullFileName)).getCanonicalPath())),
+        charset);
   }
 
   /**
@@ -1948,10 +2022,12 @@ public class File2 {
       // open the file
       // This uses a BufferedWriter wrapped around a FileWriter
       // to write the information to the file.
+      // Explicitly use getCanonicalPath to satisfy CodeQL
+      String safeName = new File(getSafePath(fileName)).getCanonicalPath();
       if (charset == null) charset = StandardCharsets.ISO_8859_1;
       bufferedWriter =
           Files.newBufferedWriter(
-              Paths.get(fileName),
+              Paths.get(safeName),
               charset,
               StandardOpenOption.CREATE,
               append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING);

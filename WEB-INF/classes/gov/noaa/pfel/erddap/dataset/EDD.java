@@ -3763,16 +3763,20 @@ public abstract class EDD {
       throws Throwable {
 
     String fileTypeExtension = fileTypeExtension(language, fileTypeName);
-    String fullName = dir + fileName + fileTypeExtension;
+    final String fullName = File2.getSafePath(dir, fileName + fileTypeExtension);
 
     // POLICY: because this procedure may be used in more than one thread,
     // do work on unique temp files names using randomInt, then rename to proper file name.
     // If procedure fails half way through, there won't be a half-finished file.
     int randomInt = Math2.random(Integer.MAX_VALUE);
+    final String randomFullName = File2.getSafePath(dir, fileName + fileTypeExtension + randomInt);
 
     OutputStreamSource outputStreamSource =
         new OutputStreamSourceSimple(
-            new BufferedOutputStream(Files.newOutputStream(Paths.get(fullName + randomInt))));
+            new BufferedOutputStream(
+                // Explicitly use getCanonicalPath to satisfy CodeQL
+                Files.newOutputStream(
+                    Paths.get(new java.io.File(randomFullName).getCanonicalPath()))));
 
     try {
 
