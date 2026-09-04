@@ -12,6 +12,7 @@ import com.cohort.array.IntArray;
 import com.cohort.array.LongArray;
 import com.cohort.array.PAOne;
 import com.cohort.array.PAType;
+import com.cohort.array.PaddedPrimitiveView;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import com.cohort.util.Calendar2;
@@ -7305,14 +7306,26 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
       // handle justExtension request  e.g., datasetID/.csv
       // FUTURE: handle ?constraintExpression
       if (justExtension.length() > 0) {
+        int nSubDirs = subDirs.size();
+        if (nSubDirs > 0) {
+          // 1. Prepend subdirs directly to column 0
+          StringArray oldNames = (StringArray) fileTable.getColumn(0);
+          StringArray newNames = new StringArray(nSubDirs + oldNames.size(), false);
+          for (int i = 0; i < nSubDirs; i++) {
+            newNames.add(subDirs.get(i) + "/");
+          }
+          newNames.append(oldNames);
+          fileTable.setColumn(0, newNames);
 
-        // add subdirs to table
-        int oNRows = fileTable.nRows();
-        StringArray namesSA = (StringArray) fileTable.getColumn(0);
-        for (int i = 0; i < subDirs.size(); i++) namesSA.add(subDirs.get(i) + "/");
-        fileTable.makeColumnsSameSize();
-        // move subdirs to top of table
-        fileTable.moveRows(oNRows, fileTable.nRows(), 0);
+          // 2. Front-pad remaining file metadata columns (size, time, etc.) lazily
+          int targetSize = newNames.size();
+          for (int col = 1; col < fileTable.nColumns(); col++) {
+            PrimitiveArray pa = fileTable.getColumn(col);
+            if (pa.size() < targetSize) {
+              fileTable.setColumn(col, PaddedPrimitiveView.padFront(pa, targetSize));
+            }
+          }
+        }
 
         // return results as justExtension fileType
         sendPlainTable(

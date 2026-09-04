@@ -45,6 +45,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
+        <compiler.args></compiler.args>
         <erddapcontent.download.version>content1.0.1</erddapcontent.download.version>
         <erddapreffiles.download.version>1.0.0</erddapreffiles.download.version>
         <netcdfJavaVersion>5.10.0</netcdfJavaVersion>
@@ -59,6 +60,7 @@
         <mavenTestPluginVersion>3.5.6</mavenTestPluginVersion>
         <jacocoMavenVersion>0.8.15</jacocoMavenVersion>
         <download.unpackWhenChanged>true</download.unpackWhenChanged>
+        <argLine.extra></argLine.extra>
     </properties>
 
     <repositories>
@@ -135,6 +137,7 @@
                         <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
                         <arg>-Xplugin:ErrorProne -Xep:StatementSwitchToExpressionSwitch:OFF -Xep:StringCaseLocaleUsage:OFF -Xep:EmptyCatch:OFF -Xep:StringSplitter:OFF -Xep:JavaLangClash:OFF -Xep:CatchAndPrintStackTrace:OFF -Xep:NotJavadoc:OFF -Xep:InvalidBlockTag:OFF -Xep:MissingSummary:OFF -Xep:EmptyBlockTag:OFF -Xep:InvalidParam:OFF -Xep:InvalidThrows:OFF -Xep:ReturnFromVoid:OFF -Xep:MisleadingEscapedSpace:OFF</arg>
                         <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+                        <arg>${compiler.args}</arg>
                     </compilerArgs>
                     <excludes>
                         <exclude>gov/noaa/pfel/coastwatch/sgt/LandMask.javaINACTIVE</exclude>
@@ -629,7 +632,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${mavenTestPluginVersion}</version>
                 <configuration>
-                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                     <environmentVariables>
                         <temp>${project.basedir}/target/temp/</temp>
                         <tmp>${project.basedir}/target/temp/</tmp>
@@ -652,7 +655,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <argLine>${failsafe.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                            <argLine>${failsafe.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                             <environmentVariables>
                                 <temp>${project.basedir}/target/temp/</temp>
                                 <tmp>${project.basedir}/target/temp/</tmp>
@@ -684,7 +687,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${mavenTestPluginVersion}</version>
                 <configuration>
-                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                     <environmentVariables>
                         <temp>${project.basedir}/target/temp/</temp>
                         <tmp>${project.basedir}/target/temp/</tmp>
@@ -708,7 +711,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${mavenTestPluginVersion}</version>
                 <configuration>
-                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>${surefire.jacoco.args} -javaagent:${org.mockito:mockito-core:jar} ${argLine.extra}</argLine>
                     <environmentVariables>
                         <temp>${project.basedir}/target/temp/</temp>
                         <tmp>${project.basedir}/target/temp/</tmp>
