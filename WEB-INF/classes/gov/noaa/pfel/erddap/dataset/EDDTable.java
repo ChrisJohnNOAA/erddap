@@ -4211,12 +4211,20 @@ public abstract class EDDTable extends EDD {
               // String2.log("  writeMVs: feature=" + feature + " origin[1]=" + origin[1] +
               //  " tNRows=" + tNRows + " maxFeatureNRows=" + maxFeatureNRows);
               tNRows = maxFeatureNRows - tNRows;
-              subsetPa.clear();
               // if (tEdv.destinationDataPAType() == PAType.LONG)
               //    subsetPa.addNStrings(tNRows, "" + tSafeMV);
               // else
-              if (subsetPa instanceof StringArray) subsetPa.addNStrings(tNRows, "");
-              else subsetPa.addNDoubles(tNRows, tSafeMV);
+              // subsetPa is a PrimitiveView, so add elements will materialize the view
+              // previously the subsetPa was cleared just above here, so rather than clear
+              // and then cause it to materialize, we just make a proper PrimitiveArray.
+
+              if (subsetPa.elementType() == PAType.STRING) {
+                subsetPa = new StringArray();
+                subsetPa.addNStrings(tNRows, "");
+              } else {
+                subsetPa = PrimitiveArray.factory(subsetPa.elementType(), tNRows, false);
+                subsetPa.addNDoubles(tNRows, tSafeMV);
+              }
               NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tNRows}, subsetPa);
             }
           }
