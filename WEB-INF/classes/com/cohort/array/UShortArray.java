@@ -621,8 +621,8 @@ public class UShortArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof UShortArray usa) {
+      if (otherIndex + nValues > usa.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in UShortArray.addFromPA: otherIndex="
@@ -630,10 +630,28 @@ public class UShortArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + usa.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((UShortArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(usa.array, otherIndex, array, size, nValues);
       size += nValues;
+      if (usa.getMaxIsMV()) maxIsMV = true;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in UShortArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = (short) otherPA.getInt(otherIndex++);
+      }
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
     }
