@@ -935,6 +935,7 @@ public class ShortArray extends PrimitiveArray {
    */
   @Override
   public PrimitiveArray makeUnsignedPA() {
+    if (array.length == size) return new UShortArray(array);
     Math2.ensureMemoryAvailable(2L * size, "ShortArray");
     final short ar[] = new short[size];
     System.arraycopy(array, 0, ar, 0, size);

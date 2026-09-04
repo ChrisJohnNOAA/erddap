@@ -1023,6 +1023,7 @@ public class ByteArray extends PrimitiveArray {
    */
   @Override
   public PrimitiveArray makeUnsignedPA() {
+    if (array.length == size) return new UByteArray(array);
     Math2.ensureMemoryAvailable(1L * size, "ByteArray");
     final byte ar[] = new byte[size];
     System.arraycopy(array, 0, ar, 0, size);

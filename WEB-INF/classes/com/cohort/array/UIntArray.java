@@ -201,6 +201,7 @@ public class UIntArray extends PrimitiveArray {
    */
   @Override
   public PrimitiveArray makeSignedPA() {
+    if (array.length == size) return new IntArray(array);
     Math2.ensureMemoryAvailable(4L * size, "UIntArray");
     final int ar[] = new int[size];
     System.arraycopy(array, 0, ar, 0, size);

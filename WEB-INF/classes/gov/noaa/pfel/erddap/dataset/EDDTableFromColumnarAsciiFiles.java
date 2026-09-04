@@ -460,9 +460,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
     double maxTimeES = Double.NaN;
     for (int col = 0; col < dataSourceTable.nColumns(); col++) {
       String colName = dataSourceTable.getColumnName(col);
-      PrimitiveArray sourcePA =
-          (PrimitiveArray)
-              dataSourceTable.getColumn(col).clone(); // clone because going into addTable
+      PrimitiveArray sourcePA = dataSourceTable.getColumn(col);
 
       Attributes sourceAtts = dataSourceTable.columnAttributes(col);
       Attributes addAtts = new Attributes();
