@@ -377,7 +377,8 @@ public class NcHelper {
         // String2.log("***getAttribute string=\"" + ts + "\"");
         return new Attribute(name, ts);
       } else {
-        String s = ((StringArray) pa).toNewlineString();
+        StringArray sa = pa instanceof StringArray tsa ? tsa : new StringArray(pa);
+        String s = sa.toNewlineString();
         return new Attribute(name, s.length() == 0 ? "" : s.substring(0, s.length() - 1));
       }
     }
@@ -1878,11 +1879,20 @@ public class NcHelper {
     if (paType == PAType.CHAR) {
       // netcdf-java 3 & 4 just write 1 byte chars
       // (but nc4 will writes strings as utf-8 encoded
-      pa = new CharArray(pa).toIso88591();
+      if (pa instanceof CharArray tca) {
+        pa = tca.toIso88591();
+      } else {
+        pa = new CharArray(pa).toIso88591();
+      }
     } else if (nc3Mode) {
       if (paType == PAType.LONG || paType == PAType.ULONG) pa = new DoubleArray(pa);
-      else if (paType == PAType.STRING)
-        pa = new StringArray(pa).toIso88591(); // netcdf-java 3 just writes low byte
+      else if (paType == PAType.STRING) {
+        if (pa instanceof StringArray tsa) {
+          pa = tsa.toIso88591(); // netcdf-java 3 just writes low byte
+        } else {
+          pa = new StringArray(pa).toIso88591(); // netcdf-java 3 just writes low byte
+        }
+      }
     }
 
     if (nc3Mode && paType == PAType.STRING) {
@@ -1987,14 +1997,15 @@ public class NcHelper {
         tpas[var] = pas[var];
         if (tpas[var].elementType() == PAType.CHAR) {
           // nc 'char' is 1 byte!  So store java char (2 bytes) as shorts.
-          tpas[var] = new ShortArray(((CharArray) pas[var]).toArray());
+          CharArray ca = pas[var] instanceof CharArray tca ? tca : new CharArray(pas[var]);
+          tpas[var] = new ShortArray(ca.toArray());
         } else if (tpas[var].elementType() == PAType.LONG
             || tpas[var].elementType() == PAType.ULONG) {
           // these will always be decoded by fromJson as-is; no need to encode with toJson
           tpas[var] = new StringArray(pas[var]);
         } else if (tpas[var].elementType() == PAType.STRING) {
           // .nc strings only support characters 1..255, so encode as Json strings
-          StringArray oldSa = (StringArray) pas[var];
+          StringArray oldSa = pas[var] instanceof StringArray tsa ? tsa : new StringArray(pas[var]);
           int tSize = oldSa.size();
           StringArray newSa = new StringArray(tSize, false);
           tpas[var] = newSa;
@@ -2169,18 +2180,6 @@ public class NcHelper {
    * @throws Exception if trouble (if an attribute's values are in a LongArray, ULongArray, unsigned
    *     array)
    */
-  public static ucar.ma2.Section getSectionFromConstraints(IntArray tConstraints, int numAxes)
-      throws Exception {
-    java.util.List<ucar.ma2.Range> ranges = new java.util.ArrayList<>();
-    for (int av = 0; av < numAxes; av++) {
-      int start = tConstraints.get(av * 3);
-      int stride = tConstraints.get(av * 3 + 1);
-      int stop = tConstraints.get(av * 3 + 2);
-      ranges.add(new ucar.ma2.Range(start, stop, stride));
-    }
-    return new ucar.ma2.Section(ranges);
-  }
-
   public static void writeAttributesToNc3(String fullName, Attributes attributes) throws Exception {
 
     // gather the names and primitiveArrays
