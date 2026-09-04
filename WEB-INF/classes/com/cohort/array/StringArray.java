@@ -155,17 +155,32 @@ public class StringArray extends PrimitiveArray {
   }
 
   /**
-   * A constructor which gets values from anArray[i]. THERE IS NO StringArray CONSTRUCTOR WHICH
-   * LET'S YOU SPECIFY THE BACKING ARRAY! The values anArray are stored in a different way in a
-   * different data structure.
+   * A constructor which uses the provided array as the backing array. The initial 'size' will be
+   * anArray.length. The array is not copied, so if the caller changes the array, this StringArray
+   * will be affected.
    *
    * @param anArray
    */
   public StringArray(final String[] anArray) {
-    int al = anArray.length;
-    array = new String[al];
-    size = 0;
-    for (String s : anArray) add(s);
+    if (anArray == null) {
+      array = new String[8];
+      size = 0;
+      return;
+    }
+    for (int i = 0; i < anArray.length; i++) {
+      String s = anArray[i];
+      if (s == null) {
+        anArray[i] = null;
+      } else if (s.length() == 0) {
+        anArray[i] = "";
+      } else if (i > 0 && s.equals(anArray[i - 1])) {
+        anArray[i] = anArray[i - 1];
+      } else {
+        anArray[i] = String2.canonical(s);
+      }
+    }
+    array = anArray;
+    size = anArray.length;
   }
 
   /**
@@ -550,11 +565,16 @@ public class StringArray extends PrimitiveArray {
   public void add(final String value) {
     if (size == array.length) // if we're at capacity
     ensureCapacity(size + 1L);
-    array[size++] =
-        value == null
-            ? null
-            : // quick, saves time
-            value.length() == 0 ? "" : String2.canonical(value);
+    if (value == null) {
+      array[size++] = null;
+    } else if (value.length() == 0) {
+      array[size++] = "";
+    } else if (size > 0 && value.equals(array[size - 1])) {
+      array[size] = array[size - 1];
+      size++;
+    } else {
+      array[size++] = String2.canonical(value);
+    }
   }
 
   /**
