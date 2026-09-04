@@ -553,7 +553,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
             table = new Table();
             table.readJsonlCSV(
                 dnlsFileName,
-                new StringArray(new String[] {DIRECTORY, NAME, LASTMODIFIED, SIZE}),
+                StringArray.fromArray(new String[] {DIRECTORY, NAME, LASTMODIFIED, SIZE}),
                 new String[] {"String", "String", "long", "long"},
                 false); // simplify
             int col = table.findColumnNumber(LASTMODIFIED);

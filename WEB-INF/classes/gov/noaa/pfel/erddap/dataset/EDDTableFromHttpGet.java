@@ -1117,7 +1117,7 @@ public class EDDTableFromHttpGet extends EDDTableFromFiles {
                   EDStatic.messages.get(Message.QUERY_ERROR, language) + "Invalid author_key."));
         int po = Math.max(0, tValue.indexOf('_'));
         author = tValue.substring(0, po);
-        columnValues[authorColumn] = new StringArray(new String[] {author});
+        columnValues[authorColumn] = StringArray.fromArray(new String[] {author});
 
       } else {
         // is it a requiredVariable?

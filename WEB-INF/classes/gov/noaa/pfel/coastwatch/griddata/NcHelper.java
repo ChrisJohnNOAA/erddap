@@ -1101,7 +1101,7 @@ public class NcHelper {
       boolean nc3Mode, Variable.Builder<?> var, Attributes attributes, boolean unsigned) {
     String names[] = attributes.getNames();
     if (nc3Mode && unsigned)
-      var.addAttribute(newAttribute(nc3Mode, "_Unsigned", new StringArray(new String[] {"true"})));
+      var.addAttribute(newAttribute(nc3Mode, "_Unsigned", StringArray.fromArray(new String[] {"true"})));
     for (String tName : names) {
       if (!String2.isSomething(tName)) continue;
       PrimitiveArray tValue = attributes.get(tName);

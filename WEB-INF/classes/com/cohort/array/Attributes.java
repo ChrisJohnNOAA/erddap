@@ -441,7 +441,7 @@ public class Attributes {
     // netCDF doesn't allow 0 length strings
     if (value == null || value.trim().length() == 0) return remove(name);
     return set(
-        name, new StringArray(new String[] {value})); // new StringArray calls String2.canonical
+        name, StringArray.fromArray(new String[] {value})); // fromArray calls String2.canonical
   }
 
   /**

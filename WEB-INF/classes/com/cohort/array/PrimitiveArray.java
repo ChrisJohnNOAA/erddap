@@ -179,7 +179,7 @@ public abstract class PrimitiveArray {
     if (o instanceof Character c) return new CharArray(new char[] {c.charValue()});
 
     // String and fall through
-    return new StringArray(new String[] {o.toString()});
+    return StringArray.fromArray(new String[] {o.toString()});
   }
 
   /**

@@ -281,8 +281,8 @@ public abstract class EDDTableFromFilesNcLow extends EDDTableFromFiles {
       return FileVariableMetadata.createNoData(paType);
     }
     try {
-      StringArray scriptNames = new StringArray(new String[] {dvName});
-      StringArray scriptTypes = new StringArray(new String[] {dvType});
+      StringArray scriptNames = StringArray.fromArray(new String[] {dvName});
+      StringArray scriptTypes = StringArray.fromArray(new String[] {dvType});
       convertScriptColumnsToDataColumns(
           fullDir + fileName, // file name for error logging
           scriptInputTable,

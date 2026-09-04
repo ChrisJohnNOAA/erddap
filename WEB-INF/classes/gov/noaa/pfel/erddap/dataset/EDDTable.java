@@ -538,9 +538,9 @@ public abstract class EDDTable extends EDD {
         if (!validAttValues.isEmpty()) {
           if (addVariablesWhereAttNames == null) {
             addVariablesWhereAttNames =
-                new StringArray(new String[] {""}); // with "" initial option
+                StringArray.fromArray(new String[] {""}); // with "" initial option
             addVariablesWhereAttValues = new ArrayList<>();
-            addVariablesWhereAttValues.add(new StringArray(new String[] {""}));
+            addVariablesWhereAttValues.add(StringArray.fromArray(new String[] {""}));
           }
           validAttValues.add("");
           StringArray tValues = new StringArray(validAttValues.iterator());

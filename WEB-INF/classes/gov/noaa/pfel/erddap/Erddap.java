@@ -1334,7 +1334,7 @@ public class Erddap extends HttpServlet {
         table.addColumn("Resource", resourceCol);
         table.addColumn("URL", urlCol);
         StringArray resources =
-            new StringArray(new String[] {"info", "search", "categorize", "griddap", "tabledap"});
+            StringArray.fromArray(new String[] {"info", "search", "categorize", "griddap", "tabledap"});
         if (EDStatic.config.sosActive) resources.add("sos");
         if (EDStatic.config.wcsActive) resources.add("wcs");
         if (EDStatic.config.wmsActive) resources.add("wms");
@@ -7093,7 +7093,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
       // make columns: "Name" (String), "Last modified" (long millis),
       //  "Size" (long), and "Description" (String)
       Table table = new Table();
-      table.addColumn("Name", new StringArray(new String[] {"documentation.html"}));
+      table.addColumn("Name", StringArray.fromArray(new String[] {"documentation.html"}));
       table.addColumn(
           "Last modified", new LongArray(new long[] {EDStatic.startupMillis}).setMaxIsMV(true));
       table.addColumn(
@@ -7102,7 +7102,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
               .setMaxIsMV(true)); // it is made on-the-fly, so size not known
       table.addColumn(
           "Description",
-          new StringArray(new String[] {"Documentation for ERDDAP's \"files\" system."}));
+          StringArray.fromArray(new String[] {"Documentation for ERDDAP's \"files\" system."}));
 
       if (justExtension.length() > 0) {
 

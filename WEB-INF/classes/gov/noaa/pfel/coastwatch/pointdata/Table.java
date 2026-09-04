@@ -5190,11 +5190,11 @@ public class Table {
 
       } else if (pa instanceof LongArray) {
         atts.remove(name);
-        atts.set("_encodedLongArray_" + name, new StringArray(new String[] {pa.toString()}));
+        atts.set("_encodedLongArray_" + name, StringArray.fromArray(new String[] {pa.toString()}));
 
       } else if (pa instanceof ULongArray) {
         atts.remove(name);
-        atts.set("_encodedULongArray_" + name, new StringArray(new String[] {pa.toString()}));
+        atts.set("_encodedULongArray_" + name, StringArray.fromArray(new String[] {pa.toString()}));
 
         // Even nc3 saves attributes via utf-8
         // } else if (pa instanceof StringArray) {
@@ -11343,9 +11343,9 @@ public class Table {
     nRows =
         tryToApplyConstraintsAndKeep(
             lastKeyColumn,
-            new StringArray(new String[] {getColumnName(lastKeyColumn)}),
-            new StringArray(new String[] {"!="}),
-            new StringArray(new String[] {lastKCMV}));
+            StringArray.fromArray(new String[] {getColumnName(lastKeyColumn)}),
+            StringArray.fromArray(new String[] {"!="}),
+            StringArray.fromArray(new String[] {lastKCMV}));
     if (nRows == 0) return;
 
     // sort based on keys

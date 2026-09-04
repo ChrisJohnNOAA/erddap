@@ -532,7 +532,7 @@ public class EDDTableFromOBIS extends EDDTable {
             datasetID,
             "TIME",
             new Attributes()
-                .add("actual_range", new StringArray(new String[] {tTimeMin, tTimeMax}))
+                .add("actual_range", StringArray.fromArray(new String[] {tTimeMin, tTimeMax}))
                 .add(
                     "comment",
                     "Created from the darwin:YearCollected-darwin:MonthCollected-darwin:DayCollected and darwin:TimeOfDay variables.")

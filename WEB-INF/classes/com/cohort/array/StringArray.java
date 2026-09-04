@@ -2226,15 +2226,15 @@ public class StringArray extends PrimitiveArray {
    *     trim'd.
    */
   public static StringArray fromCSV(final String searchFor) {
-    return new StringArray(arrayFromCSV(searchFor, ','));
+    return StringArray.fromArray(arrayFromCSV(searchFor, ','));
   }
 
   public static StringArray fromCSV(final String searchFor, final char separatorChars) {
-    return new StringArray(arrayFromCSV(searchFor, separatorChars));
+    return StringArray.fromArray(arrayFromCSV(searchFor, separatorChars));
   }
 
   public static StringArray fromCSV(final String searchFor, final String separatorChars) {
-    return new StringArray(arrayFromCSV(searchFor, separatorChars, true, true));
+    return StringArray.fromArray(arrayFromCSV(searchFor, separatorChars, true, true));
   }
 
   /**

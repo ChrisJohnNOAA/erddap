@@ -491,7 +491,7 @@ public class OpendapHelper {
       return new PrimitiveArray[] {new ByteArray(new byte[] {dbyte.getValue()})};
     } else if (baseType instanceof DString dstring) {
       // String2.log(">>  baseType is DString=" + String2.toJson(((DString)baseType).getValue()));
-      return new PrimitiveArray[] {new StringArray(new String[] {dstring.getValue()})};
+      return new PrimitiveArray[] {StringArray.fromArray(new String[] {dstring.getValue()})};
     } else {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       baseType.printVal(baos, " ");
@@ -691,7 +691,7 @@ public class OpendapHelper {
       String tName = names.get(ni);
       PrimitiveArray pa =
           tName.equals("_Unsigned") && addedUnsigned
-              ? new StringArray(new String[] {paType == PAType.BYTE ? "false" : "true"})
+              ? StringArray.fromArray(new String[] {paType == PAType.BYTE ? "false" : "true"})
               : attributes.get(tName);
       PAType et = pa.elementType();
       // technically this is wrong because DAP says bytes are unsigned

@@ -542,12 +542,12 @@ public class EDDGridFromEtopo extends EDDGrid {
 
       // return the one file
       Table table = new Table();
-      table.addColumn("Name", new StringArray(new String[] {File2.getNameAndExtension(fileName)}));
+      table.addColumn("Name", StringArray.fromArray(new String[] {File2.getNameAndExtension(fileName)}));
       table.addColumn(
           "Last modified",
           new LongArray(new long[] {File2.getLastModified(fileName)}).setMaxIsMV(true));
       table.addColumn("Size", new LongArray(new long[] {File2.length(fileName)}).setMaxIsMV(true));
-      table.addColumn("Description", new StringArray(new String[] {""}));
+      table.addColumn("Description", StringArray.fromArray(new String[] {""}));
       StringArray subDirs = new StringArray();
       return new Object[] {table, subDirs.toStringArray(), null};
 

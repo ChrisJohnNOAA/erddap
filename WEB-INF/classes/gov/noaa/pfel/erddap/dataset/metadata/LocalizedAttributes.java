@@ -237,7 +237,7 @@ public class LocalizedAttributes {
     if (value == null || value.trim().length() == 0) {
       return remove(name);
     }
-    set(language, name, new StringArray(new String[] {value}));
+    set(language, name, StringArray.fromArray(new String[] {value}));
     return this;
   }
 
@@ -431,7 +431,7 @@ public class LocalizedAttributes {
           }
           String value = EDStatic.updateUrls(v.getString(0));
           if (!value.equals(v.getString(0))) {
-            return new StringArray(new String[] {value});
+            return StringArray.fromArray(new String[] {value});
           }
           return v;
         });
