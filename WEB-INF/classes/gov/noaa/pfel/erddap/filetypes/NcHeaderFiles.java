@@ -52,6 +52,15 @@ public class NcHeaderFiles extends FileTypeInterface {
   private Attribute.Builder attributeBuilder(String name, PrimitiveArray value) {
     Attribute.Builder attBuild = Attribute.builder(name);
     PAType attributeType = value.elementType();
+    if (attributeType == PAType.STRING && value.size() > 0) {
+      if ("_CoordinateAxes".equals(name) || "_coordinateSystem".equals(name)) {
+        StringArray sa = new StringArray(value.size(), false);
+        for (int i = 0; i < value.size(); i++) {
+          sa.add(value.getString(i).trim());
+        }
+        value = sa;
+      }
+    }
     attBuild.setDataType(NcHelper.getNc3DataType(attributeType));
     if (value.size() == 1) {
       switch (attributeType) {
