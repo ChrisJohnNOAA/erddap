@@ -149,4 +149,78 @@ class PrimitiveViewTests {
     Test.ensureEqual(view.toCSVString(), "2,3", "toCSVString format");
     Test.ensureEqual(view.toJsonCsvString(), "2, 3", "toJsonCsvString format");
   }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewEvaluation() {
+    IntArray ia = new IntArray(new int[] {-12430, -12418, 100});
+    PrimitiveArray osv = ia.asOffsetScaleView(false, PAType.FLOAT, 0.01, 0.0);
+
+    Test.ensureTrue(osv instanceof OffsetScaleView, "is OffsetScaleView");
+    Test.ensureEqual(osv.size(), 3, "size");
+    Test.ensureEqual(osv.getFloat(0), -124.3f, "getFloat(0)");
+    Test.ensureEqual(osv.getFloat(1), -124.18f, "getFloat(1)");
+    Test.ensureEqual(osv.getFloat(2), 1.0f, "getFloat(2)");
+
+    // Negative scale and offset
+    ByteArray ba = new ByteArray(new byte[] {10, 20, 30});
+    PrimitiveArray osv2 = ba.asOffsetScaleView(false, PAType.DOUBLE, -2.0, 100.0);
+    Test.ensureEqual(osv2.getDouble(0), 80.0, "10 * -2 + 100");
+    Test.ensureEqual(osv2.getDouble(1), 60.0, "20 * -2 + 100");
+    Test.ensureEqual(osv2.getDouble(2), 40.0, "30 * -2 + 100");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewMissingValues() {
+    ShortArray sa = new ShortArray(new short[] {10, Short.MAX_VALUE});
+    sa.setMaxIsMV(true);
+    PrimitiveArray osv = sa.asOffsetScaleView(false, PAType.DOUBLE, 0.1, 5.0);
+
+    Test.ensureEqual(osv.getDouble(0), 6.0, "10 * 0.1 + 5");
+    Test.ensureTrue(Double.isNaN(osv.getDouble(1)), "Short.MAX_VALUE is missing value -> NaN");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewChainingAndFlattening() {
+    IntArray ia = new IntArray(new int[] {10, 20, 30, 40});
+    PrimitiveArray v1 = ia.asOffsetScaleView(false, PAType.DOUBLE, 2.0, 10.0); // 30, 50, 70, 90
+    PrimitiveArray v2 = v1.asOffsetScaleView(false, PAType.DOUBLE, 0.5, -5.0); // 0.5*(2x+10)-5 = x
+
+    Test.ensureTrue(v2 instanceof OffsetScaleView, "v2 is OffsetScaleView");
+    OffsetScaleView osv2 = (OffsetScaleView) v2;
+    Test.ensureEqual(osv2.source, ia, "flattened to root IntArray");
+    Test.ensureEqual(osv2.scale, 1.0, "composed scale 2.0 * 0.5 = 1.0");
+    Test.ensureEqual(osv2.addOffset, 0.0, "composed offset 0.5 * 10 - 5 = 0.0");
+    Test.ensureEqual(osv2.getDouble(0), 10.0, "v2.getDouble(0)");
+    Test.ensureEqual(osv2.getDouble(1), 20.0, "v2.getDouble(1)");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewMaterializationAndSubsetting() {
+    FloatArray fa = new FloatArray(new float[] {1f, 2f, 3f, 4f});
+    PrimitiveArray osv = fa.asOffsetScaleView(false, PAType.DOUBLE, 10.0, 1.0); // 11, 21, 31, 41
+
+    // Subsetting
+    PrimitiveArray sub = osv.subset(null, 1, 2, 3); // indices 1, 3 -> 21, 41
+    Test.ensureTrue(sub instanceof OffsetScaleView, "subset is OffsetScaleView");
+    Test.ensureEqual(sub.getDouble(0), 21.0, "sub getDouble(0)");
+    Test.ensureEqual(sub.getDouble(1), 41.0, "sub getDouble(1)");
+
+    // Materialization on mutation
+    osv.setDouble(0, 999.0);
+    Test.ensureEqual(osv.getDouble(0), 999.0, "updated mutated view");
+    Test.ensureEqual(fa.getFloat(0), 1f, "source unchanged");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testOffsetScaleViewTypePredicates() {
+    ByteArray ba = new ByteArray(new byte[] {1, 2, 3});
+    PrimitiveArray osv = ba.asOffsetScaleView(false, PAType.FLOAT, 0.1, 0.0);
+
+    Test.ensureEqual(osv.elementType(), PAType.FLOAT, "elementType is FLOAT");
+    Test.ensureTrue(osv.isFloatingPointType(), "isFloatingPointType is true");
+    Test.ensureTrue(!osv.isIntegerType(), "isIntegerType is false");
+    Test.ensureTrue(!osv.isUnsigned(), "isUnsigned is false");
+    Test.ensureEqual(osv.elementSize(), 4, "elementSize is 4 for FLOAT");
+    Test.ensureTrue(Double.isNaN(osv.missingValueAsDouble()), "missingValueAsDouble is NaN");
+  }
 }
