@@ -304,7 +304,6 @@ public class UByteArray extends PrimitiveArray {
    */
   @Override
   public PrimitiveArray makeSignedPA() {
-    if (array.length == size) return new ByteArray(array);
     Math2.ensureMemoryAvailable(1L * size, "UByteArray");
     final byte ar[] = new byte[size];
     System.arraycopy(array, 0, ar, 0, size);

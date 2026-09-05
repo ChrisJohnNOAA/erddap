@@ -237,7 +237,6 @@ public class ULongArray extends PrimitiveArray {
    */
   @Override
   public PrimitiveArray makeSignedPA() {
-    if (array.length == size) return new LongArray(array);
     Math2.ensureMemoryAvailable(8L * size, "ULongArray");
     final long ar[] = new long[size];
     System.arraycopy(array, 0, ar, 0, size);

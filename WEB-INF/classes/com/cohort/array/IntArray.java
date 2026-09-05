@@ -907,7 +907,6 @@ public class IntArray extends PrimitiveArray {
    */
   @Override
   public PrimitiveArray makeUnsignedPA() {
-    if (array.length == size) return new UIntArray(array);
     Math2.ensureMemoryAvailable(4L * size, "IntArray");
     final int ar[] = new int[size];
     System.arraycopy(array, 0, ar, 0, size);
