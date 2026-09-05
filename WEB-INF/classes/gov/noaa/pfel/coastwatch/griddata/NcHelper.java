@@ -222,8 +222,15 @@ public class NcHelper {
       return PrimitiveArray.factory(byteAr, nc2Array.isUnsigned());
     }
 
-    // ArrayXxxnumeric
-    return PrimitiveArray.factory(nc2Array.copyTo1DJavaArray(), nc2Array.isUnsigned());
+    // ArrayXxxnumeric or String Array
+    PrimitiveArray pa = PrimitiveArray.factory(nc2Array.copyTo1DJavaArray(), nc2Array.isUnsigned());
+    if (pa instanceof StringArray sa) {
+      for (int i = 0; i < sa.size(); i++) {
+        String s = sa.get(i);
+        if (s != null) sa.set(i, s.trim());
+      }
+    }
+    return pa;
   }
 
   /**
@@ -1140,13 +1147,7 @@ public class NcHelper {
                   + " has values=null"); // the full name
           return null;
         }
-        PrimitiveArray pa = decodeAttributeToPrimitive(values);
-        if (pa instanceof StringArray sa && ("_CoordinateAxes".equals(att.getName()) || "_coordinateSystem".equals(att.getName()))) {
-          for (int i = 0; i < sa.size(); i++) {
-            sa.set(i, sa.getString(i).trim());
-          }
-        }
-        return pa;
+        return decodeAttributeToPrimitive(values);
       } catch (Throwable t) {
         String2.log(
             "Warning: NcHelper caught an exception while reading varName='"
