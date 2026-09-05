@@ -222,15 +222,17 @@ public class NcHelper {
       return PrimitiveArray.factory(byteAr, nc2Array.isUnsigned());
     }
 
-    // ArrayXxxnumeric or String Array
-    PrimitiveArray pa = PrimitiveArray.factory(nc2Array.copyTo1DJavaArray(), nc2Array.isUnsigned());
-    if (pa instanceof StringArray sa) {
-      for (int i = 0; i < sa.size(); i++) {
-        String s = sa.get(i);
-        if (s != null) sa.set(i, s.trim());
+    Object o = nc2Array.copyTo1DJavaArray();
+    if (o instanceof String[] sa) {
+      StringArray result = new StringArray(sa.length, false);
+      for (String s : sa) {
+        result.add(s == null ? null : s.trim());
       }
+      return result;
     }
-    return pa;
+
+    // ArrayXxxnumeric
+    return PrimitiveArray.factory(o, nc2Array.isUnsigned());
   }
 
   /**
