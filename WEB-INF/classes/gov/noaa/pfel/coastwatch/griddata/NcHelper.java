@@ -224,11 +224,10 @@ public class NcHelper {
 
     Object o = nc2Array.copyTo1DJavaArray();
     if (o instanceof String[] sa) {
-      StringArray result = new StringArray(sa.length, false);
-      for (String s : sa) {
-        result.add(s == null ? null : s.trim());
+      for (int i = 0; i < sa.length; i++) {
+        if (sa[i] != null) sa[i] = sa[i].trim();
       }
-      return result;
+      return new StringArray(sa);
     }
 
     // ArrayXxxnumeric
