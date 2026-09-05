@@ -1627,7 +1627,7 @@ public class EDDTableFromFileNames extends EDDTable {
       String sourceName = sourceTable.getColumnName(col);
       Attributes addAtts = new Attributes();
       addTable.addColumn(
-          col, sourceName, (PrimitiveArray) sourceTable.getColumn(col).clone(), addAtts);
+          col, sourceName, sourceTable.getColumn(col), addAtts);
     }
     Set<String> keywords = suggestKeywords(sourceTable, addTable);
     cleanSuggestedKeywords(keywords);
