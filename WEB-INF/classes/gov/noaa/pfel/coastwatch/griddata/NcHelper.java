@@ -1140,7 +1140,13 @@ public class NcHelper {
                   + " has values=null"); // the full name
           return null;
         }
-        return decodeAttributeToPrimitive(values);
+        PrimitiveArray pa = decodeAttributeToPrimitive(values);
+        if (pa instanceof StringArray sa && ("_CoordinateAxes".equals(att.getName()) || "_coordinateSystem".equals(att.getName()))) {
+          for (int i = 0; i < sa.size(); i++) {
+            sa.set(i, sa.getString(i).trim());
+          }
+        }
+        return pa;
       } catch (Throwable t) {
         String2.log(
             "Warning: NcHelper caught an exception while reading varName='"
