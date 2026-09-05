@@ -335,7 +335,7 @@ public class EDDTableFromAwsXmlFiles extends EDDTableFromFiles {
     for (int col = 0; col < dataSourceTable.nColumns(); col++) {
       String colName = dataSourceTable.getColumnName(col);
       Attributes sourceAtts = dataSourceTable.columnAttributes(col);
-      PrimitiveArray sourcePA = (PrimitiveArray) dataSourceTable.getColumn(col).clone();
+      PrimitiveArray sourcePA = dataSourceTable.getColumn(col);
       PrimitiveArray destPA = makeDestPAForGDX(sourcePA, sourceAtts);
       dataAddTable.addColumn(
           col,

@@ -979,7 +979,7 @@ public class Attributes {
         // if (tName.equals("_FillValue")) String2.pressEnterToContinue(">> ncoJson _FillValue=" +
         // String2.annotatedString((new StringArray(pa)).toString()) + " maxIsMV=" +
         // pa.getMaxIsMV());
-        String s = new StringArray(pa).toNewlineString();
+        String s = (pa instanceof StringArray sa ? sa : new StringArray(pa)).toNewlineString();
         sb.append(String2.toJson(s.substring(0, s.length() - 1))); // remove trailing \n
       } else {
         String js = pa.toJsonCsvString();
@@ -1259,7 +1259,7 @@ public class Attributes {
       for (String name : names) {
         PrimitiveArray pa = newAtts.remove(name);
         if (pa != null) {
-          pa = new DoubleArray(pa);
+          pa = PrimitiveArray.factory(PAType.DOUBLE, pa);
           pa.scaleAddOffset(baseFactor[1], baseFactor[0]);
           newAtts.add(name, pa);
         }

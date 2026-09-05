@@ -322,7 +322,7 @@ public class EDDTableFromWFSFiles extends EDDTableFromAsciiFiles {
       Attributes sourceAtts = dataSourceTable.columnAttributes(col);
 
       // isDateTime?
-      PrimitiveArray sourcePA = (PrimitiveArray) dataSourceTable.getColumn(col).clone();
+      PrimitiveArray sourcePA = dataSourceTable.getColumn(col);
       String timeUnits = "";
       if (sourcePA instanceof StringArray sa) {
         timeUnits = Calendar2.suggestDateTimeFormat(sa, false); // evenIfPurelyNumeric

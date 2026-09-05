@@ -1873,7 +1873,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
       addTable.addColumn(
           col,
           colName,
-          (PrimitiveArray) sourceTable.getColumn(col).clone(),
+          sourceTable.getColumn(col),
           (Attributes) sourceTable.columnAttributes(col).clone()); // move from source to add
       sourceTable.columnAttributes(col).clear();
     }
