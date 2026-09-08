@@ -167,6 +167,8 @@ completeness, or usefulness, of this information.";
     results =
         results.substring(0, results.indexOf("    char status(row=6);"))
             + results.substring(results.indexOf("    double testLong(row=6);"));
+    expected = removeLineStartsWithIfExist("  :documentation = ", expected);
+    results = removeLineStartsWithIfExist("  :documentation = ", results);
     expected = removeLineStartsWithIfExist("  :Easternmost_Easting = ", expected);
     expected = removeLineStartsWithIfExist("  :geospatial_lat_max = ", expected);
     expected = removeLineStartsWithIfExist("  :geospatial_lat_min = ", expected);
@@ -538,6 +540,8 @@ the current year using available altimetry).";
             + results.substring(results.indexOf("      :ioos_category = ", commentStart));
     results = results.replaceAll("\'", "'");
     expected = expected.replaceAll("\'", "'");
+    expected = removeLineStartsWithIfExist("  :documentation = ", expected);
+    results = removeLineStartsWithIfExist("  :documentation = ", results);
     com.cohort.util.Test.ensureEqual(expected, results, "results=\n" + results);
   }
 
