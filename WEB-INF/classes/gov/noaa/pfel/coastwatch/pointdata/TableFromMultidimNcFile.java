@@ -1,9 +1,6 @@
 package gov.noaa.pfel.coastwatch.pointdata;
 
 import com.cohort.array.Attributes;
-import com.cohort.array.CharArray;
-import com.cohort.array.DoubleArray;
-import com.cohort.array.FloatArray;
 import com.cohort.array.IntArray;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
@@ -417,8 +414,7 @@ public class TableFromMultidimNcFile {
           PrimitiveArray pa = this.table.columns.get(c);
           isDouble[c] = pa.isFloatingPointType();
           isULong[c] = pa.elementType() == com.cohort.array.PAType.ULONG;
-          isLong[c] = pa.isIntegerType()
-              && pa.elementType() != com.cohort.array.PAType.ULONG;
+          isLong[c] = pa.isIntegerType() && pa.elementType() != com.cohort.array.PAType.ULONG;
           isChar[c] = pa.elementType() == com.cohort.array.PAType.CHAR;
           if (isDouble[c]) {
             doubleMvs[c] = this.table.columnAttributes(c).getDouble("missing_value");
