@@ -1259,7 +1259,7 @@ public class Attributes {
       for (String name : names) {
         PrimitiveArray pa = newAtts.remove(name);
         if (pa != null) {
-          pa = PrimitiveArray.factory(PAType.DOUBLE, pa);
+          pa = new DoubleArray(pa);
           pa.scaleAddOffset(baseFactor[1], baseFactor[0]);
           newAtts.add(name, pa);
         }
