@@ -951,16 +951,6 @@ public class Table {
               + size
               + ").");
 
-    int existingNRows = nRows();
-    if (existingNRows > 0 && pa.size() > 0 && pa.size() < existingNRows) {
-      pa = new PaddedPrimitiveView(pa, existingNRows);
-    } else if (pa.size() > existingNRows && existingNRows > 0) {
-      int newNRows = pa.size();
-      for (int c = 0; c < size; c++) {
-        columns.set(c, new PaddedPrimitiveView(columns.get(c), newNRows));
-      }
-    }
-
     if (name == null) name = "Column" + position;
     columnNames.atInsert(position, name);
     columns.add(position, pa);
