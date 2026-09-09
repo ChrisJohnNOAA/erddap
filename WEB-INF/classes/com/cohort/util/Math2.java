@@ -1464,6 +1464,67 @@ public class Math2 {
   }
 
   /**
+   * Appends full-precision double representation directly into an existing StringBuilder.
+   *
+   * @param d the double value
+   * @param sb the StringBuilder to append to
+   */
+  public static void doubleToString(final double d, final StringBuilder sb) {
+    sb.append(d);
+  }
+
+  /**
+   * Returns full-precision double representation as a String.
+   *
+   * @param d the double value
+   * @return the double as a String
+   */
+  public static String doubleToString(final double d) {
+    return Double.toString(d);
+  }
+
+  /**
+   * Appends compact/rounded double value (stripping unnecessary trailing zeros and
+   * constraining excessive decimal places) directly into an existing StringBuilder.
+   *
+   * @param d the double value
+   * @param sb the StringBuilder to append to
+   */
+  public static void doubleToShortString(final double d, final StringBuilder sb) {
+    String2.genEFormat10(d, sb);
+  }
+
+  /**
+   * Returns a compact/rounded double value as a String.
+   *
+   * @param d the double value
+   * @return the double formatted as a short String
+   */
+  public static String doubleToShortString(final double d) {
+    return String2.genEFormat10(d);
+  }
+
+  /**
+   * Appends single-precision float representation directly into an existing StringBuilder.
+   *
+   * @param f the float value
+   * @param sb the StringBuilder to append to
+   */
+  public static void floatToString(final float f, final StringBuilder sb) {
+    sb.append(f);
+  }
+
+  /**
+   * Returns single-precision float representation as a String.
+   *
+   * @param f the float value
+   * @return the float as a String
+   */
+  public static String floatToString(final float f) {
+    return Float.toString(f);
+  }
+
+  /**
    * Safely tries to un-bruise a double (8.999999999 -&gt; 9.0, or 1.000000001 -&gt; 1.0).
    *
    * <UL>

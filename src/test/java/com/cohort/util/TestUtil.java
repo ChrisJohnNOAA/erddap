@@ -613,6 +613,28 @@ public class TestUtil {
     Test.ensureEqual(Math2.doubleToFloatNaN(Double.POSITIVE_INFINITY), Float.NaN, "o");
     Test.ensureEqual(Math2.doubleToFloatNaN(Double.NEGATIVE_INFINITY), Float.NaN, "p");
 
+    // doubleToString, doubleToShortString, floatToString
+    String2.log("test Math2 formatting appenders");
+
+    sb.setLength(0);
+    Math2.doubleToString(123.456789, sb);
+    Test.ensureEqual(sb.toString(), "123.456789", "doubleToString sb");
+    Test.ensureEqual(Math2.doubleToString(123.456789), "123.456789", "doubleToString String");
+
+    sb.setLength(0);
+    Math2.doubleToShortString(123.456789, sb);
+    Test.ensureEqual(sb.toString(), "123.456789", "doubleToShortString sb");
+    Test.ensureEqual(Math2.doubleToShortString(123.456789), "123.456789", "doubleToShortString String");
+
+    sb.setLength(0);
+    Math2.doubleToShortString(0.00000012345, sb);
+    Test.ensureEqual(sb.toString(), "1.2345E-7", "doubleToShortString sci sb");
+
+    sb.setLength(0);
+    Math2.floatToString(12.34f, sb);
+    Test.ensureEqual(sb.toString(), "12.34", "floatToString sb");
+    Test.ensureEqual(Math2.floatToString(12.34f), "12.34", "floatToString String");
+
     // (float)
     String2.log("test (float)d");
     Test.ensureEqual((float) 1e100, Float.POSITIVE_INFINITY, "k");

@@ -4518,37 +4518,58 @@ public class String2 {
    * @return the number converted to a string
    */
   public static String genEFormat6(double d) {
+    StringBuilder sb = new StringBuilder();
+    genEFormat6(d, sb);
+    return sb.toString();
+  }
 
+  /**
+   * Appends d formatted with up to 6 digits to the left and right of the decimal directly to sb.
+   *
+   * @param d a number
+   * @param sb the StringBuilder to append to
+   */
+  public static void genEFormat6(double d, StringBuilder sb) {
     // !finite
-    if (!Double.isFinite(d)) return "" + d;
+    if (!Double.isFinite(d)) {
+      sb.append(d);
+      return;
+    }
 
     // almost 0
-    if (Math2.almost0(d)) return "0";
+    if (Math2.almost0(d)) {
+      sb.append('0');
+      return;
+    }
 
     // close to 0
-    // String2.log("genEFormat test " + (d*1000) + " " + Math.rint(d*1000));
     if (Math.abs(d) < 0.0999995
         && !Math2.almostEqual(
             6,
             d * 10000,
-            Math.rint(d * 10000))) { // leave .0021 as .0021, but display .00023 as 2.3e-4
+            Math.rint(d * 10000))) {
       synchronized (genExpFormat6) {
-        return genExpFormat6.format(d);
+        sb.append(genExpFormat6.format(d));
       }
+      return;
     }
 
     // large int
-    if (Math.abs(d) < 1e13 && d == Math.rint(d)) return "" + Math2.roundToLong(d);
+    if (Math.abs(d) < 1e13 && d == Math.rint(d)) {
+      sb.append(Math2.roundToLong(d));
+      return;
+    }
 
     // >10e6
     if (Math.abs(d) >= 999999.9999995) {
       synchronized (genExpFormat6) {
-        return genExpFormat6.format(d);
+        sb.append(genExpFormat6.format(d));
       }
+      return;
     }
 
     synchronized (genStdFormat6) {
-      return genStdFormat6.format(d);
+      sb.append(genStdFormat6.format(d));
     }
   }
 
@@ -4563,38 +4584,58 @@ public class String2 {
    * @return the number converted to a string
    */
   public static String genEFormat10(double d) {
+    StringBuilder sb = new StringBuilder();
+    genEFormat10(d, sb);
+    return sb.toString();
+  }
 
+  /**
+   * Appends d formatted with up to 10 digits to the left and right of the decimal directly to sb.
+   *
+   * @param d a number
+   * @param sb the StringBuilder to append to
+   */
+  public static void genEFormat10(double d, StringBuilder sb) {
     // !finite
-    if (!Double.isFinite(d)) return "" + d;
+    if (!Double.isFinite(d)) {
+      sb.append(d);
+      return;
+    }
 
     // almost 0
-    if (Math2.almost0(d)) return "0";
+    if (Math2.almost0(d)) {
+      sb.append('0');
+      return;
+    }
 
     // close to 0 and many sig digits
-    // String2.log("genEFormat test " + (d*1000) + " " + Math.rint(d*1000));
     if (Math.abs(d) < 0.09999999995
         && !Math2.almostEqual(
             9,
             d * 1000000,
-            Math.rint(d * 1000000))) { // leave .0021 as .0021, but display .00023 as 2.3e-4
+            Math.rint(d * 1000000))) {
       synchronized (genExpFormat10) {
-        return genExpFormat10.format(d);
+        sb.append(genExpFormat10.format(d));
       }
+      return;
     }
 
     // large int
-    if (Math.abs(d) < 1e13 && d == Math.rint(d)) // rint only catches 9 digits(?)
-    return "" + Math2.roundToLong(d);
+    if (Math.abs(d) < 1e13 && d == Math.rint(d)) {
+      sb.append(Math2.roundToLong(d));
+      return;
+    }
 
     // >10e6
     if (Math.abs(d) >= 1000000.0) {
       synchronized (genExpFormat10) {
-        return genExpFormat10.format(d);
+        sb.append(genExpFormat10.format(d));
       }
+      return;
     }
 
     synchronized (genStdFormat10) {
-      return genStdFormat10.format(d);
+      sb.append(genStdFormat10.format(d));
     }
   }
 

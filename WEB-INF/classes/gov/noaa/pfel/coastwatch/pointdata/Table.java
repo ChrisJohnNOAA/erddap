@@ -1297,9 +1297,25 @@ public class Table {
    * @return a BitSet with bit=true for each row that has data (not all missing-values).
    */
   public BitSet rowsWithData() {
+    return rowsWithData(null);
+  }
+
+  /**
+   * Returns a BitSet with bit=true for each row that has data (not all missing-values),
+   * using a reusable BitSet if provided.
+   *
+   * @param reusableKeep optional BitSet instance to clear and reuse
+   * @return keep BitSet
+   */
+  public BitSet rowsWithData(BitSet reusableKeep) {
     int tnRows = nRows();
     int tnCols = nColumns();
-    BitSet keep = new BitSet(tnRows); // all false
+    BitSet keep = reusableKeep;
+    if (keep == null) {
+      keep = new BitSet(tnRows);
+    } else {
+      keep.clear();
+    }
     int keepN = 0;
     for (int col = 0; col < tnCols; col++) {
       // this is very similar to lastRowWithData
@@ -10333,13 +10349,34 @@ public class Table {
    */
   public int tryToApplyConstraintsAndKeep(
       int idCol, StringArray conNames, StringArray conOps, StringArray conVals) {
+    return tryToApplyConstraintsAndKeep(idCol, conNames, conOps, conVals, null);
+  }
+
+  /**
+   * This is like tryToApplyConstraintsAndKeep, but accepts a reusable BitSet.
+   *
+   * @param idCol For reallyVerbose only: rejected rows will log the value in this column.
+   * @param conNames constraint variable names
+   * @param conOps constraint operators
+   * @param conVals constraint values
+   * @param reusableKeep optional reusable BitSet; if null, a new BitSet will be created
+   * @return the number of rows remaining in the table
+   */
+  public int tryToApplyConstraintsAndKeep(
+      int idCol, StringArray conNames, StringArray conOps, StringArray conVals, BitSet reusableKeep) {
 
     // no constraints
     if (conNames == null || conNames.size() == 0) return nRows();
 
     // try to apply constraints
-    BitSet keep = new BitSet();
-    keep.set(0, nRows());
+    int n = nRows();
+    BitSet keep = reusableKeep;
+    if (keep == null) {
+      keep = new BitSet(n);
+    } else {
+      keep.clear();
+    }
+    keep.set(0, n);
     int cardinality = tryToApplyConstraints(idCol, conNames, conOps, conVals, keep);
     if (cardinality == 0) removeAllRows();
     else justKeep(keep);
