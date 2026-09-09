@@ -258,4 +258,20 @@ class PaddedPrimitiveViewTests {
     Test.ensureEqual(sub.getInt(1), 10, "sub(1)");
     Test.ensureEqual(sub.getInt(2), 20, "sub(2)");
   }
+
+  @org.junit.jupiter.api.Test
+  void testConvertToStandardMissingValuesDoesNotMaterializeView() {
+    DoubleArray da = new DoubleArray(new double[] {-999.0, 50.0});
+    PaddedPrimitiveView frontView = PaddedPrimitiveView.padFront(da, 5);
+
+    Test.ensureTrue(frontView.materialized == null, "view initially unmaterialized");
+
+    frontView.convertToStandardMissingValues("-999.0", "-999.0");
+
+    Test.ensureTrue(
+        frontView.materialized == null,
+        "view remains unmaterialized after convertToStandardMissingValues");
+    Test.ensureTrue(Double.isNaN(frontView.getDouble(3)), "source index 0 converted to NaN");
+    Test.ensureEqual(frontView.getDouble(4), 50.0, "source index 1 untouched");
+  }
 }

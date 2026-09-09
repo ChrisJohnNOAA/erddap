@@ -638,6 +638,33 @@ public class PaddedPrimitiveView extends PrimitiveView {
   }
 
   @Override
+  public int switchFromTo(String from, String to) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.switchFromTo(from, to);
+    }
+    return source.switchFromTo(from, to);
+  }
+
+  @Override
+  public int convertToStandardMissingValues(String fakeFillValue, String fakeMissingValue) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.convertToStandardMissingValues(fakeFillValue, fakeMissingValue);
+    }
+    return source.convertToStandardMissingValues(fakeFillValue, fakeMissingValue);
+  }
+
+  @Override
+  public int switchFakeMissingValueToNaN(double fakeMissingValue) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.switchFakeMissingValueToNaN(fakeMissingValue);
+    }
+    return source.switchFakeMissingValueToNaN(fakeMissingValue);
+  }
+
+  @Override
   public PrimitiveArray subset(PrimitiveArray pa, int startIndex, int stride, int stopIndex) {
     if (startIndex < 0) {
       throw new IllegalArgumentException(
