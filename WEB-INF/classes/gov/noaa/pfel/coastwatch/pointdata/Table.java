@@ -2255,7 +2255,9 @@ public class Table {
     if (maxNRows > 0) {
       for (int col = 0; col < tNCol; col++) {
         PrimitiveArray pa = columns.get(col);
-        pa.addNDoubles(maxNRows - pa.size(), Double.NaN);
+        if (pa.size() < maxNRows) {
+          columns.set(col, new com.cohort.array.PaddedPrimitiveView(pa, maxNRows));
+        }
       }
     }
   }

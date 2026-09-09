@@ -180,8 +180,12 @@ public class EDDTableFromAllDatasets extends EDDTable {
     // find the distinct values
     for (int v = 0; v < table.nColumns(); v++) {
       PrimitiveArray pa = table.getColumn(v);
-      pa.sortIgnoreCase();
-      pa.removeDuplicates(false);
+      // GUARD: Sorting or removing duplicates on <= 1 elements is a no-op.
+      // Checking pa.size() > 1 prevents materializing PaddedPrimitiveViews!
+      if (pa.size() > 1) {
+        pa.sortIgnoreCase();
+        pa.removeDuplicates(false);
+      }
     }
 
     return table;

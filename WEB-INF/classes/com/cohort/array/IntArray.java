@@ -506,8 +506,8 @@ public class IntArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof IntArray ia) {
+      if (otherIndex + nValues > ia.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in IntArray.addFromPA: otherIndex="
@@ -515,10 +515,28 @@ public class IntArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + ia.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((IntArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(ia.array, otherIndex, array, size, nValues);
       size += nValues;
+      if (ia.getMaxIsMV()) maxIsMV = true;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in IntArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = otherPA.getInt(otherIndex++);
+      }
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
     }

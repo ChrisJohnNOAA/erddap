@@ -459,8 +459,8 @@ public class FloatArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof FloatArray fa) {
+      if (otherIndex + nValues > fa.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in FloatArray.addFromPA: otherIndex="
@@ -468,10 +468,27 @@ public class FloatArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + fa.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((FloatArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(fa.array, otherIndex, array, size, nValues);
       size += nValues;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in FloatArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = otherPA.getFloat(otherIndex++);
+      }
       return this;
     }
 

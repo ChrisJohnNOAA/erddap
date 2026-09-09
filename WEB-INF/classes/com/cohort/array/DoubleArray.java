@@ -473,8 +473,8 @@ public class DoubleArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof DoubleArray da) {
+      if (otherIndex + nValues > da.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in DoubleArray.addFromPA: otherIndex="
@@ -482,10 +482,27 @@ public class DoubleArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + da.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((DoubleArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(da.array, otherIndex, array, size, nValues);
       size += nValues;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in DoubleArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = otherPA.getDouble(otherIndex++);
+      }
       return this;
     }
 

@@ -618,8 +618,8 @@ public class ULongArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof ULongArray ula) {
+      if (otherIndex + nValues > ula.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in ULongArray.addFromPA: otherIndex="
@@ -627,10 +627,28 @@ public class ULongArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + ula.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((ULongArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(ula.array, otherIndex, array, size, nValues);
       size += nValues;
+      if (ula.getMaxIsMV()) maxIsMV = true;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in ULongArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = otherPA.getLong(otherIndex++);
+      }
       if (otherPA.getMaxIsMV()) maxIsMV = true;
       return this;
     }

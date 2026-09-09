@@ -520,8 +520,8 @@ public class CharArray extends PrimitiveArray {
   public PrimitiveArray addFromPA(final PrimitiveArray otherPA, int otherIndex, final int nValues) {
 
     // add from same type
-    if (otherPA.elementType() == elementType()) {
-      if (otherIndex + nValues > otherPA.size)
+    if (otherPA instanceof CharArray ca) {
+      if (otherIndex + nValues > ca.size)
         throw new IllegalArgumentException(
             String2.ERROR
                 + " in CharArray.addFromPA: otherIndex="
@@ -529,10 +529,28 @@ public class CharArray extends PrimitiveArray {
                 + " + nValues="
                 + nValues
                 + " > otherPA.size="
-                + otherPA.size);
+                + ca.size);
       ensureCapacity(size + nValues);
-      System.arraycopy(((CharArray) otherPA).array, otherIndex, array, size, nValues);
+      System.arraycopy(ca.array, otherIndex, array, size, nValues);
       size += nValues;
+      return this;
+    }
+
+    if (otherPA.elementType() == elementType()) {
+      if (otherIndex + nValues > otherPA.size())
+        throw new IllegalArgumentException(
+            String2.ERROR
+                + " in CharArray.addFromPA: otherIndex="
+                + otherIndex
+                + " + nValues="
+                + nValues
+                + " > otherPA.size="
+                + otherPA.size());
+      ensureCapacity(size + nValues);
+      for (int i = 0; i < nValues; i++) {
+        array[size++] = (char) otherPA.getRawInt(otherIndex++);
+      }
+      return this;
 
       // add from different type
     } else if (otherPA.elementType() == PAType.STRING) {
