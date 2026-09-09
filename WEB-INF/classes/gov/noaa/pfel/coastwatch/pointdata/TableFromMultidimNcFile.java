@@ -417,7 +417,8 @@ public class TableFromMultidimNcFile {
           PrimitiveArray pa = this.table.columns.get(c);
           isDouble[c] = pa.isFloatingPointType();
           isULong[c] = pa.elementType() == com.cohort.array.PAType.ULONG;
-          isLong[c] = pa.isIntegerType() && pa.elementType() != com.cohort.array.PAType.ULONG;
+          isLong[c] = pa.isIntegerType()
+              && pa.elementType() != com.cohort.array.PAType.ULONG;
           isChar[c] = pa.elementType() == com.cohort.array.PAType.CHAR;
           if (isDouble[c]) {
             doubleMvs[c] = this.table.columnAttributes(c).getDouble("missing_value");
