@@ -344,6 +344,8 @@ public abstract class PrimitiveArray {
 
   /**
    * Converts String or Char elements to ISO-8859-1. Default implementation returns 'this'.
+   * Subclasses (such as StringArray, CharArray, and virtual views like PaddedPrimitiveView)
+   * override this method to perform element conversion or lazy view transformation.
    *
    * @return this for convenience
    */

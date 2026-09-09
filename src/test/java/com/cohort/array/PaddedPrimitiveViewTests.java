@@ -258,4 +258,43 @@ class PaddedPrimitiveViewTests {
     Test.ensureEqual(sub.getInt(1), 10, "sub(1)");
     Test.ensureEqual(sub.getInt(2), 20, "sub(2)");
   }
+
+  @org.junit.jupiter.api.Test
+  void testToIso88591LazyEncoding() {
+    StringArray sa = new StringArray(new String[] {"hello", "world\u00fc"});
+    PaddedPrimitiveView pSa = new PaddedPrimitiveView(sa, 4);
+
+    Test.ensureTrue(pSa.materialized == null, "materialized initially null");
+
+    PrimitiveArray isoView = pSa.toIso88591();
+    Test.ensureTrue(isoView instanceof PaddedPrimitiveView, "toIso88591 returns PaddedPrimitiveView");
+    PaddedPrimitiveView pIso = (PaddedPrimitiveView) isoView;
+    Test.ensureTrue(pIso.materialized == null, "toIso88591 preserves lazy unmaterialized view");
+    Test.ensureEqual(pIso.size(), 4, "size is preserved");
+
+    // Compare lazy view output with eager StringArray.toIso88591() output
+    StringArray saEager = new StringArray(new String[] {"hello", "world\u00fc", "", ""});
+    saEager.toIso88591();
+
+    for (int i = 0; i < 4; i++) {
+      Test.ensureEqual(pIso.getString(i), saEager.getString(i), "string match at index " + i);
+    }
+
+    // CharArray test
+    CharArray ca = new CharArray(new char[] {'A', '\u00fc'});
+    PaddedPrimitiveView pCa = new PaddedPrimitiveView(ca, 4);
+
+    PrimitiveArray isoCaView = pCa.toIso88591();
+    Test.ensureTrue(isoCaView instanceof PaddedPrimitiveView, "char toIso88591 returns PaddedPrimitiveView");
+    PaddedPrimitiveView pIsoCa = (PaddedPrimitiveView) isoCaView;
+    Test.ensureTrue(pIsoCa.materialized == null, "char toIso88591 preserves lazy unmaterialized view");
+
+    CharArray caEagerSource = new CharArray(new char[] {'A', '\u00fc'});
+    caEagerSource.toIso88591();
+
+    Test.ensureEqual(pIsoCa.getInt(0), caEagerSource.getInt(0), "char match at index 0");
+    Test.ensureEqual(pIsoCa.getInt(1), caEagerSource.getInt(1), "char match at index 1");
+    Test.ensureTrue(pIsoCa.isMissingValue(2), "char index 2 is missing value");
+    Test.ensureTrue(pIsoCa.isMissingValue(3), "char index 3 is missing value");
+  }
 }
