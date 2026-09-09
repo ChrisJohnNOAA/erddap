@@ -343,6 +343,15 @@ public abstract class PrimitiveArray {
   }
 
   /**
+   * Converts String or Char elements to ISO-8859-1. Default implementation returns 'this'.
+   *
+   * @return this for convenience
+   */
+  public PrimitiveArray toIso88591() {
+    return this;
+  }
+
+  /**
    * This returns a PrimitiveArray with size constantValues.
    *
    * @param elementType e.g., PAType.FLOAT

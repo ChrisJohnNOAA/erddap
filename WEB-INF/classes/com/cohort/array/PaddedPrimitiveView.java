@@ -108,6 +108,15 @@ public class PaddedPrimitiveView extends PrimitiveView {
   }
 
   @Override
+  public PrimitiveArray toIso88591() {
+    if (materialized != null) {
+      return materialized.toIso88591();
+    }
+    PrimitiveArray newSource = source.toIso88591();
+    return new PaddedPrimitiveView(newSource, targetSize, missingDouble, padAtFront);
+  }
+
+  @Override
   public synchronized PrimitiveArray materialize() {
     if (materialized == null) {
       PrimitiveArray newArray = PrimitiveArray.factory(elementType(), targetSize, false);

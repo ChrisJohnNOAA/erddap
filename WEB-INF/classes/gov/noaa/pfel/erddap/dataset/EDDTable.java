@@ -10,6 +10,7 @@ import com.cohort.array.DoubleArray;
 import com.cohort.array.IntArray;
 import com.cohort.array.LongArray;
 import com.cohort.array.PAOne;
+import com.cohort.array.PaddedPrimitiveView;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
@@ -4203,30 +4204,10 @@ public abstract class EDDTable extends EDD {
             int tNRows = featureNRows.get(feature);
             int stopRow = firstRow + tNRows - 1;
             PrimitiveArray subsetPa = pa.subset(firstRow, 1, stopRow);
-            NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tNRows}, subsetPa);
-
-            // and write missing values
             if (tNRows < maxFeatureNRows) {
-              origin[1] = tNRows;
-              // String2.log("  writeMVs: feature=" + feature + " origin[1]=" + origin[1] +
-              //  " tNRows=" + tNRows + " maxFeatureNRows=" + maxFeatureNRows);
-              tNRows = maxFeatureNRows - tNRows;
-              // if (tEdv.destinationDataPAType() == PAType.LONG)
-              //    subsetPa.addNStrings(tNRows, "" + tSafeMV);
-              // else
-              // subsetPa is a PrimitiveView, so add elements will materialize the view
-              // previously the subsetPa was cleared just above here, so rather than clear
-              // and then cause it to materialize, we just make a proper PrimitiveArray.
-
-              if (subsetPa.elementType() == PAType.STRING) {
-                subsetPa = new StringArray();
-                subsetPa.addNStrings(tNRows, "");
-              } else {
-                subsetPa = PrimitiveArray.factory(subsetPa.elementType(), tNRows, false);
-                subsetPa.addNDoubles(tNRows, tSafeMV);
-              }
-              NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tNRows}, subsetPa);
+              subsetPa = new PaddedPrimitiveView(subsetPa, maxFeatureNRows, tSafeMV, false);
             }
+            NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, subsetPa.size()}, subsetPa);
           }
 
         } else {
@@ -4682,20 +4663,10 @@ public abstract class EDDTable extends EDD {
               firstRow = lastRow + 1;
               lastRow = firstRow + tnProfiles - 1;
               PrimitiveArray tpa = pa.subset(firstRow, 1, lastRow);
-              NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tnProfiles}, tpa);
-
-              // write fill values
-              int nmv = maxProfilesPerFeature - tnProfiles;
-              if (nmv > 0) {
-                origin[1] = tnProfiles;
-                tpa.clear();
-                // if (tEdv.destinationDataPAType() == PAType.LONG)
-                //    tpa.addNStrings(nmv, "" + tSafeMV);
-                // else
-                if (tpa instanceof StringArray) tpa.addNStrings(nmv, "");
-                else tpa.addNDoubles(nmv, tSafeMV);
-                NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, nmv}, tpa);
+              if (tnProfiles < maxProfilesPerFeature) {
+                tpa = new PaddedPrimitiveView(tpa, maxProfilesPerFeature, tSafeMV, false);
               }
+              NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, tpa.size()}, tpa);
             }
           } else {
             // write ragged array var[profile]

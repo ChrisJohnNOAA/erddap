@@ -151,6 +151,7 @@ public class CharArray extends PrimitiveArray {
    *
    * @return this for convenience
    */
+  @Override
   public CharArray toIso88591() {
     for (int i = 0; i < size; i++) array[i] = String2.toIso88591Char(array[i]);
     return this;
