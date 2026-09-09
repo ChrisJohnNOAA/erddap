@@ -11136,49 +11136,33 @@ public class Table {
     if (other == null) return;
     int thisNRows = nRows();
     int otherNRows = other.nRows();
-    int targetSize = thisNRows + otherNRows;
 
-    // Process columns present in `this`
-    for (int col = 0; col < nColumns(); col++) {
-      String colName = getColumnName(col);
-      int otherCol = other.findColumnNumber(colName);
-      if (otherCol >= 0) {
-        PrimitiveArray pa1 = this.getColumn(col);
-        PrimitiveArray pa2 = other.getColumn(otherCol);
+    int n = Math.min(nColumns(), other.nColumns());
+    for (int col = 0; col < n; col++) {
 
-        if (pa1.size() < thisNRows) {
-          pa1 = new PaddedPrimitiveView(pa1, thisNRows);
-          this.setColumn(col, pa1);
-        }
+      PrimitiveArray pa1 = this.getColumn(col);
+      PrimitiveArray pa2 = other.getColumn(col);
 
-        PAType needPAType = pa1.needPAType(pa2.elementType());
-        if (pa1.elementType() != needPAType) {
-          PrimitiveArray newPa1 =
-              PrimitiveArray.factory(needPAType, pa1.size() + pa2.size(), false);
-          newPa1.append(pa1);
-          pa1 = newPa1;
-          this.setColumn(col, pa1);
-        }
-
-        pa1.append(pa2);
-      } else {
-        PrimitiveArray pa1 = this.getColumn(col);
-        this.setColumn(col, new PaddedPrimitiveView(pa1, targetSize));
+      if (pa1.size() < thisNRows) {
+        pa1 = new PaddedPrimitiveView(pa1, thisNRows);
+        this.setColumn(col, pa1);
       }
-    }
 
-    // Process columns present in `other` but missing in `this`
-    for (int otherCol = 0; otherCol < other.nColumns(); otherCol++) {
-      String colName = other.getColumnName(otherCol);
-      int thisCol = findColumnNumber(colName);
-      if (thisCol < 0) {
-        PrimitiveArray otherPA = other.getColumn(otherCol);
-        if (otherPA.size() < otherNRows) {
-          otherPA = new PaddedPrimitiveView(otherPA, otherNRows);
-        }
-        PrimitiveArray padded = PaddedPrimitiveView.padFront(otherPA, targetSize);
-        addColumn(nColumns(), colName, padded, (Attributes) other.columnAttributes(otherCol).clone());
+      if (pa2.size() < otherNRows) {
+        pa2 = new PaddedPrimitiveView(pa2, otherNRows);
       }
+
+      PAType needPAType = pa1.needPAType(pa2.elementType());
+      if (pa1.elementType() != needPAType) {
+        PrimitiveArray newPa1 =
+            PrimitiveArray.factory(needPAType, pa1.size() + pa2.size(), false);
+        newPa1.append(pa1);
+        pa1 = newPa1;
+        this.setColumn(col, pa1);
+      }
+
+      // append the data from other
+      pa1.append(pa2);
     }
   }
 
