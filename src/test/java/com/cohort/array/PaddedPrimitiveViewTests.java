@@ -168,4 +168,94 @@ class PaddedPrimitiveViewTests {
     Test.ensureTrue(csv.contains("1.0,A"), "CSV row 0");
     Test.ensureTrue(csv.contains("3.0,"), "CSV row 2 padded empty string");
   }
+
+  @org.junit.jupiter.api.Test
+  void testFrontPaddingBasicAndGetters() {
+    DoubleArray da = new DoubleArray(new double[] {10.0, 20.0, 30.0});
+    PaddedPrimitiveView frontView = PaddedPrimitiveView.padFront(da, 5);
+
+    Test.ensureTrue(frontView.padAtFront, "padAtFront should be true");
+    Test.ensureEqual(frontView.size(), 5, "frontView size");
+
+    // Indices 0 and 1 are front padding (missing values)
+    Test.ensureTrue(Double.isNaN(frontView.getDouble(0)), "get(0) is NaN");
+    Test.ensureTrue(Double.isNaN(frontView.getDouble(1)), "get(1) is NaN");
+    Test.ensureTrue(frontView.isMissingValue(0), "isMissingValue(0) true");
+    Test.ensureTrue(frontView.isMissingValue(1), "isMissingValue(1) true");
+
+    // Indices 2, 3, 4 delegate to source 0, 1, 2
+    Test.ensureEqual(frontView.getDouble(2), 10.0, "get(2)");
+    Test.ensureEqual(frontView.getDouble(3), 20.0, "get(3)");
+    Test.ensureEqual(frontView.getDouble(4), 30.0, "get(4)");
+    Test.ensureTrue(!frontView.isMissingValue(2), "isMissingValue(2) false");
+    Test.ensureTrue(!frontView.isMissingValue(4), "isMissingValue(4) false");
+
+    // Boundary index checks
+    try {
+      frontView.getDouble(-1);
+      Test.ensureTrue(false, "should throw IndexOutOfBoundsException for -1");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+
+    try {
+      frontView.getDouble(5);
+      Test.ensureTrue(false, "should throw IndexOutOfBoundsException for index == targetSize");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+  }
+
+  @org.junit.jupiter.api.Test
+  void testFrontPaddingTypesAndExports() {
+    IntArray ia = new IntArray(new int[] {100, 200});
+    PaddedPrimitiveView pIa = PaddedPrimitiveView.padFront(ia, 4);
+
+    Test.ensureEqual(pIa.getInt(0), Integer.MAX_VALUE, "int front padding 0");
+    Test.ensureEqual(pIa.getInt(1), Integer.MAX_VALUE, "int front padding 1");
+    Test.ensureEqual(pIa.getInt(2), 100, "int source 0");
+    Test.ensureEqual(pIa.getInt(3), 200, "int source 1");
+
+    StringArray sa = new StringArray(new String[] {"alpha", "beta"});
+    PaddedPrimitiveView pSa = PaddedPrimitiveView.padFront(sa, 4);
+
+    Test.ensureEqual(pSa.getString(0), "", "string front padding 0");
+    Test.ensureEqual(pSa.getString(1), "", "string front padding 1");
+    Test.ensureEqual(pSa.getString(2), "alpha", "string source 0");
+    Test.ensureEqual(pSa.getString(3), "beta", "string source 1");
+
+    String[] strArr = pSa.toStringArray();
+    Test.ensureEqual(strArr.length, 4, "toStringArray length");
+    Test.ensureEqual(strArr[0], "", "strArr[0]");
+    Test.ensureEqual(strArr[1], "", "strArr[1]");
+    Test.ensureEqual(strArr[2], "alpha", "strArr[2]");
+    Test.ensureEqual(strArr[3], "beta", "strArr[3]");
+
+    double[] dArr = pSa.toDoubleArray();
+    Test.ensureEqual(dArr.length, 4, "toDoubleArray length");
+    Test.ensureTrue(Double.isNaN(dArr[0]), "dArr[0] is NaN");
+    Test.ensureTrue(Double.isNaN(dArr[1]), "dArr[1] is NaN");
+  }
+
+  @org.junit.jupiter.api.Test
+  void testFrontPaddingMaterializeAndSubset() {
+    IntArray ia = new IntArray(new int[] {10, 20});
+    PaddedPrimitiveView frontView = PaddedPrimitiveView.padFront(ia, 4);
+
+    Test.ensureTrue(frontView.materialized == null, "materialized initially null");
+
+    PrimitiveArray mat = frontView.materialize();
+    Test.ensureEqual(mat.size(), 4, "materialized size");
+    Test.ensureEqual(mat.getInt(0), Integer.MAX_VALUE, "mat(0)");
+    Test.ensureEqual(mat.getInt(1), Integer.MAX_VALUE, "mat(1)");
+    Test.ensureEqual(mat.getInt(2), 10, "mat(2)");
+    Test.ensureEqual(mat.getInt(3), 20, "mat(3)");
+
+    IntArray sub = new IntArray();
+    frontView.subset(sub, 1, 1, 3);
+    Test.ensureEqual(sub.size(), 3, "subset size");
+    Test.ensureEqual(sub.getInt(0), Integer.MAX_VALUE, "sub(0)");
+    Test.ensureEqual(sub.getInt(1), 10, "sub(1)");
+    Test.ensureEqual(sub.getInt(2), 20, "sub(2)");
+  }
 }
