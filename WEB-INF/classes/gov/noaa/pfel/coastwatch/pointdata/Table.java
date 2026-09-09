@@ -1404,7 +1404,17 @@ public class Table {
    * @return the number of rows remaining
    */
   public int removeRowsWithoutData() {
-    justKeep(rowsWithData());
+    return removeRowsWithoutData(null);
+  }
+
+  /**
+   * This removes rows that don't have data in any column, using a reusable BitSet.
+   *
+   * @param reusableKeep optional BitSet instance to clear and reuse
+   * @return the number of rows remaining
+   */
+  public int removeRowsWithoutData(BitSet reusableKeep) {
+    justKeep(rowsWithData(reusableKeep));
     return nRows();
   }
 
@@ -11382,20 +11392,22 @@ public class Table {
     boolean someConverted = temporarilyConvertToStandardMissingValues(keyColumns);
 
     String lastKCMV = getColumn(lastKeyColumn).elementType() == PAType.STRING ? "" : "NaN";
+    BitSet keep = new BitSet(nRows);
     // remove rows with mv for last keyColumn
     nRows =
         tryToApplyConstraintsAndKeep(
             lastKeyColumn,
             new StringArray(new String[] {getColumnName(lastKeyColumn)}),
             new StringArray(new String[] {"!="}),
-            new StringArray(new String[] {lastKCMV}));
+            new StringArray(new String[] {lastKCMV}),
+            keep);
     if (nRows == 0) return;
 
     // sort based on keys
     ascendingSort(keyColumns);
 
     // walk through the table, often marking previous row to be kept
-    BitSet keep = new BitSet(nRows); // all false
+    keep.clear();
     keep.set(nRows - 1); // always
     if (nKeyColumns > 1) {
       PrimitiveArray keyCols[] = new PrimitiveArray[nKeyColumns - 1];
