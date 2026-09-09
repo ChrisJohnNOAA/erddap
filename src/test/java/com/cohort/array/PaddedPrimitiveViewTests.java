@@ -258,5 +258,4 @@ class PaddedPrimitiveViewTests {
     Test.ensureEqual(sub.getInt(1), 10, "sub(1)");
     Test.ensureEqual(sub.getInt(2), 20, "sub(2)");
   }
-
 }

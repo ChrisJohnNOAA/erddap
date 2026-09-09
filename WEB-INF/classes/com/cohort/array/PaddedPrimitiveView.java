@@ -19,8 +19,8 @@ public class PaddedPrimitiveView extends PrimitiveView {
   private final int frontPaddingCount;
 
   /**
-   * Constructs a PaddedPrimitiveView padding the source to targetSize with default missing value
-   * at the end (back padding).
+   * Constructs a PaddedPrimitiveView padding the source to targetSize with default missing value at
+   * the end (back padding).
    *
    * @param source the source PrimitiveArray
    * @param targetSize the target size after padding
@@ -636,7 +636,6 @@ public class PaddedPrimitiveView extends PrimitiveView {
     }
     return sar;
   }
-
 
   @Override
   public PrimitiveArray subset(PrimitiveArray pa, int startIndex, int stride, int stopIndex) {
