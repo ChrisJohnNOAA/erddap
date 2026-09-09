@@ -1418,6 +1418,7 @@ public class UShortArray extends PrimitiveArray {
     final int CHUNK_ELEMENTS = Math.max(1, CHUNK_BYTES / bytesPerElement);
     final ByteBuffer byteBuf =
         ByteBuffer.allocate(CHUNK_ELEMENTS * bytesPerElement).order(ByteOrder.nativeOrder());
+    final java.nio.ShortBuffer shortBuf = byteBuf.asShortBuffer();
 
     long totalWritten = 0;
     int remaining = length;
@@ -1425,8 +1426,8 @@ public class UShortArray extends PrimitiveArray {
     while (remaining > 0) {
       final int toWrite = Math.min(remaining, CHUNK_ELEMENTS);
       byteBuf.clear();
-      byteBuf.asShortBuffer().put(array, currentOffset, toWrite);
-      byteBuf.position(0);
+      shortBuf.clear();
+      shortBuf.put(array, currentOffset, toWrite);
       byteBuf.limit(toWrite * bytesPerElement);
       totalWritten += channel.write(byteBuf);
       currentOffset += toWrite;
