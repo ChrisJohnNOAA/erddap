@@ -1764,9 +1764,27 @@ public class String2 {
    *     as a string.
    */
   public static String toJson(final float f) {
-    if (!Float.isFinite(f)) return "null";
-    String s = "" + f;
-    return s.endsWith(".0") ? s.substring(0, s.length() - 2) : s;
+    StringBuilder sb = new StringBuilder();
+    toJson(f, sb);
+    return sb.toString();
+  }
+
+  /**
+   * Appends a JSON version of a float directly to sb.
+   *
+   * @param f
+   * @param sb
+   */
+  public static void toJson(final float f, final StringBuilder sb) {
+    if (!Float.isFinite(f)) {
+      sb.append("null");
+      return;
+    }
+    int len0 = sb.length();
+    Math2.floatToString(f, sb);
+    if (sb.length() >= len0 + 2 && sb.charAt(sb.length() - 2) == '.' && sb.charAt(sb.length() - 1) == '0') {
+      sb.setLength(sb.length() - 2);
+    }
   }
 
   /**
@@ -1777,9 +1795,27 @@ public class String2 {
    *     as a string.
    */
   public static String toJson(final double d) {
-    if (!Double.isFinite(d)) return "null";
-    String s = "" + d;
-    return s.endsWith(".0") ? s.substring(0, s.length() - 2) : s;
+    StringBuilder sb = new StringBuilder();
+    toJson(d, sb);
+    return sb.toString();
+  }
+
+  /**
+   * Appends a JSON version of a double directly to sb.
+   *
+   * @param d
+   * @param sb
+   */
+  public static void toJson(final double d, final StringBuilder sb) {
+    if (!Double.isFinite(d)) {
+      sb.append("null");
+      return;
+    }
+    int len0 = sb.length();
+    Math2.doubleToString(d, sb);
+    if (sb.length() >= len0 + 2 && sb.charAt(sb.length() - 2) == '.' && sb.charAt(sb.length() - 1) == '0') {
+      sb.setLength(sb.length() - 2);
+    }
   }
 
   /**

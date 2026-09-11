@@ -1377,16 +1377,32 @@ public class Math2 {
 
   /** This creates a String based on the results of guessFrac() */
   public static String guessFracString(final double d) {
+    StringBuilder sb = new StringBuilder();
+    guessFracString(d, sb);
+    return sb.toString();
+  }
+
+  /** Appends a String based on the results of guessFrac() directly into sb */
+  public static void guessFracString(final double d, final StringBuilder sb) {
     final int[] ar3 = new int[3];
     guessFrac(d, ar3);
 
-    if ((ar3[0] == 0) && (ar3[1] == 0)) return "0";
+    if ((ar3[0] == 0) && (ar3[1] == 0)) {
+      sb.append('0');
+      return;
+    }
 
-    if (ar3[0] == 0) return ar3[1] + "/" + ar3[2];
+    if (ar3[0] == 0) {
+      sb.append(ar3[1]).append('/').append(ar3[2]);
+      return;
+    }
 
-    if (ar3[1] == 0) return ar3[0] + "";
+    if (ar3[1] == 0) {
+      sb.append(ar3[0]);
+      return;
+    }
 
-    return ar3[0] + " " + Math.abs(ar3[1]) + "/" + ar3[2];
+    sb.append(ar3[0]).append(' ').append(Math.abs(ar3[1])).append('/').append(ar3[2]);
   }
 
   /**
