@@ -267,7 +267,8 @@ class PaddedPrimitiveViewTests {
     Test.ensureTrue(pSa.materialized == null, "materialized initially null");
 
     PrimitiveArray isoView = pSa.toIso88591();
-    Test.ensureTrue(isoView instanceof PaddedPrimitiveView, "toIso88591 returns PaddedPrimitiveView");
+    Test.ensureTrue(
+        isoView instanceof PaddedPrimitiveView, "toIso88591 returns PaddedPrimitiveView");
     PaddedPrimitiveView pIso = (PaddedPrimitiveView) isoView;
     Test.ensureTrue(pIso.materialized == null, "toIso88591 preserves lazy unmaterialized view");
     Test.ensureEqual(pIso.size(), 4, "size is preserved");

@@ -10,8 +10,8 @@ import com.cohort.array.DoubleArray;
 import com.cohort.array.IntArray;
 import com.cohort.array.LongArray;
 import com.cohort.array.PAOne;
-import com.cohort.array.PaddedPrimitiveView;
 import com.cohort.array.PAType;
+import com.cohort.array.PaddedPrimitiveView;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import com.cohort.array.ULongArray;
@@ -4207,7 +4207,8 @@ public abstract class EDDTable extends EDD {
             if (tNRows < maxFeatureNRows) {
               subsetPa = new PaddedPrimitiveView(subsetPa, maxFeatureNRows, tSafeMV, false);
             }
-            NcHelper.write(nc3Mode, ncWriter, newVar, origin, new int[] {1, subsetPa.size()}, subsetPa);
+            NcHelper.write(
+                nc3Mode, ncWriter, newVar, origin, new int[] {1, subsetPa.size()}, subsetPa);
           }
 
         } else {
