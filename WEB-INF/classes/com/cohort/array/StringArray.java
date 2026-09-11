@@ -239,6 +239,7 @@ public class StringArray extends PrimitiveArray {
    *
    * @return this for convenience
    */
+  @Override
   public StringArray toIso88591() {
     for (int i = 0; i < size; i++) set(i, String2.toIso88591String(get(i)));
     return this;

@@ -14,7 +14,7 @@ public class PaddedPrimitiveView extends PrimitiveView {
 
   public final PrimitiveArray source;
   public final int targetSize;
-  public final double missingDouble;
+  public double missingDouble;
   public final boolean padAtFront;
   private final int frontPaddingCount;
 
@@ -105,6 +105,15 @@ public class PaddedPrimitiveView extends PrimitiveView {
       pa = ppv.source;
     }
     return pa;
+  }
+
+  @Override
+  public PrimitiveArray toIso88591() {
+    if (materialized != null) {
+      return materialized.toIso88591();
+    }
+    PrimitiveArray newSource = source.toIso88591();
+    return new PaddedPrimitiveView(newSource, targetSize, missingDouble, padAtFront);
   }
 
   @Override
@@ -612,7 +621,85 @@ public class PaddedPrimitiveView extends PrimitiveView {
   public Object toObjectArray() {
     PrimitiveArray m = materialized;
     if (m != null) return m.toObjectArray();
-    return materialize().toObjectArray();
+    int n = size();
+    int srcSize = source.size();
+    PAType paType = source.elementType();
+
+    int srcOffset = padAtFront ? (n - srcSize) : 0;
+    int padStart = padAtFront ? 0 : srcSize;
+    int padEnd = padAtFront ? (n - srcSize) : n;
+
+    switch (paType) {
+      case DOUBLE:
+        {
+          double[] result = new double[n];
+          double missingVal = missingDouble;
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = source.getDouble(i);
+          return result;
+        }
+      case FLOAT:
+        {
+          float[] result = new float[n];
+          float missingVal = (float) missingDouble;
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = source.getFloat(i);
+          return result;
+        }
+      case LONG:
+      case ULONG:
+        {
+          long[] result = new long[n];
+          long missingVal = Math.round(missingDouble);
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = source.getLong(i);
+          return result;
+        }
+      case INT:
+      case UINT:
+        {
+          int[] result = new int[n];
+          int missingVal = (int) Math.round(missingDouble);
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = source.getInt(i);
+          return result;
+        }
+      case SHORT:
+      case USHORT:
+        {
+          short[] result = new short[n];
+          short missingVal = (short) Math.round(missingDouble);
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = (short) source.getInt(i);
+          return result;
+        }
+      case BYTE:
+      case UBYTE:
+        {
+          byte[] result = new byte[n];
+          byte missingVal = (byte) Math.round(missingDouble);
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = (byte) source.getInt(i);
+          return result;
+        }
+      case CHAR:
+        {
+          char[] result = new char[n];
+          char missingVal = (char) getInt(padStart);
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = (char) source.getInt(i);
+          return result;
+        }
+      case STRING:
+      default:
+        {
+          String[] result = new String[n];
+          String missingVal = getString(padStart);
+          for (int i = padStart; i < padEnd; i++) result[i] = missingVal;
+          for (int i = 0; i < srcSize; i++) result[srcOffset + i] = source.getString(i);
+          return result;
+        }
+    }
   }
 
   @Override
@@ -673,5 +760,47 @@ public class PaddedPrimitiveView extends PrimitiveView {
       pa.addFromPA(this, startIndex + i * stride, 1);
     }
     return pa;
+  }
+
+  @Override
+  public int switchFromTo(String fromStr, String toStr) {
+    PrimitiveArray m = materialized;
+    if (m != null) {
+      return m.switchFromTo(fromStr, toStr);
+    }
+
+    // 1. Mutate underlying real source values in place
+    int changes = source.switchFromTo(fromStr, toStr);
+
+    int padCount = targetSize - source.size();
+    if (padCount > 0) {
+      int padIndex = padAtFront ? 0 : source.size();
+      String currentPaddedStr = getString(padIndex);
+
+      // 2. Check exact string match
+      boolean match =
+          (fromStr == null)
+              ? (currentPaddedStr == null)
+              : (currentPaddedStr != null && fromStr.equals(currentPaddedStr));
+
+      // 3. Fallback to numeric equivalence (handles "NaN" vs "", or "10" vs "10.0")
+      if (!match) {
+        double fromD = String2.parseDouble(fromStr);
+        double currentD = String2.parseDouble(currentPaddedStr);
+        if (Double.isNaN(fromD) && Double.isNaN(currentD)) {
+          match = true;
+        } else if (!Double.isNaN(fromD) && !Double.isNaN(currentD) && fromD == currentD) {
+          match = true;
+        }
+      }
+
+      // 4. Update internal missing double representation if matched
+      if (match) {
+        missingDouble = String2.parseDouble(toStr);
+        changes += padCount;
+      }
+    }
+
+    return changes;
   }
 }
