@@ -164,6 +164,7 @@ public class TableWriterJson extends TableWriter {
     Math2.ensureArraySizeOkay(totalNRows.get(), "json");
 
     // write the data
+    StringBuilder jsonSB = new StringBuilder();
     if (rowsWritten) writer.write(",\n"); // end previous row
     for (int row = 0; row < nRows; row++) {
       writer.write("      ["); // beginRow
@@ -178,7 +179,9 @@ public class TableWriterJson extends TableWriter {
                       + Calendar2.epochSecondsToLimitedIsoStringT(time_precision[col], d, "")
                       + "\"");
         } else {
-          writer.write(pas[col].getJsonString(row));
+          jsonSB.setLength(0);
+          pas[col].getJsonString(row, jsonSB);
+          writer.write(jsonSB.toString());
         }
       }
       writer.write(row < nRows - 1 ? "],\n" : "]"); // endRow

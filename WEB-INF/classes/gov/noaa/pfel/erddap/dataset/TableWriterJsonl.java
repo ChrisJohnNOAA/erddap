@@ -145,6 +145,7 @@ public class TableWriterJsonl extends TableWriter {
     Math2.ensureArraySizeOkay(totalNRows.get(), "jsonl");
 
     // write the data
+    StringBuilder jsonSB = new StringBuilder();
     for (int row = 0; row < nRows; row++) {
       writer.write(writeKVP ? '{' : '['); // beginRow
       for (int col = 0; col < nColumns; col++) {
@@ -162,7 +163,9 @@ public class TableWriterJsonl extends TableWriter {
                       + Calendar2.epochSecondsToLimitedIsoStringT(time_precision[col], d, "")
                       + "\"");
         } else {
-          writer.write(pas[col].getJsonString(row));
+          jsonSB.setLength(0);
+          pas[col].getJsonString(row, jsonSB);
+          writer.write(jsonSB.toString());
         }
       }
       writer.write(writeKVP ? "}\n" : "]\n"); // endRow    //recommended: always just \n
