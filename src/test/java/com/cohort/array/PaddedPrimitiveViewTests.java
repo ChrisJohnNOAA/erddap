@@ -286,9 +286,11 @@ class PaddedPrimitiveViewTests {
     PaddedPrimitiveView pCa = new PaddedPrimitiveView(ca, 4);
 
     PrimitiveArray isoCaView = pCa.toIso88591();
-    Test.ensureTrue(isoCaView instanceof PaddedPrimitiveView, "char toIso88591 returns PaddedPrimitiveView");
+    Test.ensureTrue(
+        isoCaView instanceof PaddedPrimitiveView, "char toIso88591 returns PaddedPrimitiveView");
     PaddedPrimitiveView pIsoCa = (PaddedPrimitiveView) isoCaView;
-    Test.ensureTrue(pIsoCa.materialized == null, "char toIso88591 preserves lazy unmaterialized view");
+    Test.ensureTrue(
+        pIsoCa.materialized == null, "char toIso88591 preserves lazy unmaterialized view");
 
     CharArray caEagerSource = new CharArray(new char[] {'A', '\u00fc'});
     caEagerSource.toIso88591();
