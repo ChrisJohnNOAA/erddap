@@ -46,6 +46,30 @@ public class String2Tests {
   }
 
   @Test
+  void testSplitOnCharAndParseIntBenchmark() {
+    String csv = "var1,var2,var3,12345,-67890,2147483647,-2147483648";
+    int iterations = 10000;
+    List<String> list = new ArrayList<>();
+
+    long startTime = System.nanoTime();
+    for (int i = 0; i < iterations; i++) {
+      list.clear();
+      String2.splitOnChar(csv, ',', true, (start, end) -> {
+        if (start < end) {
+          int val = String2.parseInt(csv, start, end);
+          if (val != Integer.MAX_VALUE) {
+            list.add(Integer.toString(val));
+          } else {
+            list.add(csv.substring(start, end));
+          }
+        }
+      });
+    }
+    long elapsedNs = System.nanoTime() - startTime;
+    assertTrue(elapsedNs > 0);
+  }
+
+  @Test
   void testLinkify() {
     assertNoUrl("No url here. But there are multiple sentences!");
     assertNoUrl("https://this is definitely not valid URL! \"{><}\"");
