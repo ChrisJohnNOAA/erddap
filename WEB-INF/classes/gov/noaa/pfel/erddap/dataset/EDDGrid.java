@@ -1186,54 +1186,62 @@ public abstract class EDDGrid extends EDD {
         constraints.add(1);
         constraints.add(axisVariable.sourceValues().size() - 1);
       }
-      String destNames[] = String2.split(query, ',');
-      for (String name : destNames) {
-        // if gridName.gridName notation, remove "gridName."
-        // This isn't exactly correct: technically, the response shouldn't include the axis
-        // variables.
-        String destName = name;
-        int period = destName.indexOf('.');
-        if (period > 0) {
-          String shortName = destName.substring(0, period);
-          if (destName.equals(shortName + "." + shortName)
-              && String2.indexOf(dataVariableDestinationNames(), shortName) >= 0)
-            destName = shortName;
-        }
+      final String q = query;
+      String2.splitOnChar(q, ',', true, (start, end) -> {
+        if (start < end) {
+          String name = q.substring(start, end);
+          // if gridName.gridName notation, remove "gridName."
+          // This isn't exactly correct: technically, the response shouldn't include the axis
+          // variables.
+          String destName = name;
+          int period = destName.indexOf('.');
+          if (period > 0) {
+            String shortName = destName.substring(0, period);
+            if (destName.equals(shortName + "." + shortName)
+                && String2.indexOf(dataVariableDestinationNames(), shortName) >= 0)
+              destName = shortName;
+          }
 
-        // ensure destName is valid
-        int tdi = String2.indexOf(dataVariableDestinationNames(), destName);
-        if (tdi < 0) {
-          if (repair) destName = dataVariableDestinationNames()[0];
-          else {
-            if (String2.indexOf(axisVariableDestinationNames(), destName) >= 0)
+          // ensure destName is valid
+          int tdi = String2.indexOf(dataVariableDestinationNames(), destName);
+          if (tdi < 0) {
+            if (repair) destName = dataVariableDestinationNames()[0];
+            else {
+              if (String2.indexOf(axisVariableDestinationNames(), destName) >= 0) {
+                String errMsg = EDStatic.bilingual(
+                    language,
+                    EDStatic.messages.get(Message.QUERY_ERROR, 0)
+                        + MessageFormat.format(
+                            EDStatic.messages.get(Message.QUERY_ERROR_GRID_NO_AXIS_VAR, 0),
+                            destName),
+                    EDStatic.messages.get(Message.QUERY_ERROR, language)
+                        + MessageFormat.format(
+                            EDStatic.messages.get(Message.QUERY_ERROR_GRID_NO_AXIS_VAR, language),
+                            destName));
+                throw new SimpleException(errMsg);
+              }
+              try {
+                findDataVariableByDestinationName(destName);
+              } catch (Throwable t) {
+                throw new SimpleException(t.getMessage(), t);
+              }
+            }
+          }
+
+          // ensure not duplicate destName
+          tdi = destinationNames.indexOf(destName);
+          if (tdi >= 0) {
+            if (!repair)
               throw new SimpleException(
-                  EDStatic.bilingual(
-                      language,
-                      EDStatic.messages.get(Message.QUERY_ERROR, 0)
-                          + MessageFormat.format(
-                              EDStatic.messages.get(Message.QUERY_ERROR_GRID_NO_AXIS_VAR, 0),
-                              destName),
-                      EDStatic.messages.get(Message.QUERY_ERROR, language)
-                          + MessageFormat.format(
-                              EDStatic.messages.get(Message.QUERY_ERROR_GRID_NO_AXIS_VAR, language),
-                              destName)));
-            findDataVariableByDestinationName(destName); // throws Throwable if trouble
+                  EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
+                      + "Variable name='"
+                      + destName
+                      + "' occurs twice.");
+          } else {
+            destinationNames.add(destName);
           }
         }
-
-        // ensure not duplicate destName
-        tdi = destinationNames.indexOf(destName);
-        if (tdi >= 0) {
-          if (!repair)
-            throw new SimpleException(
-                EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
-                    + "Variable name='"
-                    + destName
-                    + "' occurs twice.");
-        } else {
-          destinationNames.add(destName);
-        }
-      }
+      });
       return;
     }
 
