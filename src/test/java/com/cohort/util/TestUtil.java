@@ -635,6 +635,34 @@ public class TestUtil {
     Test.ensureEqual(sb.toString(), "12.34", "floatToString sb");
     Test.ensureEqual(Math2.floatToString(12.34f), "12.34", "floatToString String");
 
+    // Benchmark validation for formatting appenders and BitSet recycling
+    String2.log("running benchmark for double formatting and BitSet recycling...");
+    int iterations = 100000;
+    double[] testDoubles = new double[iterations];
+    for (int i = 0; i < iterations; i++) {
+      testDoubles[i] = i * 1.123456789;
+    }
+
+    // Benchmark direct StringBuilder appender
+    long t0 = System.currentTimeMillis();
+    StringBuilder benchSB = new StringBuilder(64);
+    for (int i = 0; i < iterations; i++) {
+      benchSB.setLength(0);
+      Math2.doubleToString(testDoubles[i], benchSB);
+    }
+    long elapsedAppender = System.currentTimeMillis() - t0;
+
+    // Benchmark BitSet recycling
+    java.util.BitSet reusedBitSet = new java.util.BitSet(1000);
+    long t1 = System.currentTimeMillis();
+    for (int i = 0; i < 10000; i++) {
+      reusedBitSet.clear();
+      reusedBitSet.set(0, 1000);
+    }
+    long elapsedBitSetReused = System.currentTimeMillis() - t1;
+
+    String2.log("Benchmark results: Appender time=" + elapsedAppender + "ms, Reused BitSet time=" + elapsedBitSetReused + "ms");
+
     // (float)
     String2.log("test (float)d");
     Test.ensureEqual((float) 1e100, Float.POSITIVE_INFINITY, "k");
