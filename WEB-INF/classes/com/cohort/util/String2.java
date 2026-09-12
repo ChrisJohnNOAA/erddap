@@ -1831,6 +1831,16 @@ public class String2 {
   }
 
   /**
+   * Appends a JSON version of a string directly to targetSB.
+   *
+   * @param s
+   * @param targetSB
+   */
+  public static void toJson(final String s, final StringBuilder targetSB) {
+    toJson(s, 127, true, targetSB);
+  }
+
+  /**
    * This variant doesn't encode high characters.
    *
    * @param s
@@ -1910,35 +1920,49 @@ public class String2 {
     if (s == null) return "null";
     final int sLength = s.length();
     final StringBuilder sb = new StringBuilder((sLength / 5 + 1) * 6);
-    sb.append('\"');
+    toJson(s, firstUEncodedChar, encodeNewline, sb);
+    return sb.toString();
+  }
+
+  /**
+   * Appends a JSON version of a string directly to targetSB.
+   */
+  public static void toJson(
+      final String s, final int firstUEncodedChar, final boolean encodeNewline, final StringBuilder targetSB) {
+    if (s == null) {
+      targetSB.append("null");
+      return;
+    }
+    final int sLength = s.length();
+    targetSB.append('\"');
     int start = 0;
     for (int i = 0; i < sLength; i++) {
       final char ch = s.charAt(i);
-      // using 127 (not 255) means the output is 7bit ASCII and file encoding is irrelevant
       if (ch < 32 || ch >= firstUEncodedChar) {
-        sb.append(s, start, i);
+        targetSB.append(s, start, i);
         start = i + 1;
-        if (ch == '\f') sb.append("\\f");
-        else if (ch == '\n') sb.append(encodeNewline ? "\\n" : "\n");
-        else if (ch == '\r') sb.append("\\r");
-        else if (ch == '\t') sb.append("\\t");
+        if (ch == '\f') targetSB.append("\\f");
+        else if (ch == '\n') targetSB.append(encodeNewline ? "\\n" : "\n");
+        else if (ch == '\r') targetSB.append("\\r");
+        else if (ch == '\t') targetSB.append("\\t");
         else if (ch == '\b') {
         } // remove it
-        //  / can be encoded as \/ but there is no need and it looks odd
-        else sb.append("\\u" + zeroPad(Integer.toHexString(ch), 4));
+        else {
+          targetSB.append("\\u");
+          targetSB.append(zeroPad(Integer.toHexString(ch), 4));
+        }
       } else if (ch == '\\') {
-        sb.append(s, start, i);
+        targetSB.append(s, start, i);
         start = i + 1;
-        sb.append("\\\\");
+        targetSB.append("\\\\");
       } else if (ch == '\"') {
-        sb.append(s, start, i);
+        targetSB.append(s, start, i);
         start = i + 1;
-        sb.append("\\\"");
-      } // else normal character will be appended later via s.substring
+        targetSB.append("\\\"");
+      }
     }
-    sb.append(s.substring(start));
-    sb.append('\"');
-    return sb.toString();
+    targetSB.append(s, start, sLength);
+    targetSB.append('\"');
   }
 
   /** This encodes one char to the Json encoding. */
