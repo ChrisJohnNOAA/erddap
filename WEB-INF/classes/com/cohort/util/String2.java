@@ -3452,33 +3452,71 @@ public class String2 {
    * @return al for convenience. The strings are not canonical. s=null returns al with 0 values.
    *     s="" returns ArrayList with one value: "".
    */
+  /**
+   * Functional interface for zero-allocation string splitting/tokenization callbacks.
+   */
+  @FunctionalInterface
+  public interface IntPairConsumer {
+    void accept(int start, int end);
+  }
+
+  /**
+   * Zero-allocation helper to scan a character sequence split by a single separator character.
+   * Calls consumer with start (inclusive) and end (exclusive) index pairs for each substring.
+   * If s is null, action is not called.
+   *
+   * @param s the character sequence
+   * @param separator the delimiter character
+   * @param trim whether to skip leading/trailing whitespace <= ' ' for each slice
+   * @param action the callback receiving (start, end)
+   */
+  public static void splitOnChar(CharSequence s, char separator, boolean trim, IntPairConsumer action) {
+    if (s == null || action == null) return;
+    int sLength = s.length();
+    int start = 0;
+    for (int index = 0; index < sLength; index++) {
+      if (s.charAt(index) == separator) {
+        int subStart = start;
+        int subEnd = index;
+        if (trim) {
+          while (subStart < subEnd && s.charAt(subStart) <= ' ') {
+            subStart++;
+          }
+          while (subEnd > subStart && s.charAt(subEnd - 1) <= ' ') {
+            subEnd--;
+          }
+        }
+        action.accept(subStart, subEnd);
+        start = index + 1;
+      }
+    }
+
+    int subStart = start;
+    int subEnd = sLength;
+    if (trim) {
+      while (subStart < subEnd && s.charAt(subStart) <= ' ') {
+        subStart++;
+      }
+      while (subEnd > subStart && s.charAt(subEnd - 1) <= ' ') {
+        subEnd--;
+      }
+    }
+    action.accept(subStart, subEnd);
+  }
+
   public static List<String> splitToArrayList(
       String s, char separator, boolean trim, List<String> al) {
 
     // go through the string looking for separators
     al.clear();
     if (s == null) return al;
-    int sLength = s.length();
-    int start = 0;
-    // log("split line=" + annotatedString(s));
-    for (int index = 0; index < sLength; index++) {
-      if (s.charAt(index) == separator) {
-        if (trim) {
-          al.add(trimSubString(s, start, index));
-        } else {
-          al.add(s.substring(start, index));
-        }
-        start = index + 1;
+    splitOnChar(s, separator, trim, (start, end) -> {
+      if (start >= end) {
+        al.add("");
+      } else {
+        al.add(s.substring(start, end));
       }
-    }
-
-    // add the final substring
-    if (trim) {
-      al.add(trimSubString(s, start, sLength));
-    } else {
-      al.add(s.substring(start, sLength));
-    }
-    // log("al.size=" + al.size() + "\n");
+    });
     return al;
   }
 
@@ -3723,6 +3761,67 @@ public class String2 {
   public static int parseInt(String s, int def) {
     int i = parseInt(s);
     return i == Integer.MAX_VALUE ? def : i;
+  }
+
+  /**
+   * Zero-allocation slice variant of parseInt.
+   */
+  public static int parseInt(CharSequence s, int start, int end) {
+    if (s == null) return Integer.MAX_VALUE;
+    while (start < end && s.charAt(start) <= ' ') start++;
+    while (end > start && s.charAt(end - 1) <= ' ') end--;
+    if (start >= end) return Integer.MAX_VALUE;
+
+    char ch = s.charAt(start);
+    if ((ch < '0' || ch > '9') && ch != '-' && ch != '+' && ch != '.') return Integer.MAX_VALUE;
+
+    // Check hex
+    if (end - start >= 2 && s.charAt(start) == '0' && (s.charAt(start + 1) == 'x' || s.charAt(start + 1) == 'X')) {
+      return parseInt(s.subSequence(start, end).toString());
+    }
+
+    // Try fast integer parsing without allocation
+    int i = start;
+    boolean isNeg = false;
+    if (ch == '-') {
+      isNeg = true;
+      i++;
+    } else if (ch == '+') {
+      i++;
+    }
+
+    int result = 0;
+    boolean hasDigits = false;
+    boolean pureInt = true;
+    int limit = isNeg ? Integer.MIN_VALUE : -Integer.MAX_VALUE;
+    int multmin = limit / 10;
+
+    for (; i < end; i++) {
+      char c = s.charAt(i);
+      if (c >= '0' && c <= '9') {
+        hasDigits = true;
+        int digit = c - '0';
+        if (result < multmin) {
+          pureInt = false;
+          break;
+        }
+        result *= 10;
+        if (result < limit + digit) {
+          pureInt = false;
+          break;
+        }
+        result -= digit;
+      } else {
+        pureInt = false;
+        break;
+      }
+    }
+
+    if (pureInt && hasDigits) {
+      return isNeg ? result : -result;
+    }
+
+    return parseInt(s.subSequence(start, end).toString());
   }
 
   /**
