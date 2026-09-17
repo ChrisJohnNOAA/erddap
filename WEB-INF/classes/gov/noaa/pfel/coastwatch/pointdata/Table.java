@@ -692,6 +692,35 @@ public class Table {
    * @return the number of lines read (0 if skipHeaderToRegex is null).
    * @throws Exception if trouble
    */
+  /**
+   * Helper method to extract literal prefix from skipLinesRegex (e.g., "^#.*" -> "#", "^//" -> "//", "#.*" -> "#").
+   * Returns null if skipLinesRegex is null or doesn't have a simple literal anchor/prefix.
+   */
+  private static String extractLiteralPrefix(String regex) {
+    if (regex == null || regex.isEmpty()) {
+      return null;
+    }
+    String r = regex.startsWith("^") ? regex.substring(1) : regex;
+    // Check for simple comment patterns like #.*, //.*, %.*, ;.*, #, //, %, ;
+    if (r.startsWith("#")) return "#";
+    if (r.startsWith("//")) return "//";
+    if (r.startsWith("%")) return "%";
+    if (r.startsWith(";")) return ";";
+    return null;
+  }
+
+  /**
+   * Helper method to determine if a line should be skipped based on fast-path checks or skipLinesMatcher.
+   */
+  private static boolean shouldSkipLine(String line, Matcher skipMatcher, String literalPrefix) {
+    if (line == null) return false;
+    if (line.isEmpty()) return false;
+    if (literalPrefix != null) {
+      return line.startsWith(literalPrefix);
+    }
+    return skipMatcher != null && skipMatcher.reset(line).matches();
+  }
+
   public static int skipHeaderToRegex(
       String skipHeaderToRegex, String sourceName, BufferedReader linesReader) throws IOException {
     int linesRead = 0;
@@ -2572,6 +2601,8 @@ public class Table {
           skipLinesRegex != null && !skipLinesRegex.isEmpty()
               ? Pattern.compile(skipLinesRegex)
               : null;
+      Matcher skipLinesMatcher = skipLinesPattern != null ? skipLinesPattern.matcher("") : null;
+      String literalPrefix = extractLiteralPrefix(skipLinesRegex);
 
       // skipHeaderToRegex
       int row =
@@ -2586,7 +2617,7 @@ public class Table {
         String s = linesReader.readLine(); // null if end. exception if trouble
         if (s == null) break;
         linesCache.add(s);
-        if (skipLinesPattern == null || skipLinesPattern.matcher(s).matches()) nonSkipLines++;
+        if (!shouldSkipLine(s, skipLinesMatcher, literalPrefix)) nonSkipLines++;
         if (nonSkipLines == dataStartLine + 2) // both 0-based
         break;
       }
@@ -2605,7 +2636,7 @@ public class Table {
         int tRow = 0;
         for (String s : linesCache) {
           oneLine = s;
-          if (skipLinesPattern != null && skipLinesPattern.matcher(oneLine).matches()) continue;
+          if (shouldSkipLine(oneLine, skipLinesMatcher, literalPrefix)) continue;
           if (tRow++ < dataStartLine) // both are 0..
           continue;
           nTab *=
@@ -2651,7 +2682,7 @@ public class Table {
         while (true) {
           oneLine = linesCache.get(nextLinesCache++);
           row++;
-          if (skipLinesPattern != null && skipLinesPattern.matcher(oneLine).matches()) continue;
+          if (shouldSkipLine(oneLine, skipLinesMatcher, literalPrefix)) continue;
           if (++logicalLine == columnNamesLine) // both are 0-based
           break;
         }
@@ -2693,7 +2724,7 @@ public class Table {
         // actual row number
         row++;
         // then check skipLines
-        if (skipLinesPattern != null && skipLinesPattern.matcher(oneLine).matches()) continue;
+        if (shouldSkipLine(oneLine, skipLinesMatcher, literalPrefix)) continue;
         // then check dataStartLine
         if (++logicalLine < dataStartLine) continue;
 
@@ -3189,6 +3220,8 @@ public class Table {
           skipLinesRegex != null && !skipLinesRegex.isEmpty()
               ? Pattern.compile(skipLinesRegex)
               : null;
+      Matcher skipLinesMatcher = skipLinesPattern != null ? skipLinesPattern.matcher("") : null;
+      String literalPrefix = extractLiteralPrefix(skipLinesRegex);
 
       // create the columns
       PrimitiveArray pa[] = new PrimitiveArray[nCols];
@@ -3213,7 +3246,7 @@ public class Table {
         row++;
         if (tLine == null) // end of file
         break;
-        if (skipLinesPattern != null && skipLinesPattern.matcher(tLine).matches()) continue;
+        if (shouldSkipLine(tLine, skipLinesMatcher, literalPrefix)) continue;
         logicalLine++;
         if (logicalLine < dataStartLine) continue;
 
