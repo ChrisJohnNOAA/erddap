@@ -404,7 +404,10 @@ public class TableFromMultidimNcFile {
           if (!doDimsMatch(nd0, candidate.nDims, candidate.dims, loadDims.size(), loadDims)) {
             continue;
           }
-          VarData data = VarData.fromVariable(this, v, tVar);
+          int boundsStart[] = new int[candidate.nDims];
+          int cShape[] = new int[candidate.nDims];
+          Section section = makeSectionAndBounds(v, tVar, candidate, allIndicesTable, loadDims, nd0, boundsStart, cShape);
+          VarData data = VarData.fromVariable(this, v, tVar, section);
           this.table.addColumn(this.table.nColumns(), tVar.getFullName(), data.pa, data.atts);
         }
 

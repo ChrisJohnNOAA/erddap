@@ -34,6 +34,8 @@ import ucar.ma2.ArrayChar;
 import ucar.ma2.ArrayObject;
 import ucar.ma2.ArrayString;
 import ucar.ma2.DataType;
+import ucar.ma2.Range;
+import ucar.ma2.Section;
 import ucar.ma2.StructureData;
 import ucar.ma2.StructureDataIterator;
 import ucar.ma2.StructureMembers;
@@ -570,6 +572,14 @@ public class NcHelper {
       throws Exception {
     if (section == null) {
       return getPrimitiveArray(variable, buildStringsFromChars);
+    }
+    if (section.getRank() == variable.getRank() - 1
+        && variable.getDataType() == DataType.CHAR
+        && variable.getRank() > 0) {
+      int strLen = variable.getDimension(variable.getRank() - 1).getLength();
+      List<Range> ranges = new ArrayList<>(section.getRanges());
+      ranges.add(new Range(0, strLen - 1));
+      section = new Section(ranges);
     }
     return getPrimitiveArray(variable.read(section), buildStringsFromChars, isUnsigned(variable));
   }
