@@ -2711,6 +2711,7 @@ public class Table {
       StringBuilder warnings = new StringBuilder();
       ArrayList<String> items = new ArrayList<>(16);
       StringBuilder separatedWord = new StringBuilder();
+      boolean[] isColumnNeeded = null;
       while (true) {
         oneLine = null;
         if (nextLinesCache < linesCacheSize) {
@@ -2742,14 +2743,19 @@ public class Table {
                 ',',
                 true,
                 true,
-                items); // trim=true keep=true   //does handle "'d phrases, but leaves them quoted
+                items,
+                isColumnNeeded); // trim=true keep=true   //does handle "'d phrases, but leaves them quoted
           } else if (colSeparator == ' ') {
-            StringArray.wordsAndQuotedPhrases(oneLine, items); // items are trim'd
+            StringArray.wordsAndQuotedPhrases(oneLine, items, isColumnNeeded); // items are trim'd
           } else if (colSeparator == '\u0000') {
             items.clear();
-            items.add(oneLine.trim());
+            if (isColumnNeeded != null && isColumnNeeded.length > 0 && !isColumnNeeded[0]) {
+              items.add(null);
+            } else {
+              items.add(oneLine.trim());
+            }
           } else {
-            String2.splitToArrayList(oneLine, colSeparator, true, items); // trim=true
+            String2.splitToArrayList(oneLine, colSeparator, true, items, isColumnNeeded); // trim=true
           }
           // if (debugMode && logicalLine-dataStartLine<5) String2.log(">> row=" + row + " nItems="
           // + items.length + "\nitems=" + String2.toCSSVString(items));
@@ -2795,6 +2801,19 @@ public class Table {
               loadColumnNumbers[col] = fileColumnNames.indexOf(loadColumns[col], 0);
               loadColumnSA[col] = new StringArray();
               addColumn(loadColumns[col], loadColumnSA[col]);
+            }
+          }
+
+          // construct isColumnNeeded array for subsequent iterations
+          isColumnNeeded = new boolean[expectedNItems];
+          for (int tc : testColumnNumbers) {
+            if (tc >= 0 && tc < expectedNItems) {
+              isColumnNeeded[tc] = true;
+            }
+          }
+          for (int lc : loadColumnNumbers) {
+            if (lc >= 0 && lc < expectedNItems) {
+              isColumnNeeded[lc] = true;
             }
           }
           // if (reallyVerbose) String2.log("loadColumnNumbers=" +
