@@ -546,6 +546,35 @@ public class NcHelper {
   }
 
   /**
+   * This reads a section of values from an nDimensional variable using a ucar.ma2.Section.
+   *
+   * @param variable
+   * @param section
+   * @return a suitable primitiveArray
+   */
+  public static PrimitiveArray getPrimitiveArray(Variable variable, ucar.ma2.Section section)
+      throws Exception {
+    return getPrimitiveArray(variable, section, true);
+  }
+
+  /**
+   * This reads a section of values from an nDimensional variable using a ucar.ma2.Section.
+   *
+   * @param variable
+   * @param section
+   * @param buildStringsFromChars only applies to source DataType=char variables.
+   * @return a suitable primitiveArray
+   */
+  public static PrimitiveArray getPrimitiveArray(
+      Variable variable, ucar.ma2.Section section, boolean buildStringsFromChars)
+      throws Exception {
+    if (section == null) {
+      return getPrimitiveArray(variable, buildStringsFromChars);
+    }
+    return getPrimitiveArray(variable.read(section), buildStringsFromChars, isUnsigned(variable));
+  }
+
+  /**
    * This converts a ucar.nc2 numeric or char ArrayXxx.Dx into a PrimitiveArray.
    *
    * @param nc2Array an nc2Array

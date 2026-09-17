@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import ucar.ma2.DataType;
+import ucar.ma2.Range;
+import ucar.ma2.Section;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
@@ -54,7 +56,13 @@ public class TableFromMultidimNcFile {
 
     private void loadArrayAndAttributes(TableFromMultidimNcFile tableMultidim, Variable tVar)
         throws Exception {
-      pa = NcHelper.getPrimitiveArray(tVar, isCharArray);
+      loadArrayAndAttributes(tableMultidim, tVar, null);
+    }
+
+    private void loadArrayAndAttributes(
+        TableFromMultidimNcFile tableMultidim, Variable tVar, Section section)
+        throws Exception {
+      pa = NcHelper.getPrimitiveArray(tVar, section, isCharArray);
       if (pa instanceof StringArray t) {
         t.trimEndAll();
       }
@@ -96,15 +104,22 @@ public class TableFromMultidimNcFile {
 
     private static VarData fromVariable(TableFromMultidimNcFile tableMultidim, int v, Variable tVar)
         throws Exception {
-      if (v >= 0
+      return fromVariable(tableMultidim, v, tVar, null);
+    }
+
+    private static VarData fromVariable(
+        TableFromMultidimNcFile tableMultidim, int v, Variable tVar, Section section)
+        throws Exception {
+      if (section == null
+          && v >= 0
           && v < tableMultidim.cachedVarData.length
           && tableMultidim.cachedVarData[v] != null) {
         return tableMultidim.cachedVarData[v];
       }
       VarData data = new VarData();
       data.loadDims(tableMultidim, tVar);
-      data.loadArrayAndAttributes(tableMultidim, tVar);
-      if (v >= 0 && v < tableMultidim.cachedVarData.length) {
+      data.loadArrayAndAttributes(tableMultidim, tVar, section);
+      if (section == null && v >= 0 && v < tableMultidim.cachedVarData.length) {
         tableMultidim.cachedVarData[v] = data;
       }
       return data;
@@ -374,26 +389,22 @@ public class TableFromMultidimNcFile {
       keep.set(0, onRows); // all true
       // *** removeMVRows
       if (removeMVRows && this.table.nColumns() > 0) {
-        // ensure all vars that use all loadDims are loaded
+        // ensure requested loadVars that use all loadDims are loaded
         int onCols = this.table.nColumns();
-        for (int v = 0; v < nAllVars; v++) {
-          Variable tVar = allVars.get(v);
+        for (int v = 0; v < nLoadVars; v++) {
+          Variable tVar = loadVars.get(v);
           if (this.table.findColumnNumber(tVar.getFullName()) >= 0) {
             continue;
           } // already in the table
-          VarData data = new VarData();
-          data.loadDims(this, tVar);
-          if (!doDimsMatch(nd0, data.nDims, data.dims, loadDims.size(), loadDims)) {
+          VarData candidate = cachedVarData[v];
+          if (candidate == null) {
+            candidate = new VarData();
+            candidate.loadDims(this, tVar);
+          }
+          if (!doDimsMatch(nd0, candidate.nDims, candidate.dims, loadDims.size(), loadDims)) {
             continue;
           }
-          // yes, load this var TEMPORARILY, it has all of the dimensions in the expected
-          // order
-          // don't use knownPAs here: different vars and different v's.
-          data.loadArrayAndAttributes(this, tVar);
-          int index = loadVarNames.indexOf(tVar.getFullName());
-          if (index > -1) {
-            cachedVarData[index] = data;
-          }
+          VarData data = VarData.fromVariable(this, v, tVar);
           this.table.addColumn(this.table.nColumns(), tVar.getFullName(), data.pa, data.atts);
         }
 
@@ -556,13 +567,29 @@ public class TableFromMultidimNcFile {
             continue;
           }
           Variable tVar = loadVars.get(v);
-          VarData data = VarData.fromVariable(this, v, tVar);
+          VarData data = new VarData();
+          data.loadDims(this, tVar);
+          int boundsStart[] = new int[data.nDims];
+          int cShape[] = new int[data.nDims];
+          Section section = makeSectionAndBounds(v, tVar, data, allIndicesTable, loadDims, nd0, boundsStart, cShape);
+          data = VarData.fromVariable(this, v, tVar, section);
           addVarAndIndicies(
-              nd0, loadDims, loaded, allIndicesTable, lut, getMetadata, data, v, tVar);
-          loadDimMatchedVars(nd0, loadVars, nLoadVars, loaded, lut, data, getMetadata);
+              nd0, loadDims, loaded, allIndicesTable, lut, getMetadata, data, v, tVar, boundsStart, cShape);
+          loadDimMatchedVars(
+              nd0, loadVars, nLoadVars, loaded, lut, data, getMetadata, allIndicesTable, loadDims);
 
           // If we ran constraints on this var earlier, load it.
           BitSet lutkeep = getKeepForVar(data, nd0, varToKeep);
+          if (data.nDims == 1 && boundsStart != null && boundsStart.length > 0 && boundsStart[0] > 0) {
+            BitSet slicedKeep = new BitSet();
+            int start0 = boundsStart[0];
+            for (int i = 0; i < data.pa.size(); i++) {
+              if (lutkeep.get(start0 + i)) {
+                slicedKeep.set(i);
+              }
+            }
+            lutkeep = slicedKeep;
+          }
           // If we've already applied the constraints, use that previous bitset
           if (lutkeep.cardinality() == data.pa.size()) {
             int nAfter = lut.tryToApplyConstraints(-1, conVars, conOps, conVals, lutkeep);
@@ -589,7 +616,8 @@ public class TableFromMultidimNcFile {
             findVarToLoad(
                 nd0, loadVars, loadDims, nLoadVars, loaded, allIndicesTable, lut, getMetadata);
 
-        loadDimMatchedVars(nd0, loadVars, nLoadVars, loaded, lut, varData, getMetadata);
+        loadDimMatchedVars(
+            nd0, loadVars, nLoadVars, loaded, lut, varData, getMetadata, allIndicesTable, loadDims);
 
         // all constraints checked above so we just need to join this data in.
         joinLutToTable(lut, varData, allIndicesTable);
@@ -674,6 +702,52 @@ public class TableFromMultidimNcFile {
     return dim;
   }
 
+  private Section makeSectionAndBounds(
+      int v,
+      Variable tVar,
+      VarData varData,
+      Table allIndicesTable,
+      List<Dimension> loadDims,
+      int nd0,
+      int[] boundsStart,
+      int[] cShape)
+      throws Exception {
+    if (varData.nDims == 0) {
+      return null;
+    }
+    boolean isFull = true;
+    List<Range> ranges = new ArrayList<>();
+    for (int d = 0; d < varData.nDims; d++) {
+      Dimension cDim = varData.dims.get(d);
+      cDim = convertDimension(nd0, cDim);
+      int whichDim = loadDims.indexOf(cDim);
+      int start = 0;
+      int stop = cDim.getLength() - 1;
+      if (whichDim >= 0 && allIndicesTable != null && allIndicesTable.nRows() > 0) {
+        PrimitiveArray indexCol = allIndicesTable.getColumn(whichDim);
+        if (indexCol != null && indexCol.size() > 0) {
+          int[] nmm = indexCol.getNMinMaxIndex();
+          if (nmm[0] > 0) {
+            start = indexCol.getInt(nmm[1]);
+            stop = indexCol.getInt(nmm[2]);
+          }
+        }
+      }
+      boundsStart[d] = start;
+      cShape[d] = stop - start + 1;
+      if (start != 0 || stop != cDim.getLength() - 1) {
+        isFull = false;
+      }
+      ranges.add(new Range(start, stop));
+    }
+    if (varData.isCharArray) {
+      int strLenDimIndex = varData.nDims;
+      int strLen = tVar.getDimension(strLenDimIndex).getLength();
+      ranges.add(new Range(0, strLen - 1));
+    }
+    return isFull ? null : new Section(ranges);
+  }
+
   private VarData findVarToLoad(
       int nd0,
       List<Variable> loadVars,
@@ -687,18 +761,19 @@ public class TableFromMultidimNcFile {
     VarData varData = null;
     for (int v = 0; v < nLoadVars; v++) {
       if (loaded.get(v)) continue;
-      // if (debugMode) {
-      // String2.log(">> v=" + v + " cDims==null?" + (cDims==null) +
-      // " lut: nCols=" + lut.nColumns() + " nRows=" + lut.nRows());
-      // String2.log(">> lut=" + lut.dataToString(5));
-      // }
 
-      // look for an unloaded var (and other vars with same dimensions)
       Variable tVar = loadVars.get(v);
+      varData = new VarData();
+      varData.loadDims(this, tVar);
 
-      varData = VarData.fromVariable(this, v, tVar);
+      int boundsStart[] = new int[varData.nDims];
+      int cShape[] = new int[varData.nDims];
+      Section section = makeSectionAndBounds(v, tVar, varData, allIndicesTable, loadDims, nd0, boundsStart, cShape);
 
-      addVarAndIndicies(nd0, loadDims, loaded, allIndicesTable, lut, getMetadata, varData, v, tVar);
+      varData = VarData.fromVariable(this, v, tVar, section);
+
+      addVarAndIndicies(
+          nd0, loadDims, loaded, allIndicesTable, lut, getMetadata, varData, v, tVar, boundsStart, cShape);
       return varData;
     }
     return varData;
@@ -714,12 +789,37 @@ public class TableFromMultidimNcFile {
       VarData varData,
       int v,
       Variable tVar) {
+    int boundsStart[] = new int[varData.nDims];
     int cShape[] = new int[varData.nDims];
+    try {
+      makeSectionAndBounds(v, tVar, varData, allIndicesTable, loadDims, nd0, boundsStart, cShape);
+    } catch (Exception e) {
+      for (int d = 0; d < varData.nDims; d++) {
+        Dimension cDim = convertDimension(nd0, varData.dims.get(d));
+        boundsStart[d] = 0;
+        cShape[d] = cDim.getLength();
+      }
+    }
+    addVarAndIndicies(
+        nd0, loadDims, loaded, allIndicesTable, lut, getMetadata, varData, v, tVar, boundsStart, cShape);
+  }
+
+  private void addVarAndIndicies(
+      int nd0,
+      List<Dimension> loadDims,
+      BitSet loaded,
+      Table allIndicesTable,
+      Table lut,
+      boolean getMetadata,
+      VarData varData,
+      int v,
+      Variable tVar,
+      int[] boundsStart,
+      int[] cShape) {
     for (int d = 0; d < varData.nDims; d++) {
       // which dim is it in loadDims?
       Dimension cDim = varData.dims.get(d);
       cDim = convertDimension(nd0, cDim);
-      cShape[d] = cDim.getLength();
       int whichDim = loadDims.indexOf(cDim);
       // insert that index in main table
       this.table.addColumn(
@@ -736,15 +836,23 @@ public class TableFromMultidimNcFile {
       // and in main table
       IntArray ia = new IntArray(this.table.nRows(), false);
       ia.addN(this.table.nRows(), 0);
-      // String2.log("nRows=" + nRows() + " ia.size=" + ia.size());
       this.table.addColumn(0, "_scalar_", ia, new Attributes());
     } else {
       lut.addIndexColumns(cShape);
+      if (boundsStart != null) {
+        for (int d = 0; d < varData.nDims; d++) {
+          if (boundsStart[d] != 0) {
+            IntArray ia = (IntArray) lut.getColumn(d);
+            int offset = boundsStart[d];
+            for (int i = 0; i < ia.size(); i++) {
+              ia.array[i] += offset;
+            }
+          }
+        }
+      }
     }
 
     // read this var into lut
-    // knownPAs[v] = null;
-    // knownAtts[v] = null;
     addColumnToTable(getMetadata, loaded, varData, v, tVar, lut);
   }
 
@@ -757,22 +865,41 @@ public class TableFromMultidimNcFile {
       VarData matchDims,
       boolean getMetadata)
       throws Exception {
-    // extra check on loaded?? verify this isn't a problem
+    loadDimMatchedVars(nd0, loadVars, nLoadVars, loaded, table, matchDims, getMetadata, null, null);
+  }
+
+  private void loadDimMatchedVars(
+      int nd0,
+      List<Variable> loadVars,
+      int nLoadVars,
+      BitSet loaded,
+      Table table,
+      VarData matchDims,
+      boolean getMetadata,
+      Table allIndicesTable,
+      List<Dimension> loadDims)
+      throws Exception {
     for (int v = 0; v < nLoadVars; v++) {
       if (loaded.get(v)) continue;
-      // if (debugMode) {
-      // String2.log(">> v=" + v + " cDims==null?" + (cDims==null) +
-      // " lut: nCols=" + lut.nColumns() + " nRows=" + lut.nRows());
-      // String2.log(">> lut=" + lut.dataToString(5));
-      // }
 
-      // look for an unloaded var (and other vars with same dimensions)
       Variable tVar = loadVars.get(v);
-      VarData data = VarData.fromVariableIfDimsMatch(this, v, tVar, matchDims, nd0);
-      if (data == null) {
+      VarData candidate = cachedVarData[v];
+      if (candidate == null) {
+        candidate = new VarData();
+        candidate.loadDims(this, tVar);
+      }
+      if (!doDimsMatch(nd0, candidate.nDims, candidate.dims, matchDims.nDims, matchDims.dims)) {
         continue;
       }
-      // read this var into lut
+
+      Section section = null;
+      if (allIndicesTable != null && loadDims != null) {
+        int boundsStart[] = new int[candidate.nDims];
+        int cShape[] = new int[candidate.nDims];
+        section = makeSectionAndBounds(v, tVar, candidate, allIndicesTable, loadDims, nd0, boundsStart, cShape);
+      }
+
+      VarData data = VarData.fromVariable(this, v, tVar, section);
       addColumnToTable(getMetadata, loaded, data, v, tVar, table);
     }
   }
@@ -998,6 +1125,27 @@ public class TableFromMultidimNcFile {
   }
 
   /**
+   * Loads a single variable's attributes from the NetCDF file without reading the array data payload.
+   *
+   * @param fileName The full path or URL to the .nc file.
+   * @param variableName The name of the variable.
+   * @return The Attributes of the variable.
+   * @throws Exception if the file or variable cannot be found.
+   */
+  public Attributes loadSingleVariableAttributes(String fileName, String variableName)
+      throws Exception {
+    try (NetcdfFile nc = NcHelper.openFile(fileName)) {
+      Variable tVar = nc.findVariable(variableName);
+      if (tVar == null) {
+        throw new Exception("Variable '" + variableName + "' not found in file " + fileName);
+      }
+      Attributes atts = new Attributes();
+      NcHelper.getVariableAttributes(tVar, atts);
+      return atts;
+    }
+  }
+
+  /**
    * Loads a single variable's data and attributes from the NetCDF file.
    *
    * <p>This method provides a way to read one variable without loading the entire flattened table.
@@ -1013,6 +1161,11 @@ public class TableFromMultidimNcFile {
    */
   public Pair<PrimitiveArray, Attributes> loadSingleVariable(
       String fileName, String variableName, int standardizeWhat) throws Exception {
+    return loadSingleVariable(fileName, variableName, standardizeWhat, null);
+  }
+
+  public Pair<PrimitiveArray, Attributes> loadSingleVariable(
+      String fileName, String variableName, int standardizeWhat, Section section) throws Exception {
 
     // Open the file
     this.ncFile = NcHelper.openFile(fileName);
@@ -1030,7 +1183,7 @@ public class TableFromMultidimNcFile {
       // Use the private VarData class as a helper to load the data
       VarData data = new VarData();
       data.loadDims(this, tVar);
-      data.loadArrayAndAttributes(this, tVar);
+      data.loadArrayAndAttributes(this, tVar, section);
 
       return Pair.of(data.pa, data.atts);
 
