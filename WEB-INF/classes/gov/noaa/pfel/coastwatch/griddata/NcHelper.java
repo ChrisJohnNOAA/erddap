@@ -1709,18 +1709,19 @@ public class NcHelper {
     boolean isChar = variable.getDataType() == DataType.CHAR;
     int nDim = variable.getRank();
     int oShape[] = variable.getShape();
-    // ???verify that shape is valid?
-    int origin[] = new int[nDim]; // all 0's
-    int shape[] = new int[nDim];
-    origin[0] = firstRow;
-    Arrays.fill(shape, 1);
+    List<Range> ranges = new ArrayList<>();
+    ranges.add(new Range(firstRow, lastRow));
+    for (int d = 1; d < nDim; d++) {
+      if (isChar && d == nDim - 1) {
+        ranges.add(new Range(0, oShape[d] - 1));
+      } else {
+        ranges.add(new Range(0, 0));
+      }
+    }
+    Section section = new Section(ranges);
     int nRows = lastRow - firstRow + 1;
-    shape[0] = nRows;
-    if (isChar) shape[nDim - 1] = oShape[nDim - 1]; // nChars / String
-    PrimitiveArray pa = getPrimitiveArray(variable.read(origin, shape), true, isUnsigned(variable));
+    PrimitiveArray pa = getPrimitiveArray(variable, section, true);
 
-    // eek! opendap returns a full-sized array!
-    //     netcdf  returns a shape-sized array
     if (pa.size() < nRows)
       Test.error(
           String2.ERROR
@@ -1733,12 +1734,11 @@ public class NcHelper {
               + pa.size()
               + ").");
     if (pa.size() > nRows) {
-      // it full-sized; reduce to correct size
       if (reallyVerbose)
         String2.log("    NcHelper.getPrimitiveArray variable.read returned entire variable!");
       pa.removeRange(
-          lastRow + 1, pa.size()); // remove tail first (so don't have to move it when remove head
-      pa.removeRange(0, firstRow - 1); // remove head section
+          lastRow + 1, pa.size());
+      pa.removeRange(0, firstRow - 1);
     }
     return pa;
   }
@@ -1981,21 +1981,45 @@ public class NcHelper {
         okRows.set(0, nRows); // make all 'true' initially
       }
 
-      // read the data
-      cumReadTime -= System.currentTimeMillis();
-      PrimitiveArray pa = getPrimitiveArray(variable.read());
-      cumReadTime += System.currentTimeMillis();
-
-      // test the data
+      // test the data in chunks using Section reads
       double tMin = min[col];
       double tMax = max[col];
-      int row = okRows.nextSetBit(0);
+      int nRows = variable.getDimension(0).getLength();
+      int chunkSize = 10000;
       int lastSetBit = -1;
+
+      int row = okRows.nextSetBit(0);
       while (row >= 0) {
-        double d = pa.getDouble(row);
-        if (d < tMin || d > tMax || Double.isNaN(d)) okRows.clear(row);
-        else lastSetBit = row;
-        row = okRows.nextSetBit(row + 1);
+        int chunkStart = (row / chunkSize) * chunkSize;
+        int chunkEnd = Math.min(chunkStart + chunkSize - 1, nRows - 1);
+
+        List<Range> ranges = new ArrayList<>();
+        ranges.add(new Range(chunkStart, chunkEnd));
+        boolean isChar = variable.getDataType() == DataType.CHAR;
+        int nDim = variable.getRank();
+        int oShape[] = variable.getShape();
+        for (int d = 1; d < nDim; d++) {
+          if (isChar && d == nDim - 1) {
+            ranges.add(new Range(0, oShape[d] - 1));
+          } else {
+            ranges.add(new Range(0, 0));
+          }
+        }
+        Section chunkSection = new Section(ranges);
+
+        cumReadTime -= System.currentTimeMillis();
+        PrimitiveArray pa = getPrimitiveArray(variable, chunkSection, true);
+        cumReadTime += System.currentTimeMillis();
+
+        while (row >= 0 && row <= chunkEnd) {
+          double d = pa.getDouble(row - chunkStart);
+          if (d < tMin || d > tMax || Double.isNaN(d)) {
+            okRows.clear(row);
+          } else {
+            lastSetBit = row;
+          }
+          row = okRows.nextSetBit(row + 1);
+        }
       }
       if (lastSetBit == -1) return okRows;
     }

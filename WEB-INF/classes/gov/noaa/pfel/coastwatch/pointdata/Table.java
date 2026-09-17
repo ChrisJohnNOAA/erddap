@@ -31,6 +31,7 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.XML;
 import com.google.common.collect.ImmutableList;
+import ucar.ma2.Section;
 import gov.noaa.pfel.coastwatch.griddata.DataHelper;
 import gov.noaa.pfel.coastwatch.griddata.FileNameUtility;
 import gov.noaa.pfel.coastwatch.griddata.Matlab;
@@ -5959,8 +5960,8 @@ public class Table {
           tReadOrigin[nAxes] = 0;
           tReadShape[nAxes] = variable.getDimension(nAxes).getLength();
         }
-        Array array = variable.read(tReadOrigin, tReadShape);
-        PrimitiveArray pa = NcHelper.getPrimitiveArray(array);
+        Section section = new Section(tReadOrigin, tReadShape);
+        PrimitiveArray pa = NcHelper.getPrimitiveArray(variable, section);
         Test.ensureEqual(
             pa.size(),
             nRows(),
