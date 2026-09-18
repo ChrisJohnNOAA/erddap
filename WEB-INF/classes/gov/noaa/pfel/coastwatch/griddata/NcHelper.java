@@ -208,7 +208,9 @@ public class NcHelper {
     // String[] from ArrayChar.Dn
     if (nc2Array instanceof ArrayChar ac) {
       ArrayObject ao = ac.make1DStringArray();
-      Object[] oa = (Object[]) ao.copyTo1DJavaArray();
+      // Make1DStringArray already makes this a contiguous array, so no need to call
+      // copyTo1DJavaArray
+      Object[] oa = (Object[]) ao.get1DJavaArray(ao.getDataType());
       StringArray sa = new StringArray(oa.length, false);
       for (Object o : oa)
         sa.add(o == null ? null : String2.fromJson(String2.trimEnd(o.toString())));
@@ -216,8 +218,8 @@ public class NcHelper {
     }
 
     // byte[] from ArrayBoolean.Dn
-    if (nc2Array instanceof ArrayBoolean) {
-      boolean boolAr[] = (boolean[]) nc2Array.copyTo1DJavaArray();
+    if (nc2Array instanceof ArrayBoolean ab) {
+      boolean boolAr[] = (boolean[]) ab.copyTo1DJavaArray();
       int n = boolAr.length;
       byte byteAr[] = new byte[n];
       for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
@@ -568,8 +570,7 @@ public class NcHelper {
    * @return a suitable primitiveArray
    */
   public static PrimitiveArray getPrimitiveArray(
-      Variable variable, ucar.ma2.Section section, boolean buildStringsFromChars)
-      throws Exception {
+      Variable variable, ucar.ma2.Section section, boolean buildStringsFromChars) throws Exception {
     if (section == null) {
       return getPrimitiveArray(variable, buildStringsFromChars);
     }
@@ -600,7 +601,9 @@ public class NcHelper {
     // String[] from ArrayChar.Dn
     if (buildStringsFromChars && nc2Array instanceof ArrayChar na) {
       ArrayObject ao = na.make1DStringArray();
-      Object[] oa = (Object[]) ao.copyTo1DJavaArray();
+      // Make1DStringArray already makes this a contiguous array, so no need to call
+      // copyTo1DJavaArray
+      Object[] oa = (Object[]) ao.get1DJavaArray(ao.getDataType());
       if (oa instanceof String[] sa) {
         return new StringArray(sa);
       }
@@ -1736,8 +1739,7 @@ public class NcHelper {
     if (pa.size() > nRows) {
       if (reallyVerbose)
         String2.log("    NcHelper.getPrimitiveArray variable.read returned entire variable!");
-      pa.removeRange(
-          lastRow + 1, pa.size());
+      pa.removeRange(lastRow + 1, pa.size());
       pa.removeRange(0, firstRow - 1);
     }
     return pa;

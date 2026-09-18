@@ -169,8 +169,7 @@ public class EDDTableFromMultidimNcFiles extends EDDTableFromFilesNcLow {
   }
 
   protected PrimitiveArray loadSingleVar(
-      Variable var, Attributes atts, String fileName, ucar.ma2.Section section)
-      throws Exception {
+      Variable var, Attributes atts, String fileName, ucar.ma2.Section section) throws Exception {
     Table tempTable = new Table();
     TableFromMultidimNcFile loader = new TableFromMultidimNcFile(tempTable);
 
