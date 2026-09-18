@@ -1962,54 +1962,53 @@ public abstract class EDDTable extends EDD {
         resultsVariables.add(dataVariable.destinationName());
       }
     } else {
-      String cParts[] = String2.split(parts[0], ','); // list of results variables
-      for (String cPart : cParts) {
+      String2.splitOnChar(parts[0], ',', true, (start, end) -> {
+        if (start < end) {
+          String tVar = parts[0].substring(start, end);
+          int period = tVar.indexOf('.');
+          if (period > 0 && tVar.substring(0, period).equals(SEQUENCE_NAME))
+            tVar = tVar.substring(period + 1);
 
-        // request uses sequence.dataVarName notation?
-        String tVar = cPart.trim();
-        int period = tVar.indexOf('.');
-        if (period > 0 && tVar.substring(0, period).equals(SEQUENCE_NAME))
-          tVar = tVar.substring(period + 1);
-
-        // is it a valid destinationName?
-        int po = String2.indexOf(dataVariableDestinationNames(), tVar);
-        if (po < 0) {
-          if (!repair) {
-            if (tVar.equals(SEQUENCE_NAME))
-              throw new SimpleException(
-                  EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
-                      + "If "
-                      + SEQUENCE_NAME
-                      + " is requested, it must be the only requested variable.");
-            for (int op = 0; op < OPERATORS.size(); op++) {
-              int opPo = tVar.indexOf(OPERATORS.get(op));
-              if (opPo >= 0)
+          // is it a valid destinationName?
+          int po = String2.indexOf(dataVariableDestinationNames(), tVar);
+          if (po < 0) {
+            if (!repair) {
+              if (tVar.equals(SEQUENCE_NAME))
                 throw new SimpleException(
                     EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
-                        + "All constraints (including \""
-                        + tVar.substring(0, opPo + OPERATORS.get(op).length())
-                        + "...\") must be preceded by '&'.");
-            }
-            throw new SimpleException(
-                EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
-                    + "Unrecognized variable=\""
-                    + tVar
-                    + "\".");
-          }
-        } else {
-          // it's valid; is it a duplicate?
-          if (resultsVariables.indexOf(tVar) >= 0) {
-            if (!repair)
+                        + "If "
+                        + SEQUENCE_NAME
+                        + " is requested, it must be the only requested variable.");
+              for (int op = 0; op < OPERATORS.size(); op++) {
+                int opPo = tVar.indexOf(OPERATORS.get(op));
+                if (opPo >= 0)
+                  throw new SimpleException(
+                      EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
+                          + "All constraints (including \""
+                          + tVar.substring(0, opPo + OPERATORS.get(op).length())
+                          + "...\") must be preceded by '&'.");
+              }
               throw new SimpleException(
                   EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
-                      + "variable="
+                      + "Unrecognized variable=\""
                       + tVar
-                      + " is listed twice in the results variables list.");
+                      + "\".");
+            }
           } else {
-            resultsVariables.add(tVar);
+            // it's valid; is it a duplicate?
+            if (resultsVariables.indexOf(tVar) >= 0) {
+              if (!repair)
+                throw new SimpleException(
+                    EDStatic.simpleBilingual(language, Message.QUERY_ERROR)
+                        + "variable="
+                        + tVar
+                        + " is listed twice in the results variables list.");
+            } else {
+              resultsVariables.add(tVar);
+            }
           }
         }
-      }
+      });
     }
     // String2.log("resultsVariables=" + resultsVariables);
 
