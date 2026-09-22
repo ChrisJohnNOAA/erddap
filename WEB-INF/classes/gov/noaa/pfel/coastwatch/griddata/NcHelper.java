@@ -233,15 +233,45 @@ public class NcHelper {
       return sa;
     }
 
-    PrimitiveArray pa = getPrimitiveArray(nc2Array, false, nc2Array.isUnsigned());
-    if (pa instanceof StringArray sa) {
-      int n = sa.size();
-      for (int i = 0; i < n; i++) {
-        String s = sa.get(i);
-        if (s != null) sa.set(i, s.trim());
+    // byte[] from ArrayBoolean.Dn
+    if (nc2Array instanceof ArrayBoolean) {
+      int n = Math2.narrowToInt(nc2Array.getSize());
+      byte byteAr[] = new byte[n];
+      Object storage = nc2Array.getStorage();
+      if (storage instanceof boolean[] boolAr && boolAr.length == n) {
+        for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
+      } else {
+        IndexIterator iter = nc2Array.getIndexIterator();
+        for (int i = 0; i < n; i++) byteAr[i] = iter.getBooleanNext() ? (byte) 1 : (byte) 0;
       }
+      return PrimitiveArray.factory(byteAr, nc2Array.isUnsigned());
     }
-    return pa;
+
+    // Fast-path for contiguous numeric/string arrays
+    Object storage = nc2Array.getStorage();
+    if (storage != null
+        && storage.getClass().isArray()
+        && nc2Array.getSize() == java.lang.reflect.Array.getLength(storage)
+        && nc2Array.getIndexIterator() instanceof IteratorFast) {
+      if (storage instanceof String[] sa) {
+        String[] trimmed = new String[sa.length];
+        for (int i = 0; i < sa.length; i++) {
+          trimmed[i] = sa[i] == null ? null : sa[i].trim();
+        }
+        return new StringArray(trimmed);
+      }
+      return PrimitiveArray.factory(storage, nc2Array.isUnsigned());
+    }
+
+    Object o = nc2Array.copyTo1DJavaArray();
+    if (o instanceof String[] sa) {
+      for (int i = 0; i < sa.length; i++) {
+        if (sa[i] != null) sa[i] = sa[i].trim();
+      }
+      return new StringArray(sa);
+    }
+
+    return PrimitiveArray.factory(o, nc2Array.isUnsigned());
   }
 
   /**
