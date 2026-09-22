@@ -5,6 +5,7 @@
 package gov.noaa.pfel.coastwatch.griddata;
 
 import com.cohort.array.Attributes;
+import com.cohort.array.ByteArray;
 import com.cohort.array.CharArray;
 import com.cohort.array.DoubleArray;
 import com.cohort.array.FloatArray;
@@ -15,7 +16,10 @@ import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.ShortArray;
 import com.cohort.array.StringArray;
+import com.cohort.array.UByteArray;
+import com.cohort.array.UIntArray;
 import com.cohort.array.ULongArray;
+import com.cohort.array.UShortArray;
 import com.cohort.util.Calendar2;
 import com.cohort.util.File2;
 import com.cohort.util.Math2;
@@ -30,10 +34,18 @@ import java.util.Collections;
 import java.util.List;
 import ucar.ma2.Array;
 import ucar.ma2.ArrayBoolean;
+import ucar.ma2.ArrayByte;
 import ucar.ma2.ArrayChar;
+import ucar.ma2.ArrayDouble;
+import ucar.ma2.ArrayFloat;
+import ucar.ma2.ArrayInt;
+import ucar.ma2.ArrayLong;
 import ucar.ma2.ArrayObject;
+import ucar.ma2.ArrayShort;
 import ucar.ma2.ArrayString;
 import ucar.ma2.DataType;
+import ucar.ma2.IndexIterator;
+import ucar.ma2.IteratorFast;
 import ucar.ma2.StructureData;
 import ucar.ma2.StructureDataIterator;
 import ucar.ma2.StructureMembers;
@@ -557,11 +569,20 @@ public class NcHelper {
    */
   public static PrimitiveArray getPrimitiveArray(
       Array nc2Array, boolean buildStringsFromChars, boolean isUnsigned) {
-    // String2.log(">> NcHelper.getPrimitiveArray nc2Array.isUnsigned=" + nc2Array.isUnsigned());
+    if (nc2Array == null) return null;
+
+    boolean unsigned = isUnsigned || nc2Array.isUnsigned();
+
     // String[] from ArrayChar.Dn
     if (buildStringsFromChars && nc2Array instanceof ArrayChar na) {
       ArrayObject ao = na.make1DStringArray();
-      Object[] oa = (Object[]) ao.copyTo1DJavaArray();
+      Object storage = ao.getStorage();
+      Object[] oa;
+      if (storage != null && storage.getClass().isArray() && ao.getSize() == java.lang.reflect.Array.getLength(storage)) {
+        oa = (Object[]) storage;
+      } else {
+        oa = (Object[]) ao.copyTo1DJavaArray();
+      }
       if (oa instanceof String[] sa) {
         return new StringArray(sa);
       }
@@ -572,16 +593,69 @@ public class NcHelper {
 
     // byte[] from ArrayBoolean.Dn
     if (nc2Array instanceof ArrayBoolean ab) {
-      boolean boolAr[] = (boolean[]) ab.copyTo1DJavaArray();
-      int n = boolAr.length;
+      int n = Math2.narrowToInt(nc2Array.getSize());
       byte byteAr[] = new byte[n];
-      for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
+      Object storage = ab.getStorage();
+      if (storage instanceof boolean[] boolAr && boolAr.length == n) {
+        for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
+      } else {
+        IndexIterator iter = nc2Array.getIndexIterator();
+        for (int i = 0; i < n; i++) byteAr[i] = iter.getBooleanNext() ? (byte) 1 : (byte) 0;
+      }
       return new com.cohort.array.ByteArray(byteAr);
     }
 
-    // ArrayXxxnumeric
-    return PrimitiveArray.factory(
-        nc2Array.copyTo1DJavaArray(), isUnsigned || nc2Array.isUnsigned());
+    // Fast-path: wrap storage directly if array is contiguous, un-transformed, and matches size
+    Object storage = nc2Array.getStorage();
+    if (storage != null
+        && storage.getClass().isArray()
+        && nc2Array.getSize() == java.lang.reflect.Array.getLength(storage)
+        && nc2Array.getIndexIterator() instanceof IteratorFast) {
+      if (storage instanceof double[] da) return new DoubleArray(da);
+      if (storage instanceof float[] fa) return new FloatArray(fa);
+      if (storage instanceof int[] ia) return unsigned ? new UIntArray(ia) : new IntArray(ia);
+      if (storage instanceof short[] sa) return unsigned ? new UShortArray(sa) : new ShortArray(sa);
+      if (storage instanceof byte[] ba) return unsigned ? new UByteArray(ba) : new ByteArray(ba);
+      if (storage instanceof long[] la) return unsigned ? new ULongArray(la) : new LongArray(la);
+      if (storage instanceof char[] ca) return new CharArray(ca);
+      if (storage instanceof String[] sa) return new StringArray(sa);
+      return PrimitiveArray.factory(storage, unsigned);
+    }
+
+    // Non-contiguous or strided view array: copy directly into target PrimitiveArray without copyTo1DJavaArray
+    int n = Math2.narrowToInt(nc2Array.getSize());
+    IndexIterator iter = nc2Array.getIndexIterator();
+    if (nc2Array instanceof ArrayDouble) {
+      double[] ar = new double[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getDoubleNext();
+      return new DoubleArray(ar);
+    } else if (nc2Array instanceof ArrayFloat) {
+      float[] ar = new float[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getFloatNext();
+      return new FloatArray(ar);
+    } else if (nc2Array instanceof ArrayInt) {
+      int[] ar = new int[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getIntNext();
+      return unsigned ? new UIntArray(ar) : new IntArray(ar);
+    } else if (nc2Array instanceof ArrayShort) {
+      short[] ar = new short[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getShortNext();
+      return unsigned ? new UShortArray(ar) : new ShortArray(ar);
+    } else if (nc2Array instanceof ArrayByte) {
+      byte[] ar = new byte[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getByteNext();
+      return unsigned ? new UByteArray(ar) : new ByteArray(ar);
+    } else if (nc2Array instanceof ArrayLong) {
+      long[] ar = new long[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getLongNext();
+      return unsigned ? new ULongArray(ar) : new LongArray(ar);
+    } else if (nc2Array instanceof ArrayChar) {
+      char[] ar = new char[n];
+      for (int i = 0; i < n; i++) ar[i] = iter.getCharNext();
+      return new CharArray(ar);
+    }
+
+    return PrimitiveArray.factory(nc2Array.copyTo1DJavaArray(), unsigned);
   }
 
   // was

@@ -424,24 +424,12 @@ public abstract class EDDGridFromNcLow extends EDDGridFromFiles {
             if (edv.sourceDataPAType() == PAType.STRING)
               tSel += ",0:" + (var.getShape(var.getRank() - 1) - 1);
             paa[dvi] = NcHelper.getPrimitiveArray(var.read(tSel), true, NcHelper.isUnsigned(var));
-            // 2020-02-27 WARNING: in netcdf-java 5+, when reading nc3 file,
-            //  variable with _Unsigned="true" behaves in raw way
-            /*
-            String2.log(">> EDDGridFrimNcFilesLow.getSourceDataFromFile " + edv.sourceName() +
-                " sourceDataPAType()=" + edv.sourceDataPAType() +
-                " var.getDataType()=" + var.getDataType() +                //returns raw (signed) dataType
-                " dataType.isUnsigned=" + var.getDataType().isUnsigned() + //returns false
-                " pa.elementType()=" + paa[dvi].elementType() +
-                " pa.isUnsigned=" + paa[dvi].isUnsigned() );
-                //    "[" + selection + "]\n" + paa[dvi].toString());
-            /* */
 
             if (unpack())
               paa[dvi] =
                   NcHelper.unpackPA(
                       var, paa[dvi], true,
-                      true); // lookForStringTime, lookForUnsigned (which changes type, eg unsigned
-            // byte to signed short)
+                      true);
 
             nValues = paa[dvi].size();
           }

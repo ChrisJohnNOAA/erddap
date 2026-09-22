@@ -501,6 +501,27 @@ class NcHelperTests {
     }
   }
 
+  @org.junit.jupiter.api.Test
+  void testZeroCopyGetPrimitiveArray() throws Throwable {
+    double[] rawDoubles = new double[] {1.1, 2.2, 3.3, 4.4};
+    ucar.ma2.ArrayDouble.D1 arrayDouble = new ucar.ma2.ArrayDouble.D1(4);
+    for (int i = 0; i < 4; i++) arrayDouble.set(i, rawDoubles[i]);
+    com.cohort.array.DoubleArray dpa = (com.cohort.array.DoubleArray) NcHelper.getPrimitiveArray(arrayDouble, true, false);
+    Test.ensureTrue(dpa.array == arrayDouble.getStorage(), "DoubleArray should wrap NetCDF storage directly without extra copy");
+
+    float[] rawFloats = new float[] {1.0f, 2.0f, 3.0f};
+    ucar.ma2.ArrayFloat.D1 arrayFloat = new ucar.ma2.ArrayFloat.D1(3);
+    for (int i = 0; i < 3; i++) arrayFloat.set(i, rawFloats[i]);
+    com.cohort.array.FloatArray fpa = (com.cohort.array.FloatArray) NcHelper.getPrimitiveArray(arrayFloat, true, false);
+    Test.ensureTrue(fpa.array == arrayFloat.getStorage(), "FloatArray should wrap NetCDF storage directly without extra copy");
+
+    byte[] rawBytes = new byte[] {10, 20, 30};
+    ucar.ma2.ArrayByte.D1 arrayByte = new ucar.ma2.ArrayByte.D1(3, false);
+    for (int i = 0; i < 3; i++) arrayByte.set(i, rawBytes[i]);
+    com.cohort.array.ByteArray bpa = (com.cohort.array.ByteArray) NcHelper.getPrimitiveArray(arrayByte, true, false);
+    Test.ensureTrue(bpa.array == arrayByte.getStorage(), "ByteArray should wrap NetCDF storage directly without extra copy");
+  }
+
   /** ERDDAP: require that all vars be in same structure */
   @org.junit.jupiter.api.Test
   void testReadStructure2() throws Throwable {
