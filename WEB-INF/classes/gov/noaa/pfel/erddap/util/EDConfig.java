@@ -219,6 +219,8 @@ public class EDConfig {
   public String awsS3OutputRegion = null;
   public boolean useAwsCrt;
   public boolean useAwsAnonymous;
+  public double s3TargetThroughputInGbps = 20.0;
+  public Integer s3MaxConcurrency = null;
 
   public final String corsAllowHeaders;
   public final String[] corsAllowOrigin;
@@ -549,6 +551,8 @@ public class EDConfig {
     // optional parameter to disable AWS Common Runtime
     useAwsCrt = getSetupEVBoolean(setup, ev, "useAwsCrt", true);
     useAwsAnonymous = getSetupEVBoolean(setup, ev, "useAwsAnonymous", false);
+    s3TargetThroughputInGbps = getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
+    s3MaxConcurrency = getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
 
     units_standard = getSetupEVString(setup, ev, "units_standard", "UDUNITS");
 
@@ -876,5 +880,71 @@ public class EDConfig {
       return value;
     }
     return setup.getNotNothingString(paramName, errorInMethod);
+  }
+
+  /**
+   * This gets a double from setup.xml or environmentalVariables (preferred).
+   * Ensures the value is positive (> 0) and finite; falls back to tDefault otherwise.
+   *
+   * @param setup from setup.xml
+   * @param ev from System.getenv()
+   * @param paramName If present in ev, it will be ERDDAP_paramName.
+   * @param tDefault the default value
+   * @return the desired value (or default if not defined or <= 0/invalid)
+   */
+  double getSetupEVDouble(
+      ResourceBundle2 setup, Map<String, String> ev, String paramName, double tDefault) {
+    String value = ev.get("ERDDAP_" + paramName);
+    if (String2.isSomething(value)) {
+      double valued = String2.parseDouble(value);
+      if (Double.isFinite(valued) && valued > 0) {
+        String2.log("got " + paramName + " from ERDDAP_" + paramName + ": " + valued);
+        return valued;
+      }
+      String2.log("WARNING: ERDDAP_" + paramName + " (" + value + ") is invalid or <= 0. Using default: " + tDefault);
+    }
+    String s = setup.getString(paramName, null);
+    if (String2.isSomething(s)) {
+      double valued = String2.parseDouble(s);
+      if (Double.isFinite(valued) && valued > 0) {
+        String2.log("got " + paramName + " from setup.xml: " + valued);
+        return valued;
+      }
+      String2.log("WARNING: " + paramName + " in setup.xml (" + s + ") is invalid or <= 0. Using default: " + tDefault);
+    }
+    return tDefault;
+  }
+
+  /**
+   * This gets an Integer from setup.xml or environmentalVariables (preferred).
+   * Ensures the value is positive (> 0); falls back to tDefault (which can be null) otherwise.
+   *
+   * @param setup from setup.xml
+   * @param ev from System.getenv()
+   * @param paramName If present in ev, it will be ERDDAP_paramName.
+   * @param tDefault the default value (e.g. null)
+   * @return the desired value (or default if not defined or <= 0/invalid)
+   */
+  Integer getSetupEVInteger(
+      ResourceBundle2 setup, Map<String, String> ev, String paramName, Integer tDefault) {
+    String value = ev.get("ERDDAP_" + paramName);
+    if (String2.isSomething(value)) {
+      int valuei = String2.parseInt(value);
+      if (valuei != Integer.MAX_VALUE && valuei > 0) {
+        String2.log("got " + paramName + " from ERDDAP_" + paramName + ": " + valuei);
+        return valuei;
+      }
+      String2.log("WARNING: ERDDAP_" + paramName + " (" + value + ") is invalid or <= 0. Using default: " + tDefault);
+    }
+    String s = setup.getString(paramName, null);
+    if (String2.isSomething(s)) {
+      int valuei = String2.parseInt(s);
+      if (valuei != Integer.MAX_VALUE && valuei > 0) {
+        String2.log("got " + paramName + " from setup.xml: " + valuei);
+        return valuei;
+      }
+      String2.log("WARNING: " + paramName + " in setup.xml (" + s + ") is invalid or <= 0. Using default: " + tDefault);
+    }
+    return tDefault;
   }
 }
