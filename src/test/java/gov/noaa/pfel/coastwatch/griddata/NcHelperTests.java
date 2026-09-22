@@ -502,6 +502,42 @@ class NcHelperTests {
   }
 
   @org.junit.jupiter.api.Test
+  void benchmarkGetPrimitiveArray() throws Throwable {
+    int n = 100000;
+    ucar.ma2.ArrayDouble.D1 arrayDouble = new ucar.ma2.ArrayDouble.D1(n);
+    for (int i = 0; i < n; i++) arrayDouble.set(i, i * 1.1);
+
+    // Warmup JVM
+    for (int i = 0; i < 100; i++) {
+      PrimitiveArray.factory(arrayDouble.copyTo1DJavaArray(), false);
+      NcHelper.getPrimitiveArray(arrayDouble, true, false);
+    }
+
+    int iterations = 1000;
+
+    // Time Old Way: copyTo1DJavaArray() + PrimitiveArray.factory()
+    long t0 = System.nanoTime();
+    for (int i = 0; i < iterations; i++) {
+      PrimitiveArray paOld = PrimitiveArray.factory(arrayDouble.copyTo1DJavaArray(), false);
+    }
+    long elapsedOld = System.nanoTime() - t0;
+
+    // Time New Way: NcHelper.getPrimitiveArray (zero-copy storage wrapping)
+    long t1 = System.nanoTime();
+    for (int i = 0; i < iterations; i++) {
+      PrimitiveArray paNew = NcHelper.getPrimitiveArray(arrayDouble, true, false);
+    }
+    long elapsedNew = System.nanoTime() - t1;
+
+    double msOld = elapsedOld / 1e6;
+    double msNew = elapsedNew / 1e6;
+    String2.log(String.format("Benchmark getPrimitiveArray [%d iterations of %d elements]: Old copyTo1DJavaArray = %.2f ms, New zero-copy = %.2f ms",
+        iterations, n, msOld, msNew));
+
+    Test.ensureTrue(msNew < msOld, "New zero-copy getPrimitiveArray should be faster than old copyTo1DJavaArray");
+  }
+
+  @org.junit.jupiter.api.Test
   void benchmarkGetUnpackedPrimitiveArray() throws Throwable {
     String scaleFile = NcHelperTests.class.getResource("/data/nc/scale_factor.nc").getFile();
     try (NetcdfFile nc = NcHelper.openFile(scaleFile)) {
