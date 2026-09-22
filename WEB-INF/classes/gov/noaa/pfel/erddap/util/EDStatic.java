@@ -630,6 +630,7 @@ public class EDStatic {
       return;
     }
     initialized = true;
+    NcHelper.registerProviders();
     String erdStartup = "EDStatic Low Level Startup";
     String errorInMethod = "";
     try {

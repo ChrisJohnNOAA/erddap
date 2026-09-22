@@ -112,9 +112,123 @@ public class NcHelper {
    * email from Christian Ward-Garrison Nov 2, 2016 and new location in email from
    * support-netcdf-java (Sean Arms) 2021-01-07.
    */
+  private static boolean providersRegistered = false;
+
+  /**
+   * Pre-registers required NetCDF IOSPs and RandomAccessFile providers, and pre-warms ServiceLoaders
+   * at application startup to bypass dynamic ServiceLoader classpath scanning on file open calls.
+   */
+  public static synchronized void registerProviders() {
+    if (providersRegistered) {
+      return;
+    }
+    providersRegistered = true;
+
+    // 1. Explicitly register known/common NetCDF IOSPs
+    String[] iospClassNames =
+        new String[] {
+          "ucar.nc2.iosp.zarr.ZarrIosp",
+          "ucar.nc2.grib.collection.Grib1Iosp",
+          "ucar.nc2.grib.collection.Grib2Iosp",
+          "ucar.nc2.iosp.bufr.BufrIosp2",
+          "ucar.nc2.iosp.cinrad.Cinrad2IOServiceProvider",
+          "ucar.nc2.iosp.dmsp.DMSPiosp",
+          "ucar.nc2.iosp.dorade.Doradeiosp",
+          "ucar.nc2.iosp.fysat.Fysatiosp",
+          "ucar.nc2.iosp.gempak.GempakGridServiceProvider",
+          "ucar.nc2.iosp.gempak.GempakSoundingIOSP",
+          "ucar.nc2.iosp.gempak.GempakSurfaceIOSP",
+          "ucar.nc2.iosp.gini.Giniiosp",
+          "ucar.nc2.iosp.grads.GradsBinaryGridServiceProvider",
+          "ucar.nc2.iosp.mcidas.AreaServiceProvider",
+          "ucar.nc2.iosp.mcidas.McIDASGridServiceProvider",
+          "ucar.nc2.iosp.misc.GtopoIosp",
+          "ucar.nc2.iosp.misc.Nldn",
+          "ucar.nc2.iosp.misc.NmcObsLegacy",
+          "ucar.nc2.iosp.misc.Uspln",
+          "ucar.nc2.iosp.nexrad2.Nexrad2IOServiceProvider",
+          "ucar.nc2.iosp.nids.Nidsiosp",
+          "ucar.nc2.iosp.noaa.Ghcnm2",
+          "ucar.nc2.iosp.noaa.IgraPor",
+          "ucar.nc2.iosp.nowrad.NOWRadiosp",
+          "ucar.nc2.iosp.sigmet.SigmetIOServiceProvider",
+          "ucar.nc2.iosp.uamiv.UAMIVServiceProvider",
+          "ucar.nc2.iosp.uf.UFiosp"
+        };
+    for (String className : iospClassNames) {
+      try {
+        NetcdfFiles.registerIOProvider(className);
+      } catch (Throwable t) {
+        if (reallyVerbose) {
+          String2.log("NcHelper.registerProviders could not register IOSP: " + className);
+        }
+      }
+    }
+
+    // 2. Explicitly register known/common RandomAccessFile providers
+    String[] rafClassNames =
+        new String[] {
+          "ucar.unidata.io.s3.S3RandomAccessFile$Provider",
+          "ucar.unidata.io.zarr.RandomAccessDirectory$Provider"
+        };
+    for (String className : rafClassNames) {
+      try {
+        NetcdfFiles.registerRandomAccessFileProvider(className);
+      } catch (Throwable t) {
+        if (reallyVerbose) {
+          String2.log("NcHelper.registerProviders could not register RAF provider: " + className);
+        }
+      }
+    }
+
+    // 3. Pre-warm / pre-register remaining dynamic ServiceLoader providers
+    try {
+      java.util.ServiceLoader<ucar.nc2.iosp.IOServiceProvider> iospLoader =
+          java.util.ServiceLoader.load(ucar.nc2.iosp.IOServiceProvider.class);
+      for (ucar.nc2.iosp.IOServiceProvider iosp : iospLoader) {
+        try {
+          NetcdfFiles.registerIOProvider(iosp.getClass());
+        } catch (Throwable t) {
+        }
+      }
+    } catch (Throwable t) {
+    }
+
+    try {
+      java.util.ServiceLoader<ucar.unidata.io.spi.RandomAccessFileProvider> rafLoader =
+          java.util.ServiceLoader.load(ucar.unidata.io.spi.RandomAccessFileProvider.class);
+      for (ucar.unidata.io.spi.RandomAccessFileProvider rafProvider : rafLoader) {
+        try {
+          NetcdfFiles.registerRandomAccessFileProvider(rafProvider.getClass());
+        } catch (Throwable t) {
+        }
+      }
+    } catch (Throwable t) {
+    }
+
+    try {
+      java.util.ServiceLoader<ucar.nc2.dataset.spi.NetcdfFileProvider> nfpLoader =
+          java.util.ServiceLoader.load(ucar.nc2.dataset.spi.NetcdfFileProvider.class);
+      for (ucar.nc2.dataset.spi.NetcdfFileProvider nfp : nfpLoader) {
+        // pre-warm iterator
+      }
+    } catch (Throwable t) {
+    }
+
+    try {
+      java.util.ServiceLoader<ucar.nc2.dataset.spi.CoordSystemBuilderFactory> csbLoader =
+          java.util.ServiceLoader.load(ucar.nc2.dataset.spi.CoordSystemBuilderFactory.class);
+      for (ucar.nc2.dataset.spi.CoordSystemBuilderFactory csb : csbLoader) {
+        // pre-warm iterator
+      }
+    } catch (Throwable t) {
+    }
+  }
+
   static {
     // 2021-01-07 was ucar.nc2.iosp.netcdf3.N3header.disallowFileTruncation = true;
     ucar.nc2.internal.iosp.netcdf3.N3headerNew.disallowFileTruncation = true;
+    registerProviders();
   }
 
   /**
