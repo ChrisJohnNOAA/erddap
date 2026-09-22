@@ -895,23 +895,14 @@ public class EDConfig {
    */
   double getSetupEVDouble(
       ResourceBundle2 setup, Map<String, String> ev, String paramName, double tDefault) {
-    String value = ev.get("ERDDAP_" + paramName);
-    if (String2.isSomething(value)) {
-      double valued = String2.parseDouble(value);
-      if (Double.isFinite(valued) && valued > 0) {
-        String2.log("got " + paramName + " from ERDDAP_" + paramName + ": " + valued);
-        return valued;
-      }
-      String2.log("WARNING: ERDDAP_" + paramName + " (" + value + ") is invalid or <= 0. Using default: " + tDefault);
-    }
-    String s = setup.getString(paramName, null);
+    String s = getSetupEVString(setup, ev, paramName, null);
     if (String2.isSomething(s)) {
       double valued = String2.parseDouble(s);
       if (Double.isFinite(valued) && valued > 0) {
-        String2.log("got " + paramName + " from setup.xml: " + valued);
         return valued;
       }
-      String2.log("WARNING: " + paramName + " in setup.xml (" + s + ") is invalid or <= 0. Using default: " + tDefault);
+      String2.log(
+          "WARNING: " + paramName + " (" + s + ") is invalid or <= 0. Using default: " + tDefault);
     }
     return tDefault;
   }
