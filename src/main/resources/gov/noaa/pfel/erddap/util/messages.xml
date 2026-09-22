@@ -8568,10 +8568,4 @@ Many datasets can also be accessed via ERDDAP's Web Map Service (WMS).
 <copytoclipboardnotavailable>Copy to clipboard not available</copytoclipboardnotavailable>
 <copyimagetoclipboard>Copy image to clipboard</copyimagetoclipboard>
 
-<!--
-AWS S3 CRT Configuration Notes:
-<s3TargetThroughputInGbps> (default: 20.0) sets target throughput in Gbps for AWS CRT S3 client.
-<s3MaxConcurrency> (default: unconfigured/null) sets maximum concurrent connections for AWS CRT S3 client.
--->
-
 </erddapMessages>

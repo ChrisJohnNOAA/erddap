@@ -552,7 +552,8 @@ public class EDConfig {
     useAwsCrt = getSetupEVBoolean(setup, ev, "useAwsCrt", true);
     useAwsAnonymous = getSetupEVBoolean(setup, ev, "useAwsAnonymous", false);
     s3TargetThroughputInGbps = getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    s3MaxConcurrency = getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    int maxConcurrency = getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    s3MaxConcurrency = maxConcurrency > 0 ? Integer.valueOf(maxConcurrency) : null;
 
     units_standard = getSetupEVString(setup, ev, "units_standard", "UDUNITS");
 
@@ -849,7 +850,7 @@ public class EDConfig {
    * @param tDefault the default value
    * @return the desired value (or the default if it isn't defined anywhere)
    */
-  private int getSetupEVInt(
+  int getSetupEVInt(
       ResourceBundle2 setup, Map<String, String> ev, String paramName, int tDefault) {
     String value = ev.get("ERDDAP_" + paramName);
     if (value != null) {
@@ -915,36 +916,4 @@ public class EDConfig {
     return tDefault;
   }
 
-  /**
-   * This gets an Integer from setup.xml or environmentalVariables (preferred).
-   * Ensures the value is positive (> 0); falls back to tDefault (which can be null) otherwise.
-   *
-   * @param setup from setup.xml
-   * @param ev from System.getenv()
-   * @param paramName If present in ev, it will be ERDDAP_paramName.
-   * @param tDefault the default value (e.g. null)
-   * @return the desired value (or default if not defined or <= 0/invalid)
-   */
-  Integer getSetupEVInteger(
-      ResourceBundle2 setup, Map<String, String> ev, String paramName, Integer tDefault) {
-    String value = ev.get("ERDDAP_" + paramName);
-    if (String2.isSomething(value)) {
-      int valuei = String2.parseInt(value);
-      if (valuei != Integer.MAX_VALUE && valuei > 0) {
-        String2.log("got " + paramName + " from ERDDAP_" + paramName + ": " + valuei);
-        return valuei;
-      }
-      String2.log("WARNING: ERDDAP_" + paramName + " (" + value + ") is invalid or <= 0. Using default: " + tDefault);
-    }
-    String s = setup.getString(paramName, null);
-    if (String2.isSomething(s)) {
-      int valuei = String2.parseInt(s);
-      if (valuei != Integer.MAX_VALUE && valuei > 0) {
-        String2.log("got " + paramName + " from setup.xml: " + valuei);
-        return valuei;
-      }
-      String2.log("WARNING: " + paramName + " in setup.xml (" + s + ") is invalid or <= 0. Using default: " + tDefault);
-    }
-    return tDefault;
-  }
 }

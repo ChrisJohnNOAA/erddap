@@ -39,7 +39,8 @@ public class EDConfigTests {
     setupMap.put("s3MaxConcurrency", "100");
 
     double targetThroughput = config.getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    Integer maxConcurrency = config.getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    int rawMaxConcurrency = config.getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    Integer maxConcurrency = rawMaxConcurrency > 0 ? Integer.valueOf(rawMaxConcurrency) : null;
 
     com.cohort.util.Test.ensureEqual(targetThroughput, 5.5, "parsed valid targetThroughputInGbps");
     com.cohort.util.Test.ensureEqual(maxConcurrency, Integer.valueOf(100), "parsed valid maxConcurrency");
@@ -49,7 +50,8 @@ public class EDConfigTests {
     setupMap.remove("s3MaxConcurrency");
 
     targetThroughput = config.getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    maxConcurrency = config.getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    rawMaxConcurrency = config.getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    maxConcurrency = rawMaxConcurrency > 0 ? Integer.valueOf(rawMaxConcurrency) : null;
 
     com.cohort.util.Test.ensureEqual(targetThroughput, 20.0, "missing targetThroughputInGbps falls back to 20.0");
     com.cohort.util.Test.ensureTrue(maxConcurrency == null, "missing maxConcurrency falls back to null");
@@ -59,7 +61,8 @@ public class EDConfigTests {
     setupMap.put("s3MaxConcurrency", "0");
 
     targetThroughput = config.getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    maxConcurrency = config.getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    rawMaxConcurrency = config.getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    maxConcurrency = rawMaxConcurrency > 0 ? Integer.valueOf(rawMaxConcurrency) : null;
 
     com.cohort.util.Test.ensureEqual(targetThroughput, 20.0, "negative targetThroughputInGbps falls back to 20.0");
     com.cohort.util.Test.ensureTrue(maxConcurrency == null, "zero maxConcurrency falls back to null");
@@ -69,7 +72,8 @@ public class EDConfigTests {
     setupMap.put("s3MaxConcurrency", "invalid_int");
 
     targetThroughput = config.getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    maxConcurrency = config.getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    rawMaxConcurrency = config.getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    maxConcurrency = rawMaxConcurrency > 0 ? Integer.valueOf(rawMaxConcurrency) : null;
 
     com.cohort.util.Test.ensureEqual(targetThroughput, 20.0, "malformed targetThroughputInGbps falls back to 20.0");
     com.cohort.util.Test.ensureTrue(maxConcurrency == null, "malformed maxConcurrency falls back to null");
@@ -79,7 +83,8 @@ public class EDConfigTests {
     ev.put("ERDDAP_s3MaxConcurrency", "64");
 
     targetThroughput = config.getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    maxConcurrency = config.getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    rawMaxConcurrency = config.getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    maxConcurrency = rawMaxConcurrency > 0 ? Integer.valueOf(rawMaxConcurrency) : null;
 
     com.cohort.util.Test.ensureEqual(targetThroughput, 12.5, "EV override targetThroughputInGbps");
     com.cohort.util.Test.ensureEqual(maxConcurrency, Integer.valueOf(64), "EV override maxConcurrency");
@@ -89,7 +94,8 @@ public class EDConfigTests {
     ev.put("ERDDAP_s3MaxConcurrency", "-5");
 
     targetThroughput = config.getSetupEVDouble(setup, ev, "s3TargetThroughputInGbps", 20.0);
-    maxConcurrency = config.getSetupEVInteger(setup, ev, "s3MaxConcurrency", null);
+    rawMaxConcurrency = config.getSetupEVInt(setup, ev, "s3MaxConcurrency", -1);
+    maxConcurrency = rawMaxConcurrency > 0 ? Integer.valueOf(rawMaxConcurrency) : null;
 
     com.cohort.util.Test.ensureEqual(targetThroughput, 20.0, "malformed EV falls back to default 20.0");
     com.cohort.util.Test.ensureTrue(maxConcurrency == null, "negative EV falls back to null");

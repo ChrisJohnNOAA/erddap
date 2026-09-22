@@ -4640,16 +4640,8 @@ public class EDStatic {
             if (EDStatic.config.s3MaxConcurrency != null && EDStatic.config.s3MaxConcurrency > 0) {
               crtBuilder.maxConcurrency(EDStatic.config.s3MaxConcurrency);
             }
-            String2.log(
-                "Creating S3 CRT client for region "
-                    + region
-                    + " with targetThroughputInGbps="
-                    + EDStatic.config.s3TargetThroughputInGbps
-                    + ", maxConcurrency="
-                    + EDStatic.config.s3MaxConcurrency);
             builder = crtBuilder;
           } else {
-            String2.log("Creating standard S3 client for region " + region);
             builder =
                 S3AsyncClient.builder()
                     .credentialsProvider(credentialsProvider)
