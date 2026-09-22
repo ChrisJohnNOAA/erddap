@@ -215,35 +215,33 @@ public class NcHelper {
    *     numeric ArrayXxx.D1)
    */
   private static PrimitiveArray decodeAttributeToPrimitive(Array nc2Array) {
+    if (nc2Array == null) return null;
+
     // String[] from ArrayChar.Dn
     if (nc2Array instanceof ArrayChar ac) {
       ArrayObject ao = ac.make1DStringArray();
-      Object[] oa = (Object[]) ao.copyTo1DJavaArray();
+      Object storage = ao.getStorage();
+      Object[] oa;
+      if (storage != null && storage.getClass().isArray() && ao.getSize() == java.lang.reflect.Array.getLength(storage)) {
+        oa = (Object[]) storage;
+      } else {
+        oa = (Object[]) ao.copyTo1DJavaArray();
+      }
       StringArray sa = new StringArray(oa.length, false);
       for (Object o : oa)
         sa.add(o == null ? null : String2.fromJson(String2.trimEnd(o.toString())));
       return sa;
     }
 
-    // byte[] from ArrayBoolean.Dn
-    if (nc2Array instanceof ArrayBoolean) {
-      boolean boolAr[] = (boolean[]) nc2Array.copyTo1DJavaArray();
-      int n = boolAr.length;
-      byte byteAr[] = new byte[n];
-      for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
-      return PrimitiveArray.factory(byteAr, nc2Array.isUnsigned());
-    }
-
-    Object o = nc2Array.copyTo1DJavaArray();
-    if (o instanceof String[] sa) {
-      for (int i = 0; i < sa.length; i++) {
-        if (sa[i] != null) sa[i] = sa[i].trim();
+    PrimitiveArray pa = getPrimitiveArray(nc2Array, false, nc2Array.isUnsigned());
+    if (pa instanceof StringArray sa) {
+      int n = sa.size();
+      for (int i = 0; i < n; i++) {
+        String s = sa.get(i);
+        if (s != null) sa.set(i, s.trim());
       }
-      return new StringArray(sa);
     }
-
-    // ArrayXxxnumeric
-    return PrimitiveArray.factory(o, nc2Array.isUnsigned());
+    return pa;
   }
 
   /**
