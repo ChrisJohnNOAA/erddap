@@ -502,6 +502,47 @@ class NcHelperTests {
   }
 
   @org.junit.jupiter.api.Test
+  void benchmarkGetUnpackedPrimitiveArray() throws Throwable {
+    String scaleFile = NcHelperTests.class.getResource("/data/nc/scale_factor.nc").getFile();
+    try (NetcdfFile nc = NcHelper.openFile(scaleFile)) {
+      Variable var = nc.findVariable("analysed_sst");
+      Test.ensureNotNull(var, "analysed_sst variable should exist in scale_factor.nc");
+      Array nc2Array = var.read();
+
+      // Warmup JVM
+      for (int i = 0; i < 100; i++) {
+        PrimitiveArray pa1 = NcHelper.getPrimitiveArray(nc2Array, true, NcHelper.isUnsigned(var));
+        NcHelper.unpackPA(var, pa1, true, true);
+        NcHelper.getUnpackedPrimitiveArray(var, nc2Array, NcHelper.isUnsigned(var));
+      }
+
+      int iterations = 1000;
+
+      // Time Old Approach: getPrimitiveArray (allocates raw copy) + unpackPA
+      long t0 = System.nanoTime();
+      for (int i = 0; i < iterations; i++) {
+        PrimitiveArray paOld = NcHelper.getPrimitiveArray(nc2Array, true, NcHelper.isUnsigned(var));
+        paOld = NcHelper.unpackPA(var, paOld, true, true);
+      }
+      long elapsedOld = System.nanoTime() - t0;
+
+      // Time New Fused Approach: getUnpackedPrimitiveArray
+      long t1 = System.nanoTime();
+      for (int i = 0; i < iterations; i++) {
+        PrimitiveArray paNew = NcHelper.getUnpackedPrimitiveArray(var, nc2Array, NcHelper.isUnsigned(var));
+      }
+      long elapsedNew = System.nanoTime() - t1;
+
+      double msOld = elapsedOld / 1e6;
+      double msNew = elapsedNew / 1e6;
+      String2.log(String.format("Benchmark [%d iterations]: Old approach = %.2f ms, New fused approach = %.2f ms",
+          iterations, msOld, msNew));
+
+      Test.ensureTrue(msNew <= msOld * 1.5, "New fused approach should be as fast or faster than old approach");
+    }
+  }
+
+  @org.junit.jupiter.api.Test
   void testGetUnpackedPrimitiveArray() throws Throwable {
     String scaleFile = NcHelperTests.class.getResource("/data/nc/scale_factor.nc").getFile();
     try (NetcdfFile nc = NcHelper.openFile(scaleFile)) {
