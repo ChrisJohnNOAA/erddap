@@ -502,6 +502,18 @@ class NcHelperTests {
   }
 
   @org.junit.jupiter.api.Test
+  void testGetUnpackedPrimitiveArray() throws Throwable {
+    String scaleFile = NcHelperTests.class.getResource("/data/nc/scale_factor.nc").getFile();
+    try (NetcdfFile nc = NcHelper.openFile(scaleFile)) {
+      Variable var = nc.findVariable("analysed_sst");
+      Test.ensureNotNull(var, "analysed_sst variable should exist in scale_factor.nc");
+      PrimitiveArray pa = NcHelper.getUnpackedPrimitiveArray(var, var.read(), NcHelper.isUnsigned(var));
+      Test.ensureTrue(pa instanceof DoubleArray, "Unpacked sst should be DoubleArray");
+      Test.ensureTrue(pa.size() > 0, "Unpacked sst size should be > 0");
+    }
+  }
+
+  @org.junit.jupiter.api.Test
   void testZeroCopyGetPrimitiveArray() throws Throwable {
     double[] rawDoubles = new double[] {1.1, 2.2, 3.3, 4.4};
     ucar.ma2.ArrayDouble.D1 arrayDouble = new ucar.ma2.ArrayDouble.D1(4);

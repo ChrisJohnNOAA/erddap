@@ -1460,6 +1460,106 @@ public class NcHelper {
   }
 
   /**
+   * Fuses NetCDF Array extraction and scale_factor/add_offset unpacking into a single pass
+   * directly into the destination DoubleArray or FloatArray to avoid allocating an intermediate raw array.
+   *
+   * @param var the NetCDF variable
+   * @param nc2Array the read NetCDF Array
+   * @param isUnsigned whether the variable is unsigned
+   * @return the unpacked PrimitiveArray
+   * @throws Exception if trouble
+   */
+  public static PrimitiveArray getUnpackedPrimitiveArray(
+      Variable var, Array nc2Array, boolean isUnsigned) throws Exception {
+    if (nc2Array == null) return null;
+
+    Attributes atts = new Attributes();
+    getVariableAttributes(var, atts);
+
+    PrimitiveArray scalePA = atts.get("scale_factor");
+    PrimitiveArray addPA = atts.get("add_offset");
+
+    if (scalePA != null || addPA != null) {
+      double scale = 1;
+      double add = 0;
+      PAType targetPAType = null;
+      if (scalePA != null) {
+        scale = scalePA.getNiceDouble(0);
+        if (Double.isNaN(scale)) scale = 1;
+        targetPAType = scalePA.elementType();
+      }
+      if (addPA != null) {
+        add = addPA.getNiceDouble(0);
+        if (Double.isNaN(add)) add = 0;
+        if (targetPAType == null) targetPAType = addPA.elementType();
+      }
+      if (targetPAType == null) {
+        targetPAType = getElementPAType(var);
+      }
+
+      boolean unsigned = isUnsigned || isUnsigned(var);
+      PAType rawPAType = getElementPAType(var);
+      if (unsigned) {
+        if (rawPAType == PAType.BYTE) rawPAType = PAType.UBYTE;
+        else if (rawPAType == PAType.SHORT) rawPAType = PAType.USHORT;
+        else if (rawPAType == PAType.INT) rawPAType = PAType.UINT;
+        else if (rawPAType == PAType.LONG) rawPAType = PAType.ULONG;
+      }
+
+      double dFillValue = unsigned ? atts.getUnsignedDouble("_FillValue") : atts.getDouble("_FillValue");
+      double dMissingValue = unsigned ? atts.getUnsignedDouble("missing_value") : atts.getDouble("missing_value");
+
+      int n = Math2.narrowToInt(nc2Array.getSize());
+      IndexIterator iter = nc2Array.getIndexIterator();
+      DataType dataType = var.getDataType();
+      boolean isByte = dataType == DataType.BYTE || dataType == DataType.UBYTE;
+      boolean isShort = dataType == DataType.SHORT || dataType == DataType.USHORT;
+      boolean isInt = dataType == DataType.INT || dataType == DataType.UINT;
+
+      if (targetPAType == PAType.FLOAT) {
+        float[] dest = new float[n];
+        for (int i = 0; i < n; i++) {
+          double val = iter.getDoubleNext();
+          if (unsigned) {
+            if (isByte) val = ((byte) val) & 0xff;
+            else if (isShort) val = ((short) val) & 0xffff;
+            else if (isInt) val = ((int) val) & 0xffffffffL;
+          }
+
+          if ((!Double.isNaN(dMissingValue) && Math2.almostEqual(5, val, dMissingValue))
+              || (!Double.isNaN(dFillValue) && Math2.almostEqual(5, val, dFillValue))) {
+            dest[i] = Float.NaN;
+          } else {
+            dest[i] = (float) (val * scale + add);
+          }
+        }
+        return new FloatArray(dest);
+      } else {
+        double[] dest = new double[n];
+        for (int i = 0; i < n; i++) {
+          double val = iter.getDoubleNext();
+          if (unsigned) {
+            if (isByte) val = ((byte) val) & 0xff;
+            else if (isShort) val = ((short) val) & 0xffff;
+            else if (isInt) val = ((int) val) & 0xffffffffL;
+          }
+
+          if ((!Double.isNaN(dMissingValue) && Math2.almostEqual(5, val, dMissingValue))
+              || (!Double.isNaN(dFillValue) && Math2.almostEqual(5, val, dFillValue))) {
+            dest[i] = Double.NaN;
+          } else {
+            dest[i] = val * scale + add;
+          }
+        }
+        return new DoubleArray(dest);
+      }
+    }
+
+    PrimitiveArray pa = getPrimitiveArray(nc2Array, true, isUnsigned);
+    return atts.unpackPA(var.getFullName(), pa, true, true);
+  }
+
+  /**
    * This returns the double value of an attribute. If the attribute DataType is DataType.FLOAT,
    * this nicely converts the float to a double.
    *

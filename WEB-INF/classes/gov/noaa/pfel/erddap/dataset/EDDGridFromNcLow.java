@@ -423,13 +423,15 @@ public abstract class EDDGridFromNcLow extends EDDGridFromFiles {
             String tSel = selection;
             if (edv.sourceDataPAType() == PAType.STRING)
               tSel += ",0:" + (var.getShape(var.getRank() - 1) - 1);
-            paa[dvi] = NcHelper.getPrimitiveArray(var.read(tSel), true, NcHelper.isUnsigned(var));
-
-            if (unpack())
+            if (unpack()) {
               paa[dvi] =
-                  NcHelper.unpackPA(
-                      var, paa[dvi], true,
-                      true);
+                  NcHelper.getUnpackedPrimitiveArray(
+                      var, var.read(tSel), NcHelper.isUnsigned(var));
+            } else {
+              paa[dvi] =
+                  NcHelper.getPrimitiveArray(
+                      var.read(tSel), true, NcHelper.isUnsigned(var));
+            }
 
             nValues = paa[dvi].size();
           }
