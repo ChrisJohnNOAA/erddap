@@ -1498,57 +1498,157 @@ public class NcHelper {
       }
 
       boolean unsigned = isUnsigned || isUnsigned(var);
-      PAType rawPAType = getElementPAType(var);
-      if (unsigned) {
-        if (rawPAType == PAType.BYTE) rawPAType = PAType.UBYTE;
-        else if (rawPAType == PAType.SHORT) rawPAType = PAType.USHORT;
-        else if (rawPAType == PAType.INT) rawPAType = PAType.UINT;
-        else if (rawPAType == PAType.LONG) rawPAType = PAType.ULONG;
-      }
-
       double dFillValue = unsigned ? atts.getUnsignedDouble("_FillValue") : atts.getDouble("_FillValue");
       double dMissingValue = unsigned ? atts.getUnsignedDouble("missing_value") : atts.getDouble("missing_value");
+      boolean hasMissingValue = !Double.isNaN(dMissingValue);
+      boolean hasFillValue = !Double.isNaN(dFillValue);
 
       int n = Math2.narrowToInt(nc2Array.getSize());
-      IndexIterator iter = nc2Array.getIndexIterator();
-      DataType dataType = var.getDataType();
-      boolean isByte = dataType == DataType.BYTE || dataType == DataType.UBYTE;
-      boolean isShort = dataType == DataType.SHORT || dataType == DataType.USHORT;
-      boolean isInt = dataType == DataType.INT || dataType == DataType.UINT;
+      Object storage = nc2Array.getStorage();
+      boolean isFast = storage != null
+          && storage.getClass().isArray()
+          && nc2Array.getSize() == java.lang.reflect.Array.getLength(storage)
+          && nc2Array.getIndexIterator() instanceof IteratorFast;
 
       if (targetPAType == PAType.FLOAT) {
         float[] dest = new float[n];
-        for (int i = 0; i < n; i++) {
-          double val = iter.getDoubleNext();
-          if (unsigned) {
-            if (isByte) val = ((byte) val) & 0xff;
-            else if (isShort) val = ((short) val) & 0xffff;
-            else if (isInt) val = ((int) val) & 0xffffffffL;
-          }
 
-          if ((!Double.isNaN(dMissingValue) && Math2.almostEqual(5, val, dMissingValue))
-              || (!Double.isNaN(dFillValue) && Math2.almostEqual(5, val, dFillValue))) {
-            dest[i] = Float.NaN;
-          } else {
-            dest[i] = (float) (val * scale + add);
+        if (isFast && storage instanceof short[] sa) {
+          for (int i = 0; i < n; i++) {
+            double val = unsigned ? (sa[i] & 0xffff) : sa[i];
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Float.NaN;
+            } else {
+              dest[i] = (float) (val * scale + add);
+            }
+          }
+        } else if (isFast && storage instanceof byte[] ba) {
+          for (int i = 0; i < n; i++) {
+            double val = unsigned ? (ba[i] & 0xff) : ba[i];
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Float.NaN;
+            } else {
+              dest[i] = (float) (val * scale + add);
+            }
+          }
+        } else if (isFast && storage instanceof int[] ia) {
+          for (int i = 0; i < n; i++) {
+            double val = unsigned ? (ia[i] & 0xffffffffL) : ia[i];
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Float.NaN;
+            } else {
+              dest[i] = (float) (val * scale + add);
+            }
+          }
+        } else if (isFast && storage instanceof float[] fa) {
+          for (int i = 0; i < n; i++) {
+            float val = fa[i];
+            if (Float.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Float.NaN;
+            } else {
+              dest[i] = (float) (val * scale + add);
+            }
+          }
+        } else if (isFast && storage instanceof double[] da) {
+          for (int i = 0; i < n; i++) {
+            double val = da[i];
+            if (Double.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Float.NaN;
+            } else {
+              dest[i] = (float) (val * scale + add);
+            }
+          }
+        } else {
+          IndexIterator iter = nc2Array.getIndexIterator();
+          DataType dataType = var.getDataType();
+          boolean isByte = dataType == DataType.BYTE || dataType == DataType.UBYTE;
+          boolean isShort = dataType == DataType.SHORT || dataType == DataType.USHORT;
+          boolean isInt = dataType == DataType.INT || dataType == DataType.UINT;
+
+          for (int i = 0; i < n; i++) {
+            double val = iter.getDoubleNext();
+            if (unsigned) {
+              if (isByte) val = ((byte) val) & 0xff;
+              else if (isShort) val = ((short) val) & 0xffff;
+              else if (isInt) val = ((int) val) & 0xffffffffL;
+            }
+
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Float.NaN;
+            } else {
+              dest[i] = (float) (val * scale + add);
+            }
           }
         }
         return new FloatArray(dest);
       } else {
         double[] dest = new double[n];
-        for (int i = 0; i < n; i++) {
-          double val = iter.getDoubleNext();
-          if (unsigned) {
-            if (isByte) val = ((byte) val) & 0xff;
-            else if (isShort) val = ((short) val) & 0xffff;
-            else if (isInt) val = ((int) val) & 0xffffffffL;
-          }
 
-          if ((!Double.isNaN(dMissingValue) && Math2.almostEqual(5, val, dMissingValue))
-              || (!Double.isNaN(dFillValue) && Math2.almostEqual(5, val, dFillValue))) {
-            dest[i] = Double.NaN;
-          } else {
-            dest[i] = val * scale + add;
+        if (isFast && storage instanceof short[] sa) {
+          for (int i = 0; i < n; i++) {
+            double val = unsigned ? (sa[i] & 0xffff) : sa[i];
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Double.NaN;
+            } else {
+              dest[i] = val * scale + add;
+            }
+          }
+        } else if (isFast && storage instanceof byte[] ba) {
+          for (int i = 0; i < n; i++) {
+            double val = unsigned ? (ba[i] & 0xff) : ba[i];
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Double.NaN;
+            } else {
+              dest[i] = val * scale + add;
+            }
+          }
+        } else if (isFast && storage instanceof int[] ia) {
+          for (int i = 0; i < n; i++) {
+            double val = unsigned ? (ia[i] & 0xffffffffL) : ia[i];
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Double.NaN;
+            } else {
+              dest[i] = val * scale + add;
+            }
+          }
+        } else if (isFast && storage instanceof float[] fa) {
+          for (int i = 0; i < n; i++) {
+            float val = fa[i];
+            if (Float.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Double.NaN;
+            } else {
+              dest[i] = val * scale + add;
+            }
+          }
+        } else if (isFast && storage instanceof double[] da) {
+          for (int i = 0; i < n; i++) {
+            double val = da[i];
+            if (Double.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Double.NaN;
+            } else {
+              dest[i] = val * scale + add;
+            }
+          }
+        } else {
+          IndexIterator iter = nc2Array.getIndexIterator();
+          DataType dataType = var.getDataType();
+          boolean isByte = dataType == DataType.BYTE || dataType == DataType.UBYTE;
+          boolean isShort = dataType == DataType.SHORT || dataType == DataType.USHORT;
+          boolean isInt = dataType == DataType.INT || dataType == DataType.UINT;
+
+          for (int i = 0; i < n; i++) {
+            double val = iter.getDoubleNext();
+            if (unsigned) {
+              if (isByte) val = ((byte) val) & 0xff;
+              else if (isShort) val = ((short) val) & 0xffff;
+              else if (isInt) val = ((int) val) & 0xffffffffL;
+            }
+
+            if ((hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+              dest[i] = Double.NaN;
+            } else {
+              dest[i] = val * scale + add;
+            }
           }
         }
         return new DoubleArray(dest);
