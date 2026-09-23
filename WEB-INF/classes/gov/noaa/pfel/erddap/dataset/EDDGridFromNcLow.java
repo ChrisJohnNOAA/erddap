@@ -290,10 +290,12 @@ public abstract class EDDGridFromNcLow extends EDDGridFromFiles {
           avPa[avi] =
               avi > 0 && dimSize1 < 32000 ? new ShortArray(0, dimSize1) : new IntArray(0, dimSize1);
         } else {
-          avPa[avi] = NcHelper.getPrimitiveArray(var);
-          if (unpack())
+          if (unpack()) {
             avPa[avi] =
-                NcHelper.unpackPA(var, avPa[avi], true, true); // lookForStringTime, lookForUnsigned
+                NcHelper.getUnpackedPrimitiveArray(var, var.read(), NcHelper.isUnsigned(var));
+          } else {
+            avPa[avi] = NcHelper.getPrimitiveArray(var);
+          }
         }
       }
 
@@ -425,12 +427,9 @@ public abstract class EDDGridFromNcLow extends EDDGridFromFiles {
               tSel += ",0:" + (var.getShape(var.getRank() - 1) - 1);
             if (unpack()) {
               paa[dvi] =
-                  NcHelper.getUnpackedPrimitiveArray(
-                      var, var.read(tSel), NcHelper.isUnsigned(var));
+                  NcHelper.getUnpackedPrimitiveArray(var, var.read(tSel), NcHelper.isUnsigned(var));
             } else {
-              paa[dvi] =
-                  NcHelper.getPrimitiveArray(
-                      var.read(tSel), true, NcHelper.isUnsigned(var));
+              paa[dvi] = NcHelper.getPrimitiveArray(var.read(tSel), true, NcHelper.isUnsigned(var));
             }
 
             nValues = paa[dvi].size();

@@ -216,62 +216,7 @@ public class NcHelper {
    */
   private static PrimitiveArray decodeAttributeToPrimitive(Array nc2Array) {
     if (nc2Array == null) return null;
-
-    // String[] from ArrayChar.Dn
-    if (nc2Array instanceof ArrayChar ac) {
-      ArrayObject ao = ac.make1DStringArray();
-      Object storage = ao.getStorage();
-      Object[] oa;
-      if (storage != null && storage.getClass().isArray() && ao.getSize() == java.lang.reflect.Array.getLength(storage)) {
-        oa = (Object[]) storage;
-      } else {
-        oa = (Object[]) ao.copyTo1DJavaArray();
-      }
-      StringArray sa = new StringArray(oa.length, false);
-      for (Object o : oa)
-        sa.add(o == null ? null : String2.fromJson(String2.trimEnd(o.toString())));
-      return sa;
-    }
-
-    // byte[] from ArrayBoolean.Dn
-    if (nc2Array instanceof ArrayBoolean) {
-      int n = Math2.narrowToInt(nc2Array.getSize());
-      byte byteAr[] = new byte[n];
-      Object storage = nc2Array.getStorage();
-      if (storage instanceof boolean[] boolAr && boolAr.length == n) {
-        for (int i = 0; i < n; i++) byteAr[i] = boolAr[i] ? (byte) 1 : (byte) 0;
-      } else {
-        IndexIterator iter = nc2Array.getIndexIterator();
-        for (int i = 0; i < n; i++) byteAr[i] = iter.getBooleanNext() ? (byte) 1 : (byte) 0;
-      }
-      return PrimitiveArray.factory(byteAr, nc2Array.isUnsigned());
-    }
-
-    // Fast-path for contiguous numeric/string arrays
-    Object storage = nc2Array.getStorage();
-    if (storage != null
-        && storage.getClass().isArray()
-        && nc2Array.getSize() == java.lang.reflect.Array.getLength(storage)
-        && nc2Array.getIndexIterator() instanceof IteratorFast) {
-      if (storage instanceof String[] sa) {
-        String[] trimmed = new String[sa.length];
-        for (int i = 0; i < sa.length; i++) {
-          trimmed[i] = sa[i] == null ? null : sa[i].trim();
-        }
-        return new StringArray(trimmed);
-      }
-      return PrimitiveArray.factory(storage, nc2Array.isUnsigned());
-    }
-
-    Object o = nc2Array.copyTo1DJavaArray();
-    if (o instanceof String[] sa) {
-      for (int i = 0; i < sa.length; i++) {
-        if (sa[i] != null) sa[i] = sa[i].trim();
-      }
-      return new StringArray(sa);
-    }
-
-    return PrimitiveArray.factory(o, nc2Array.isUnsigned());
+    return getPrimitiveArray(nc2Array, false, nc2Array.isUnsigned());
   }
 
   /**
@@ -606,7 +551,9 @@ public class NcHelper {
       ArrayObject ao = na.make1DStringArray();
       Object storage = ao.getStorage();
       Object[] oa;
-      if (storage != null && storage.getClass().isArray() && ao.getSize() == java.lang.reflect.Array.getLength(storage)) {
+      if (storage != null
+          && storage.getClass().isArray()
+          && ao.getSize() == java.lang.reflect.Array.getLength(storage)) {
         oa = (Object[]) storage;
       } else {
         oa = (Object[]) ao.copyTo1DJavaArray();
@@ -650,7 +597,8 @@ public class NcHelper {
       return PrimitiveArray.factory(storage, unsigned);
     }
 
-    // Non-contiguous or strided view array: copy directly into target PrimitiveArray without copyTo1DJavaArray
+    // Non-contiguous or strided view array: copy directly into target PrimitiveArray without
+    // copyTo1DJavaArray
     int n = Math2.narrowToInt(nc2Array.getSize());
     IndexIterator iter = nc2Array.getIndexIterator();
     if (nc2Array instanceof ArrayDouble) {
@@ -1488,8 +1436,8 @@ public class NcHelper {
   }
 
   /**
-   * Fuses NetCDF Array extraction and scale_factor/add_offset unpacking into a single pass
-   * directly into the destination DoubleArray or FloatArray to avoid allocating an intermediate raw array.
+   * Fuses NetCDF Array extraction and scale_factor/add_offset unpacking into a single pass directly
+   * into the destination DoubleArray or FloatArray to avoid allocating an intermediate raw array.
    *
    * @param var the NetCDF variable
    * @param nc2Array the read NetCDF Array
@@ -1526,17 +1474,20 @@ public class NcHelper {
       }
 
       boolean unsigned = isUnsigned || isUnsigned(var);
-      double dFillValue = unsigned ? atts.getUnsignedDouble("_FillValue") : atts.getDouble("_FillValue");
-      double dMissingValue = unsigned ? atts.getUnsignedDouble("missing_value") : atts.getDouble("missing_value");
+      double dFillValue =
+          unsigned ? atts.getUnsignedDouble("_FillValue") : atts.getDouble("_FillValue");
+      double dMissingValue =
+          unsigned ? atts.getUnsignedDouble("missing_value") : atts.getDouble("missing_value");
       boolean hasMissingValue = !Double.isNaN(dMissingValue);
       boolean hasFillValue = !Double.isNaN(dFillValue);
 
       int n = Math2.narrowToInt(nc2Array.getSize());
       Object storage = nc2Array.getStorage();
-      boolean isFast = storage != null
-          && storage.getClass().isArray()
-          && nc2Array.getSize() == java.lang.reflect.Array.getLength(storage)
-          && nc2Array.getIndexIterator() instanceof IteratorFast;
+      boolean isFast =
+          storage != null
+              && storage.getClass().isArray()
+              && nc2Array.getSize() == java.lang.reflect.Array.getLength(storage)
+              && nc2Array.getIndexIterator() instanceof IteratorFast;
 
       if (targetPAType == PAType.FLOAT) {
         float[] dest = new float[n];
@@ -1571,7 +1522,9 @@ public class NcHelper {
         } else if (isFast && storage instanceof float[] fa) {
           for (int i = 0; i < n; i++) {
             float val = fa[i];
-            if (Float.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+            if (Float.isNaN(val)
+                || (hasMissingValue && val == dMissingValue)
+                || (hasFillValue && val == dFillValue)) {
               dest[i] = Float.NaN;
             } else {
               dest[i] = (float) (val * scale + add);
@@ -1580,7 +1533,9 @@ public class NcHelper {
         } else if (isFast && storage instanceof double[] da) {
           for (int i = 0; i < n; i++) {
             double val = da[i];
-            if (Double.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+            if (Double.isNaN(val)
+                || (hasMissingValue && val == dMissingValue)
+                || (hasFillValue && val == dFillValue)) {
               dest[i] = Float.NaN;
             } else {
               dest[i] = (float) (val * scale + add);
@@ -1642,7 +1597,9 @@ public class NcHelper {
         } else if (isFast && storage instanceof float[] fa) {
           for (int i = 0; i < n; i++) {
             float val = fa[i];
-            if (Float.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+            if (Float.isNaN(val)
+                || (hasMissingValue && val == dMissingValue)
+                || (hasFillValue && val == dFillValue)) {
               dest[i] = Double.NaN;
             } else {
               dest[i] = val * scale + add;
@@ -1651,7 +1608,9 @@ public class NcHelper {
         } else if (isFast && storage instanceof double[] da) {
           for (int i = 0; i < n; i++) {
             double val = da[i];
-            if (Double.isNaN(val) || (hasMissingValue && val == dMissingValue) || (hasFillValue && val == dFillValue)) {
+            if (Double.isNaN(val)
+                || (hasMissingValue && val == dMissingValue)
+                || (hasFillValue && val == dFillValue)) {
               dest[i] = Double.NaN;
             } else {
               dest[i] = val * scale + add;

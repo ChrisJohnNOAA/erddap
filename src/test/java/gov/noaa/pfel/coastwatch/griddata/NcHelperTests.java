@@ -531,10 +531,14 @@ class NcHelperTests {
 
     double msOld = elapsedOld / 1e6;
     double msNew = elapsedNew / 1e6;
-    String2.log(String.format("Benchmark getPrimitiveArray [%d iterations of %d elements]: Old copyTo1DJavaArray = %.2f ms, New zero-copy = %.2f ms",
-        iterations, n, msOld, msNew));
+    String2.log(
+        String.format(
+            "Benchmark getPrimitiveArray [%d iterations of %d elements]: Old copyTo1DJavaArray = %.2f ms, New zero-copy = %.2f ms",
+            iterations, n, msOld, msNew));
 
-    Test.ensureTrue(msNew < msOld, "New zero-copy getPrimitiveArray should be faster than old copyTo1DJavaArray");
+    Test.ensureTrue(
+        msNew < msOld,
+        "New zero-copy getPrimitiveArray should be faster than old copyTo1DJavaArray");
   }
 
   @org.junit.jupiter.api.Test
@@ -565,16 +569,20 @@ class NcHelperTests {
       // Time New Fused Approach: getUnpackedPrimitiveArray
       long t1 = System.nanoTime();
       for (int i = 0; i < iterations; i++) {
-        PrimitiveArray paNew = NcHelper.getUnpackedPrimitiveArray(var, nc2Array, NcHelper.isUnsigned(var));
+        PrimitiveArray paNew =
+            NcHelper.getUnpackedPrimitiveArray(var, nc2Array, NcHelper.isUnsigned(var));
       }
       long elapsedNew = System.nanoTime() - t1;
 
       double msOld = elapsedOld / 1e6;
       double msNew = elapsedNew / 1e6;
-      String2.log(String.format("Benchmark [%d iterations]: Old approach = %.2f ms, New fused approach = %.2f ms",
-          iterations, msOld, msNew));
+      String2.log(
+          String.format(
+              "Benchmark [%d iterations]: Old approach = %.2f ms, New fused approach = %.2f ms",
+              iterations, msOld, msNew));
 
-      Test.ensureTrue(msNew <= msOld * 1.5, "New fused approach should be as fast or faster than old approach");
+      Test.ensureTrue(
+          msNew <= msOld * 1.5, "New fused approach should be as fast or faster than old approach");
     }
   }
 
@@ -584,7 +592,8 @@ class NcHelperTests {
     try (NetcdfFile nc = NcHelper.openFile(scaleFile)) {
       Variable var = nc.findVariable("analysed_sst");
       Test.ensureNotNull(var, "analysed_sst variable should exist in scale_factor.nc");
-      PrimitiveArray pa = NcHelper.getUnpackedPrimitiveArray(var, var.read(), NcHelper.isUnsigned(var));
+      PrimitiveArray pa =
+          NcHelper.getUnpackedPrimitiveArray(var, var.read(), NcHelper.isUnsigned(var));
       Test.ensureTrue(pa instanceof DoubleArray, "Unpacked sst should be DoubleArray");
       Test.ensureTrue(pa.size() > 0, "Unpacked sst size should be > 0");
     }
@@ -595,20 +604,29 @@ class NcHelperTests {
     double[] rawDoubles = new double[] {1.1, 2.2, 3.3, 4.4};
     ucar.ma2.ArrayDouble.D1 arrayDouble = new ucar.ma2.ArrayDouble.D1(4);
     for (int i = 0; i < 4; i++) arrayDouble.set(i, rawDoubles[i]);
-    com.cohort.array.DoubleArray dpa = (com.cohort.array.DoubleArray) NcHelper.getPrimitiveArray(arrayDouble, true, false);
-    Test.ensureTrue(dpa.array == arrayDouble.getStorage(), "DoubleArray should wrap NetCDF storage directly without extra copy");
+    com.cohort.array.DoubleArray dpa =
+        (com.cohort.array.DoubleArray) NcHelper.getPrimitiveArray(arrayDouble, true, false);
+    Test.ensureTrue(
+        dpa.array == arrayDouble.getStorage(),
+        "DoubleArray should wrap NetCDF storage directly without extra copy");
 
     float[] rawFloats = new float[] {1.0f, 2.0f, 3.0f};
     ucar.ma2.ArrayFloat.D1 arrayFloat = new ucar.ma2.ArrayFloat.D1(3);
     for (int i = 0; i < 3; i++) arrayFloat.set(i, rawFloats[i]);
-    com.cohort.array.FloatArray fpa = (com.cohort.array.FloatArray) NcHelper.getPrimitiveArray(arrayFloat, true, false);
-    Test.ensureTrue(fpa.array == arrayFloat.getStorage(), "FloatArray should wrap NetCDF storage directly without extra copy");
+    com.cohort.array.FloatArray fpa =
+        (com.cohort.array.FloatArray) NcHelper.getPrimitiveArray(arrayFloat, true, false);
+    Test.ensureTrue(
+        fpa.array == arrayFloat.getStorage(),
+        "FloatArray should wrap NetCDF storage directly without extra copy");
 
     byte[] rawBytes = new byte[] {10, 20, 30};
     ucar.ma2.ArrayByte.D1 arrayByte = new ucar.ma2.ArrayByte.D1(3, false);
     for (int i = 0; i < 3; i++) arrayByte.set(i, rawBytes[i]);
-    com.cohort.array.ByteArray bpa = (com.cohort.array.ByteArray) NcHelper.getPrimitiveArray(arrayByte, true, false);
-    Test.ensureTrue(bpa.array == arrayByte.getStorage(), "ByteArray should wrap NetCDF storage directly without extra copy");
+    com.cohort.array.ByteArray bpa =
+        (com.cohort.array.ByteArray) NcHelper.getPrimitiveArray(arrayByte, true, false);
+    Test.ensureTrue(
+        bpa.array == arrayByte.getStorage(),
+        "ByteArray should wrap NetCDF storage directly without extra copy");
   }
 
   /** ERDDAP: require that all vars be in same structure */
