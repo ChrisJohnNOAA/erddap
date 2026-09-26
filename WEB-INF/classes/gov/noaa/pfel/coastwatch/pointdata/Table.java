@@ -36,6 +36,7 @@ import gov.noaa.pfel.coastwatch.griddata.FileNameUtility;
 import gov.noaa.pfel.coastwatch.griddata.Matlab;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
+import gov.noaa.pfel.coastwatch.pointdata.parquet.CustomWriteSupport.RowRef;
 import gov.noaa.pfel.coastwatch.pointdata.parquet.ParquetWriterBuilder;
 import gov.noaa.pfel.coastwatch.util.HtmlWidgets;
 import gov.noaa.pfel.coastwatch.util.SSR;
@@ -76,6 +77,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -110,10 +112,10 @@ import org.apache.parquet.schema.Types.MessageTypeBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import thredds.client.catalog.ServiceType;
-import ucar.ma2.Array;
 import ucar.ma2.ArraySequence;
 import ucar.ma2.ArrayStructure;
 import ucar.ma2.DataType;
+import ucar.ma2.Section;
 import ucar.ma2.StructureData;
 import ucar.ma2.StructureDataIterator;
 import ucar.nc2.Dimension;
@@ -122,6 +124,7 @@ import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDataset.Enhance;
 import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.write.NetcdfFormatWriter;
 
@@ -681,6 +684,37 @@ public class Table {
 
     globalAttributes.clear();
     columnAttributes.clear();
+  }
+
+  /**
+   * Helper method to extract literal prefix from skipLinesRegex (e.g., "^#.*" -> "#", "^//" ->
+   * "//", "#.*" -> "#"). Returns null if skipLinesRegex is null or doesn't have a simple literal
+   * anchor/prefix.
+   */
+  private static String extractLiteralPrefix(String regex) {
+    if (regex == null || regex.isEmpty()) {
+      return null;
+    }
+    String r = regex.startsWith("^") ? regex.substring(1) : regex;
+    // Check for simple comment patterns like #.*, //.*, %.*, ;.*, #, //, %, ;
+    if (r.startsWith("#")) return "#";
+    if (r.startsWith("//")) return "//";
+    if (r.startsWith("%")) return "%";
+    if (r.startsWith(";")) return ";";
+    return null;
+  }
+
+  /**
+   * Helper method to determine if a line should be skipped based on fast-path checks or
+   * skipLinesMatcher.
+   */
+  private static boolean shouldSkipLine(String line, Matcher skipMatcher, String literalPrefix) {
+    if (line == null) return false;
+    if (line.isEmpty()) return false;
+    if (literalPrefix != null) {
+      return line.startsWith(literalPrefix);
+    }
+    return skipMatcher != null && skipMatcher.reset(line).matches();
   }
 
   /**
@@ -1293,9 +1327,25 @@ public class Table {
    * @return a BitSet with bit=true for each row that has data (not all missing-values).
    */
   public BitSet rowsWithData() {
+    return rowsWithData(null);
+  }
+
+  /**
+   * Returns a BitSet with bit=true for each row that has data (not all missing-values), using a
+   * reusable BitSet if provided.
+   *
+   * @param reusableKeep optional BitSet instance to clear and reuse
+   * @return keep BitSet
+   */
+  public BitSet rowsWithData(BitSet reusableKeep) {
     int tnRows = nRows();
     int tnCols = nColumns();
-    BitSet keep = new BitSet(tnRows); // all false
+    BitSet keep = reusableKeep;
+    if (keep == null) {
+      keep = new BitSet(tnRows);
+    } else {
+      keep.clear();
+    }
     int keepN = 0;
     for (int col = 0; col < tnCols; col++) {
       // this is very similar to lastRowWithData
@@ -1384,7 +1434,17 @@ public class Table {
    * @return the number of rows remaining
    */
   public int removeRowsWithoutData() {
-    justKeep(rowsWithData());
+    return removeRowsWithoutData(null);
+  }
+
+  /**
+   * This removes rows that don't have data in any column, using a reusable BitSet.
+   *
+   * @param reusableKeep optional BitSet instance to clear and reuse
+   * @return the number of rows remaining
+   */
+  public int removeRowsWithoutData(BitSet reusableKeep) {
+    justKeep(rowsWithData(reusableKeep));
     return nRows();
   }
 
@@ -2568,6 +2628,8 @@ public class Table {
           skipLinesRegex != null && !skipLinesRegex.isEmpty()
               ? Pattern.compile(skipLinesRegex)
               : null;
+      Matcher skipLinesMatcher = skipLinesPattern != null ? skipLinesPattern.matcher("") : null;
+      String literalPrefix = extractLiteralPrefix(skipLinesRegex);
 
       // skipHeaderToRegex
       int row =
@@ -2582,7 +2644,7 @@ public class Table {
         String s = linesReader.readLine(); // null if end. exception if trouble
         if (s == null) break;
         linesCache.add(s);
-        if (skipLinesPattern == null || skipLinesPattern.matcher(s).matches()) nonSkipLines++;
+        if (!shouldSkipLine(s, skipLinesMatcher, literalPrefix)) nonSkipLines++;
         if (nonSkipLines == dataStartLine + 2) // both 0-based
         break;
       }
@@ -2601,7 +2663,7 @@ public class Table {
         int tRow = 0;
         for (String s : linesCache) {
           oneLine = s;
-          if (skipLinesPattern != null && skipLinesPattern.matcher(oneLine).matches()) continue;
+          if (shouldSkipLine(oneLine, skipLinesMatcher, literalPrefix)) continue;
           if (tRow++ < dataStartLine) // both are 0..
           continue;
           nTab *=
@@ -2647,7 +2709,7 @@ public class Table {
         while (true) {
           oneLine = linesCache.get(nextLinesCache++);
           row++;
-          if (skipLinesPattern != null && skipLinesPattern.matcher(oneLine).matches()) continue;
+          if (shouldSkipLine(oneLine, skipLinesMatcher, literalPrefix)) continue;
           if (++logicalLine == columnNamesLine) // both are 0-based
           break;
         }
@@ -2676,6 +2738,7 @@ public class Table {
       StringBuilder warnings = new StringBuilder();
       ArrayList<String> items = new ArrayList<>(16);
       StringBuilder separatedWord = new StringBuilder();
+      boolean[] isColumnNeeded = null;
       while (true) {
         oneLine = null;
         if (nextLinesCache < linesCacheSize) {
@@ -2689,7 +2752,7 @@ public class Table {
         // actual row number
         row++;
         // then check skipLines
-        if (skipLinesPattern != null && skipLinesPattern.matcher(oneLine).matches()) continue;
+        if (shouldSkipLine(oneLine, skipLinesMatcher, literalPrefix)) continue;
         // then check dataStartLine
         if (++logicalLine < dataStartLine) continue;
 
@@ -2707,14 +2770,21 @@ public class Table {
                 ',',
                 true,
                 true,
-                items); // trim=true keep=true   //does handle "'d phrases, but leaves them quoted
+                items,
+                isColumnNeeded); // trim=true keep=true   //does handle "'d phrases, but leaves them
+            // quoted
           } else if (colSeparator == ' ') {
-            StringArray.wordsAndQuotedPhrases(oneLine, items); // items are trim'd
+            StringArray.wordsAndQuotedPhrases(oneLine, items, isColumnNeeded); // items are trim'd
           } else if (colSeparator == '\u0000') {
             items.clear();
-            items.add(oneLine.trim());
+            if (isColumnNeeded != null && isColumnNeeded.length > 0 && !isColumnNeeded[0]) {
+              items.add(null);
+            } else {
+              items.add(oneLine.trim());
+            }
           } else {
-            String2.splitToArrayList(oneLine, colSeparator, true, items); // trim=true
+            String2.splitToArrayList(
+                oneLine, colSeparator, true, items, isColumnNeeded); // trim=true
           }
           // if (debugMode && logicalLine-dataStartLine<5) String2.log(">> row=" + row + " nItems="
           // + items.length + "\nitems=" + String2.toCSSVString(items));
@@ -2742,15 +2812,28 @@ public class Table {
             testColumnNumbers[col] = po;
           }
 
-          // loadColumnNumbers[sourceColumn#] -> outputColumn#
-          //  (-1 if a var not in this file)
+          // Estimate file rows to pre-allocate exact StringArray capacity
+          int sampleLineIndex = 0;
+          String sampleLine = linesCache.size() > 0 ? linesCache.get(0) : null;
+          while (sampleLine == null && sampleLineIndex < linesCache.size() - 1) {
+            sampleLine = linesCache.get(++sampleLineIndex);
+          }
+          int sampleLineLength = sampleLine != null ? sampleLine.length() + 1 : 80;
+          long fileBytes =
+              (fileName != null && fileName.length() > 0) ? new java.io.File(fileName).length() : 0;
+
+          int estimatedRows =
+              (fileBytes > 0 && sampleLineLength > 0)
+                  ? Math.max(128, (int) (fileBytes / sampleLineLength))
+                  : 128;
+
           if (loadColumns == null) {
             // load all
             loadColumnNumbers = new int[fileColumnNames.size()];
             loadColumnSA = new StringArray[fileColumnNames.size()];
             for (int col = 0; col < fileColumnNames.size(); col++) {
               loadColumnNumbers[col] = col;
-              loadColumnSA[col] = new StringArray();
+              loadColumnSA[col] = new StringArray(estimatedRows, false);
               addColumn(fileColumnNames.get(col), loadColumnSA[col]);
             }
           } else {
@@ -2758,8 +2841,21 @@ public class Table {
             loadColumnSA = new StringArray[loadColumns.length];
             for (int col = 0; col < loadColumns.length; col++) {
               loadColumnNumbers[col] = fileColumnNames.indexOf(loadColumns[col], 0);
-              loadColumnSA[col] = new StringArray();
+              loadColumnSA[col] = new StringArray(estimatedRows, false);
               addColumn(loadColumns[col], loadColumnSA[col]);
+            }
+          }
+
+          // construct isColumnNeeded array for subsequent iterations
+          isColumnNeeded = new boolean[expectedNItems];
+          for (int tc : testColumnNumbers) {
+            if (tc >= 0 && tc < expectedNItems) {
+              isColumnNeeded[tc] = true;
+            }
+          }
+          for (int lc : loadColumnNumbers) {
+            if (lc >= 0 && lc < expectedNItems) {
+              isColumnNeeded[lc] = true;
             }
           }
           // if (reallyVerbose) String2.log("loadColumnNumbers=" +
@@ -3186,6 +3282,8 @@ public class Table {
               ? Pattern.compile(skipLinesRegex)
               : null;
 
+      Matcher skipLinesMatcher = skipLinesPattern != null ? skipLinesPattern.matcher("") : null;
+      String literalPrefix = extractLiteralPrefix(skipLinesRegex);
       // create the columns
       PrimitiveArray pa[] = new PrimitiveArray[nCols];
       ByteArray arBool[] = new ByteArray[nCols]; // ByteArray (from boolean) if boolean, else null
@@ -3209,7 +3307,7 @@ public class Table {
         row++;
         if (tLine == null) // end of file
         break;
-        if (skipLinesPattern != null && skipLinesPattern.matcher(tLine).matches()) continue;
+        if (shouldSkipLine(tLine, skipLinesMatcher, literalPrefix)) continue;
         logicalLine++;
         if (logicalLine < dataStartLine) continue;
 
@@ -4611,9 +4709,10 @@ public class Table {
     int nColumns = nColumns();
     int nRows = nRows();
     DataOutputStream dos = new DataOutputStream(outputStream);
+    byte[] buffer = new byte[1024];
     for (int row = 0; row < nRows; row++) {
       dos.writeInt(0x5A << 24); // start of instance
-      for (int col = 0; col < nColumns; col++) getColumn(col).externalizeForDODS(dos, row);
+      for (int col = 0; col < nColumns; col++) getColumn(col).externalizeForDODS(dos, row, buffer);
     }
     dos.writeInt(0xA5 << 24); // end of sequence; so if nRows=0, this is all that is sent
 
@@ -5946,8 +6045,8 @@ public class Table {
           tReadOrigin[nAxes] = 0;
           tReadShape[nAxes] = variable.getDimension(nAxes).getLength();
         }
-        Array array = variable.read(tReadOrigin, tReadShape);
-        PrimitiveArray pa = NcHelper.getPrimitiveArray(array);
+        Section section = new Section(tReadOrigin, tReadShape);
+        PrimitiveArray pa = NcHelper.getPrimitiveArray(variable, section);
         Test.ensureEqual(
             pa.size(),
             nRows(),
@@ -9916,8 +10015,7 @@ public class Table {
               + ", so lookUpTable has no related information.");
     if (mvKey == null) mvKey = "";
     long time = System.currentTimeMillis();
-    Tally notMatchedTally = null;
-    if (debugMode) notMatchedTally = new Tally();
+    Tally notMatchedTally = debugMode ? new Tally() : null;
 
     // gather keyPA's
     PrimitiveArray keyPA[] = new PrimitiveArray[nKeys];
@@ -9930,11 +10028,22 @@ public class Table {
     // make hashtable of keys->Integer.valueOf(row#) in lookUpTable
     // so join is fast with any number of rows in lookUpTable
     int lutNRows = lutKeyPA[0].size();
-    HashMap<String, Integer> hashMap = new HashMap<>(Math2.roundToInt(1.4 * lutNRows));
+    HashMap<String, Integer> hashMap = new HashMap<>((int) Math.ceil(lutNRows / 0.75f));
+    StringBuilder sb = nKeys > 1 ? new StringBuilder(32 * nKeys) : null;
+
     for (int row = 0; row < lutNRows; row++) {
-      StringBuilder sb = new StringBuilder(lutKeyPA[0].getString(row));
-      for (int key = 1; key < nKeys; key++) sb.append("\t" + lutKeyPA[key].getString(row));
-      hashMap.put(sb.toString(), row);
+      String keyStr;
+      if (nKeys == 1) {
+        keyStr = lutKeyPA[0].getString(row);
+      } else {
+        sb.setLength(0);
+        sb.append(lutKeyPA[0].getString(row));
+        for (int key = 1; key < nKeys; key++) {
+          sb.append('\t').append(lutKeyPA[key].getString(row));
+        }
+        keyStr = sb.toString();
+      }
+      hashMap.put(keyStr, row);
     }
 
     // insert columns to be filled
@@ -9965,11 +10074,24 @@ public class Table {
     BitSet matched = new BitSet();
     matched.set(0, nRows); // all true
     for (int row = 0; row < nRows; row++) {
-      StringBuilder sb = new StringBuilder(keyPA[0].getString(row));
-      for (int key = 1; key < nKeys; key++) sb.append("\t" + keyPA[key].getString(row));
-      String s = sb.toString();
-      if (s.length() == nKeys - 1) // just tabs separating ""
-      s = mvKey;
+      String s;
+      if (nKeys == 1) {
+        s = keyPA[0].getString(row);
+        if (s == null || s.isEmpty()) {
+          s = mvKey;
+        }
+      } else {
+        sb.setLength(0);
+        sb.append(keyPA[0].getString(row));
+        for (int key = 1; key < nKeys; key++) {
+          sb.append('\t').append(keyPA[key].getString(row));
+        }
+        s = sb.toString();
+        if (s.length() == nKeys - 1) {
+          s = mvKey;
+        }
+      }
+
       Integer obj = hashMap.get(s);
       if (obj == null) {
         // don't change the missing values already in the pa
@@ -9979,10 +10101,12 @@ public class Table {
         // copy values from lutPA's to newPA's
         nMatched++;
         int fRow = obj;
-        for (int lutCol = nKeys; lutCol < lutNCols; lutCol++)
+        for (int lutCol = nKeys; lutCol < lutNCols; lutCol++) {
           newPA[lutCol].setFromPA(row, lutPA[lutCol], fRow);
+        }
       }
     }
+
     if (reallyVerbose)
       String2.log(
           "  Table.join(nKeys="
@@ -10085,7 +10209,8 @@ public class Table {
     clear();
 
     DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, url);
-    try (NetcdfDataset ncd = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
+    try (NetcdfDataset ncd =
+        NetcdfDatasets.openDataset(durl, EnumSet.noneOf(Enhance.class), -1, null, null)) {
       Attributes rawGlobalAtts = new Attributes();
       NcHelper.getGroupAttributes(ncd.getRootGroup(), rawGlobalAtts);
       for (String name : rawGlobalAtts.getNames()) {
@@ -10330,13 +10455,38 @@ public class Table {
    */
   public int tryToApplyConstraintsAndKeep(
       int idCol, StringArray conNames, StringArray conOps, StringArray conVals) {
+    return tryToApplyConstraintsAndKeep(idCol, conNames, conOps, conVals, null);
+  }
+
+  /**
+   * This is like tryToApplyConstraintsAndKeep, but accepts a reusable BitSet.
+   *
+   * @param idCol For reallyVerbose only: rejected rows will log the value in this column.
+   * @param conNames constraint variable names
+   * @param conOps constraint operators
+   * @param conVals constraint values
+   * @param reusableKeep optional reusable BitSet; if null, a new BitSet will be created
+   * @return the number of rows remaining in the table
+   */
+  public int tryToApplyConstraintsAndKeep(
+      int idCol,
+      StringArray conNames,
+      StringArray conOps,
+      StringArray conVals,
+      BitSet reusableKeep) {
 
     // no constraints
     if (conNames == null || conNames.size() == 0) return nRows();
 
     // try to apply constraints
-    BitSet keep = new BitSet();
-    keep.set(0, nRows());
+    int n = nRows();
+    BitSet keep = reusableKeep;
+    if (keep == null) {
+      keep = new BitSet(n);
+    } else {
+      keep.clear();
+    }
+    keep.set(0, n);
     int cardinality = tryToApplyConstraints(idCol, conNames, conOps, conVals, keep);
     if (cardinality == 0) removeAllRows();
     else justKeep(keep);
@@ -11342,20 +11492,22 @@ public class Table {
     boolean someConverted = temporarilyConvertToStandardMissingValues(keyColumns);
 
     String lastKCMV = getColumn(lastKeyColumn).elementType() == PAType.STRING ? "" : "NaN";
+    BitSet keep = new BitSet(nRows);
     // remove rows with mv for last keyColumn
     nRows =
         tryToApplyConstraintsAndKeep(
             lastKeyColumn,
             new StringArray(new String[] {getColumnName(lastKeyColumn)}),
             new StringArray(new String[] {"!="}),
-            new StringArray(new String[] {lastKCMV}));
+            new StringArray(new String[] {lastKCMV}),
+            keep);
     if (nRows == 0) return;
 
     // sort based on keys
     ascendingSort(keyColumns);
 
     // walk through the table, often marking previous row to be kept
-    BitSet keep = new BitSet(nRows); // all false
+    keep.clear();
     keep.set(nRows - 1); // always
     if (nKeyColumns > 1) {
       PrimitiveArray keyCols[] = new PrimitiveArray[nKeyColumns - 1];
@@ -13882,22 +14034,28 @@ public class Table {
 
       // write the col names
       int nc = nColumns();
+      StringBuilder jsonSB = new StringBuilder();
       if (writeColumnNames) {
         for (int c = 0; c < nc; c++) {
-          bw.write(c == 0 ? '[' : ',');
-          bw.write(String2.toJson(columnNames.get(c)));
+          jsonSB.append(c == 0 ? '[' : ',');
+          String2.toJson(columnNames.get(c), jsonSB);
         }
-        bw.write("]\n");
+        jsonSB.append("]\n");
+        bw.write(jsonSB.toString());
       }
 
       // write the data
       int nr = nRows();
       for (int r = 0; r < nr; r++) {
+        boolean somethingWritten = false;
+        jsonSB.setLength(0);
         for (int c = 0; c < nc; c++) {
-          bw.write(c == 0 ? '[' : ',');
-          bw.write(columns.get(c).getJsonString(r));
+          jsonSB.append(c != 0 ? ',' : '[');
+          columns.get(c).getJsonString(r, jsonSB);
+          somethingWritten = true;
         }
-        bw.write("]\n");
+        jsonSB.append("]\n");
+        bw.write(jsonSB.toString());
       }
 
       bw.close();
@@ -14101,7 +14259,7 @@ public class Table {
     }
   }
 
-  private boolean isTimeColumn(int col) {
+  public boolean isTimeColumn(int col) {
     return "time".equalsIgnoreCase(getColumnName(col))
         && Calendar2.SECONDS_SINCE_1970.equals(columnAttributes.get(col).getString("units"));
   }
@@ -14205,8 +14363,10 @@ public class Table {
     }
     metadata.put("column_names", columnNames.toString());
     metadata.put("column_units", columnUnits.toString());
-    try (ParquetWriter<List<PAOne>> writer =
+
+    try (ParquetWriter<RowRef> writer =
         new ParquetWriterBuilder(
+                this,
                 schema,
                 new LocalOutputFile(java.nio.file.Path.of(fullFileName + randomInt)),
                 metadata)
@@ -14218,22 +14378,15 @@ public class Table {
             .withDictionaryEncoding(false)
             .build()) {
 
+      // Single object allocated once, reused across all rows
+      RowRef rowRef = new RowRef();
       for (int row = 0; row < nRows(); row++) {
-        ArrayList<PAOne> record = new ArrayList<>();
-        for (int j = 0; j < nColumns(); j++) {
-          if (isTimeColumn(j)) {
-            // Convert from seconds since epoch to millis since epoch.
-            record.add(getPAOneData(j, row).multiply(PAOne.fromInt(1000)));
-          } else {
-            record.add(getPAOneData(j, row));
-          }
-        }
-        writer.write(record);
+        rowRef.row = row;
+        writer.write(rowRef);
       }
       writer.close();
 
-      File2.rename(fullFileName + randomInt, fullFileName); // throws Exception if trouble
-
+      File2.rename(fullFileName + randomInt, fullFileName);
       if (reallyVerbose)
         String2.log(
             msg

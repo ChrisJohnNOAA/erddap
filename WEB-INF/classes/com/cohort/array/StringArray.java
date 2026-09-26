@@ -1248,8 +1248,8 @@ public class StringArray extends PrimitiveArray {
    * @return For numeric types, this returns ("" + ar[index]), or null for NaN or infinity.
    */
   @Override
-  public String getJsonString(final int index) {
-    return String2.toJson(get(index));
+  public void getJsonString(final int index, final StringBuilder sb) {
+    String2.toJson(get(index), sb);
   }
 
   /**
@@ -1852,21 +1852,30 @@ public class StringArray extends PrimitiveArray {
    * @param s
    * @throws Exception if trouble
    */
-  public static void externalizeForDODS(final DataOutputStream dos, final String s)
-      throws Exception {
+  public static void externalizeForDODS(
+      final DataOutputStream dos, final String s, byte[] workBuffer) throws Exception {
     int n = s.length();
-    dos.writeInt(n); // for Strings, just write size once
-    for (int i = 0; i < n; i++) { // just low 8 bits written; no utf or other unicode support,
-      final char c =
-          s.charAt(i); // 2016-11-29 I added: char>255 -> '?', it's better than low 8 bits
-      dos.writeByte(
-          c < 256
-              ? c
-              : '?'); // dods.dap.DString reader assumes ISO-8859-1, which is first page of unicode
+    dos.writeInt(n); // Write 4-byte length prefix
+
+    // Ensure workBuffer is large enough for length + padding
+    int paddedLen = n + ((4 - (n % 4)) % 4);
+    if (workBuffer.length < paddedLen) {
+      workBuffer = new byte[Math.max(paddedLen, workBuffer.length * 2)];
     }
 
-    // pad to 4 bytes boundary at end
-    while (n++ % 4 != 0) dos.writeByte(0);
+    // Pack characters into byte array in memory
+    for (int i = 0; i < n; i++) {
+      char c = s.charAt(i);
+      workBuffer[i] = (byte) (c < 256 ? c : '?');
+    }
+
+    // Add 4-byte boundary padding
+    for (int i = n; i < paddedLen; i++) {
+      workBuffer[i] = 0;
+    }
+
+    // Single I/O call to underlying stream
+    dos.write(workBuffer, 0, paddedLen);
   }
 
   /**
@@ -1881,7 +1890,8 @@ public class StringArray extends PrimitiveArray {
   public void externalizeForDODS(final DataOutputStream dos) throws Exception {
     dos.writeInt(size);
     dos.writeInt(size); // yes, a second time
-    for (int i = 0; i < size; i++) externalizeForDODS(dos, get(i));
+    byte[] buffer = new byte[1024];
+    for (int i = 0; i < size; i++) externalizeForDODS(dos, get(i), buffer);
   }
 
   /**
@@ -1894,8 +1904,9 @@ public class StringArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public void externalizeForDODS(final DataOutputStream dos, final int i) throws Exception {
-    externalizeForDODS(dos, get(i));
+  public void externalizeForDODS(final DataOutputStream dos, final int i, byte[] workBuffer)
+      throws Exception {
+    externalizeForDODS(dos, get(i), workBuffer);
   }
 
   /**
@@ -2163,9 +2174,15 @@ public class StringArray extends PrimitiveArray {
    *     (e.g., "a quote "" within a phrase"). The resulting parts are all trim'd.
    */
   public static List<String> wordsAndQuotedPhrases(final String searchFor, final List<String> sa) {
+    return wordsAndQuotedPhrases(searchFor, sa, null);
+  }
+
+  public static List<String> wordsAndQuotedPhrases(
+      final String searchFor, final List<String> sa, final boolean[] isColumnNeeded) {
     sa.clear();
     if (searchFor == null) return sa;
     int po = 0;
+    int col = 0;
     final int n = searchFor.length();
     while (po < n) {
       final char ch = searchFor.charAt(po);
@@ -2181,8 +2198,13 @@ public class StringArray extends PrimitiveArray {
             po2++;
           }
         }
-        final String s = searchFor.substring(po + 1, po2);
-        sa.add(String2.replaceAll(s, "\"\"", "\""));
+        if (isColumnNeeded != null && col < isColumnNeeded.length && !isColumnNeeded[col]) {
+          sa.add(null);
+        } else {
+          final String s = searchFor.substring(po + 1, po2);
+          sa.add(String2.replaceAll(s, "\"\"", "\""));
+        }
+        col++;
         po = po2 + 1;
       } else if (String2.isWhite(ch) || ch == ',') {
         // whitespace or comma
@@ -2194,7 +2216,12 @@ public class StringArray extends PrimitiveArray {
             && !String2.isWhite(searchFor.charAt(po2))
             && searchFor.charAt(po2) != ',') po2++;
         // String2.log("searchFor=" + searchFor + " wordPo=" + po + " po2=" + po2);
-        sa.add(searchFor.substring(po, po2));
+        if (isColumnNeeded != null && col < isColumnNeeded.length && !isColumnNeeded[col]) {
+          sa.add(null);
+        } else {
+          sa.add(searchFor.substring(po, po2));
+        }
+        col++;
         po = po2;
       }
     }
@@ -2356,11 +2383,23 @@ public class StringArray extends PrimitiveArray {
       final boolean trim,
       final boolean keepNothing,
       final List<String> al) {
+    return arrayListFromCSV(word, searchFor, separatorChars, trim, keepNothing, al, null);
+  }
+
+  public static List<String> arrayListFromCSV(
+      final StringBuilder word,
+      final String searchFor,
+      final String separatorChars,
+      final boolean trim,
+      final boolean keepNothing,
+      final List<String> al,
+      final boolean[] isColumnNeeded) {
     word.setLength(0);
     al.clear();
     if (searchFor == null || searchFor.length() == 0) return al;
     // String2.log(">> arrayFrom s=" + String2.annotatedString(searchFor));
     int po = 0; // next char to be looked at
+    int col = 0;
     int n = searchFor.length();
     boolean isQuoted = false; // is this item quoted?
     while (po <= n) { // ==n closes things out
@@ -2455,7 +2494,9 @@ public class StringArray extends PrimitiveArray {
 
         // end of word?
       } else if (po == n + 1 || separatorChars.indexOf(ch) >= 0) { // e.g., comma or semicolon
-        if (trim && !isQuoted) {
+        if (isColumnNeeded != null && col < isColumnNeeded.length && !isColumnNeeded[col]) {
+          al.add(null);
+        } else if (trim && !isQuoted) {
           String s = String2.trimAndToString(word);
           if (s.length() > 0 || keepNothing || isQuoted) {
             al.add(s);
@@ -2463,6 +2504,7 @@ public class StringArray extends PrimitiveArray {
         } else if (word.length() > 0 || keepNothing || isQuoted) {
           al.add(word.toString());
         }
+        col++;
         word.setLength(0);
         isQuoted = false;
         if (po == n + 1) break;
@@ -2495,11 +2537,23 @@ public class StringArray extends PrimitiveArray {
       final boolean trim,
       final boolean keepNothing,
       final List<String> al) {
+    return arrayListFromCSV(word, searchFor, separatorChars, trim, keepNothing, al, null);
+  }
+
+  public static List<String> arrayListFromCSV(
+      final StringBuilder word,
+      final String searchFor,
+      final char separatorChars,
+      final boolean trim,
+      final boolean keepNothing,
+      final List<String> al,
+      final boolean[] isColumnNeeded) {
     word.setLength(0);
     al.clear();
     if (searchFor == null || searchFor.length() == 0) return al;
     // String2.log(">> arrayFrom s=" + String2.annotatedString(searchFor));
     int po = 0; // next char to be looked at
+    int col = 0;
     int n = searchFor.length();
     boolean isQuoted = false; // is this item quoted?
     while (po <= n) { // ==n closes things out
@@ -2595,7 +2649,9 @@ public class StringArray extends PrimitiveArray {
         // end of word?
         // separatorChars.indexOf(ch) >= 0
       } else if (po == n + 1 || ch == separatorChars) { // e.g., comma or semicolon
-        if (trim && !isQuoted) {
+        if (isColumnNeeded != null && col < isColumnNeeded.length && !isColumnNeeded[col]) {
+          al.add(null);
+        } else if (trim && !isQuoted) {
           String s = String2.trimAndToString(word);
           if (s.length() > 0 || keepNothing || isQuoted) {
             al.add(s);
@@ -2603,6 +2659,7 @@ public class StringArray extends PrimitiveArray {
         } else if (word.length() > 0 || keepNothing || isQuoted) {
           al.add(word.toString());
         }
+        col++;
         word.setLength(0);
         isQuoted = false;
         if (po == n + 1) break;
