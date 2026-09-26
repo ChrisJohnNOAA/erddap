@@ -250,10 +250,14 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
-  public String getJsonString(int index) {
+  public void getJsonString(int index, StringBuilder sb) {
     checkIndex(index);
     PrimitiveArray m = materialized;
-    return m != null ? m.getJsonString(index) : source.getJsonString(offset + index * stride);
+    if (m != null) {
+      m.getJsonString(index, sb);
+    } else {
+      source.getJsonString(offset + index * stride, sb);
+    }
   }
 
   @Override
@@ -760,7 +764,7 @@ public class PrimitiveView extends PrimitiveArray {
     StringBuilder sb = new StringBuilder(size * 8);
     for (int i = 0; i < size; i++) {
       if (i > 0) sb.append(", ");
-      sb.append(getJsonString(i));
+      getJsonString(i, sb);
     }
     return sb.toString();
   }

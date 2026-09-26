@@ -76,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -122,6 +123,7 @@ import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDataset.Enhance;
 import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.write.NetcdfFormatWriter;
 
@@ -10205,7 +10207,8 @@ public class Table {
     clear();
 
     DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, url);
-    try (NetcdfDataset ncd = NetcdfDatasets.openDataset(durl, null, -1, null, null)) {
+    try (NetcdfDataset ncd =
+        NetcdfDatasets.openDataset(durl, EnumSet.noneOf(Enhance.class), -1, null, null)) {
       Attributes rawGlobalAtts = new Attributes();
       NcHelper.getGroupAttributes(ncd.getRootGroup(), rawGlobalAtts);
       for (String name : rawGlobalAtts.getNames()) {
@@ -14029,22 +14032,28 @@ public class Table {
 
       // write the col names
       int nc = nColumns();
+      StringBuilder jsonSB = new StringBuilder();
       if (writeColumnNames) {
         for (int c = 0; c < nc; c++) {
-          bw.write(c == 0 ? '[' : ',');
-          bw.write(String2.toJson(columnNames.get(c)));
+          jsonSB.append(c == 0 ? '[' : ',');
+          String2.toJson(columnNames.get(c), jsonSB);
         }
-        bw.write("]\n");
+        jsonSB.append("]\n");
+        bw.write(jsonSB.toString());
       }
 
       // write the data
       int nr = nRows();
       for (int r = 0; r < nr; r++) {
+        boolean somethingWritten = false;
+        jsonSB.setLength(0);
         for (int c = 0; c < nc; c++) {
-          bw.write(c == 0 ? '[' : ',');
-          bw.write(columns.get(c).getJsonString(r));
+          jsonSB.append(c != 0 ? ',' : '[');
+          columns.get(c).getJsonString(r, jsonSB);
+          somethingWritten = true;
         }
-        bw.write("]\n");
+        jsonSB.append("]\n");
+        bw.write(jsonSB.toString());
       }
 
       bw.close();

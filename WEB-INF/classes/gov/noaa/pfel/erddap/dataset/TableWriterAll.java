@@ -216,23 +216,42 @@ public class TableWriterAll extends TableWriter {
     if (channel == null || destBuffer == null || maxRows <= 0 || startRow < 0) {
       return;
     }
+
     if (destBuffer instanceof com.cohort.array.StringArray sa) {
       if (startRow == 0) {
         channel.position(0);
-      } else if (channel.position() == 0) {
-        DataInputStream dis =
-            new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
+      }
+
+      // Wrap channel in a single DataInputStream
+      DataInputStream dis = new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
+
+      // Seek to startRow if we are at position 0 without instantiating String objects
+      if (startRow > 0 && channel.position() == 0) {
         for (long i = 0; i < startRow; i++) {
-          dis.readUTF();
+          if (channel.position() >= channel.size()) {
+            return; // Reached EOF while seeking
+          }
+          int utfLen = dis.readUnsignedShort();
+          int skipped = dis.skipBytes(utfLen);
+          if (skipped < utfLen) {
+            return; // Reached EOF mid-string
+          }
         }
       }
-      DataInputStream dis = new DataInputStream(java.nio.channels.Channels.newInputStream(channel));
-      try {
-        sa.ensureCapacity(sa.size() + maxRows);
-        for (int i = 0; i < maxRows; i++) {
-          sa.add(dis.readUTF());
+
+      sa.ensureCapacity(sa.size() + maxRows);
+
+      // Read the target rows
+      long channelSize = channel.size();
+      for (int i = 0; i < maxRows; i++) {
+        if (channel.position() >= channelSize) {
+          break; // Clean exit at EOF without throwing EOFException
         }
-      } catch (java.io.EOFException eof) {
+        try {
+          sa.add(dis.readUTF());
+        } catch (java.io.EOFException eof) {
+          break; // Safety fallback for truncated string entries
+        }
       }
     } else {
       int elementSize = destBuffer.elementSize();

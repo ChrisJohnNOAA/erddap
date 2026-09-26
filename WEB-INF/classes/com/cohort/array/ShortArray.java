@@ -1007,9 +1007,13 @@ public class ShortArray extends PrimitiveArray {
    * @return For numeric types, this returns ("" + ar[index]), or "null" for NaN or infinity.
    */
   @Override
-  public String getJsonString(final int index) {
+  public void getJsonString(final int index, final StringBuilder sb) {
     final short s = get(index);
-    return maxIsMV && s == Short.MAX_VALUE ? "null" : String.valueOf(s);
+    if (maxIsMV && s == Short.MAX_VALUE) {
+      sb.append("null");
+    } else {
+      sb.append(String.valueOf(s));
+    }
   }
 
   /**
