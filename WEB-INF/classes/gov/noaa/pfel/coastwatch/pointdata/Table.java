@@ -36,6 +36,7 @@ import gov.noaa.pfel.coastwatch.griddata.FileNameUtility;
 import gov.noaa.pfel.coastwatch.griddata.Matlab;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.griddata.OpendapHelper;
+import gov.noaa.pfel.coastwatch.pointdata.parquet.CustomWriteSupport.RowRef;
 import gov.noaa.pfel.coastwatch.pointdata.parquet.ParquetWriterBuilder;
 import gov.noaa.pfel.coastwatch.util.HtmlWidgets;
 import gov.noaa.pfel.coastwatch.util.SSR;
@@ -4708,9 +4709,10 @@ public class Table {
     int nColumns = nColumns();
     int nRows = nRows();
     DataOutputStream dos = new DataOutputStream(outputStream);
+    byte[] buffer = new byte[1024];
     for (int row = 0; row < nRows; row++) {
       dos.writeInt(0x5A << 24); // start of instance
-      for (int col = 0; col < nColumns; col++) getColumn(col).externalizeForDODS(dos, row);
+      for (int col = 0; col < nColumns; col++) getColumn(col).externalizeForDODS(dos, row, buffer);
     }
     dos.writeInt(0xA5 << 24); // end of sequence; so if nRows=0, this is all that is sent
 
@@ -14257,7 +14259,7 @@ public class Table {
     }
   }
 
-  private boolean isTimeColumn(int col) {
+  public boolean isTimeColumn(int col) {
     return "time".equalsIgnoreCase(getColumnName(col))
         && Calendar2.SECONDS_SINCE_1970.equals(columnAttributes.get(col).getString("units"));
   }
@@ -14361,8 +14363,10 @@ public class Table {
     }
     metadata.put("column_names", columnNames.toString());
     metadata.put("column_units", columnUnits.toString());
-    try (ParquetWriter<List<PAOne>> writer =
+
+    try (ParquetWriter<RowRef> writer =
         new ParquetWriterBuilder(
+                this,
                 schema,
                 new LocalOutputFile(java.nio.file.Path.of(fullFileName + randomInt)),
                 metadata)
@@ -14374,22 +14378,15 @@ public class Table {
             .withDictionaryEncoding(false)
             .build()) {
 
+      // Single object allocated once, reused across all rows
+      RowRef rowRef = new RowRef();
       for (int row = 0; row < nRows(); row++) {
-        ArrayList<PAOne> record = new ArrayList<>();
-        for (int j = 0; j < nColumns(); j++) {
-          if (isTimeColumn(j)) {
-            // Convert from seconds since epoch to millis since epoch.
-            record.add(getPAOneData(j, row).multiply(PAOne.fromInt(1000)));
-          } else {
-            record.add(getPAOneData(j, row));
-          }
-        }
-        writer.write(record);
+        rowRef.row = row;
+        writer.write(rowRef);
       }
       writer.close();
 
-      File2.rename(fullFileName + randomInt, fullFileName); // throws Exception if trouble
-
+      File2.rename(fullFileName + randomInt, fullFileName);
       if (reallyVerbose)
         String2.log(
             msg

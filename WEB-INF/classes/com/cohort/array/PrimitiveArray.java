@@ -1886,7 +1886,7 @@ public abstract class PrimitiveArray {
    * @param dos
    * @param i the index of the element to be written
    */
-  public void externalizeForDODS(DataOutputStream dos, int i) throws Exception {
+  public void externalizeForDODS(DataOutputStream dos, int i, byte[] workBuffer) throws Exception {
     writeDos(dos, i);
   }
 

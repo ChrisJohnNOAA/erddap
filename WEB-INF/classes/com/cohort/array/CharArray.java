@@ -1530,7 +1530,8 @@ public class CharArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public void externalizeForDODS(final DataOutputStream dos, final int i) throws Exception {
+  public void externalizeForDODS(final DataOutputStream dos, final int i, byte[] workbuffer)
+      throws Exception {
     externalizeForDODS(dos, array[i]);
   }
 

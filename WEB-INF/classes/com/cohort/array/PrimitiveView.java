@@ -972,13 +972,13 @@ public class PrimitiveView extends PrimitiveArray {
   }
 
   @Override
-  public void externalizeForDODS(DataOutputStream dos, int i) throws Exception {
+  public void externalizeForDODS(DataOutputStream dos, int i, byte[] buffer) throws Exception {
     checkIndex(i);
     PrimitiveArray m = materialized;
     if (m != null) {
-      m.externalizeForDODS(dos, i);
+      m.externalizeForDODS(dos, i, buffer);
     } else {
-      source.externalizeForDODS(dos, offset + i * stride);
+      source.externalizeForDODS(dos, offset + i * stride, buffer);
     }
   }
 

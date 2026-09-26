@@ -1904,9 +1904,9 @@ public class StringArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public void externalizeForDODS(final DataOutputStream dos, final int i) throws Exception {
-    byte[] buffer = new byte[1024];
-    externalizeForDODS(dos, get(i), buffer);
+  public void externalizeForDODS(final DataOutputStream dos, final int i, byte[] workBuffer)
+      throws Exception {
+    externalizeForDODS(dos, get(i), workBuffer);
   }
 
   /**

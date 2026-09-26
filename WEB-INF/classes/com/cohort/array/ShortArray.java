@@ -1445,7 +1445,8 @@ public class ShortArray extends PrimitiveArray {
    * @throws Exception if trouble
    */
   @Override
-  public void externalizeForDODS(final DataOutputStream dos, final int i) throws Exception {
+  public void externalizeForDODS(final DataOutputStream dos, final int i, byte[] workbuffer)
+      throws Exception {
     dos.writeInt(array[i]); // as if int
   }
 
