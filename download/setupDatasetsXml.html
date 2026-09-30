@@ -2568,6 +2568,8 @@ currently recommend
       <li><a rel="help" href="#EDDGridFromNcFilesUnpacked">EDDGridFromNcFilesUnpacked</a> 
         is a variant if EDDGridFromNcFiles which also aggregates data from a 
         group of local NetCDF (v3 or v4) .nc and related files, which ERDDAP™ unpacks at a low level.
+      <li><a rel="help" href="#EDDGridFromZarr">EDDGridFromZarr</a>
+        handles gridded data stored in local or remote Zarr (v2 or v3) stores (filesystem, HTTP, or Amazon S3).
       <li><a rel="help" href="#EDDGridLonPM180">EDDGridLonPM180</a> 
         modifies the longitude values of a child EDDGrid so that they are in 
         the range -180 to 180.
@@ -4329,6 +4331,63 @@ related attributes.
   Then you can give better answers for the second loop through GenerateDatasetsXml.
 
 </ul>
+
+
+<p><a class="selfLink" id="EDDGridFromZarr" href="#EDDGridFromZarr" rel="bookmark"><strong>EDDGridFromZarr</strong></a>
+handles gridded data stored in local or remote Zarr (v2 or v3) stores.
+Supported storage backends include local filesystems, HTTP/HTTPS endpoints, and Amazon S3 object stores.
+<ul>
+<li>Zarr store paths (<kbd>&lt;zarrStorePath&gt;</kbd>) can be specified as:
+  <ul>
+    <li>Local directory path (e.g., <kbd>/data/zarr/global_sst.zarr</kbd>)</li>
+    <li>HTTP/HTTPS URL (e.g., <kbd>https://example.org/zarr/dataset.zarr</kbd>)</li>
+    <li>Amazon S3 URI (e.g., <kbd>s3://bucket-name/prefix/dataset.zarr</kbd>)</li>
+  </ul>
+</li>
+<li>Subgroups within a Zarr store can be selected using <kbd>&lt;zarrGroupName&gt;</kbd> (e.g., <kbd>group1/subgroup2</kbd>).</li>
+<li>Chunk byte cache size can be configured using <kbd>&lt;chunkCacheSize&gt;</kbd> (in bytes, e.g., <kbd>2147483648</kbd> for 2 GB).</li>
+<li>Parallel processing threads for multidimensional chunk extraction can be configured using <kbd>&lt;nThreads&gt;</kbd>.</li>
+<li>We strongly recommend using the <a rel="help" href="#GenerateDatasetsXml">GenerateDatasetsXml program</a> to make a rough draft of the datasets.xml block for this dataset.</li>
+</ul>
+
+<p>The skeleton XML for an EDDGridFromZarr dataset is:
+<pre>
+&lt;dataset type="EDDGridFromZarr" <a rel="help" href="#datasetID">datasetID</a>="..." <a rel="help" href="#active">active</a>="true"&gt;
+    &lt;<a rel="help" href="#reloadEveryNMinutes">reloadEveryNMinutes</a>&gt;1440&lt;/reloadEveryNMinutes&gt;
+    &lt;zarrStorePath&gt;s3://bucket-name/path/dataset.zarr&lt;/zarrStorePath&gt;
+    &lt;zarrGroupName&gt;&lt;/zarrGroupName&gt;
+    &lt;chunkCacheSize&gt;2147483648&lt;/chunkCacheSize&gt;
+    &lt;<a rel="help" href="#nThreads">nThreads</a>&gt;8&lt;/nThreads&gt;
+    &lt;<a rel="help" href="#dimensionValuesInMemory">dimensionValuesInMemory</a>&gt;true&lt;/dimensionValuesInMemory&gt;
+    &lt;<a rel="help" href="#addAttributes">addAttributes</a>&gt;
+        &lt;att name="title"&gt;...&lt;/att&gt;
+        &lt;att name="summary"&gt;...&lt;/att&gt;
+        &lt;att name="institution"&gt;...&lt;/att&gt;
+        &lt;att name="infoUrl"&gt;...&lt;/att&gt;
+    &lt;/addAttributes&gt;
+    &lt;<a rel="help" href="#axisVariable">axisVariable</a>&gt;
+        &lt;sourceName&gt;time&lt;/sourceName&gt;
+        &lt;destinationName&gt;time&lt;/destinationName&gt;
+    &lt;/axisVariable&gt;
+    &lt;<a rel="help" href="#axisVariable">axisVariable</a>&gt;
+        &lt;sourceName&gt;latitude&lt;/sourceName&gt;
+        &lt;destinationName&gt;latitude&lt;/destinationName&gt;
+    &lt;/axisVariable&gt;
+    &lt;<a rel="help" href="#axisVariable">axisVariable</a>&gt;
+        &lt;sourceName&gt;longitude&lt;/sourceName&gt;
+        &lt;destinationName&gt;longitude&lt;/destinationName&gt;
+    &lt;/axisVariable&gt;
+    &lt;<a rel="help" href="#dataVariable">dataVariable</a>&gt;
+        &lt;sourceName&gt;sst&lt;/sourceName&gt;
+        &lt;destinationName&gt;sst&lt;/destinationName&gt;
+        &lt;dataType&gt;double&lt;/dataType&gt;
+        &lt;addAttributes&gt;
+            &lt;att name="ioos_category"&gt;Temperature&lt;/att&gt;
+            &lt;att name="units"&gt;degree_C&lt;/att&gt;
+        &lt;/addAttributes&gt;
+    &lt;/dataVariable&gt;
+&lt;/dataset&gt;
+</pre>
 
 
 <p><a class="selfLink" id="EDDGridLonPM180" href="#EDDGridLonPM180" rel="bookmark"><strong>EDDGridLonPM180</strong></a> 
