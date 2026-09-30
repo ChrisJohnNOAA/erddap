@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -625,6 +626,187 @@ class EDDGridFromZarrTests {
 
       GenerateDatasetsXml gdx = new GenerateDatasetsXml();
       gdx.doGridFromZarr(new String[] {"EDDGridFromZarr", tempDir.toString(), "", "cli_prefix", "60", ""});
+
+    } finally {
+      com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testWebEndpointFileGeneration() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_web_endpoint_test");
+
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store = new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group g = dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.core.Attributes gAtts = new dev.zarr.zarrjava.core.Attributes();
+      gAtts.set("title", "Web Endpoint Zarr Test");
+      g.setAttributes(gAtts);
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("latitude"),
+          mb -> mb.withShape(2).withDataType(float64).withDimensionNames("latitude"),
+          true).write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {-10.0, 10.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("longitude"),
+          mb -> mb.withShape(2).withDataType(float64).withDimensionNames("longitude"),
+          true).write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {100.0, 110.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("temperature"),
+          mb -> mb.withShape(2, 2).withDataType(float64).withDimensionNames("latitude", "longitude"),
+          true).write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {2, 2}, new double[] {12.5, 14.0, 15.5, 17.0}));
+
+      String xml =
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+              + "<dataset type=\"EDDGridFromZarr\" datasetID=\"zarr_web_id\">\n"
+              + "    <zarrStorePath>" + tempDir.toString().replace('\\', '/') + "</zarrStorePath>\n"
+              + "    <zarrGroupName></zarrGroupName>\n"
+              + "    <reloadEveryNMinutes>1440</reloadEveryNMinutes>\n"
+              + "    <addAttributes>\n"
+              + "        <att name=\"title\">Web Endpoint Zarr Test</att>\n"
+              + "        <att name=\"summary\">Web Endpoint Test Summary</att>\n"
+              + "        <att name=\"institution\">NOAA</att>\n"
+              + "        <att name=\"infoUrl\">https://example.org</att>\n"
+              + "    </addAttributes>\n"
+              + "    <axisVariable>\n"
+              + "        <sourceName>latitude</sourceName>\n"
+              + "        <destinationName>latitude</destinationName>\n"
+              + "    </axisVariable>\n"
+              + "    <axisVariable>\n"
+              + "        <sourceName>longitude</sourceName>\n"
+              + "        <destinationName>longitude</destinationName>\n"
+              + "    </axisVariable>\n"
+              + "    <dataVariable>\n"
+              + "        <sourceName>temperature</sourceName>\n"
+              + "        <destinationName>temperature</destinationName>\n"
+              + "        <dataType>double</dataType>\n"
+              + "        <addAttributes>\n"
+              + "            <att name=\"ioos_category\">Temperature</att>\n"
+              + "        </addAttributes>\n"
+              + "    </dataVariable>\n"
+              + "</dataset>";
+
+      SimpleXMLReader xmlReader = new SimpleXMLReader(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), "dataset");
+      EDDGridFromZarr dataset = EDDGridFromZarr.fromXml(null, xmlReader);
+
+      String testDir = gov.noaa.pfel.erddap.util.EDStatic.config.fullTestCacheDirectory;
+
+      // 1. Verify .das metadata format
+      String dasFileName = dataset.makeNewFileForDapQuery(0, null, null, "", testDir, "zarr_test_endpoint", ".das");
+      Path dasPath = Paths.get(testDir, dasFileName);
+      assertTrue(Files.exists(dasPath));
+      String dasContent = Files.readString(dasPath);
+      assertTrue(dasContent.contains("Attributes {"));
+      assertTrue(dasContent.contains("temperature {"));
+
+      // 2. Verify .dds data descriptor structure format
+      String ddsFileName = dataset.makeNewFileForDapQuery(0, null, null, "", testDir, "zarr_test_endpoint", ".dds");
+      Path ddsPath = Paths.get(testDir, ddsFileName);
+      assertTrue(Files.exists(ddsPath));
+      String ddsContent = Files.readString(ddsPath);
+      assertTrue(ddsContent.contains("Dataset {"));
+      assertTrue(ddsContent.contains("temperature"));
+
+      // 3. Verify .htmlTable format output
+      String htmlTableFileName = dataset.makeNewFileForDapQuery(0, null, null, "temperature[0:1][0:1]", testDir, "zarr_test_endpoint", ".htmlTable");
+      Path htmlTablePath = Paths.get(testDir, htmlTableFileName);
+      assertTrue(Files.exists(htmlTablePath));
+      String htmlContent = Files.readString(htmlTablePath);
+      assertTrue(htmlContent.contains("<table") || htmlContent.contains("<TABLE") || htmlContent.contains("temperature"));
+
+      // 4. Verify .csv file format output
+      String csvFileName = dataset.makeNewFileForDapQuery(0, null, null, "temperature[0:1][0:1]", testDir, "zarr_test_endpoint", ".csv");
+      Path csvPath = Paths.get(testDir, csvFileName);
+      assertTrue(Files.exists(csvPath));
+      String csvContent = Files.readString(csvPath);
+      assertTrue(csvContent.contains("latitude") && csvContent.contains("longitude") && csvContent.contains("temperature"));
+
+      // 5. Verify .nc NetCDF output
+      String ncFileName = dataset.makeNewFileForDapQuery(0, null, null, "temperature[0:1][0:1]", testDir, "zarr_test_endpoint", ".nc");
+      Path ncPath = Paths.get(testDir, ncFileName);
+      assertTrue(Files.exists(ncPath));
+      assertTrue(Files.size(ncPath) > 0);
+
+      // 6. Verify .png plot/image generation
+      String pngFileName = dataset.makeNewFileForDapQuery(0, null, null, "temperature[0:1][0:1]", testDir, "zarr_test_endpoint", ".png");
+      Path pngPath = Paths.get(testDir, pngFileName);
+      assertTrue(Files.exists(pngPath));
+      assertTrue(Files.size(pngPath) > 0);
+
+    } finally {
+      com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testDatasetReloadMechanism() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_reload_test");
+
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store = new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group g = dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.core.Attributes gAtts = new dev.zarr.zarrjava.core.Attributes();
+      gAtts.set("title", "Initial Zarr Store Title");
+      g.setAttributes(gAtts);
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("latitude"),
+          mb -> mb.withShape(2).withDataType(float64).withDimensionNames("latitude"),
+          true).write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {0.0, 5.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("temperature"),
+          mb -> mb.withShape(2).withDataType(float64).withDimensionNames("latitude"),
+          true).write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {20.0, 22.0}));
+
+      String xml =
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+              + "<dataset type=\"EDDGridFromZarr\" datasetID=\"zarr_reload_id\">\n"
+              + "    <zarrStorePath>" + tempDir.toString().replace('\\', '/') + "</zarrStorePath>\n"
+              + "    <zarrGroupName></zarrGroupName>\n"
+              + "    <reloadEveryNMinutes>1</reloadEveryNMinutes>\n"
+              + "    <addAttributes>\n"
+              + "        <att name=\"summary\">Reload Test Summary</att>\n"
+              + "        <att name=\"institution\">NOAA</att>\n"
+              + "        <att name=\"infoUrl\">https://example.org</att>\n"
+              + "    </addAttributes>\n"
+              + "    <axisVariable>\n"
+              + "        <sourceName>latitude</sourceName>\n"
+              + "        <destinationName>latitude</destinationName>\n"
+              + "    </axisVariable>\n"
+              + "    <dataVariable>\n"
+              + "        <sourceName>temperature</sourceName>\n"
+              + "        <destinationName>temperature</destinationName>\n"
+              + "        <dataType>double</dataType>\n"
+              + "        <addAttributes>\n"
+              + "            <att name=\"ioos_category\">Temperature</att>\n"
+              + "        </addAttributes>\n"
+              + "    </dataVariable>\n"
+              + "</dataset>";
+
+      SimpleXMLReader xmlReader1 = new SimpleXMLReader(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), "dataset");
+      EDDGridFromZarr dataset1 = EDDGridFromZarr.fromXml(null, xmlReader1);
+      assertEquals("Initial Zarr Store Title", dataset1.combinedGlobalAttributes().getString(0, "title"));
+
+      // Update source Zarr store attributes to simulate underlying dataset reload/change
+      gAtts.set("title", "Updated Zarr Store Title");
+      g.setAttributes(gAtts);
+
+      // Re-initialize dataset instance (simulating ERDDAP dataset reload mechanism)
+      SimpleXMLReader xmlReader2 = new SimpleXMLReader(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), "dataset");
+      EDDGridFromZarr dataset2 = EDDGridFromZarr.fromXml(null, xmlReader2);
+
+      assertEquals("Updated Zarr Store Title", dataset2.combinedGlobalAttributes().getString(0, "title"));
 
     } finally {
       com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
