@@ -1193,10 +1193,17 @@ public class EDDGridFromZarr extends EDDGrid {
 
   private static boolean isCodecError(Throwable t) {
     if (t == null) return false;
-    String msg = t.toString().toLowerCase();
-    return msg.contains("codec") || msg.contains("invalidtypeidexception")
-        || msg.contains("could not resolve type id") || msg.contains("invalid fill value")
-        || msg.contains("valueinstantiationexception");
+    if (t instanceof com.fasterxml.jackson.databind.exc.InvalidTypeIdException
+        || t instanceof com.fasterxml.jackson.databind.exc.ValueInstantiationException) {
+      return true;
+    }
+    String msg = t.getMessage();
+    if (msg == null) msg = t.toString();
+    msg = msg.toLowerCase();
+    return msg.contains("could not resolve type id")
+        || msg.contains("invalid fill value")
+        || msg.contains("unsupported codec")
+        || msg.contains("unknown codec");
   }
 
   /**
@@ -1483,7 +1490,11 @@ public class EDDGridFromZarr extends EDDGrid {
         PrimitiveArray pa = null;
         Attributes sourceAtts = new Attributes();
 
-        if (info != null && !info.isUnsupportedCodec) {
+        if (info != null) {
+          if (info.isUnsupportedCodec) {
+            throw new SimpleException(
+                "Axis variable '" + sourceName + "' could not be loaded due to unsupported codec or metadata error.");
+          }
           if (!info.is1D()) {
             throw new SimpleException(
                 "Axis variable '" + sourceName + "' is not a 1D Zarr array (shape rank=" + info.shape.length + ").");
@@ -1496,6 +1507,8 @@ public class EDDGridFromZarr extends EDDGrid {
         } else if (avi.values() != null && avi.values().size() > 0) {
           pa = avi.values();
         } else {
+          // No 1D array variable exists for sourceName in store.
+          // Check if sourceName is a dimension name of an N-dimensional data variable.
           long dimLen = -1;
           String simpleSourceName = sourceName.contains("/")
               ? sourceName.substring(sourceName.lastIndexOf('/') + 1)
@@ -1544,7 +1557,7 @@ public class EDDGridFromZarr extends EDDGrid {
             }
           } else {
             throw new SimpleException(
-                "Axis variable '" + sourceName + "' not found in Zarr store as 1D array.");
+                "Axis variable '" + sourceName + "' not found in Zarr store.");
           }
         }
 
