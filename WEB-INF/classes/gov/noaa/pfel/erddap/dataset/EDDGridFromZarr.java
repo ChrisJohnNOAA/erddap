@@ -959,14 +959,7 @@ public class EDDGridFromZarr extends EDDGrid {
     }
 
     Store zarrStore = createZarrStore(zarrStorePath);
-    StoreHandle handle;
-    if (zarrGroupName.isEmpty() || "/".equals(zarrGroupName)) {
-      handle = zarrStore.resolve();
-    } else {
-      String[] groupKeys = String2.split(zarrGroupName, '/');
-      handle = zarrStore.resolve(groupKeys);
-    }
-    Group zarrGroup = Group.open(handle);
+    Group zarrGroup = openZarrGroup(zarrStore, zarrGroupName);
 
     Table axisSourceTable = new Table();
     Table axisAddTable = new Table();
@@ -988,6 +981,7 @@ public class EDDGridFromZarr extends EDDGrid {
     Map<String, Long> dimLengths = new LinkedHashMap<>();
 
     for (ZarrArrayInfo info : arrayMap.values()) {
+      if (info == null || info.isUnsupportedCodec) continue;
       if (!info.is1D() && info.dimensionNames != null) {
         for (int d = 0; d < info.dimensionNames.length; d++) {
           String dimName = info.dimensionNames[d];
@@ -1002,7 +996,7 @@ public class EDDGridFromZarr extends EDDGrid {
 
     if (axisNames.isEmpty()) {
       for (ZarrArrayInfo info : arrayMap.values()) {
-        if (info.is1D()) {
+        if (info != null && !info.isUnsupportedCodec && info.is1D()) {
           axisNames.add(info.name);
           dimLengths.put(info.name, info.shape[0]);
         }
@@ -1049,6 +1043,7 @@ public class EDDGridFromZarr extends EDDGrid {
 
     int dvCount = 0;
     for (ZarrArrayInfo info : arrayMap.values()) {
+      if (info == null || info.isUnsupportedCodec) continue;
       if (axisNameSet.contains(info.name)) continue;
       if (info.is1D() && isLikelyAxisArray(info)) continue;
 
