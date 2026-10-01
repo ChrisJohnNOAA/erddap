@@ -1113,6 +1113,76 @@ class EDDGridFromZarrTests {
   }
 
   @Test
+  void testUnsupportedOrMissingAxisFailsFast() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_missing_axis_test");
+
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("valid_lat"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("valid_lat"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {10.0, 20.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temp"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("valid_lat"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {1.0, 2.0}));
+
+      // Test 1: Missing axis variable that is not in store and not a dimension
+      List<AxisVariableInfo> missingAxisList = new ArrayList<>();
+      missingAxisList.add(new AxisVariableInfo("missing_axis_name", "missing_axis_name", new LocalizedAttributes(), null));
+
+      LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
+      addGlobalAtts.set(0, "title", "Missing Axis Test");
+      addGlobalAtts.set(0, "summary", "Test Summary");
+      addGlobalAtts.set(0, "institution", "NOAA");
+      addGlobalAtts.set(0, "infoUrl", "https://example.org");
+
+      Exception missingEx =
+          assertThrows(
+              Exception.class,
+              () ->
+                  new EDDGridFromZarr(
+                      "zarr_missing_axis_id",
+                      null,
+                      null,
+                      true,
+                      new StringArray(),
+                      null,
+                      null,
+                      null,
+                      null,
+                      addGlobalAtts,
+                      missingAxisList,
+                      new ArrayList<>(),
+                      10080,
+                      0,
+                      tempDir.toString(),
+                      "",
+                      -1,
+                      -1,
+                      true));
+
+      assertTrue(missingEx.getMessage().contains("Axis variable 'missing_axis_name' not found in Zarr store"));
+
+    } finally {
+      com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
   void testGridTestData_ZarrJava() throws Throwable {
     Initialization.edStatic();
     EDDGridFromZarr dataset = (EDDGridFromZarr) EDDTestDataset.getTestZarr_gridTestData_ZarrJava();
