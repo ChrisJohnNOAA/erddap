@@ -270,9 +270,6 @@ public class EDDGridFromZarr extends EDDGrid {
     // Open specified Zarr root or subgroup
     try {
       this.zarrGroup = openZarrGroup(this.zarrStore, this.zarrGroupName);
-      if (this.zarrGroup != null && this.zarrGroup.storeHandle != null && this.zarrGroup.storeHandle.keys != null && this.zarrGroup.storeHandle.keys.length > 0) {
-        this.zarrGroupName = String.join("/", this.zarrGroup.storeHandle.keys);
-      }
     } catch (Exception e) {
       throw new RuntimeException(
           errorInMethod
@@ -1526,24 +1523,6 @@ public class EDDGridFromZarr extends EDDGrid {
             if (dimLen >= 0) break;
           }
 
-          if (dimLen < 0) {
-            for (ZarrArrayInfo dataInfo : arrayMap.values()) {
-              if (dataInfo != null && !dataInfo.isUnsupportedCodec && !dataInfo.is1D() && dataInfo.shape != null) {
-                int dimIdx = -1;
-                if (simpleSourceName.matches("^dim\\d+$")) {
-                  try {
-                    dimIdx = Integer.parseInt(simpleSourceName.substring(3));
-                  } catch (Exception e) {}
-                }
-                if (dimIdx >= 0 && dimIdx < dataInfo.shape.length) {
-                  if (sourcePrefix.isEmpty() || (dataInfo.name != null && dataInfo.name.startsWith(sourcePrefix))) {
-                    dimLen = dataInfo.shape[dimIdx];
-                    break;
-                  }
-                }
-              }
-            }
-          }
 
           if (dimLen > 0) {
             pa = PrimitiveArray.factory(PAType.INT, (int) dimLen, false);
