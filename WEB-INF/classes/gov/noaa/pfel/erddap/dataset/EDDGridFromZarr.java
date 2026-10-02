@@ -1192,10 +1192,7 @@ public class EDDGridFromZarr extends EDDGrid {
     String msg = t.getMessage();
     if (msg == null) msg = t.toString();
     msg = msg.toLowerCase();
-    return msg.contains("could not resolve type id")
-        || msg.contains("invalid fill value")
-        || msg.contains("unsupported codec")
-        || msg.contains("unknown codec");
+    return msg.contains("could not resolve type id");
   }
 
   /**
@@ -1499,8 +1496,7 @@ public class EDDGridFromZarr extends EDDGrid {
         } else if (avi.values() != null && avi.values().size() > 0) {
           pa = avi.values();
         } else {
-          // No 1D array variable exists for sourceName in store.
-          // Check if sourceName is a dimension name of an N-dimensional data variable.
+          // Check if sourceName matches a dimension name of an N-dimensional data variable.
           long dimLen = -1;
           String simpleSourceName = sourceName.contains("/")
               ? sourceName.substring(sourceName.lastIndexOf('/') + 1)
@@ -1523,7 +1519,6 @@ public class EDDGridFromZarr extends EDDGrid {
             if (dimLen >= 0) break;
           }
 
-
           if (dimLen > 0) {
             pa = PrimitiveArray.factory(PAType.INT, (int) dimLen, false);
             for (int i = 0; i < dimLen; i++) {
@@ -1531,7 +1526,7 @@ public class EDDGridFromZarr extends EDDGrid {
             }
           } else {
             throw new SimpleException(
-                "Axis variable '" + sourceName + "' not found in Zarr store.");
+                "Axis variable '" + sourceName + "' not found in Zarr store as 1D array.");
           }
         }
 
@@ -1543,6 +1538,9 @@ public class EDDGridFromZarr extends EDDGrid {
         sourceAtts.remove("missing_value");
 
         LocalizedAttributes addAtts = avi.attributes() != null ? avi.attributes() : new LocalizedAttributes();
+        if (addAtts.get(0, "ioos_category") == null && sourceAtts.get("ioos_category") == null) {
+          addAtts.set(0, "ioos_category", "Unknown");
+        }
 
         EDVGridAxis edvga = makeAxisVariable(
             datasetID, av, sourceName, destName, sourceAtts, addAtts, pa);
@@ -1604,8 +1602,13 @@ public class EDDGridFromZarr extends EDDGrid {
         sourceAtts.remove("_FillValue");
         sourceAtts.remove("missing_value");
 
+        LocalizedAttributes autoAddAtts = new LocalizedAttributes();
+        if (sourceAtts.get("ioos_category") == null) {
+          autoAddAtts.set(0, "ioos_category", "Unknown");
+        }
+
         EDVGridAxis edvga = makeAxisVariable(
-            datasetID, av, dimName, dimName, sourceAtts, new LocalizedAttributes(), pa);
+            datasetID, av, dimName, dimName, sourceAtts, autoAddAtts, pa);
         axesList.add(edvga);
       }
     }
