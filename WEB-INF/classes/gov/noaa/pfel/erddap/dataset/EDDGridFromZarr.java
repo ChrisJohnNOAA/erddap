@@ -1566,6 +1566,10 @@ public class EDDGridFromZarr extends EDDGrid {
         PrimitiveArray pa = null;
         Attributes sourceAtts = new Attributes();
 
+        if (info != null && info.isUnsupportedCodec) {
+          throw new SimpleException(
+              "Dimension coordinate variable '" + dimName + "' found in Zarr store but could not be loaded due to unsupported codec.");
+        }
         if (info != null && info.is1D()) {
           if (info.attributes != null) info.attributes.copyTo(sourceAtts);
           ucar.ma2.Array nc2Array = info.array.read();
