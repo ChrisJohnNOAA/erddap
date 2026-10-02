@@ -372,22 +372,27 @@ public class EDDGridFromZarr extends EDDGrid {
         return Group.open(handle);
       } catch (Exception e) {
         if (store instanceof Store.ListableStore listable) {
-          Set<String> topDirs = new HashSet<>();
-          listable.listChildren().forEach(c -> {
-            String clean = c.startsWith("/") ? c.substring(1) : c;
-            int slash = clean.indexOf('/');
-            String top = slash > 0 ? clean.substring(0, slash) : clean;
-            if (String2.isSomething(top) && !top.startsWith(".")) {
-              topDirs.add(top);
-            }
-          });
-          if (topDirs.size() == 1) {
-            String singleChild = topDirs.iterator().next();
-            StoreHandle childHandle = store.resolve(singleChild);
-            if (childHandle.resolve(".zgroup").exists()
-                || childHandle.resolve("zarr.json").exists()
-                || childHandle.resolve(".zarray").exists()) {
-              return Group.open(childHandle);
+          boolean rootHasZarrDescriptor = handle.resolve(".zgroup").exists()
+              || handle.resolve("zarr.json").exists()
+              || handle.resolve(".zarray").exists();
+          if (!rootHasZarrDescriptor) {
+            Set<String> topDirs = new HashSet<>();
+            listable.listChildren().forEach(c -> {
+              String clean = c.startsWith("/") ? c.substring(1) : c;
+              int slash = clean.indexOf('/');
+              String top = slash > 0 ? clean.substring(0, slash) : clean;
+              if (String2.isSomething(top) && !top.startsWith(".")) {
+                topDirs.add(top);
+              }
+            });
+            if (topDirs.size() == 1) {
+              String singleChild = topDirs.iterator().next();
+              StoreHandle childHandle = store.resolve(singleChild);
+              if (childHandle.resolve(".zgroup").exists()
+                  || childHandle.resolve("zarr.json").exists()
+                  || childHandle.resolve(".zarray").exists()) {
+                return Group.open(childHandle);
+              }
             }
           }
         }
@@ -1190,24 +1195,16 @@ public class EDDGridFromZarr extends EDDGrid {
 
   private static boolean isCodecError(Throwable t) {
     if (t == null) return false;
-    if (t instanceof com.fasterxml.jackson.core.JacksonException
-        || t instanceof dev.zarr.zarrjava.ZarrException) {
-      String msg = t.getMessage();
-      if (msg == null) msg = t.toString();
-      msg = msg.toLowerCase();
-      if (msg.contains("codec")
-          || msg.contains("compressor")
-          || msg.contains("filter")
-          || msg.contains("type id")
-          || msg.contains("fill value")) {
-        return true;
-      }
+    if (t instanceof com.fasterxml.jackson.databind.exc.InvalidTypeIdException) {
+      return true;
     }
     String msg = t.getMessage();
     if (msg == null) msg = t.toString();
     msg = msg.toLowerCase();
     return msg.contains("could not resolve type id")
         || msg.contains("unsupported codec")
+        || msg.contains("unknown codec")
+        || msg.contains("no codec registered")
         || msg.contains("invalid fill value");
   }
 
