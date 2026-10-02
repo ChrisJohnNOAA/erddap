@@ -1496,38 +1496,8 @@ public class EDDGridFromZarr extends EDDGrid {
         } else if (avi.values() != null && avi.values().size() > 0) {
           pa = avi.values();
         } else {
-          // Check if sourceName matches a dimension name of an N-dimensional data variable.
-          long dimLen = -1;
-          String simpleSourceName = sourceName.contains("/")
-              ? sourceName.substring(sourceName.lastIndexOf('/') + 1)
-              : sourceName;
-          String sourcePrefix = sourceName.contains("/")
-              ? sourceName.substring(0, sourceName.lastIndexOf('/') + 1)
-              : "";
-
-          for (ZarrArrayInfo dataInfo : arrayMap.values()) {
-            if (dataInfo != null && !dataInfo.isUnsupportedCodec && !dataInfo.is1D() && dataInfo.shape != null && dataInfo.dimensionNames != null) {
-              if (sourcePrefix.isEmpty() || (dataInfo.name != null && dataInfo.name.startsWith(sourcePrefix))) {
-                for (int d = 0; d < dataInfo.dimensionNames.length; d++) {
-                  if (simpleSourceName.equals(dataInfo.dimensionNames[d]) && d < dataInfo.shape.length) {
-                    dimLen = dataInfo.shape[d];
-                    break;
-                  }
-                }
-              }
-            }
-            if (dimLen >= 0) break;
-          }
-
-          if (dimLen > 0) {
-            pa = PrimitiveArray.factory(PAType.INT, (int) dimLen, false);
-            for (int i = 0; i < dimLen; i++) {
-              pa.addInt(i);
-            }
-          } else {
-            throw new SimpleException(
-                "Axis variable '" + sourceName + "' not found in Zarr store as 1D array.");
-          }
+          throw new SimpleException(
+              "Axis variable '" + sourceName + "' not found in Zarr store as 1D array.");
         }
 
         if (pa == null || pa.size() == 0) {
