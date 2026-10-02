@@ -383,7 +383,12 @@ public class EDDGridFromZarr extends EDDGrid {
           });
           if (topDirs.size() == 1) {
             String singleChild = topDirs.iterator().next();
-            return Group.open(store.resolve(singleChild));
+            StoreHandle childHandle = store.resolve(singleChild);
+            if (childHandle.resolve(".zgroup").exists()
+                || childHandle.resolve("zarr.json").exists()
+                || childHandle.resolve(".zarray").exists()) {
+              return Group.open(childHandle);
+            }
           }
         }
         throw e;
@@ -1185,14 +1190,25 @@ public class EDDGridFromZarr extends EDDGrid {
 
   private static boolean isCodecError(Throwable t) {
     if (t == null) return false;
-    if (t instanceof com.fasterxml.jackson.databind.exc.InvalidTypeIdException
-        || t instanceof com.fasterxml.jackson.databind.exc.ValueInstantiationException) {
-      return true;
+    if (t instanceof com.fasterxml.jackson.core.JacksonException
+        || t instanceof dev.zarr.zarrjava.ZarrException) {
+      String msg = t.getMessage();
+      if (msg == null) msg = t.toString();
+      msg = msg.toLowerCase();
+      if (msg.contains("codec")
+          || msg.contains("compressor")
+          || msg.contains("filter")
+          || msg.contains("type id")
+          || msg.contains("fill value")) {
+        return true;
+      }
     }
     String msg = t.getMessage();
     if (msg == null) msg = t.toString();
     msg = msg.toLowerCase();
-    return msg.contains("could not resolve type id");
+    return msg.contains("could not resolve type id")
+        || msg.contains("unsupported codec")
+        || msg.contains("invalid fill value");
   }
 
   /**
@@ -1522,6 +1538,7 @@ public class EDDGridFromZarr extends EDDGrid {
       Map<String, Long> dimLengths = new LinkedHashMap<>();
 
       for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
         if (!info.is1D() && info.dimensionNames != null) {
           for (int d = 0; d < info.dimensionNames.length; d++) {
             String dimName = info.dimensionNames[d];
@@ -1537,7 +1554,7 @@ public class EDDGridFromZarr extends EDDGrid {
       // If no N-dimensional arrays, fallback to all 1D arrays
       if (orderedDimNames.isEmpty()) {
         for (ZarrArrayInfo info : arrayMap.values()) {
-          if (info.is1D()) {
+          if (info != null && !info.isUnsupportedCodec && info.is1D()) {
             orderedDimNames.add(info.name);
             dimLengths.put(info.name, info.shape[0]);
           }
@@ -1662,6 +1679,7 @@ public class EDDGridFromZarr extends EDDGrid {
     } else {
       // Auto-discovery mode: find all N-dimensional arrays in group not used as axes
       for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
         if (axisSourceNames.contains(info.name)) continue;
         if (info.is1D() && isLikelyAxisArray(info)) continue;
 
