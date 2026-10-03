@@ -269,14 +269,7 @@ public class EDDGridFromZarr extends EDDGrid {
 
     // Open specified Zarr root or subgroup
     try {
-      StoreHandle handle;
-      if (this.zarrGroupName.isEmpty() || "/".equals(this.zarrGroupName)) {
-        handle = this.zarrStore.resolve();
-      } else {
-        String[] groupKeys = String2.split(this.zarrGroupName, '/');
-        handle = this.zarrStore.resolve(groupKeys);
-      }
-      this.zarrGroup = Group.open(handle);
+      this.zarrGroup = openZarrGroup(this.zarrStore, this.zarrGroupName);
     } catch (Exception e) {
       throw new RuntimeException(
           errorInMethod
@@ -312,6 +305,14 @@ public class EDDGridFromZarr extends EDDGrid {
 
     // Discover Zarr metadata
     Map<String, ZarrArrayInfo> arrayMap = parseZarrMetadata();
+
+    if (tDataVariables != null) {
+      for (DataVariableInfo dvi : tDataVariables) {
+        if (dvi != null && String2.isSomething(dvi.sourceName())) {
+          getOrOpenZarrArrayInfo(dvi.sourceName(), arrayMap);
+        }
+      }
+    }
 
     // Build grid axes
     this.axisVariables = buildGridAxes(tAxisVariables, arrayMap);
@@ -356,8 +357,51 @@ public class EDDGridFromZarr extends EDDGrid {
       String keyPrefix = firstSlash > 0 ? s3Path.substring(firstSlash + 1) : "";
       S3Client s3Client = S3Client.create();
       return new S3Store(s3Client, bucket, keyPrefix);
+    } else if (path.toLowerCase().endsWith(".zip")) {
+      return new dev.zarr.zarrjava.store.ReadOnlyZipStore(Paths.get(path));
     } else {
       return new FilesystemStore(Paths.get(path));
+    }
+  }
+
+  private static Group openZarrGroup(Store store, String groupName) throws Exception {
+    StoreHandle handle;
+    if (groupName == null || groupName.isEmpty() || "/".equals(groupName.trim())) {
+      handle = store.resolve();
+      try {
+        return Group.open(handle);
+      } catch (Exception e) {
+        if (store instanceof Store.ListableStore listable) {
+          boolean rootHasZarrDescriptor = handle.resolve(".zgroup").exists()
+              || handle.resolve("zarr.json").exists()
+              || handle.resolve(".zarray").exists();
+          if (!rootHasZarrDescriptor) {
+            Set<String> topDirs = new HashSet<>();
+            listable.listChildren().forEach(c -> {
+              String clean = c.startsWith("/") ? c.substring(1) : c;
+              int slash = clean.indexOf('/');
+              String top = slash > 0 ? clean.substring(0, slash) : clean;
+              if (String2.isSomething(top) && !top.startsWith(".")) {
+                topDirs.add(top);
+              }
+            });
+            if (topDirs.size() == 1) {
+              String singleChild = topDirs.iterator().next();
+              StoreHandle childHandle = store.resolve(singleChild);
+              if (childHandle.resolve(".zgroup").exists()
+                  || childHandle.resolve("zarr.json").exists()
+                  || childHandle.resolve(".zarray").exists()) {
+                return Group.open(childHandle);
+              }
+            }
+          }
+        }
+        throw e;
+      }
+    } else {
+      String[] groupKeys = String2.split(groupName, '/');
+      handle = store.resolve(groupKeys);
+      return Group.open(handle);
     }
   }
 
@@ -922,14 +966,7 @@ public class EDDGridFromZarr extends EDDGrid {
     }
 
     Store zarrStore = createZarrStore(zarrStorePath);
-    StoreHandle handle;
-    if (zarrGroupName.isEmpty() || "/".equals(zarrGroupName)) {
-      handle = zarrStore.resolve();
-    } else {
-      String[] groupKeys = String2.split(zarrGroupName, '/');
-      handle = zarrStore.resolve(groupKeys);
-    }
-    Group zarrGroup = Group.open(handle);
+    Group zarrGroup = openZarrGroup(zarrStore, zarrGroupName);
 
     Table axisSourceTable = new Table();
     Table axisAddTable = new Table();
@@ -951,6 +988,7 @@ public class EDDGridFromZarr extends EDDGrid {
     Map<String, Long> dimLengths = new LinkedHashMap<>();
 
     for (ZarrArrayInfo info : arrayMap.values()) {
+      if (info == null || info.isUnsupportedCodec) continue;
       if (!info.is1D() && info.dimensionNames != null) {
         for (int d = 0; d < info.dimensionNames.length; d++) {
           String dimName = info.dimensionNames[d];
@@ -965,7 +1003,7 @@ public class EDDGridFromZarr extends EDDGrid {
 
     if (axisNames.isEmpty()) {
       for (ZarrArrayInfo info : arrayMap.values()) {
-        if (info.is1D()) {
+        if (info != null && !info.isUnsupportedCodec && info.is1D()) {
           axisNames.add(info.name);
           dimLengths.put(info.name, info.shape[0]);
         }
@@ -1012,6 +1050,7 @@ public class EDDGridFromZarr extends EDDGrid {
 
     int dvCount = 0;
     for (ZarrArrayInfo info : arrayMap.values()) {
+      if (info == null || info.isUnsupportedCodec) continue;
       if (axisNameSet.contains(info.name)) continue;
       if (info.is1D() && isLikelyAxisArray(info)) continue;
 
@@ -1147,10 +1186,26 @@ public class EDDGridFromZarr extends EDDGrid {
     public PAType paType;
     public Attributes attributes;
     public String[] dimensionNames;
+    public boolean isUnsupportedCodec = false;
 
     public boolean is1D() {
       return shape != null && shape.length == 1;
     }
+  }
+
+  private static boolean isCodecError(Throwable t) {
+    if (t == null) return false;
+    if (t instanceof com.fasterxml.jackson.databind.exc.InvalidTypeIdException) {
+      return true;
+    }
+    String msg = t.getMessage();
+    if (msg == null) msg = t.toString();
+    msg = msg.toLowerCase();
+    return msg.contains("could not resolve type id")
+        || msg.contains("unsupported codec")
+        || msg.contains("unknown codec")
+        || msg.contains("no codec registered")
+        || msg.contains("invalid fill value");
   }
 
   /**
@@ -1173,21 +1228,38 @@ public class EDDGridFromZarr extends EDDGrid {
    */
   protected static Map<String, ZarrArrayInfo> parseZarrMetadata(Group zarrGroup) throws Throwable {
     Map<String, ZarrArrayInfo> arrayMap = new LinkedHashMap<>();
-    Node[] nodes;
-    try {
-      nodes = zarrGroup.listAsArray();
-    } catch (Exception e) {
-      nodes = new Node[0];
-    }
+    if (zarrGroup == null || zarrGroup.storeHandle == null) return arrayMap;
 
-    for (Node node : nodes) {
-      if (node instanceof Array zarray) {
-        String name = getArrayName(zarray);
-        if (String2.isSomething(name)) {
-          ZarrArrayInfo info = createZarrArrayInfo(name, zarray);
-          if (info != null) {
-            arrayMap.put(name, info);
+    Store store = zarrGroup.storeHandle.store;
+    String[] groupKeys = zarrGroup.storeHandle.keys;
+
+    if (store instanceof Store.ListableStore listable) {
+      try {
+        List<String[]> entries = listable.list(groupKeys).toList();
+        for (String[] entryKeys : entries) {
+          if (entryKeys.length >= 2) {
+            String lastPart = entryKeys[entryKeys.length - 1];
+            if (".zarray".equals(lastPart) || "zarr.json".equals(lastPart)) {
+              String[] relParts = new String[entryKeys.length - 1];
+              System.arraycopy(entryKeys, 0, relParts, 0, entryKeys.length - 1);
+              String relName = String.join("/", relParts);
+              getOrOpenZarrArrayInfo(zarrGroup, relName, arrayMap);
+            }
           }
+        }
+      } catch (Throwable t) {
+        try {
+          Node[] nodes = zarrGroup.listAsArray();
+          for (Node node : nodes) {
+            if (node instanceof Array zarray) {
+              String name = getArrayName(zarray);
+              if (String2.isSomething(name)) {
+                getOrOpenZarrArrayInfo(zarrGroup, name, arrayMap);
+              }
+            }
+          }
+        } catch (Throwable t2) {
+          // ignore
         }
       }
     }
@@ -1202,28 +1274,63 @@ public class EDDGridFromZarr extends EDDGrid {
     if (arrayMap.containsKey(name)) {
       return arrayMap.get(name);
     }
+    String[] keys = String2.split(name, '/');
+    StoreHandle childHandle = zarrGroup.storeHandle.resolve(keys);
+
+    Array zarray = null;
     try {
-      Node node = zarrGroup.get(name);
-      if (node instanceof Array zarray) {
-        ZarrArrayInfo info = createZarrArrayInfo(name, zarray);
-        if (info != null) {
-          arrayMap.put(name, info);
-          return info;
-        }
+      zarray = Array.open(childHandle);
+    } catch (Throwable t) {
+      if (isCodecError(t)) {
+        String2.log("EDDGridFromZarr skipping variable '" + name + "' due to unsupported Zarr codec or metadata error: " + t.getMessage());
+        ZarrArrayInfo unsupp = new ZarrArrayInfo();
+        unsupp.name = name;
+        unsupp.isUnsupportedCodec = true;
+        arrayMap.put(name, unsupp);
+        return unsupp;
       }
-    } catch (Throwable e) {
+      // Check if failure is due to missing .zattrs file in v2 Array
       try {
-        StoreHandle childHandle = zarrGroup.storeHandle.resolve(name);
-        Array zarray = Array.open(childHandle);
-        ZarrArrayInfo info = createZarrArrayInfo(name, zarray);
-        if (info != null) {
-          arrayMap.put(name, info);
-          return info;
+        if (childHandle.resolve(".zarray").exists()) {
+          java.nio.ByteBuffer buf = childHandle.resolve(".zarray").readNonNull();
+          com.fasterxml.jackson.databind.ObjectMapper mapper = dev.zarr.zarrjava.v2.Node.makeObjectMapper();
+          dev.zarr.zarrjava.v2.ArrayMetadata metadata = mapper.readValue(dev.zarr.zarrjava.utils.Utils.toArray(buf), dev.zarr.zarrjava.v2.ArrayMetadata.class);
+          metadata.attributes = new dev.zarr.zarrjava.core.Attributes();
+          java.lang.reflect.Constructor<dev.zarr.zarrjava.v2.Array> ctor = dev.zarr.zarrjava.v2.Array.class.getDeclaredConstructor(StoreHandle.class, dev.zarr.zarrjava.v2.ArrayMetadata.class);
+          ctor.setAccessible(true);
+          zarray = ctor.newInstance(childHandle, metadata);
         }
-      } catch (Throwable e2) {
-        // ignore
+      } catch (Throwable t2) {
+        if (isCodecError(t2)) {
+          String2.log("EDDGridFromZarr skipping variable '" + name + "' due to unsupported Zarr codec or metadata error: " + t2.getMessage());
+          ZarrArrayInfo unsupp = new ZarrArrayInfo();
+          unsupp.name = name;
+          unsupp.isUnsupportedCodec = true;
+          arrayMap.put(name, unsupp);
+          return unsupp;
+        }
       }
     }
+
+    if (zarray != null) {
+      try {
+        ZarrArrayInfo info = createZarrArrayInfo(name, zarray);
+        if (info != null) {
+          arrayMap.put(name, info);
+          return info;
+        }
+      } catch (Throwable t) {
+        if (isCodecError(t)) {
+          String2.log("EDDGridFromZarr skipping variable '" + name + "' due to unsupported Zarr codec or metadata error: " + t.getMessage());
+          ZarrArrayInfo unsupp = new ZarrArrayInfo();
+          unsupp.name = name;
+          unsupp.isUnsupportedCodec = true;
+          arrayMap.put(name, unsupp);
+          return unsupp;
+        }
+      }
+    }
+
     return null;
   }
 
@@ -1245,9 +1352,13 @@ public class EDDGridFromZarr extends EDDGrid {
     PAType paType = NcHelper.getElementPAType(ma2Type);
 
     Attributes erddapAtts = new Attributes();
-    dev.zarr.zarrjava.core.Attributes zattrs = metadata.attributes();
-    if (zattrs != null) {
-      populateAttributesFromZarr(zattrs, erddapAtts);
+    try {
+      dev.zarr.zarrjava.core.Attributes zattrs = metadata.attributes();
+      if (zattrs != null) {
+        populateAttributesFromZarr(zattrs, erddapAtts);
+      }
+    } catch (Throwable t) {
+      // array has no .zattrs
     }
 
     if (erddapAtts.get("_FillValue") == null && metadata.parsedFillValue() != null) {
@@ -1382,6 +1493,10 @@ public class EDDGridFromZarr extends EDDGrid {
         Attributes sourceAtts = new Attributes();
 
         if (info != null) {
+          if (info.isUnsupportedCodec) {
+            throw new SimpleException(
+                "Axis variable '" + sourceName + "' could not be loaded due to unsupported codec or metadata error.");
+          }
           if (!info.is1D()) {
             throw new SimpleException(
                 "Axis variable '" + sourceName + "' is not a 1D Zarr array (shape rank=" + info.shape.length + ").");
@@ -1406,6 +1521,9 @@ public class EDDGridFromZarr extends EDDGrid {
         sourceAtts.remove("missing_value");
 
         LocalizedAttributes addAtts = avi.attributes() != null ? avi.attributes() : new LocalizedAttributes();
+        if (addAtts.get(0, "ioos_category") == null && sourceAtts.get("ioos_category") == null) {
+          addAtts.set(0, "ioos_category", "Unknown");
+        }
 
         EDVGridAxis edvga = makeAxisVariable(
             datasetID, av, sourceName, destName, sourceAtts, addAtts, pa);
@@ -1417,6 +1535,7 @@ public class EDDGridFromZarr extends EDDGrid {
       Map<String, Long> dimLengths = new LinkedHashMap<>();
 
       for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
         if (!info.is1D() && info.dimensionNames != null) {
           for (int d = 0; d < info.dimensionNames.length; d++) {
             String dimName = info.dimensionNames[d];
@@ -1432,7 +1551,7 @@ public class EDDGridFromZarr extends EDDGrid {
       // If no N-dimensional arrays, fallback to all 1D arrays
       if (orderedDimNames.isEmpty()) {
         for (ZarrArrayInfo info : arrayMap.values()) {
-          if (info.is1D()) {
+          if (info != null && !info.isUnsupportedCodec && info.is1D()) {
             orderedDimNames.add(info.name);
             dimLengths.put(info.name, info.shape[0]);
           }
@@ -1447,6 +1566,10 @@ public class EDDGridFromZarr extends EDDGrid {
         PrimitiveArray pa = null;
         Attributes sourceAtts = new Attributes();
 
+        if (info != null && info.isUnsupportedCodec) {
+          throw new SimpleException(
+              "Dimension coordinate variable '" + dimName + "' found in Zarr store but could not be loaded due to unsupported codec.");
+        }
         if (info != null && info.is1D()) {
           if (info.attributes != null) info.attributes.copyTo(sourceAtts);
           ucar.ma2.Array nc2Array = info.array.read();
@@ -1467,8 +1590,13 @@ public class EDDGridFromZarr extends EDDGrid {
         sourceAtts.remove("_FillValue");
         sourceAtts.remove("missing_value");
 
+        LocalizedAttributes autoAddAtts = new LocalizedAttributes();
+        if (sourceAtts.get("ioos_category") == null) {
+          autoAddAtts.set(0, "ioos_category", "Unknown");
+        }
+
         EDVGridAxis edvga = makeAxisVariable(
-            datasetID, av, dimName, dimName, sourceAtts, new LocalizedAttributes(), pa);
+            datasetID, av, dimName, dimName, sourceAtts, autoAddAtts, pa);
         axesList.add(edvga);
       }
     }
@@ -1502,6 +1630,10 @@ public class EDDGridFromZarr extends EDDGrid {
         if (!String2.isSomething(tDataDestName)) tDataDestName = tDataSourceName;
 
         ZarrArrayInfo info = getOrOpenZarrArrayInfo(tDataSourceName, arrayMap);
+        if (info != null && info.isUnsupportedCodec) {
+          String2.log("EDDGridFromZarr skipping variable '" + tDataSourceName + "' due to unsupported Zarr codec.");
+          continue;
+        }
 
         Attributes tDataSourceAtts = new Attributes();
         if (info != null && info.attributes != null) {
@@ -1548,6 +1680,7 @@ public class EDDGridFromZarr extends EDDGrid {
     } else {
       // Auto-discovery mode: find all N-dimensional arrays in group not used as axes
       for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
         if (axisSourceNames.contains(info.name)) continue;
         if (info.is1D() && isLikelyAxisArray(info)) continue;
 
