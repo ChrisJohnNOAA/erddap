@@ -12,7 +12,6 @@ import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.variable.AxisVariableInfo;
 import gov.noaa.pfel.erddap.variable.DataVariableInfo;
 import gov.noaa.pfel.erddap.variable.EDV;
-import testDataset.EDDTestDataset;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import testDataset.EDDTestDataset;
 import testDataset.Initialization;
 
 class EDDGridFromZarrTests {
@@ -959,18 +959,21 @@ class EDDGridFromZarrTests {
   @Test
   void testGridCompressedData_ZarrJava() throws Throwable {
     Initialization.edStatic();
-    EDDGridFromZarr dataset = (EDDGridFromZarr) EDDTestDataset.getTestZarr_gridCompressedData_ZarrJava();
+    EDDGridFromZarr dataset =
+        (EDDGridFromZarr) EDDTestDataset.getTestZarr_gridCompressedData_ZarrJava();
     assertNotNull(dataset);
     assertEquals("zarr_gridCompressedData_ZarrJava", dataset.datasetID());
 
     Path testDir = Files.createTempDirectory("zarr_compressed_test");
     try {
       String dir = testDir.toString() + "/";
-      String dasFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_compressed", ".das");
+      String dasFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_compressed", ".das");
       String dasContent = Files.readString(Paths.get(dir, dasFileName));
       assertTrue(dasContent.contains("null_compressor"));
 
-      String ddsFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_compressed", ".dds");
+      String ddsFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_compressed", ".dds");
       String ddsContent = Files.readString(Paths.get(dir, ddsFileName));
       assertTrue(ddsContent.contains("GRID {"));
       assertTrue(ddsContent.contains("null_compressor"));
@@ -985,19 +988,22 @@ class EDDGridFromZarrTests {
 
     EDV nullComp = dataset.findDataVariableByDestinationName("null_compressor");
     assertNotNull(nullComp);
-    com.cohort.array.PrimitiveArray paNull = dataset.getSourceDataFromFile(nullComp, start, stride, stop);
+    com.cohort.array.PrimitiveArray paNull =
+        dataset.getSourceDataFromFile(nullComp, start, stride, stop);
     assertTrue(Double.isNaN(paNull.getDouble(0)));
     assertEquals(1.0, paNull.getDouble(1), 1e-4);
 
     EDV def1 = dataset.findDataVariableByDestinationName("compressed_deflate1");
     assertNotNull(def1);
-    com.cohort.array.PrimitiveArray paDef1 = dataset.getSourceDataFromFile(def1, start, stride, stop);
+    com.cohort.array.PrimitiveArray paDef1 =
+        dataset.getSourceDataFromFile(def1, start, stride, stop);
     assertEquals(0, paDef1.getInt(0));
     assertEquals(1, paDef1.getInt(1));
 
     EDV def9 = dataset.findDataVariableByDestinationName("compressed_deflate9");
     assertNotNull(def9);
-    com.cohort.array.PrimitiveArray paDef9 = dataset.getSourceDataFromFile(def9, start, stride, stop);
+    com.cohort.array.PrimitiveArray paDef9 =
+        dataset.getSourceDataFromFile(def9, start, stride, stop);
     assertEquals(0, paDef9.getInt(0));
     assertEquals(1, paDef9.getInt(1));
 
@@ -1016,18 +1022,21 @@ class EDDGridFromZarrTests {
   @Test
   void testGridFillValues_ZarrJava() throws Throwable {
     Initialization.edStatic();
-    EDDGridFromZarr dataset = (EDDGridFromZarr) EDDTestDataset.getTestZarr_gridFillValues_ZarrJava();
+    EDDGridFromZarr dataset =
+        (EDDGridFromZarr) EDDTestDataset.getTestZarr_gridFillValues_ZarrJava();
     assertNotNull(dataset);
     assertEquals("zarr_gridFillValues_ZarrJava", dataset.datasetID());
 
     Path testDir = Files.createTempDirectory("zarr_fill_test");
     try {
       String dir = testDir.toString() + "/";
-      String dasFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_fill", ".das");
+      String dasFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_fill", ".das");
       String dasContent = Files.readString(Paths.get(dir, dasFileName));
       assertTrue(dasContent.contains("double_nan {"));
 
-      String ddsFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_fill", ".dds");
+      String ddsFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_fill", ".dds");
       String ddsContent = Files.readString(Paths.get(dir, ddsFileName));
       assertTrue(ddsContent.contains("double_nan"));
       assertTrue(ddsContent.contains("float_nan"));
@@ -1061,11 +1070,13 @@ class EDDGridFromZarrTests {
     Path testDir = Files.createTempDirectory("zarr_dtypes_test");
     try {
       String dir = testDir.toString() + "/";
-      String dasFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_dtypes", ".das");
+      String dasFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_dtypes", ".das");
       String dasContent = Files.readString(Paths.get(dir, dasFileName));
       assertTrue(dasContent.contains("byte_ordered_group_big_endian_double_data {"));
 
-      String ddsFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_dtypes", ".dds");
+      String ddsFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_dtypes", ".dds");
       String ddsContent = Files.readString(Paths.get(dir, ddsFileName));
       assertTrue(ddsContent.contains("byte_ordered_group_big_endian_double_data"));
       assertTrue(ddsContent.contains("byte_ordered_group_little_endian_ulong_data"));
@@ -1077,12 +1088,18 @@ class EDDGridFromZarrTests {
     int[] stride = new int[] {1, 1};
     int[] stop = new int[] {0, 1};
 
-    EDV bigDouble = dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_double_data");
-    EDV littleDouble = dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_double_data");
-    EDV bigLong = dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_long_data");
-    EDV littleLong = dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_long_data");
-    EDV bigUlong = dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_ulong_data");
-    EDV littleUlong = dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_ulong_data");
+    EDV bigDouble =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_double_data");
+    EDV littleDouble =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_double_data");
+    EDV bigLong =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_long_data");
+    EDV littleLong =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_long_data");
+    EDV bigUlong =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_ulong_data");
+    EDV littleUlong =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_ulong_data");
 
     assertNotNull(bigDouble);
     assertNotNull(littleDouble);
@@ -1091,20 +1108,26 @@ class EDDGridFromZarrTests {
     assertNotNull(bigUlong);
     assertNotNull(littleUlong);
 
-    com.cohort.array.PrimitiveArray paBigDouble = dataset.getSourceDataFromFile(bigDouble, start, stride, stop);
-    com.cohort.array.PrimitiveArray paLittleDouble = dataset.getSourceDataFromFile(littleDouble, start, stride, stop);
+    com.cohort.array.PrimitiveArray paBigDouble =
+        dataset.getSourceDataFromFile(bigDouble, start, stride, stop);
+    com.cohort.array.PrimitiveArray paLittleDouble =
+        dataset.getSourceDataFromFile(littleDouble, start, stride, stop);
     for (int i = 0; i < paBigDouble.size(); i++) {
       assertEquals(paBigDouble.getDouble(i), paLittleDouble.getDouble(i), 1e-6);
     }
 
-    com.cohort.array.PrimitiveArray paBigLong = dataset.getSourceDataFromFile(bigLong, start, stride, stop);
-    com.cohort.array.PrimitiveArray paLittleLong = dataset.getSourceDataFromFile(littleLong, start, stride, stop);
+    com.cohort.array.PrimitiveArray paBigLong =
+        dataset.getSourceDataFromFile(bigLong, start, stride, stop);
+    com.cohort.array.PrimitiveArray paLittleLong =
+        dataset.getSourceDataFromFile(littleLong, start, stride, stop);
     for (int i = 0; i < paBigLong.size(); i++) {
       assertEquals(paBigLong.getLong(i), paLittleLong.getLong(i));
     }
 
-    com.cohort.array.PrimitiveArray paBigUlong = dataset.getSourceDataFromFile(bigUlong, start, stride, stop);
-    com.cohort.array.PrimitiveArray paLittleUlong = dataset.getSourceDataFromFile(littleUlong, start, stride, stop);
+    com.cohort.array.PrimitiveArray paBigUlong =
+        dataset.getSourceDataFromFile(bigUlong, start, stride, stop);
+    com.cohort.array.PrimitiveArray paLittleUlong =
+        dataset.getSourceDataFromFile(littleUlong, start, stride, stop);
     assertEquals(PAType.ULONG, paBigUlong.elementType());
     assertEquals(PAType.ULONG, paLittleUlong.elementType());
     for (int i = 0; i < paBigUlong.size(); i++) {
@@ -1142,7 +1165,9 @@ class EDDGridFromZarrTests {
 
       // Test 1: Missing axis variable that is not in store and not a dimension
       List<AxisVariableInfo> missingAxisList = new ArrayList<>();
-      missingAxisList.add(new AxisVariableInfo("missing_axis_name", "missing_axis_name", new LocalizedAttributes(), null));
+      missingAxisList.add(
+          new AxisVariableInfo(
+              "missing_axis_name", "missing_axis_name", new LocalizedAttributes(), null));
 
       LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
       addGlobalAtts.set(0, "title", "Missing Axis Test");
@@ -1175,7 +1200,10 @@ class EDDGridFromZarrTests {
                       -1,
                       true));
 
-      assertTrue(missingEx.getMessage().contains("Axis variable 'missing_axis_name' not found in Zarr store"));
+      assertTrue(
+          missingEx
+              .getMessage()
+              .contains("Axis variable 'missing_axis_name' not found in Zarr store"));
 
     } finally {
       com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
@@ -1192,11 +1220,13 @@ class EDDGridFromZarrTests {
     Path testDir = Files.createTempDirectory("zarr_testdata_test");
     try {
       String dir = testDir.toString() + "/";
-      String dasFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_testdata", ".das");
+      String dasFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_testdata", ".das");
       String dasContent = Files.readString(Paths.get(dir, dasFileName));
       assertTrue(dasContent.contains("group_with_dims_var4D {"));
 
-      String ddsFileName = dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_testdata", ".dds");
+      String ddsFileName =
+          dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_testdata", ".dds");
       String ddsContent = Files.readString(Paths.get(dir, ddsFileName));
       assertTrue(ddsContent.contains("group_with_dims_var4D"));
     } finally {

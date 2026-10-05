@@ -5,15 +5,11 @@
 package gov.noaa.pfel.erddap.dataset;
 
 import com.cohort.array.Attributes;
-import com.cohort.array.DoubleArray;
 import com.cohort.array.IntArray;
 import com.cohort.array.PAOne;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
-import com.cohort.util.File2;
-import com.cohort.util.Math2;
-import com.cohort.util.MustBe;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -78,8 +74,7 @@ public class EDDGridFromZarr extends EDDGrid {
    * @throws Throwable if trouble
    */
   @EDDFromXmlMethod
-  public static EDDGridFromZarr fromXml(Erddap erddap, SimpleXMLReader xmlReader)
-      throws Throwable {
+  public static EDDGridFromZarr fromXml(Erddap erddap, SimpleXMLReader xmlReader) throws Throwable {
 
     if (verbose) String2.log("\n*** constructing EDDGridFromZarr(xmlReader)...");
     String tDatasetID = xmlReader.attributeValue("datasetID");
@@ -291,8 +286,7 @@ public class EDDGridFromZarr extends EDDGrid {
       String2.log(errorInMethod + "Warning: Could not read .zattrs metadata: " + ze.getMessage());
     }
 
-    combinedGlobalAttributes =
-        new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
+    combinedGlobalAttributes = new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
     String tLicense = combinedGlobalAttributes.getString(language, "license");
     if (tLicense != null)
       combinedGlobalAttributes.set(
@@ -343,9 +337,7 @@ public class EDDGridFromZarr extends EDDGrid {
     if (!dimensionValuesInMemory) saveDimensionValuesInFile();
   }
 
-  /**
-   * Helper method to instantiate the appropriate zarr-java Store for local, HTTP, or S3 URIs.
-   */
+  /** Helper method to instantiate the appropriate zarr-java Store for local, HTTP, or S3 URIs. */
   private static Store createZarrStore(String path) throws IOException {
     if (path == null) throw new IllegalArgumentException("Zarr store path cannot be null.");
     if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -372,19 +364,23 @@ public class EDDGridFromZarr extends EDDGrid {
         return Group.open(handle);
       } catch (Exception e) {
         if (store instanceof Store.ListableStore listable) {
-          boolean rootHasZarrDescriptor = handle.resolve(".zgroup").exists()
-              || handle.resolve("zarr.json").exists()
-              || handle.resolve(".zarray").exists();
+          boolean rootHasZarrDescriptor =
+              handle.resolve(".zgroup").exists()
+                  || handle.resolve("zarr.json").exists()
+                  || handle.resolve(".zarray").exists();
           if (!rootHasZarrDescriptor) {
             Set<String> topDirs = new HashSet<>();
-            listable.listChildren().forEach(c -> {
-              String clean = c.startsWith("/") ? c.substring(1) : c;
-              int slash = clean.indexOf('/');
-              String top = slash > 0 ? clean.substring(0, slash) : clean;
-              if (String2.isSomething(top) && !top.startsWith(".")) {
-                topDirs.add(top);
-              }
-            });
+            listable
+                .listChildren()
+                .forEach(
+                    c -> {
+                      String clean = c.startsWith("/") ? c.substring(1) : c;
+                      int slash = clean.indexOf('/');
+                      String top = slash > 0 ? clean.substring(0, slash) : clean;
+                      if (String2.isSomething(top) && !top.startsWith(".")) {
+                        topDirs.add(top);
+                      }
+                    });
             if (topDirs.size() == 1) {
               String singleChild = topDirs.iterator().next();
               StoreHandle childHandle = store.resolve(singleChild);
@@ -405,9 +401,7 @@ public class EDDGridFromZarr extends EDDGrid {
     }
   }
 
-  /**
-   * Helper method to map dev.zarr.zarrjava.core.Attributes entries into ERDDAP Attributes.
-   */
+  /** Helper method to map dev.zarr.zarrjava.core.Attributes entries into ERDDAP Attributes. */
   public static void populateAttributesFromZarr(
       dev.zarr.zarrjava.core.Attributes zattrs, Attributes erddapAtts) {
     if (zattrs == null || erddapAtts == null) return;
@@ -439,9 +433,7 @@ public class EDDGridFromZarr extends EDDGrid {
     }
   }
 
-  /**
-   * Constructs a sibling dataset for a new Zarr store source URL.
-   */
+  /** Constructs a sibling dataset for a new Zarr store source URL. */
   @Override
   public EDDGrid sibling(
       String tLocalSourceUrl, int firstAxisToMatch, int matchAxisNDigits, boolean shareInfo)
@@ -505,8 +497,7 @@ public class EDDGridFromZarr extends EDDGrid {
       String results = similar(newEDDGrid, firstAxisToMatch, matchAxisNDigits, testAV0);
       if (results.length() > 0) throw new SimpleException("Error in EDDGrid.sibling: " + results);
 
-      for (int av = 1; av < nAv; av++)
-        newEDDGrid.axisVariables()[av] = axisVariables[av];
+      for (int av = 1; av < nAv; av++) newEDDGrid.axisVariables()[av] = axisVariables[av];
       newEDDGrid.dataVariables = dataVariables;
 
       newEDDGrid.axisVariableSourceNames = axisVariableSourceNames();
@@ -557,24 +548,20 @@ public class EDDGridFromZarr extends EDDGrid {
   /**
    * Fetches a strided multidimensional subset for a single data variable from the Zarr store.
    *
-   * <p>Math behind chunk-to-index mapping and slicing:
-   * 1. For a given dimension d with Zarr total length S_d and chunk size C_d:
-   *    - Min chunk index overlapping [start_d, stop_d]: c_min,d = start_d / C_d
-   *    - Max chunk index overlapping [start_d, stop_d]: c_max,d = stop_d / C_d
-   * 2. For each chunk at chunk coordinates (c_0, c_1, ..., c_{rank-1}):
-   *    - Physical chunk start offset in full Zarr array: P_start,d = c_d * C_d
-   *    - Physical chunk end offset (exclusive): P_end,d = min((c_d + 1) * C_d, S_d)
-   * 3. Requested output element index k_d in range [0, N_d - 1] corresponds to full Zarr index:
-   *    - i_d = start_d + k_d * stride_d
-   *    - Overlap with this chunk requires: P_start,d <= i_d < P_end,d
-   * 4. Output index bounds k_min,d and k_max,d for dimension d in this chunk are:
-   *    - k_min,d = max(0, ceilDiv(P_start,d - start_d, stride_d))
-   *    - k_max,d = min(N_d - 1, floorDiv(P_end,d - 1 - start_d, stride_d))
-   * 5. If k_min,d > k_max,d for any dimension d, the chunk does not overlap requested range.
-   * 6. Otherwise, for each point (k_0, ..., k_{rank-1}) in range [k_min, k_max]:
-   *    - Local chunk offset: localOffset_d = (start_d + k_d * stride_d) - P_start,d
-   *    - Flat 1D output offset in C-order row-major layout:
-   *      outIdx = sum(k_d * product_{m=d+1}^{rank-1} N_m)
+   * <p>Math behind chunk-to-index mapping and slicing: 1. For a given dimension d with Zarr total
+   * length S_d and chunk size C_d: - Min chunk index overlapping [start_d, stop_d]: c_min,d =
+   * start_d / C_d - Max chunk index overlapping [start_d, stop_d]: c_max,d = stop_d / C_d 2. For
+   * each chunk at chunk coordinates (c_0, c_1, ..., c_{rank-1}): - Physical chunk start offset in
+   * full Zarr array: P_start,d = c_d * C_d - Physical chunk end offset (exclusive): P_end,d =
+   * min((c_d + 1) * C_d, S_d) 3. Requested output element index k_d in range [0, N_d - 1]
+   * corresponds to full Zarr index: - i_d = start_d + k_d * stride_d - Overlap with this chunk
+   * requires: P_start,d <= i_d < P_end,d 4. Output index bounds k_min,d and k_max,d for dimension d
+   * in this chunk are: - k_min,d = max(0, ceilDiv(P_start,d - start_d, stride_d)) - k_max,d =
+   * min(N_d - 1, floorDiv(P_end,d - 1 - start_d, stride_d)) 5. If k_min,d > k_max,d for any
+   * dimension d, the chunk does not overlap requested range. 6. Otherwise, for each point (k_0,
+   * ..., k_{rank-1}) in range [k_min, k_max]: - Local chunk offset: localOffset_d = (start_d + k_d
+   * * stride_d) - P_start,d - Flat 1D output offset in C-order row-major layout: outIdx = sum(k_d *
+   * product_{m=d+1}^{rank-1} N_m)
    *
    * @param edv the data variable requested
    * @param start 0-based start indices for each dimension
@@ -583,8 +570,8 @@ public class EDDGridFromZarr extends EDDGrid {
    * @return flat 1D PrimitiveArray containing requested data subset in row-major order
    * @throws Throwable if error
    */
-  public PrimitiveArray getSourceDataFromFile(
-      EDV edv, int[] start, int[] stride, int[] stop) throws Throwable {
+  public PrimitiveArray getSourceDataFromFile(EDV edv, int[] start, int[] stride, int[] stop)
+      throws Throwable {
 
     if (edv == null) {
       throw new IllegalArgumentException("EDV data variable cannot be null.");
@@ -608,7 +595,8 @@ public class EDDGridFromZarr extends EDDGrid {
           StoreHandle childHandle = zarrGroup.storeHandle.resolve(sourceName);
           zarray = Array.open(childHandle);
         } catch (Throwable t2) {
-          throw new SimpleException("Data variable '" + sourceName + "' not found in Zarr store.", t2);
+          throw new SimpleException(
+              "Data variable '" + sourceName + "' not found in Zarr store.", t2);
         }
       }
     }
@@ -623,7 +611,13 @@ public class EDDGridFromZarr extends EDDGrid {
 
     if (start.length != rank || stride.length != rank || stop.length != rank) {
       throw new IllegalArgumentException(
-          "Constraint dimension count (" + start.length + ") does not match Zarr array rank (" + rank + ") for variable '" + sourceName + "'.");
+          "Constraint dimension count ("
+              + start.length
+              + ") does not match Zarr array rank ("
+              + rank
+              + ") for variable '"
+              + sourceName
+              + "'.");
     }
 
     // Validate request bounds and calculate output dimension lengths
@@ -632,14 +626,28 @@ public class EDDGridFromZarr extends EDDGrid {
     for (int d = 0; d < rank; d++) {
       if (start[d] < 0 || stop[d] >= shape[d] || start[d] > stop[d] || stride[d] < 1) {
         throw new IllegalArgumentException(
-            "Invalid slice bounds for dimension " + d + " on '" + sourceName + "': start=" + start[d] + ", stride=" + stride[d] + ", stop=" + stop[d] + ", shape=" + shape[d]);
+            "Invalid slice bounds for dimension "
+                + d
+                + " on '"
+                + sourceName
+                + "': start="
+                + start[d]
+                + ", stride="
+                + stride[d]
+                + ", stop="
+                + stop[d]
+                + ", shape="
+                + shape[d]);
       }
       nRequested[d] = (stop[d] - start[d]) / stride[d] + 1;
       totalSizeL *= nRequested[d];
     }
 
     if (totalSizeL > Integer.MAX_VALUE) {
-      throw new SimpleException("Requested data size (" + totalSizeL + ") exceeds maximum allowed PrimitiveArray length.");
+      throw new SimpleException(
+          "Requested data size ("
+              + totalSizeL
+              + ") exceeds maximum allowed PrimitiveArray length.");
     }
     int totalSize = (int) totalSizeL;
 
@@ -788,9 +796,10 @@ public class EDDGridFromZarr extends EDDGrid {
           } else {
             double rawVal = chunkData.getDouble(ma2Idx);
 
-            boolean isMissing = Double.isNaN(rawVal)
-                || (!Double.isNaN(sourceMissingDouble) && rawVal == sourceMissingDouble)
-                || (!Double.isNaN(sourceFillDouble) && rawVal == sourceFillDouble);
+            boolean isMissing =
+                Double.isNaN(rawVal)
+                    || (!Double.isNaN(sourceMissingDouble) && rawVal == sourceMissingDouble)
+                    || (!Double.isNaN(sourceFillDouble) && rawVal == sourceFillDouble);
 
             if (isMissing) {
               setMissingInDest(destPA, outIdx, destPAType, destMissingDouble);
@@ -810,7 +819,8 @@ public class EDDGridFromZarr extends EDDGrid {
     return destPA;
   }
 
-  private static void setMissingInDest(PrimitiveArray destPA, int index, PAType paType, double missingDouble) {
+  private static void setMissingInDest(
+      PrimitiveArray destPA, int index, PAType paType, double missingDouble) {
     if (paType == PAType.STRING || paType == PAType.CHAR) {
       destPA.setString(index, "");
     } else if (Double.isNaN(missingDouble)) {
@@ -842,7 +852,11 @@ public class EDDGridFromZarr extends EDDGrid {
     int nav = axisVariables != null ? axisVariables.length : 0;
     if (tConstraints.size() != nav * 3) {
       throw new IllegalArgumentException(
-          "tConstraints size (" + tConstraints.size() + ") must equal nav * 3 (" + (nav * 3) + ").");
+          "tConstraints size ("
+              + tConstraints.size()
+              + ") must equal nav * 3 ("
+              + (nav * 3)
+              + ").");
     }
 
     int[] start = new int[nav];
@@ -881,12 +895,12 @@ public class EDDGridFromZarr extends EDDGrid {
    * @param startUpdateMillis start timestamp of update
    * @return true if updated
    * @throws Throwable if error
-   *
-   * // TODO (Prompt 2) / // TODO (Prompt 3)
+   *     <p>// TODO (Prompt 2) / // TODO (Prompt 3)
    */
   @Override
   public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
-    // TODO (Prompt 2) / // TODO (Prompt 3): Implement lowUpdate for checking growing dimensions in Zarr store
+    // TODO (Prompt 2) / // TODO (Prompt 3): Implement lowUpdate for checking growing dimensions in
+    // Zarr store
     return false;
   }
 
@@ -927,7 +941,8 @@ public class EDDGridFromZarr extends EDDGrid {
   }
 
   /**
-   * Generates a suggested datasets.xml configuration block for a Zarr store with external global attributes.
+   * Generates a suggested datasets.xml configuration block for a Zarr store with external global
+   * attributes.
    *
    * @param zarrStorePath path or URL to the Zarr store
    * @param zarrGroupName group name within the store
@@ -949,11 +964,16 @@ public class EDDGridFromZarr extends EDDGrid {
 
     String2.log(
         "\n*** EDDGridFromZarr.generateDatasetsXml"
-            + "\nzarrStorePath=" + zarrStorePath
-            + "\nzarrGroupName=" + zarrGroupName
-            + "\ndatasetIDPrefix=" + datasetIDPrefix
-            + "\nreloadEveryNMinutes=" + reloadEveryNMinutes
-            + "\ncacheFromUrl=" + cacheFromUrl);
+            + "\nzarrStorePath="
+            + zarrStorePath
+            + "\nzarrGroupName="
+            + zarrGroupName
+            + "\ndatasetIDPrefix="
+            + datasetIDPrefix
+            + "\nreloadEveryNMinutes="
+            + reloadEveryNMinutes
+            + "\ncacheFromUrl="
+            + cacheFromUrl);
 
     if (!String2.isSomething(zarrStorePath)) {
       throw new IllegalArgumentException("zarrStorePath wasn't specified.");
@@ -1037,14 +1057,9 @@ public class EDDGridFromZarr extends EDDGrid {
 
       axisSourceTable.addColumn(av, axisName, pa, sourceAtts);
 
-      Attributes addAtts = makeReadyToUseAddVariableAttributesForDatasetsXml(
-          axisSourceTable.globalAttributes(),
-          sourceAtts,
-          null,
-          axisName,
-          true,
-          true,
-          true);
+      Attributes addAtts =
+          makeReadyToUseAddVariableAttributesForDatasetsXml(
+              axisSourceTable.globalAttributes(), sourceAtts, null, axisName, true, true, true);
       axisAddTable.addColumn(av, axisName, (PrimitiveArray) pa.clone(), addAtts);
     }
 
@@ -1065,14 +1080,15 @@ public class EDDGridFromZarr extends EDDGrid {
 
       dataSourceTable.addColumn(dvCount, varName, sourcePA, sourceAtts);
 
-      Attributes addAtts = makeReadyToUseAddVariableAttributesForDatasetsXml(
-          axisSourceTable.globalAttributes(),
-          sourceAtts,
-          null,
-          varName,
-          paType != PAType.STRING,
-          paType != PAType.STRING,
-          false);
+      Attributes addAtts =
+          makeReadyToUseAddVariableAttributesForDatasetsXml(
+              axisSourceTable.globalAttributes(),
+              sourceAtts,
+              null,
+              varName,
+              paType != PAType.STRING,
+              paType != PAType.STRING,
+              false);
 
       PrimitiveArray destPA = PrimitiveArray.factory(paType, 1, false);
       dataAddTable.addColumn(dvCount, varName, destPA, addAtts);
@@ -1110,8 +1126,10 @@ public class EDDGridFromZarr extends EDDGrid {
     sb.append(writeAttsForDatasetsXml(false, axisSourceTable.globalAttributes(), "    "));
     sb.append(writeAttsForDatasetsXml(true, globalAddAtts, "    "));
 
-    sb.append(writeVariablesForDatasetsXml(axisSourceTable, axisAddTable, "axisVariable", false, false));
-    sb.append(writeVariablesForDatasetsXml(dataSourceTable, dataAddTable, "dataVariable", true, false));
+    sb.append(
+        writeVariablesForDatasetsXml(axisSourceTable, axisAddTable, "axisVariable", false, false));
+    sb.append(
+        writeVariablesForDatasetsXml(dataSourceTable, dataAddTable, "dataVariable", true, false));
 
     sb.append("</dataset>\n\n");
 
@@ -1126,7 +1144,8 @@ public class EDDGridFromZarr extends EDDGrid {
    * @param zarrGroupName Zarr group name
    * @return sanitized dataset ID string
    */
-  public static String suggestZarrDatasetID(String prefix, String zarrStorePath, String zarrGroupName) {
+  public static String suggestZarrDatasetID(
+      String prefix, String zarrStorePath, String zarrGroupName) {
     String name = "";
     if (String2.isSomething(zarrGroupName) && !"/".equals(zarrGroupName.trim())) {
       String[] parts = String2.split(zarrGroupName, '/');
@@ -1169,15 +1188,15 @@ public class EDDGridFromZarr extends EDDGrid {
     }
 
     if (String2.isSomething(prefix)) {
-      return prefix.endsWith("_") || prefix.endsWith("-") ? prefix + sanitized : prefix + "_" + sanitized;
+      return prefix.endsWith("_") || prefix.endsWith("-")
+          ? prefix + sanitized
+          : prefix + "_" + sanitized;
     } else {
       return "zarr_" + sanitized;
     }
   }
 
-  /**
-   * Helper class to hold metadata for a Zarr array discovered in the store/group.
-   */
+  /** Helper class to hold metadata for a Zarr array discovered in the store/group. */
   protected static class ZarrArrayInfo {
     public String name;
     public Array array;
@@ -1209,8 +1228,8 @@ public class EDDGridFromZarr extends EDDGrid {
   }
 
   /**
-   * Parses Zarr metadata from the open Zarr group, discovering all array nodes,
-   * extracting array shapes, chunk dimensions, data types, attributes, and dimension names.
+   * Parses Zarr metadata from the open Zarr group, discovering all array nodes, extracting array
+   * shapes, chunk dimensions, data types, attributes, and dimension names.
    *
    * @return Map of array name to ZarrArrayInfo
    * @throws Throwable if error
@@ -1270,7 +1289,8 @@ public class EDDGridFromZarr extends EDDGrid {
     return getOrOpenZarrArrayInfo(this.zarrGroup, name, arrayMap);
   }
 
-  private static ZarrArrayInfo getOrOpenZarrArrayInfo(Group zarrGroup, String name, Map<String, ZarrArrayInfo> arrayMap) {
+  private static ZarrArrayInfo getOrOpenZarrArrayInfo(
+      Group zarrGroup, String name, Map<String, ZarrArrayInfo> arrayMap) {
     if (arrayMap.containsKey(name)) {
       return arrayMap.get(name);
     }
@@ -1282,7 +1302,11 @@ public class EDDGridFromZarr extends EDDGrid {
       zarray = Array.open(childHandle);
     } catch (Throwable t) {
       if (isCodecError(t)) {
-        String2.log("EDDGridFromZarr skipping variable '" + name + "' due to unsupported Zarr codec or metadata error: " + t.getMessage());
+        String2.log(
+            "EDDGridFromZarr skipping variable '"
+                + name
+                + "' due to unsupported Zarr codec or metadata error: "
+                + t.getMessage());
         ZarrArrayInfo unsupp = new ZarrArrayInfo();
         unsupp.name = name;
         unsupp.isUnsupportedCodec = true;
@@ -1293,16 +1317,26 @@ public class EDDGridFromZarr extends EDDGrid {
       try {
         if (childHandle.resolve(".zarray").exists()) {
           java.nio.ByteBuffer buf = childHandle.resolve(".zarray").readNonNull();
-          com.fasterxml.jackson.databind.ObjectMapper mapper = dev.zarr.zarrjava.v2.Node.makeObjectMapper();
-          dev.zarr.zarrjava.v2.ArrayMetadata metadata = mapper.readValue(dev.zarr.zarrjava.utils.Utils.toArray(buf), dev.zarr.zarrjava.v2.ArrayMetadata.class);
+          com.fasterxml.jackson.databind.ObjectMapper mapper =
+              dev.zarr.zarrjava.v2.Node.makeObjectMapper();
+          dev.zarr.zarrjava.v2.ArrayMetadata metadata =
+              mapper.readValue(
+                  dev.zarr.zarrjava.utils.Utils.toArray(buf),
+                  dev.zarr.zarrjava.v2.ArrayMetadata.class);
           metadata.attributes = new dev.zarr.zarrjava.core.Attributes();
-          java.lang.reflect.Constructor<dev.zarr.zarrjava.v2.Array> ctor = dev.zarr.zarrjava.v2.Array.class.getDeclaredConstructor(StoreHandle.class, dev.zarr.zarrjava.v2.ArrayMetadata.class);
+          java.lang.reflect.Constructor<dev.zarr.zarrjava.v2.Array> ctor =
+              dev.zarr.zarrjava.v2.Array.class.getDeclaredConstructor(
+                  StoreHandle.class, dev.zarr.zarrjava.v2.ArrayMetadata.class);
           ctor.setAccessible(true);
           zarray = ctor.newInstance(childHandle, metadata);
         }
       } catch (Throwable t2) {
         if (isCodecError(t2)) {
-          String2.log("EDDGridFromZarr skipping variable '" + name + "' due to unsupported Zarr codec or metadata error: " + t2.getMessage());
+          String2.log(
+              "EDDGridFromZarr skipping variable '"
+                  + name
+                  + "' due to unsupported Zarr codec or metadata error: "
+                  + t2.getMessage());
           ZarrArrayInfo unsupp = new ZarrArrayInfo();
           unsupp.name = name;
           unsupp.isUnsupportedCodec = true;
@@ -1321,7 +1355,11 @@ public class EDDGridFromZarr extends EDDGrid {
         }
       } catch (Throwable t) {
         if (isCodecError(t)) {
-          String2.log("EDDGridFromZarr skipping variable '" + name + "' due to unsupported Zarr codec or metadata error: " + t.getMessage());
+          String2.log(
+              "EDDGridFromZarr skipping variable '"
+                  + name
+                  + "' due to unsupported Zarr codec or metadata error: "
+                  + t.getMessage());
           ZarrArrayInfo unsupp = new ZarrArrayInfo();
           unsupp.name = name;
           unsupp.isUnsupportedCodec = true;
@@ -1335,7 +1373,10 @@ public class EDDGridFromZarr extends EDDGrid {
   }
 
   private static String getArrayName(Array zarray) {
-    if (zarray != null && zarray.storeHandle != null && zarray.storeHandle.keys != null && zarray.storeHandle.keys.length > 0) {
+    if (zarray != null
+        && zarray.storeHandle != null
+        && zarray.storeHandle.keys != null
+        && zarray.storeHandle.keys.length > 0) {
       return zarray.storeHandle.keys[zarray.storeHandle.keys.length - 1];
     }
     return "";
@@ -1461,7 +1502,8 @@ public class EDDGridFromZarr extends EDDGrid {
   private static String stripQuotes(String s) {
     if (s == null) return "";
     s = s.trim();
-    if (s.length() >= 2 && ((s.startsWith("\"") && s.endsWith("\"")) || (s.startsWith("'") && s.endsWith("'")))) {
+    if (s.length() >= 2
+        && ((s.startsWith("\"") && s.endsWith("\"")) || (s.startsWith("'") && s.endsWith("'")))) {
       s = s.substring(1, s.length() - 1);
     }
     return s.trim();
@@ -1476,8 +1518,7 @@ public class EDDGridFromZarr extends EDDGrid {
    * @throws Throwable if error or missing/invalid axes
    */
   protected EDVGridAxis[] buildGridAxes(
-      List<AxisVariableInfo> tAxisVariables, Map<String, ZarrArrayInfo> arrayMap)
-      throws Throwable {
+      List<AxisVariableInfo> tAxisVariables, Map<String, ZarrArrayInfo> arrayMap) throws Throwable {
 
     List<EDVGridAxis> axesList = new ArrayList<>();
 
@@ -1495,11 +1536,17 @@ public class EDDGridFromZarr extends EDDGrid {
         if (info != null) {
           if (info.isUnsupportedCodec) {
             throw new SimpleException(
-                "Axis variable '" + sourceName + "' could not be loaded due to unsupported codec or metadata error.");
+                "Axis variable '"
+                    + sourceName
+                    + "' could not be loaded due to unsupported codec or metadata error.");
           }
           if (!info.is1D()) {
             throw new SimpleException(
-                "Axis variable '" + sourceName + "' is not a 1D Zarr array (shape rank=" + info.shape.length + ").");
+                "Axis variable '"
+                    + sourceName
+                    + "' is not a 1D Zarr array (shape rank="
+                    + info.shape.length
+                    + ").");
           }
           if (info.attributes != null) info.attributes.copyTo(sourceAtts);
 
@@ -1520,13 +1567,14 @@ public class EDDGridFromZarr extends EDDGrid {
         sourceAtts.remove("_FillValue");
         sourceAtts.remove("missing_value");
 
-        LocalizedAttributes addAtts = avi.attributes() != null ? avi.attributes() : new LocalizedAttributes();
+        LocalizedAttributes addAtts =
+            avi.attributes() != null ? avi.attributes() : new LocalizedAttributes();
         if (addAtts.get(0, "ioos_category") == null && sourceAtts.get("ioos_category") == null) {
           addAtts.set(0, "ioos_category", "Unknown");
         }
 
-        EDVGridAxis edvga = makeAxisVariable(
-            datasetID, av, sourceName, destName, sourceAtts, addAtts, pa);
+        EDVGridAxis edvga =
+            makeAxisVariable(datasetID, av, sourceName, destName, sourceAtts, addAtts, pa);
         axesList.add(edvga);
       }
     } else {
@@ -1568,7 +1616,9 @@ public class EDDGridFromZarr extends EDDGrid {
 
         if (info != null && info.isUnsupportedCodec) {
           throw new SimpleException(
-              "Dimension coordinate variable '" + dimName + "' found in Zarr store but could not be loaded due to unsupported codec.");
+              "Dimension coordinate variable '"
+                  + dimName
+                  + "' found in Zarr store but could not be loaded due to unsupported codec.");
         }
         if (info != null && info.is1D()) {
           if (info.attributes != null) info.attributes.copyTo(sourceAtts);
@@ -1595,8 +1645,8 @@ public class EDDGridFromZarr extends EDDGrid {
           autoAddAtts.set(0, "ioos_category", "Unknown");
         }
 
-        EDVGridAxis edvga = makeAxisVariable(
-            datasetID, av, dimName, dimName, sourceAtts, autoAddAtts, pa);
+        EDVGridAxis edvga =
+            makeAxisVariable(datasetID, av, dimName, dimName, sourceAtts, autoAddAtts, pa);
         axesList.add(edvga);
       }
     }
@@ -1607,7 +1657,8 @@ public class EDDGridFromZarr extends EDDGrid {
   /**
    * Builds ERDDAP EDV data variables for gridded data arrays.
    *
-   * @param tDataVariables explicit data variable specifications from XML (or null/empty for auto-discovery)
+   * @param tDataVariables explicit data variable specifications from XML (or null/empty for
+   *     auto-discovery)
    * @param arrayMap map of Zarr array metadata
    * @param axisSourceNames set of array names used as coordinate axes
    * @return EDV[] array of constructed data variables
@@ -1631,7 +1682,10 @@ public class EDDGridFromZarr extends EDDGrid {
 
         ZarrArrayInfo info = getOrOpenZarrArrayInfo(tDataSourceName, arrayMap);
         if (info != null && info.isUnsupportedCodec) {
-          String2.log("EDDGridFromZarr skipping variable '" + tDataSourceName + "' due to unsupported Zarr codec.");
+          String2.log(
+              "EDDGridFromZarr skipping variable '"
+                  + tDataSourceName
+                  + "' due to unsupported Zarr codec.");
           continue;
         }
 
@@ -1656,23 +1710,25 @@ public class EDDGridFromZarr extends EDDGrid {
 
         EDV edv;
         if (EDVTime.hasTimeUnits(language, tDataSourceAtts, tDataAddAtts)) {
-          edv = new EDVTimeStamp(
-              datasetID,
-              tDataSourceName,
-              tDataDestName,
-              tDataSourceAtts,
-              tDataAddAtts,
-              dvSourceDataType);
+          edv =
+              new EDVTimeStamp(
+                  datasetID,
+                  tDataSourceName,
+                  tDataDestName,
+                  tDataSourceAtts,
+                  tDataAddAtts,
+                  dvSourceDataType);
         } else {
-          edv = new EDV(
-              datasetID,
-              tDataSourceName,
-              tDataDestName,
-              tDataSourceAtts,
-              tDataAddAtts,
-              dvSourceDataType,
-              PAOne.fromDouble(Double.NaN),
-              PAOne.fromDouble(Double.NaN));
+          edv =
+              new EDV(
+                  datasetID,
+                  tDataSourceName,
+                  tDataDestName,
+                  tDataSourceAtts,
+                  tDataAddAtts,
+                  dvSourceDataType,
+                  PAOne.fromDouble(Double.NaN),
+                  PAOne.fromDouble(Double.NaN));
         }
         edv.extractAndSetActualRange(language);
         dvList.add(edv);
@@ -1693,29 +1749,32 @@ public class EDDGridFromZarr extends EDDGrid {
         }
 
         LocalizedAttributes tDataAddAtts = new LocalizedAttributes();
-        String dvSourceDataType = info.paType != null ? PAType.toCohortString(info.paType) : "double";
+        String dvSourceDataType =
+            info.paType != null ? PAType.toCohortString(info.paType) : "double";
 
         if (tDataDestName.equals(EDV.TIME_NAME)) continue;
 
         EDV edv;
         if (EDVTime.hasTimeUnits(language, tDataSourceAtts, tDataAddAtts)) {
-          edv = new EDVTimeStamp(
-              datasetID,
-              tDataSourceName,
-              tDataDestName,
-              tDataSourceAtts,
-              tDataAddAtts,
-              dvSourceDataType);
+          edv =
+              new EDVTimeStamp(
+                  datasetID,
+                  tDataSourceName,
+                  tDataDestName,
+                  tDataSourceAtts,
+                  tDataAddAtts,
+                  dvSourceDataType);
         } else {
-          edv = new EDV(
-              datasetID,
-              tDataSourceName,
-              tDataDestName,
-              tDataSourceAtts,
-              tDataAddAtts,
-              dvSourceDataType,
-              PAOne.fromDouble(Double.NaN),
-              PAOne.fromDouble(Double.NaN));
+          edv =
+              new EDV(
+                  datasetID,
+                  tDataSourceName,
+                  tDataDestName,
+                  tDataSourceAtts,
+                  tDataAddAtts,
+                  dvSourceDataType,
+                  PAOne.fromDouble(Double.NaN),
+                  PAOne.fromDouble(Double.NaN));
         }
         edv.extractAndSetActualRange(language);
         dvList.add(edv);
@@ -1732,13 +1791,20 @@ public class EDDGridFromZarr extends EDDGrid {
   private static boolean isLikelyAxisArray(ZarrArrayInfo info) {
     if (info == null || !info.is1D()) return false;
     String name = info.name.toLowerCase();
-    if (name.equals("time") || name.equals("lat") || name.equals("latitude")
-        || name.equals("lon") || name.equals("longitude") || name.equals("depth")
-        || name.equals("alt") || name.equals("altitude") || name.equals("elevation")) {
+    if (name.equals("time")
+        || name.equals("lat")
+        || name.equals("latitude")
+        || name.equals("lon")
+        || name.equals("longitude")
+        || name.equals("depth")
+        || name.equals("alt")
+        || name.equals("altitude")
+        || name.equals("elevation")) {
       return true;
     }
     if (info.attributes != null) {
-      if (info.attributes.get("axis") != null || info.attributes.get("_CoordinateAxisType") != null) {
+      if (info.attributes.get("axis") != null
+          || info.attributes.get("_CoordinateAxisType") != null) {
         return true;
       }
     }
