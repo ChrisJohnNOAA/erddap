@@ -10,6 +10,7 @@ import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
+import com.cohort.util.MustBe;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -24,6 +25,7 @@ import dev.zarr.zarrjava.store.ReadOnlyZipStore;
 import dev.zarr.zarrjava.store.S3Store;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
+import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.Erddap;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
@@ -41,6 +43,7 @@ import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -611,7 +614,13 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     public boolean isScalar() {
-      return shape == null || shape.length == 0 || (shape.length == 1 && shape[0] == 1);
+      return shape == null || shape.length == 0;
+    }
+
+    public boolean isScalar(long totalNumRows) {
+      if (shape == null || shape.length == 0) return true;
+      if (shape.length == 1 && shape[0] == 1 && totalNumRows > 1) return true;
+      return false;
     }
 
     public boolean is2DStringOrChar() {
@@ -934,7 +943,7 @@ public class EDDTableFromZarr extends EDDTable {
                       + ")");
             }
           }
-        } else if (info.isScalar()) {
+        } else if (info.isScalar(numRows)) {
           isEligible = true;
         } else if (info.is2DStringOrChar()) {
           if (info.shape != null && info.shape.length == 2) {
@@ -1199,10 +1208,127 @@ public class EDDTableFromZarr extends EDDTable {
       String loggedInAs,
       String requestUrl,
       String userDapQuery,
-      gov.noaa.pfel.erddap.dataset.TableWriter tableWriter)
+      TableWriter tableWriter)
       throws Throwable {
-    // TODO (Prompt 3): Columnar chunk scanning and constraint evaluation
-    throw new SimpleException("getDataForDapQuery is not yet implemented for EDDTableFromZarr.");
+
+    // 1. Parse user DAP query into requested results variables and constraints
+    StringArray resultsVariables = new StringArray();
+    StringArray constraintVariables = new StringArray();
+    StringArray constraintOps = new StringArray();
+    StringArray constraintValues = new StringArray();
+
+    parseUserDapQuery(
+        language,
+        userDapQuery,
+        resultsVariables,
+        constraintVariables,
+        constraintOps,
+        constraintValues,
+        false);
+
+    String[] requestedVarNames = resultsVariables.toArray();
+    StringArray[] constraintVarsAndOps =
+        new StringArray[] {constraintVariables, constraintOps, constraintValues};
+
+    // Map source array names to Array handles
+    Map<String, Array> zarrArrayMap = new LinkedHashMap<>();
+    Map<String, ZarrArrayInfo> metadataMap = parseZarrMetadata();
+    for (EDV edv : dataVariables) {
+      if (edv != null) {
+        String sName = edv.sourceName();
+        ZarrArrayInfo info = metadataMap.get(sName);
+        if (info == null && zarrGroup != null) {
+          info = getOrOpenZarrArrayInfo(zarrGroup, sName, metadataMap);
+        }
+        if (info != null && info.array != null) {
+          zarrArrayMap.put(sName, info.array);
+        }
+      }
+    }
+
+    // 2. Determine chunk batch size along main row dimension
+    int chunkSize = 10000; // default buffer size
+    if (metadataMap != null && !metadataMap.isEmpty()) {
+      for (ZarrArrayInfo info : metadataMap.values()) {
+        if (info != null && info.chunkShape != null && info.chunkShape.length > 0) {
+          int c0 = info.chunkShape[0];
+          if (c0 > 0) {
+            chunkSize = c0;
+            break;
+          }
+        }
+      }
+    }
+    if (chunkSize < 100) chunkSize = 100;
+    if (chunkSize > 100000) chunkSize = 100000;
+
+    long totalMatchingRows = 0;
+    Table cumulativeBatchTable = null;
+
+    // 3. Main chunk scanning loop over dataset rows
+    for (long startRow = 0; startRow < numRows; startRow += chunkSize) {
+      int currentChunkSize = (int) Math.min(chunkSize, numRows - startRow);
+
+      // Pass 1: Evaluate constraints against chunk data
+      BitSet rowMask =
+          evaluateChunkConstraints(
+              startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap);
+
+      int cardinal = rowMask.cardinality();
+      if (cardinal == 0) {
+        continue;
+      }
+
+      totalMatchingRows += cardinal;
+
+      // Pass 2: Extract requested variable row batch
+      Table batchTable =
+          extractRowBatch(
+              startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap);
+
+      if (cumulativeBatchTable == null) {
+        cumulativeBatchTable = batchTable;
+      } else {
+        cumulativeBatchTable.append(batchTable);
+      }
+
+      // Stream sub-table batch into tableWriter if buffer size threshold met.
+      // Note: writeChunkToTableWriter calls standardizeResultsTable, which converts
+      // source column names to destination names and re-orders columns to match the query.
+      if (writeChunkToTableWriter(
+          language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, false)) {
+        cumulativeBatchTable = null;
+      }
+    }
+
+    // 4. Handle empty results or finalize tableWriter
+    if (totalMatchingRows == 0) {
+      Table emptyTable = new Table();
+      for (String varName : requestedVarNames) {
+        EDV edv = findEDV(varName);
+        PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
+        emptyTable.addColumn(
+            edv != null ? edv.sourceName() : varName, PrimitiveArray.factory(paType, 0, false));
+      }
+      writeChunkToTableWriter(language, requestUrl, userDapQuery, emptyTable, tableWriter, true);
+    } else if (cumulativeBatchTable != null) {
+      writeChunkToTableWriter(
+          language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, true);
+    } else {
+      tableWriter.finish();
+    }
+  }
+
+  /**
+   * Safe helper method to find EDV by destination name or source name.
+   */
+  public EDV findEDV(String varName) {
+    if (varName == null) return null;
+    int dv = String2.indexOf(dataVariableDestinationNames(), varName);
+    if (dv >= 0) return dataVariables[dv];
+    dv = String2.indexOf(dataVariableSourceNames(), varName);
+    if (dv >= 0) return dataVariables[dv];
+    return null;
   }
 
   /**
@@ -1216,10 +1342,360 @@ public class EDDTableFromZarr extends EDDTable {
   public void getDataForQuery(
       String userDapQuery,
       String loggedInAs,
-      gov.noaa.pfel.erddap.dataset.TableWriter tableWriter)
+      TableWriter tableWriter)
       throws Throwable {
-    // TODO (Prompt 3): Columnar chunk scanning and constraint evaluation
-    throw new SimpleException("getDataForQuery is not yet implemented for EDDTableFromZarr.");
+    getDataForDapQuery(0, loggedInAs, "", userDapQuery, tableWriter);
+  }
+
+  /**
+   * Evaluates query constraints on a chunk batch using filter-first BitSet strategy.
+   */
+  protected BitSet evaluateChunkConstraints(
+      long startRow,
+      int currentChunkSize,
+      StringArray[] constraintVarsAndOps,
+      Map<String, Array> zarrArrayMap)
+      throws Throwable {
+    return evaluateChunkConstraints(
+        startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, parseZarrMetadata());
+  }
+
+  protected BitSet evaluateChunkConstraints(
+      long startRow,
+      int currentChunkSize,
+      StringArray[] constraintVarsAndOps,
+      Map<String, Array> zarrArrayMap,
+      Map<String, ZarrArrayInfo> metadataMap)
+      throws Throwable {
+
+    BitSet rowMask = new BitSet(currentChunkSize);
+    rowMask.set(0, currentChunkSize);
+
+    if (constraintVarsAndOps == null || constraintVarsAndOps.length < 3) {
+      return rowMask;
+    }
+
+    StringArray constraintVars = constraintVarsAndOps[0];
+    StringArray constraintOps = constraintVarsAndOps[1];
+    StringArray constraintValues = constraintVarsAndOps[2];
+
+    if (constraintVars == null || constraintVars.size() == 0) {
+      return rowMask;
+    }
+
+    if (metadataMap == null) {
+      metadataMap = parseZarrMetadata();
+    }
+
+    int nConstraints = constraintVars.size();
+    for (int c = 0; c < nConstraints; c++) {
+      String varName = constraintVars.get(c);
+      String op = constraintOps.get(c);
+      String valStr = constraintValues.get(c);
+
+      EDV edv = findEDV(varName);
+      if (edv == null) {
+        if (verbose) String2.log("evaluateChunkConstraints could NOT find EDV for varName=" + varName);
+        continue;
+      }
+
+      String sourceName = edv.sourceName();
+      ZarrArrayInfo info = metadataMap.get(sourceName);
+      if (info == null && zarrGroup != null) {
+        info = getOrOpenZarrArrayInfo(zarrGroup, sourceName, metadataMap);
+      }
+      Array zarray = zarrArrayMap.get(sourceName);
+      if (zarray == null && info != null) {
+        zarray = info.array;
+        if (zarray != null) zarrArrayMap.put(sourceName, zarray);
+      }
+
+      PrimitiveArray pa =
+          readChunkDataForVar(sourceName, zarray, info, edv, startRow, currentChunkSize, true);
+
+      pa.applyConstraint(false, rowMask, op, valStr);
+
+      if (rowMask.cardinality() == 0) {
+        break; // Early exit if no rows satisfy constraints in this chunk
+      }
+    }
+
+    return rowMask;
+  }
+
+  /**
+   * Extracts requested variable columns for rows matching rowMask in a chunk batch.
+   * Note: Columns are added using edv.sourceName() so that downstream call to
+   * writeChunkToTableWriter -> standardizeResultsTable converts source names to destination
+   * names and applies destination variable attributes.
+   */
+  protected Table extractRowBatch(
+      long startRow,
+      BitSet rowMask,
+      String[] requestedVarNames,
+      Map<String, Array> zarrArrayMap)
+      throws Throwable {
+    int currentChunkSize =
+        (numRows > 0 && numRows > startRow)
+            ? (int) Math.min(10000, numRows - startRow)
+            : rowMask.size();
+    return extractRowBatch(
+        startRow,
+        currentChunkSize,
+        rowMask,
+        requestedVarNames,
+        zarrArrayMap,
+        parseZarrMetadata());
+  }
+
+  protected Table extractRowBatch(
+      long startRow,
+      int currentChunkSize,
+      BitSet rowMask,
+      String[] requestedVarNames,
+      Map<String, Array> zarrArrayMap,
+      Map<String, ZarrArrayInfo> metadataMap)
+      throws Throwable {
+
+    Table batchTable = new Table();
+    int nMatchingRows = rowMask.cardinality();
+
+    if (metadataMap == null) {
+      metadataMap = parseZarrMetadata();
+    }
+
+    for (String varName : requestedVarNames) {
+      EDV edv = findEDV(varName);
+      if (edv == null) continue;
+
+      String sourceName = edv.sourceName();
+      ZarrArrayInfo info = metadataMap.get(sourceName);
+      if (info == null && zarrGroup != null) {
+        info = getOrOpenZarrArrayInfo(zarrGroup, sourceName, metadataMap);
+      }
+      Array zarray = zarrArrayMap.get(sourceName);
+      if (zarray == null && info != null) {
+        zarray = info.array;
+        if (zarray != null) zarrArrayMap.put(sourceName, zarray);
+      }
+
+      PrimitiveArray pa =
+          readChunkDataForVar(sourceName, zarray, info, edv, startRow, currentChunkSize, false);
+
+      PrimitiveArray filteredPa = PrimitiveArray.factory(pa.elementType(), nMatchingRows, false);
+      for (int r = rowMask.nextSetBit(0); r >= 0; r = rowMask.nextSetBit(r + 1)) {
+        filteredPa.addFromPA(pa, r);
+      }
+
+      // Add column with edv.sourceName() for writeChunkToTableWriter -> standardizeResultsTable
+      batchTable.addColumn(sourceName, filteredPa);
+    }
+
+    return batchTable;
+  }
+
+  private static boolean isMissingChunkException(Throwable t) {
+    if (t == null) return true;
+    if (t instanceof java.io.FileNotFoundException
+        || t instanceof java.nio.file.NoSuchFileException) {
+      return true;
+    }
+    String msg = t.getMessage();
+    if (msg != null) {
+      String lower = msg.toLowerCase();
+      if (lower.contains("not found")
+          || lower.contains("404")
+          || lower.contains("nosuchkey")
+          || lower.contains("does not exist")
+          || lower.contains("missing chunk")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private PrimitiveArray makeMissingPrimitiveArray(
+      PAType paType,
+      int currentChunkSize,
+      ZarrArrayInfo info,
+      EDV edv) {
+    PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
+
+    if (edv != null) {
+      if (paType == PAType.STRING || paType == PAType.CHAR) {
+        String sf = edv.stringFillValue();
+        if (String2.isSomething(sf)) {
+          missingPa.addNStrings(currentChunkSize, sf);
+          return missingPa;
+        }
+      } else {
+        double sf = edv.sourceFillValue();
+        if (Double.isNaN(sf)) sf = edv.sourceMissingValue();
+        if (!Double.isNaN(sf)) {
+          missingPa.addNDoubles(currentChunkSize, sf);
+          return missingPa;
+        }
+      }
+    }
+
+    if (info != null && info.attributes != null) {
+      PrimitiveArray fillPa = info.attributes.get("_FillValue");
+      if (fillPa == null) fillPa = info.attributes.get("missing_value");
+      if (fillPa != null && fillPa.size() > 0) {
+        PAOne fvOne = fillPa.getPAOne(0);
+        if (fvOne != null && !fvOne.isMissingValue()) {
+          missingPa.addNPAOnes(currentChunkSize, fvOne);
+          return missingPa;
+        }
+      }
+    }
+
+    missingPa.addNPAOnes(currentChunkSize, missingPa.missingValue());
+    return missingPa;
+  }
+
+  /**
+   * Helper method to read chunk data for a single variable, applying scale/offset, missing values,
+   * 2D string extraction, or scalar broadcasting.
+   */
+  private PrimitiveArray readChunkDataForVar(
+      String sourceName,
+      Array zarray,
+      ZarrArrayInfo info,
+      EDV edv,
+      long startRow,
+      int currentChunkSize,
+      boolean unpackToDestination)
+      throws Throwable {
+
+    PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
+
+    // Handle missing or unwritten Zarr array
+    if (zarray == null || info == null) {
+      return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+    }
+
+    boolean isUnsigned = false;
+    if (info.attributes != null) {
+      isUnsigned = "true".equalsIgnoreCase(info.attributes.getString("_Unsigned"));
+    }
+
+    // 0D or DSG Global Scalar Variable Broadcasting
+    if (info.isScalar(numRows)) {
+      ucar.ma2.Array nc2Array = null;
+      try {
+        nc2Array = zarray.read();
+      } catch (Throwable t) {
+        if (!isMissingChunkException(t)) throw t;
+        nc2Array = null;
+      }
+
+      PrimitiveArray scalarPa =
+          nc2Array != null
+              ? NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned)
+              : null;
+
+      PrimitiveArray broadcastPa = PrimitiveArray.factory(paType, currentChunkSize, false);
+      if (scalarPa != null && scalarPa.size() > 0) {
+        PAOne scalarVal = scalarPa.getPAOne(0);
+        broadcastPa.addNPAOnes(currentChunkSize, scalarVal);
+      } else {
+        return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+      }
+      if (unpackToDestination && edv != null) {
+        broadcastPa = edv.toDestination(broadcastPa);
+      }
+      return broadcastPa;
+    }
+
+    // 2D Character or Byte Matrix String Variable
+    if (info.is2DStringOrChar()) {
+      int stringLength =
+          (info.shape != null && info.shape.length == 2) ? (int) info.shape[1] : 1;
+      long[] offset = new long[] {startRow, 0};
+      long[] shape = new long[] {currentChunkSize, stringLength};
+
+      ucar.ma2.Array nc2Array = null;
+      try {
+        nc2Array = zarray.read(offset, shape);
+      } catch (Throwable t) {
+        if (!isMissingChunkException(t)) throw t;
+        nc2Array = null;
+      }
+
+      StringArray sa = new StringArray(currentChunkSize, false);
+      if (nc2Array == null) {
+        sa.addNStrings(currentChunkSize, "");
+      } else if (nc2Array instanceof ucar.ma2.ArrayChar ac) {
+        ucar.ma2.ArrayObject ao = ac.make1DStringArray();
+        Object[] oa = (Object[]) ao.get1DJavaArray(ao.getDataType());
+        for (Object o : oa) {
+          sa.add(o == null ? "" : String2.trimEnd(o.toString()));
+        }
+      } else {
+        // Fallback for 2D byte/numeric string matrices
+        PrimitiveArray rawPa = NcHelper.getPrimitiveArray(nc2Array, false, isUnsigned);
+        for (int row = 0; row < currentChunkSize; row++) {
+          StringBuilder sb = new StringBuilder();
+          for (int c = 0; c < stringLength; c++) {
+            int idx = row * stringLength + c;
+            if (idx < rawPa.size()) {
+              int b = rawPa.getInt(idx);
+              if (b == 0) break; // Null terminator
+              sb.append((char) (b & 0xff));
+            }
+          }
+          sa.add(sb.toString().trim());
+        }
+      }
+      return sa;
+    }
+
+    // Standard 1D Variable
+    long[] offset = new long[] {startRow};
+    long[] shape = new long[] {currentChunkSize};
+
+    ucar.ma2.Array nc2Array = null;
+    try {
+      nc2Array = zarray.read(offset, shape);
+    } catch (Throwable t) {
+      if (!isMissingChunkException(t)) throw t;
+      nc2Array = null;
+    }
+
+    if (nc2Array == null) {
+      return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+    }
+
+    PrimitiveArray pa = NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned);
+
+    // Handle _FillValue or missing_value conversion on raw data
+    if (info.attributes != null) {
+      String fillValStr = info.attributes.getString("_FillValue");
+      if (!String2.isSomething(fillValStr)) {
+        fillValStr = info.attributes.getString("missing_value");
+      }
+      if (String2.isSomething(fillValStr)) {
+        pa.switchFromTo(fillValStr, "");
+      }
+    }
+
+    // Apply destination conversion & scale_factor / add_offset unpacking if requested
+    if (unpackToDestination) {
+      if (edv != null) {
+        pa = edv.toDestination(pa);
+      } else if (info.attributes != null) {
+        double scale = info.attributes.getDouble("scale_factor");
+        double offsetVal = info.attributes.getDouble("add_offset");
+        if ((!Double.isNaN(scale) && scale != 1.0) || (!Double.isNaN(offsetVal) && offsetVal != 0.0)) {
+          if (Double.isNaN(scale)) scale = 1.0;
+          if (Double.isNaN(offsetVal)) offsetVal = 0.0;
+          pa.scaleAddOffset(scale, offsetVal);
+        }
+      }
+    }
+
+    return pa;
   }
 
   // Getters for configuration and state
