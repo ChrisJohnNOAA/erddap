@@ -1292,7 +1292,9 @@ public class EDDTableFromZarr extends EDDTable {
         cumulativeBatchTable.append(batchTable);
       }
 
-      // Stream sub-table batch into tableWriter if buffer size threshold met
+      // Stream sub-table batch into tableWriter if buffer size threshold met.
+      // Note: writeChunkToTableWriter calls standardizeResultsTable, which converts
+      // source column names to destination names and re-orders columns to match the query.
       if (writeChunkToTableWriter(
           language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, false)) {
         cumulativeBatchTable = null;
@@ -1423,6 +1425,9 @@ public class EDDTableFromZarr extends EDDTable {
 
   /**
    * Extracts requested variable columns for rows matching rowMask in a chunk batch.
+   * Note: Columns are added using edv.sourceName() so that downstream call to
+   * writeChunkToTableWriter -> standardizeResultsTable converts source names to destination
+   * names and applies destination variable attributes.
    */
   protected Table extractRowBatch(
       long startRow,
@@ -1482,6 +1487,7 @@ public class EDDTableFromZarr extends EDDTable {
         filteredPa.addFromPA(pa, r);
       }
 
+      // Add column with edv.sourceName() for writeChunkToTableWriter -> standardizeResultsTable
       batchTable.addColumn(sourceName, filteredPa);
     }
 
