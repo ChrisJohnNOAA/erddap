@@ -6,8 +6,10 @@ package gov.noaa.pfel.erddap.dataset;
 
 import com.cohort.array.Attributes;
 import com.cohort.array.PAOne;
+import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
+import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -309,91 +311,10 @@ public class EDDTableFromZarr extends EDDTable {
       String2.log(errorInMethod + "Warning when determining row dimension: " + e.getMessage());
     }
 
-    // 5. Initialize dataVariables if provided
-    if (tDataVariables != null && !tDataVariables.isEmpty()) {
-      int ndv = tDataVariables.size();
-      dataVariables = new EDV[ndv];
-      for (int dv = 0; dv < ndv; dv++) {
-        DataVariableInfo dvi = tDataVariables.get(dv);
-        String tSourceName = dvi.sourceName();
-        String tDestName = dvi.destinationName();
-        if (!String2.isSomething(tDestName)) tDestName = tSourceName;
-        LocalizedAttributes tAddAtt = dvi.attributes();
-        String tSourceType = dvi.dataType();
-        Attributes tSourceAtt = new Attributes();
-
-        try {
-          if (zarrGroup != null) {
-            StoreHandle childHandle = zarrGroup.storeHandle.resolve(tSourceName);
-            Array arr = Array.open(childHandle);
-            if (arr != null && arr.metadata() != null) {
-              populateAttributesFromZarr(arr.metadata().attributes(), tSourceAtt);
-            }
-          }
-        } catch (Exception e) {
-          // ignore if array doesn't exist or metadata unreadable
-        }
-
-        if (EDV.LON_NAME.equals(tDestName)) {
-          dataVariables[dv] =
-              new EDVLon(
-                  datasetID,
-                  tSourceName,
-                  tSourceAtt,
-                  tAddAtt,
-                  tSourceType,
-                  PAOne.fromDouble(Double.NaN),
-                  PAOne.fromDouble(Double.NaN));
-          lonIndex = dv;
-        } else if (EDV.LAT_NAME.equals(tDestName)) {
-          dataVariables[dv] =
-              new EDVLat(
-                  datasetID,
-                  tSourceName,
-                  tSourceAtt,
-                  tAddAtt,
-                  tSourceType,
-                  PAOne.fromDouble(Double.NaN),
-                  PAOne.fromDouble(Double.NaN));
-          latIndex = dv;
-        } else if (EDV.ALT_NAME.equals(tDestName)) {
-          dataVariables[dv] =
-              new EDVAlt(
-                  datasetID,
-                  tSourceName,
-                  tSourceAtt,
-                  tAddAtt,
-                  tSourceType,
-                  PAOne.fromDouble(Double.NaN),
-                  PAOne.fromDouble(Double.NaN));
-          altIndex = dv;
-        } else if (EDV.DEPTH_NAME.equals(tDestName)) {
-          dataVariables[dv] =
-              new EDVDepth(
-                  datasetID,
-                  tSourceName,
-                  tSourceAtt,
-                  tAddAtt,
-                  tSourceType,
-                  PAOne.fromDouble(Double.NaN),
-                  PAOne.fromDouble(Double.NaN));
-          depthIndex = dv;
-        } else if (EDV.TIME_NAME.equals(tDestName)) {
-          dataVariables[dv] =
-              new EDVTime(datasetID, tSourceName, tSourceAtt, tAddAtt, tSourceType);
-          timeIndex = dv;
-        } else if (EDVTimeStamp.hasTimeUnits(language, tSourceAtt, tAddAtt)) {
-          dataVariables[dv] =
-              new EDVTimeStamp(
-                  datasetID, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
-        } else {
-          dataVariables[dv] =
-              new EDV(datasetID, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
-        }
-      }
-    } else {
-      dataVariables = new EDV[0];
-    }
+    // 5. Discover metadata, parse DSG structure, and initialize dataVariables
+    Map<String, ZarrArrayInfo> arrayMap = parseZarrMetadata();
+    dataVariables = buildTableVariables(tDataVariables, arrayMap);
+    detectAndSetCdmDataType(arrayMap);
 
     makeAddVariablesWhereAttNamesAndValues(tAddVariablesWhere);
     ensureValid();
@@ -673,14 +594,593 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   /**
-   * Discovers variables, 1D array column mappings, and CF Discrete Sampling Geometry (DSG) structure from Zarr metadata.
+   * Data structure holding metadata and handles for a Zarr array in an EDDTableFromZarr dataset.
+   */
+  protected static class ZarrArrayInfo {
+    public String name;
+    public Array array;
+    public long[] shape;
+    public int[] chunkShape;
+    public PAType paType;
+    public Attributes attributes;
+    public String[] dimensionNames;
+    public boolean isUnsupportedCodec = false;
+
+    public boolean is1D() {
+      return shape != null && shape.length == 1;
+    }
+
+    public boolean isScalar() {
+      return shape == null || shape.length == 0 || (shape.length == 1 && shape[0] == 1);
+    }
+
+    public boolean is2DStringOrChar() {
+      if (shape == null || shape.length != 2) return false;
+
+      // 1. Explicit string/char data types
+      if (paType == PAType.STRING || paType == PAType.CHAR) return true;
+
+      // 2. For 2D byte arrays, check if one of the dimensions explicitly indicates string length
+      if (paType == PAType.BYTE || paType == PAType.UBYTE) {
+        if (dimensionNames != null) {
+          for (String d : dimensionNames) {
+            if (String2.isSomething(d)) {
+              String dLower = d.toLowerCase();
+              if (dLower.contains("str")
+                  || dLower.contains("nchar")
+                  || dLower.contains("char")
+                  || dLower.equals("string")
+                  || dLower.equals("string_len")
+                  || dLower.equals("string_length")) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+  }
+
+  /**
+   * Helper method to open/load a ZarrArrayInfo from a Zarr group.
    *
-   * @return Map of array names to metadata objects
+   * @param zarrGroup target Zarr group
+   * @param name array name or relative path
+   * @param arrayMap map to populate/cache
+   * @return populated ZarrArrayInfo or null if error
+   */
+  protected static ZarrArrayInfo getOrOpenZarrArrayInfo(
+      Group zarrGroup, String name, Map<String, ZarrArrayInfo> arrayMap) {
+    if (arrayMap.containsKey(name)) return arrayMap.get(name);
+    try {
+      StoreHandle childHandle = zarrGroup.storeHandle.resolve(name);
+      Array zarray = Array.open(childHandle);
+      if (zarray != null && zarray.metadata() != null) {
+        ZarrArrayInfo info = createZarrArrayInfo(name, zarray);
+        if (info != null) {
+          arrayMap.put(name, info);
+          return info;
+        }
+      }
+    } catch (Throwable t) {
+      if (verbose) String2.log("Warning in getOrOpenZarrArrayInfo for '" + name + "': " + t.getMessage());
+    }
+    return null;
+  }
+
+  private static ZarrArrayInfo createZarrArrayInfo(String name, Array zarray) throws Throwable {
+    ArrayMetadata metadata = zarray.metadata();
+    if (metadata == null) return null;
+    long[] shape = metadata.shape;
+    if (shape == null) shape = new long[0];
+    int[] chunkShape = metadata.chunkShape();
+    dev.zarr.zarrjava.core.DataType zType = metadata.dataType();
+    ucar.ma2.DataType ma2Type = zType != null ? zType.getMA2DataType() : ucar.ma2.DataType.DOUBLE;
+    PAType paType = NcHelper.getElementPAType(ma2Type);
+
+    Attributes erddapAtts = new Attributes();
+    try {
+      dev.zarr.zarrjava.core.Attributes zattrs = metadata.attributes();
+      if (zattrs != null) {
+        populateAttributesFromZarr(zattrs, erddapAtts);
+      }
+    } catch (Throwable t) {
+      // array has no .zattrs
+    }
+
+    if (zType != null) {
+      String zTypeName = zType.toString().toLowerCase();
+      if (zTypeName.startsWith("u") || zTypeName.startsWith("uint")) {
+        erddapAtts.set("_Unsigned", "true");
+      }
+    }
+
+    if (erddapAtts.get("_FillValue") == null && metadata.parsedFillValue() != null) {
+      Object fv = metadata.parsedFillValue();
+      if (fv instanceof Number n) {
+        if (fv instanceof Double || fv instanceof Float) {
+          erddapAtts.set("_FillValue", n.doubleValue());
+        } else if (fv instanceof Long) {
+          erddapAtts.set("_FillValue", n.longValue());
+        } else {
+          erddapAtts.set("_FillValue", n.intValue());
+        }
+      } else if (fv instanceof String s) {
+        erddapAtts.set("_FillValue", s);
+      }
+    }
+
+    String[] dimNames = extractDimensionNames(metadata, shape.length);
+
+    ZarrArrayInfo info = new ZarrArrayInfo();
+    info.name = name;
+    info.array = zarray;
+    info.shape = shape;
+    info.chunkShape = chunkShape;
+    info.paType = paType;
+    info.attributes = erddapAtts;
+    info.dimensionNames = dimNames;
+    return info;
+  }
+
+  private void detectAndSetCdmDataType(Map<String, ZarrArrayInfo> arrayMap) {
+    int language = 0;
+    String cdmDataType = combinedGlobalAttributes.getString(language, "cdm_data_type");
+    String featureType = combinedGlobalAttributes.getString(language, "featureType");
+    if (!String2.isSomething(featureType)) {
+      featureType = combinedGlobalAttributes.getString(language, "CF:featureType");
+    }
+    if (!String2.isSomething(featureType)) {
+      featureType = combinedGlobalAttributes.getString(language, "CF:feature_type");
+    }
+
+    if (!String2.isSomething(featureType) && dataVariables != null) {
+      for (EDV edv : dataVariables) {
+        if (edv != null) {
+          String cfRole = edv.combinedAttributes().getString(language, "cf_role");
+          if (String2.isSomething(cfRole)) {
+            if ("timeseries_id".equalsIgnoreCase(cfRole)) {
+              featureType = "TimeSeries";
+              break;
+            } else if ("trajectory_id".equalsIgnoreCase(cfRole)) {
+              featureType = "Trajectory";
+              break;
+            } else if ("profile_id".equalsIgnoreCase(cfRole)) {
+              featureType = "Profile";
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!String2.isSomething(featureType) && arrayMap != null) {
+      for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info != null && info.attributes != null) {
+          String vFt = info.attributes.getString("cf_role");
+          if ("timeseries_id".equalsIgnoreCase(vFt)) {
+            featureType = "TimeSeries";
+            break;
+          } else if ("trajectory_id".equalsIgnoreCase(vFt)) {
+            featureType = "Trajectory";
+            break;
+          } else if ("profile_id".equalsIgnoreCase(vFt)) {
+            featureType = "Profile";
+            break;
+          }
+        }
+      }
+    }
+
+    if (String2.isSomething(featureType)) {
+      String ftLower = featureType.toLowerCase();
+      String cdmType = "Point";
+      if (ftLower.contains("timeseriesprofile")) {
+        cdmType = "TimeSeriesProfile";
+      } else if (ftLower.contains("timeseries")) {
+        cdmType = "TimeSeries";
+      } else if (ftLower.contains("trajectory")) {
+        cdmType = "Trajectory";
+      } else if (ftLower.contains("profile")) {
+        cdmType = "Profile";
+      } else if (ftLower.contains("point")) {
+        cdmType = "Point";
+      } else if (ftLower.contains("other")) {
+        cdmType = "Other";
+      }
+      combinedGlobalAttributes.set(language, "cdm_data_type", cdmType);
+      combinedGlobalAttributes.set(language, "featureType", cdmType);
+
+      // Auto-set cdm_<type>_variables if not already set and a cf_role variable exists
+      String roleVar = null;
+      if (dataVariables != null) {
+        for (EDV edv : dataVariables) {
+          if (edv != null) {
+            String cfRole = edv.combinedAttributes().getString(language, "cf_role");
+            if (String2.isSomething(cfRole)) {
+              roleVar = edv.destinationName();
+              break;
+            }
+          }
+        }
+      }
+      if (roleVar != null) {
+        if ("TimeSeries".equalsIgnoreCase(cdmType) && combinedGlobalAttributes.getString(language, "cdm_timeseries_variables") == null) {
+          combinedGlobalAttributes.set(language, "cdm_timeseries_variables", roleVar);
+        } else if ("Trajectory".equalsIgnoreCase(cdmType) && combinedGlobalAttributes.getString(language, "cdm_trajectory_variables") == null) {
+          combinedGlobalAttributes.set(language, "cdm_trajectory_variables", roleVar);
+        } else if ("Profile".equalsIgnoreCase(cdmType) && combinedGlobalAttributes.getString(language, "cdm_profile_variables") == null) {
+          combinedGlobalAttributes.set(language, "cdm_profile_variables", roleVar);
+        }
+      }
+    } else if (String2.isSomething(cdmDataType)) {
+      combinedGlobalAttributes.set(language, "cdm_data_type", cdmDataType);
+    } else {
+      if (lonIndex >= 0 && latIndex >= 0) {
+        combinedGlobalAttributes.set(language, "cdm_data_type", "Point");
+      } else {
+        combinedGlobalAttributes.set(language, "cdm_data_type", "Other");
+      }
+    }
+  }
+
+  /**
+   * Builds the EDV table variables based on XML configuration (if present) or auto-discovery.
+   *
+   * @param tDataVariables XML variable definitions or null
+   * @param arrayMap map of Zarr array metadata
+   * @return array of initialized EDV variables
    * @throws Throwable if error
    */
-  public Map<String, Object> parseZarrMetadata() throws Throwable {
-    // TODO (Prompt 2): Variable discovery and DSG column mapping
-    return new LinkedHashMap<>();
+  public EDV[] buildTableVariables(
+      List<DataVariableInfo> tDataVariables, Map<String, ZarrArrayInfo> arrayMap)
+      throws Throwable {
+    int language = 0;
+    List<EDV> edvList = new ArrayList<>();
+
+    if (tDataVariables != null && !tDataVariables.isEmpty()) {
+      int ndv = tDataVariables.size();
+      for (int dv = 0; dv < ndv; dv++) {
+        DataVariableInfo dvi = tDataVariables.get(dv);
+        String tSourceName = dvi.sourceName();
+        String tDestName = dvi.destinationName();
+        if (!String2.isSomething(tDestName)) tDestName = tSourceName;
+        LocalizedAttributes tAddAtt = dvi.attributes();
+        if (tAddAtt == null) tAddAtt = new LocalizedAttributes();
+        String tSourceType = dvi.dataType();
+        Attributes tSourceAtt = new Attributes();
+
+        ZarrArrayInfo info = arrayMap != null ? arrayMap.get(tSourceName) : null;
+        if (info == null && zarrGroup != null && arrayMap != null) {
+          info = getOrOpenZarrArrayInfo(zarrGroup, tSourceName, arrayMap);
+        }
+
+        if (info != null && info.attributes != null) {
+          info.attributes.copyTo(tSourceAtt);
+        }
+
+        if (!String2.isSomething(tSourceType) && info != null && info.paType != null) {
+          tSourceType = PAType.toCohortString(info.paType);
+        }
+        if (!String2.isSomething(tSourceType)) tSourceType = "double";
+
+        if (tSourceAtt.getString("ioos_category") == null && tAddAtt.getString(language, "ioos_category") == null) {
+          tAddAtt.set(language, "ioos_category", "Unknown");
+        }
+
+        EDV edv = createEdvInstance(dv, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
+        edvList.add(edv);
+      }
+    } else if (arrayMap != null && !arrayMap.isEmpty()) {
+      int dv = 0;
+      for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
+
+        String name = info.name;
+        if (!String2.isSomething(name)) continue;
+
+        // Skip hidden arrays or metadata descriptor keys
+        if (name.startsWith(".") || name.startsWith("_")) continue;
+
+        // Skip auxiliary bounds, QC, flag, and ancillary count arrays
+        String lowerName = name.toLowerCase();
+        if (lowerName.endsWith("_bnds")
+            || lowerName.endsWith("_bounds")
+            || lowerName.endsWith("_qc")
+            || lowerName.endsWith("_flags")
+            || lowerName.endsWith("_flag")
+            || lowerName.endsWith("_status")
+            || lowerName.endsWith("_count")) {
+          if (verbose) String2.log("EDDTableFromZarr auto-discovery skipping auxiliary array: " + name);
+          continue;
+        }
+
+        Attributes tSourceAtt = new Attributes();
+        if (info.attributes != null) {
+          info.attributes.copyTo(tSourceAtt);
+        }
+        String stdName = tSourceAtt.getString("standard_name");
+
+        boolean isDsgRoleOrAxis =
+            "latitude".equalsIgnoreCase(name) || "lat".equalsIgnoreCase(name) || "latitude".equalsIgnoreCase(stdName)
+            || "longitude".equalsIgnoreCase(name) || "lon".equalsIgnoreCase(name) || "longitude".equalsIgnoreCase(stdName)
+            || "altitude".equalsIgnoreCase(name) || "alt".equalsIgnoreCase(name) || "altitude".equalsIgnoreCase(stdName)
+            || "depth".equalsIgnoreCase(name) || "depth".equalsIgnoreCase(stdName)
+            || "time".equalsIgnoreCase(name) || "time".equalsIgnoreCase(stdName)
+            || "station_id".equalsIgnoreCase(name) || "station".equalsIgnoreCase(name) || "station_id".equalsIgnoreCase(stdName)
+            || "trajectory_id".equalsIgnoreCase(name) || "trajectory".equalsIgnoreCase(name) || "trajectory_id".equalsIgnoreCase(stdName)
+            || "profile_id".equalsIgnoreCase(name) || "profile".equalsIgnoreCase(name) || "profile_id".equalsIgnoreCase(stdName)
+            || tSourceAtt.getString("cf_role") != null;
+
+        boolean isEligible = false;
+        if (info.is1D()) {
+          if (numRows <= 0 || info.shape[0] == numRows || isDsgRoleOrAxis) {
+            isEligible = true;
+          } else if (info.dimensionNames != null && info.dimensionNames.length > 0
+              && String2.isSomething(rowDimensionName)
+              && rowDimensionName.equals(info.dimensionNames[0])) {
+            isEligible = true;
+          } else {
+            if (verbose) {
+              String2.log(
+                  "EDDTableFromZarr auto-discovery skipping 1D array '"
+                      + name
+                      + "' with length "
+                      + info.shape[0]
+                      + " (does not match dataset numRows="
+                      + numRows
+                      + ")");
+            }
+          }
+        } else if (info.isScalar()) {
+          isEligible = true;
+        } else if (info.is2DStringOrChar()) {
+          if (info.shape != null && info.shape.length == 2) {
+            if (numRows <= 0 || info.shape[0] == numRows || info.shape[1] == numRows || isDsgRoleOrAxis) {
+              isEligible = true;
+            }
+          }
+        }
+
+        if (!isEligible) continue;
+
+        String tSourceName = info.name;
+        String tDestName = String2.replaceAll(tSourceName, "/", "_");
+
+        PAType paType = info.paType;
+        if (info.is2DStringOrChar()) {
+          paType = PAType.STRING;
+        }
+
+        String tSourceType = paType != null ? PAType.toCohortString(paType) : "double";
+
+        Attributes addAtts =
+            makeReadyToUseAddVariableAttributesForDatasetsXml(
+                sourceGlobalAttributes,
+                tSourceAtt,
+                null,
+                tSourceName,
+                paType != PAType.STRING,
+                paType != PAType.STRING,
+                false);
+
+        LocalizedAttributes tAddAtt = new LocalizedAttributes(addAtts);
+
+        // Standard DSG cf_role inferrence during auto-discovery
+        if ("station_id".equalsIgnoreCase(tSourceName)
+            || "station_id".equalsIgnoreCase(stdName)
+            || "station".equalsIgnoreCase(tSourceName)) {
+          tAddAtt.set(language, "cf_role", "timeseries_id");
+          tSourceAtt.set("cf_role", "timeseries_id");
+          if (info.attributes != null) info.attributes.set("cf_role", "timeseries_id");
+        } else if ("trajectory_id".equalsIgnoreCase(tSourceName)
+            || "trajectory_id".equalsIgnoreCase(stdName)
+            || "trajectory".equalsIgnoreCase(tSourceName)) {
+          tAddAtt.set(language, "cf_role", "trajectory_id");
+          tSourceAtt.set("cf_role", "trajectory_id");
+          if (info.attributes != null) info.attributes.set("cf_role", "trajectory_id");
+        } else if ("profile_id".equalsIgnoreCase(tSourceName)
+            || "profile_id".equalsIgnoreCase(stdName)
+            || "profile".equalsIgnoreCase(tSourceName)) {
+          tAddAtt.set(language, "cf_role", "profile_id");
+          tSourceAtt.set("cf_role", "profile_id");
+          if (info.attributes != null) info.attributes.set("cf_role", "profile_id");
+        }
+
+        EDV edv = createEdvInstance(dv, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
+        edvList.add(edv);
+        dv++;
+      }
+    }
+
+    return edvList.toArray(new EDV[0]);
+  }
+
+  private EDV createEdvInstance(
+      int dv,
+      String tSourceName,
+      String tDestName,
+      Attributes tSourceAtt,
+      LocalizedAttributes tAddAtt,
+      String tSourceType)
+      throws Throwable {
+    int language = 0;
+    EDV edv;
+    String stdName = tSourceAtt.getString("standard_name");
+    if (stdName == null) stdName = tAddAtt.getString(language, "standard_name");
+
+    if (EDV.LON_NAME.equals(tDestName)
+        || "longitude".equalsIgnoreCase(stdName)
+        || "lon".equalsIgnoreCase(tSourceName)) {
+      if (tSourceAtt.getString("units") == null && tAddAtt.getString(language, "units") == null) {
+        tAddAtt.set(language, "units", "degrees_east");
+      }
+      edv =
+          new EDVLon(
+              datasetID,
+              tSourceName,
+              tSourceAtt,
+              tAddAtt,
+              tSourceType,
+              PAOne.fromDouble(Double.NaN),
+              PAOne.fromDouble(Double.NaN));
+      lonIndex = dv;
+    } else if (EDV.LAT_NAME.equals(tDestName)
+        || "latitude".equalsIgnoreCase(stdName)
+        || "lat".equalsIgnoreCase(tSourceName)) {
+      if (tSourceAtt.getString("units") == null && tAddAtt.getString(language, "units") == null) {
+        tAddAtt.set(language, "units", "degrees_north");
+      }
+      edv =
+          new EDVLat(
+              datasetID,
+              tSourceName,
+              tSourceAtt,
+              tAddAtt,
+              tSourceType,
+              PAOne.fromDouble(Double.NaN),
+              PAOne.fromDouble(Double.NaN));
+      latIndex = dv;
+    } else if (EDV.ALT_NAME.equals(tDestName)
+        || "altitude".equalsIgnoreCase(stdName)
+        || "alt".equalsIgnoreCase(tSourceName)) {
+      if (tSourceAtt.getString("units") == null && tAddAtt.getString(language, "units") == null) {
+        tAddAtt.set(language, "units", "m");
+      }
+      edv =
+          new EDVAlt(
+              datasetID,
+              tSourceName,
+              tSourceAtt,
+              tAddAtt,
+              tSourceType,
+              PAOne.fromDouble(Double.NaN),
+              PAOne.fromDouble(Double.NaN));
+      altIndex = dv;
+    } else if (EDV.DEPTH_NAME.equals(tDestName)
+        || "depth".equalsIgnoreCase(stdName)
+        || "depth".equalsIgnoreCase(tSourceName)) {
+      if (tSourceAtt.getString("units") == null && tAddAtt.getString(language, "units") == null) {
+        tAddAtt.set(language, "units", "m");
+      }
+      edv =
+          new EDVDepth(
+              datasetID,
+              tSourceName,
+              tSourceAtt,
+              tAddAtt,
+              tSourceType,
+              PAOne.fromDouble(Double.NaN),
+              PAOne.fromDouble(Double.NaN));
+      depthIndex = dv;
+    } else if (EDV.TIME_NAME.equals(tDestName)
+        || "time".equalsIgnoreCase(stdName)
+        || "time".equalsIgnoreCase(tSourceName)) {
+      edv = new EDVTime(datasetID, tSourceName, tSourceAtt, tAddAtt, tSourceType);
+      timeIndex = dv;
+    } else if (EDVTimeStamp.hasTimeUnits(language, tSourceAtt, tAddAtt)) {
+      edv = new EDVTimeStamp(datasetID, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
+    } else {
+      edv = new EDV(datasetID, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
+    }
+
+    return edv;
+  }
+
+  /**
+   * Discovers variables, 1D array column mappings, and CF Discrete Sampling Geometry (DSG) structure from Zarr metadata.
+   *
+   * @return Map of array names to ZarrArrayInfo objects
+   * @throws Throwable if error
+   */
+  public Map<String, ZarrArrayInfo> parseZarrMetadata() throws Throwable {
+    return parseZarrMetadata(this.zarrGroup);
+  }
+
+  /**
+   * Parses Zarr metadata from a given Zarr group.
+   *
+   * @param zarrGroup target Zarr group
+   * @return Map of array name to ZarrArrayInfo
+   * @throws Throwable if error
+   */
+  /**
+   * Helper to recursively traverse group nodes in non-listable or fallback Zarr stores.
+   */
+  protected static void traverseGroupNodes(Group group, String prefix, Map<String, ZarrArrayInfo> arrayMap) {
+    if (group == null) return;
+    try {
+      Node[] nodes = group.listAsArray();
+      if (nodes != null) {
+        for (Node node : nodes) {
+          if (node instanceof Array zarray) {
+            String name = getArrayName(zarray);
+            if (String2.isSomething(name)) {
+              String fullName = prefix.isEmpty() ? name : prefix + "/" + name;
+              getOrOpenZarrArrayInfo(group, fullName, arrayMap);
+            }
+          } else if (node instanceof Group childGroup) {
+            String groupName =
+                (childGroup.storeHandle != null
+                        && childGroup.storeHandle.keys != null
+                        && childGroup.storeHandle.keys.length > 0)
+                    ? childGroup.storeHandle.keys[childGroup.storeHandle.keys.length - 1]
+                    : "";
+            if (String2.isSomething(groupName)) {
+              String fullGroupPrefix = prefix.isEmpty() ? groupName : prefix + "/" + groupName;
+              traverseGroupNodes(childGroup, fullGroupPrefix, arrayMap);
+            }
+          }
+        }
+      }
+    } catch (Throwable t) {
+      if (verbose) String2.log("Warning in traverseGroupNodes: " + t.getMessage());
+    }
+  }
+
+  /**
+   * Parses Zarr metadata recursively from a given Zarr group.
+   *
+   * @param zarrGroup target Zarr group
+   * @return Map of array name to ZarrArrayInfo
+   * @throws Throwable if error
+   */
+  public static Map<String, ZarrArrayInfo> parseZarrMetadata(Group zarrGroup) throws Throwable {
+    Map<String, ZarrArrayInfo> arrayMap = new LinkedHashMap<>();
+    if (zarrGroup == null || zarrGroup.storeHandle == null) return arrayMap;
+
+    Store store = zarrGroup.storeHandle.store;
+    String[] groupKeys = zarrGroup.storeHandle.keys;
+
+    if (store instanceof Store.ListableStore listable) {
+      try {
+        List<String[]> entries = listable.list(groupKeys).toList();
+        for (String[] entryKeys : entries) {
+          if (entryKeys.length >= 2) {
+            String lastPart = entryKeys[entryKeys.length - 1];
+            if (".zarray".equals(lastPart) || "zarr.json".equals(lastPart)) {
+              String[] relParts = new String[entryKeys.length - 1];
+              System.arraycopy(entryKeys, 0, relParts, 0, entryKeys.length - 1);
+              String relName = String.join("/", relParts);
+              if (groupKeys != null && groupKeys.length > 0) {
+                String groupPrefix = String.join("/", groupKeys) + "/";
+                if (relName.startsWith(groupPrefix)) {
+                  relName = relName.substring(groupPrefix.length());
+                }
+              }
+              getOrOpenZarrArrayInfo(zarrGroup, relName, arrayMap);
+            }
+          }
+        }
+      } catch (Throwable t) {
+        traverseGroupNodes(zarrGroup, "", arrayMap);
+      }
+    } else {
+      traverseGroupNodes(zarrGroup, "", arrayMap);
+    }
+    return arrayMap;
   }
 
   /**
