@@ -1430,9 +1430,13 @@ public class EDDTableFromZarr extends EDDTable {
       String[] requestedVarNames,
       Map<String, Array> zarrArrayMap)
       throws Throwable {
+    int currentChunkSize =
+        (numRows > 0 && numRows > startRow)
+            ? (int) Math.min(10000, numRows - startRow)
+            : rowMask.size();
     return extractRowBatch(
         startRow,
-        rowMask.length(),
+        currentChunkSize,
         rowMask,
         requestedVarNames,
         zarrArrayMap,
