@@ -1295,7 +1295,15 @@ public class EDDTableFromZarr extends EDDTable {
 
     // 4. Handle empty results or finalize tableWriter
     if (totalMatchingRows == 0) {
-      throw new SimpleException(MustBe.THERE_IS_NO_DATA + " (nRows = 0)");
+      Table emptyTable = new Table();
+      for (String varName : requestedVarNames) {
+        EDV edv = findDataVariableBySourceName(varName);
+        if (edv == null) edv = findDataVariableByDestinationName(varName);
+        PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
+        emptyTable.addColumn(
+            edv != null ? edv.sourceName() : varName, PrimitiveArray.factory(paType, 0, false));
+      }
+      writeChunkToTableWriter(language, requestUrl, userDapQuery, emptyTable, tableWriter, true);
     } else {
       if (cumulativeBatchTable == null) {
         cumulativeBatchTable = new Table();
@@ -1462,6 +1470,44 @@ public class EDDTableFromZarr extends EDDTable {
     return batchTable;
   }
 
+  private static boolean isMissingChunkException(Throwable t) {
+    if (t == null) return true;
+    String msg = t.getMessage();
+    if (msg != null) {
+      String lower = msg.toLowerCase();
+      if (lower.contains("not found")
+          || lower.contains("404")
+          || lower.contains("nosuchkey")
+          || lower.contains("missing")
+          || lower.contains("does not exist")
+          || lower.contains("key")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private PrimitiveArray makeMissingPrimitiveArray(
+      PAType paType,
+      int currentChunkSize,
+      ZarrArrayInfo info,
+      EDV edv) {
+    PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
+    String fillValStr = null;
+    if (info != null && info.attributes != null) {
+      fillValStr = info.attributes.getString("_FillValue");
+      if (!String2.isSomething(fillValStr)) {
+        fillValStr = info.attributes.getString("missing_value");
+      }
+    }
+    if (String2.isSomething(fillValStr)) {
+      missingPa.addNStrings(currentChunkSize, fillValStr);
+    } else {
+      missingPa.addNPAOnes(currentChunkSize, missingPa.missingValue());
+    }
+    return missingPa;
+  }
+
   /**
    * Helper method to read chunk data for a single variable, applying scale/offset, missing values,
    * 2D string extraction, or scalar broadcasting.
@@ -1480,9 +1526,7 @@ public class EDDTableFromZarr extends EDDTable {
 
     // Handle missing or unwritten Zarr array
     if (zarray == null || info == null) {
-      PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-      missingPa.addNStrings(currentChunkSize, "");
-      return missingPa;
+      return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
     }
 
     boolean isUnsigned = false;
@@ -1496,18 +1540,21 @@ public class EDDTableFromZarr extends EDDTable {
       try {
         nc2Array = zarray.read();
       } catch (Throwable t) {
+        if (!isMissingChunkException(t)) throw t;
         nc2Array = null;
       }
 
       PrimitiveArray scalarPa =
           nc2Array != null
               ? NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned)
-              : PrimitiveArray.factory(paType, 1, false);
-
-      String scalarValueStr = scalarPa.size() > 0 ? scalarPa.getString(0) : "";
+              : null;
 
       PrimitiveArray broadcastPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-      broadcastPa.addNStrings(currentChunkSize, scalarValueStr);
+      if (scalarPa != null && scalarPa.size() > 0) {
+        broadcastPa.addNPAOnes(currentChunkSize, scalarPa.getPAOne(0));
+      } else {
+        broadcastPa.addNPAOnes(currentChunkSize, broadcastPa.missingValue());
+      }
       return broadcastPa;
     }
 
@@ -1522,14 +1569,13 @@ public class EDDTableFromZarr extends EDDTable {
       try {
         nc2Array = zarray.read(offset, shape);
       } catch (Throwable t) {
+        if (!isMissingChunkException(t)) throw t;
         nc2Array = null;
       }
 
       StringArray sa = new StringArray(currentChunkSize, false);
       if (nc2Array == null) {
-        for (int i = 0; i < currentChunkSize; i++) {
-          sa.add("");
-        }
+        sa.addNStrings(currentChunkSize, "");
       } else if (nc2Array instanceof ucar.ma2.ArrayChar ac) {
         ucar.ma2.ArrayObject ao = ac.make1DStringArray();
         Object[] oa = (Object[]) ao.get1DJavaArray(ao.getDataType());
@@ -1563,13 +1609,12 @@ public class EDDTableFromZarr extends EDDTable {
     try {
       nc2Array = zarray.read(offset, shape);
     } catch (Throwable t) {
+      if (!isMissingChunkException(t)) throw t;
       nc2Array = null;
     }
 
     if (nc2Array == null) {
-      PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-      missingPa.addNStrings(currentChunkSize, "");
-      return missingPa;
+      return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
     }
 
     PrimitiveArray pa = NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned);

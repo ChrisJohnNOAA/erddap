@@ -602,7 +602,7 @@ class EDDTableFromZarrTests {
       assertEquals("999", resultTable1.getColumn("station_id").getString(0));
       assertEquals("999", resultTable1.getColumn("station_id").getString(1));
 
-      // Test 2: Query with constraint matching 0 rows (expecting exception for 0 matching rows)
+      // Test 2: Query with constraint matching 0 rows (TableWriterAll throws SimpleException on finish for 0 rows)
       TableWriterAllWithMetadata twawm2 =
           new TableWriterAllWithMetadata(
               0,
@@ -611,13 +611,13 @@ class EDDTableFromZarrTests {
               dataset.cacheDirectory(),
               "query_test2.twawm");
 
-      Throwable t =
+      SimpleException se =
           assertThrows(
-              Throwable.class,
+              SimpleException.class,
               () ->
                   dataset.getDataForDapQuery(
                       0, null, "", "longitude,latitude,salinity&salinity>100.0", twawm2));
-      assertTrue(t.getMessage().contains("no matching results") || t.getMessage().contains("nRows = 0"));
+      assertTrue(se.getMessage().contains("no matching results") || se.getMessage().contains("nRows = 0"));
 
     } finally {
       File2.deleteAllFiles(tempDir.toString(), true, true);
