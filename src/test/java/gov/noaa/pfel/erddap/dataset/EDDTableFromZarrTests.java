@@ -407,4 +407,76 @@ class EDDTableFromZarrTests {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
+
+  @Test
+  void testNestedGroupDiscoveryAnd2DByteMatrixFiltering() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_nested_group_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group rootGroup = dev.zarr.zarrjava.v3.Group.create(store.resolve());
+      dev.zarr.zarrjava.v3.Group.create(store.resolve("subgroup"));
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // Array in root group
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temp"),
+              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+              true);
+
+      // Array in nested child group
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("subgroup/salinity"),
+              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+              true);
+
+      // 2D Byte QC matrix (shape 5, 10, dimensions obs, level - NOT string length)
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("qc_matrix"),
+              mb -> mb.withShape(5, 10).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs", "level"),
+              true);
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Nested Group Test");
+      globalAtts.set(0, "summary", "Test nested group auto-discovery");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Other");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "nested_group_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null, // auto-discovery
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      assertNotNull(dataset);
+      assertNotNull(dataset.findDataVariableByDestinationName("temp"));
+      assertNotNull(dataset.findDataVariableByDestinationName("subgroup_salinity"));
+
+      // 2D byte QC matrix without string length dimension should be filtered out
+      String[] dvNames = dataset.dataVariableDestinationNames();
+      assertTrue(com.cohort.util.String2.indexOf(dvNames, "qc_matrix") < 0);
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
 }

@@ -615,12 +615,31 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     public boolean is2DStringOrChar() {
-      return shape != null
-          && shape.length == 2
-          && (paType == PAType.STRING
-              || paType == PAType.CHAR
-              || paType == PAType.BYTE
-              || paType == PAType.UBYTE);
+      if (shape == null || shape.length != 2) return false;
+
+      // 1. Explicit string/char data types
+      if (paType == PAType.STRING || paType == PAType.CHAR) return true;
+
+      // 2. For 2D byte arrays, check if one of the dimensions explicitly indicates string length
+      if (paType == PAType.BYTE || paType == PAType.UBYTE) {
+        if (dimensionNames != null) {
+          for (String d : dimensionNames) {
+            if (String2.isSomething(d)) {
+              String dLower = d.toLowerCase();
+              if (dLower.contains("str")
+                  || dLower.contains("nchar")
+                  || dLower.contains("char")
+                  || dLower.equals("string")
+                  || dLower.equals("string_len")
+                  || dLower.equals("string_length")) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+
+      return false;
     }
   }
 
@@ -928,7 +947,7 @@ public class EDDTableFromZarr extends EDDTable {
         if (!isEligible) continue;
 
         String tSourceName = info.name;
-        String tDestName = tSourceName;
+        String tDestName = String2.replaceAll(tSourceName, "/", "_");
 
         PAType paType = info.paType;
         if (info.is2DStringOrChar()) {
@@ -1087,6 +1106,47 @@ public class EDDTableFromZarr extends EDDTable {
    * @return Map of array name to ZarrArrayInfo
    * @throws Throwable if error
    */
+  /**
+   * Helper to recursively traverse group nodes in non-listable or fallback Zarr stores.
+   */
+  protected static void traverseGroupNodes(Group group, String prefix, Map<String, ZarrArrayInfo> arrayMap) {
+    if (group == null) return;
+    try {
+      Node[] nodes = group.listAsArray();
+      if (nodes != null) {
+        for (Node node : nodes) {
+          if (node instanceof Array zarray) {
+            String name = getArrayName(zarray);
+            if (String2.isSomething(name)) {
+              String fullName = prefix.isEmpty() ? name : prefix + "/" + name;
+              getOrOpenZarrArrayInfo(group, fullName, arrayMap);
+            }
+          } else if (node instanceof Group childGroup) {
+            String groupName =
+                (childGroup.storeHandle != null
+                        && childGroup.storeHandle.keys != null
+                        && childGroup.storeHandle.keys.length > 0)
+                    ? childGroup.storeHandle.keys[childGroup.storeHandle.keys.length - 1]
+                    : "";
+            if (String2.isSomething(groupName)) {
+              String fullGroupPrefix = prefix.isEmpty() ? groupName : prefix + "/" + groupName;
+              traverseGroupNodes(childGroup, fullGroupPrefix, arrayMap);
+            }
+          }
+        }
+      }
+    } catch (Throwable t) {
+      if (verbose) String2.log("Warning in traverseGroupNodes: " + t.getMessage());
+    }
+  }
+
+  /**
+   * Parses Zarr metadata recursively from a given Zarr group.
+   *
+   * @param zarrGroup target Zarr group
+   * @return Map of array name to ZarrArrayInfo
+   * @throws Throwable if error
+   */
   public static Map<String, ZarrArrayInfo> parseZarrMetadata(Group zarrGroup) throws Throwable {
     Map<String, ZarrArrayInfo> arrayMap = new LinkedHashMap<>();
     if (zarrGroup == null || zarrGroup.storeHandle == null) return arrayMap;
@@ -1104,39 +1164,21 @@ public class EDDTableFromZarr extends EDDTable {
               String[] relParts = new String[entryKeys.length - 1];
               System.arraycopy(entryKeys, 0, relParts, 0, entryKeys.length - 1);
               String relName = String.join("/", relParts);
+              if (groupKeys != null && groupKeys.length > 0) {
+                String groupPrefix = String.join("/", groupKeys) + "/";
+                if (relName.startsWith(groupPrefix)) {
+                  relName = relName.substring(groupPrefix.length());
+                }
+              }
               getOrOpenZarrArrayInfo(zarrGroup, relName, arrayMap);
             }
           }
         }
       } catch (Throwable t) {
-        try {
-          Node[] nodes = zarrGroup.listAsArray();
-          for (Node node : nodes) {
-            if (node instanceof Array zarray) {
-              String name = getArrayName(zarray);
-              if (String2.isSomething(name)) {
-                getOrOpenZarrArrayInfo(zarrGroup, name, arrayMap);
-              }
-            }
-          }
-        } catch (Throwable t2) {
-          // ignore
-        }
+        traverseGroupNodes(zarrGroup, "", arrayMap);
       }
     } else {
-      try {
-        Node[] nodes = zarrGroup.listAsArray();
-        for (Node node : nodes) {
-          if (node instanceof Array zarray) {
-            String name = getArrayName(zarray);
-            if (String2.isSomething(name)) {
-              getOrOpenZarrArrayInfo(zarrGroup, name, arrayMap);
-            }
-          }
-        }
-      } catch (Throwable t) {
-        // ignore
-      }
+      traverseGroupNodes(zarrGroup, "", arrayMap);
     }
     return arrayMap;
   }
