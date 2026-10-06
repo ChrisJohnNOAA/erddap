@@ -10,6 +10,7 @@ import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
 import gov.noaa.pfel.coastwatch.griddata.NcHelper;
+import com.cohort.util.MustBe;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -1264,7 +1265,8 @@ public class EDDTableFromZarr extends EDDTable {
 
       // Pass 1: Evaluate constraints against chunk data
       BitSet rowMask =
-          evaluateChunkConstraints(startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap);
+          evaluateChunkConstraints(
+              startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap);
 
       int cardinal = rowMask.cardinality();
       if (cardinal == 0) {
@@ -1274,7 +1276,9 @@ public class EDDTableFromZarr extends EDDTable {
       totalMatchingRows += cardinal;
 
       // Pass 2: Extract requested variable row batch
-      Table batchTable = extractRowBatch(startRow, rowMask, requestedVarNames, zarrArrayMap);
+      Table batchTable =
+          extractRowBatch(
+              startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap);
 
       if (cumulativeBatchTable == null) {
         cumulativeBatchTable = batchTable;
@@ -1291,15 +1295,7 @@ public class EDDTableFromZarr extends EDDTable {
 
     // 4. Handle empty results or finalize tableWriter
     if (totalMatchingRows == 0) {
-      Table emptyTable = new Table();
-      for (String varName : requestedVarNames) {
-        EDV edv = findDataVariableBySourceName(varName);
-        if (edv == null) edv = findDataVariableByDestinationName(varName);
-        PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
-        emptyTable.addColumn(
-            edv != null ? edv.sourceName() : varName, PrimitiveArray.factory(paType, 0, false));
-      }
-      writeChunkToTableWriter(language, requestUrl, userDapQuery, emptyTable, tableWriter, true);
+      throw new SimpleException(MustBe.THERE_IS_NO_DATA + " (nRows = 0)");
     } else {
       if (cumulativeBatchTable == null) {
         cumulativeBatchTable = new Table();
@@ -1334,6 +1330,17 @@ public class EDDTableFromZarr extends EDDTable {
       StringArray[] constraintVarsAndOps,
       Map<String, Array> zarrArrayMap)
       throws Throwable {
+    return evaluateChunkConstraints(
+        startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, parseZarrMetadata());
+  }
+
+  protected BitSet evaluateChunkConstraints(
+      long startRow,
+      int currentChunkSize,
+      StringArray[] constraintVarsAndOps,
+      Map<String, Array> zarrArrayMap,
+      Map<String, ZarrArrayInfo> metadataMap)
+      throws Throwable {
 
     BitSet rowMask = new BitSet(currentChunkSize);
     rowMask.set(0, currentChunkSize);
@@ -1350,7 +1357,9 @@ public class EDDTableFromZarr extends EDDTable {
       return rowMask;
     }
 
-    Map<String, ZarrArrayInfo> metadataMap = parseZarrMetadata();
+    if (metadataMap == null) {
+      metadataMap = parseZarrMetadata();
+    }
 
     int nConstraints = constraintVars.size();
     for (int c = 0; c < nConstraints; c++) {
@@ -1398,12 +1407,30 @@ public class EDDTableFromZarr extends EDDTable {
       String[] requestedVarNames,
       Map<String, Array> zarrArrayMap)
       throws Throwable {
+    return extractRowBatch(
+        startRow,
+        rowMask.length(),
+        rowMask,
+        requestedVarNames,
+        zarrArrayMap,
+        parseZarrMetadata());
+  }
+
+  protected Table extractRowBatch(
+      long startRow,
+      int currentChunkSize,
+      BitSet rowMask,
+      String[] requestedVarNames,
+      Map<String, Array> zarrArrayMap,
+      Map<String, ZarrArrayInfo> metadataMap)
+      throws Throwable {
 
     Table batchTable = new Table();
     int nMatchingRows = rowMask.cardinality();
-    int currentChunkSize = rowMask.length();
 
-    Map<String, ZarrArrayInfo> metadataMap = parseZarrMetadata();
+    if (metadataMap == null) {
+      metadataMap = parseZarrMetadata();
+    }
 
     for (String varName : requestedVarNames) {
       EDV edv = findDataVariableBySourceName(varName);
@@ -1454,9 +1481,7 @@ public class EDDTableFromZarr extends EDDTable {
     // Handle missing or unwritten Zarr array
     if (zarray == null || info == null) {
       PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-      for (int i = 0; i < currentChunkSize; i++) {
-        missingPa.addString("");
-      }
+      missingPa.addNStrings(currentChunkSize, "");
       return missingPa;
     }
 
@@ -1482,9 +1507,7 @@ public class EDDTableFromZarr extends EDDTable {
       String scalarValueStr = scalarPa.size() > 0 ? scalarPa.getString(0) : "";
 
       PrimitiveArray broadcastPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-      for (int i = 0; i < currentChunkSize; i++) {
-        broadcastPa.addString(scalarValueStr);
-      }
+      broadcastPa.addNStrings(currentChunkSize, scalarValueStr);
       return broadcastPa;
     }
 
@@ -1545,9 +1568,7 @@ public class EDDTableFromZarr extends EDDTable {
 
     if (nc2Array == null) {
       PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-      for (int i = 0; i < currentChunkSize; i++) {
-        missingPa.addString("");
-      }
+      missingPa.addNStrings(currentChunkSize, "");
       return missingPa;
     }
 
