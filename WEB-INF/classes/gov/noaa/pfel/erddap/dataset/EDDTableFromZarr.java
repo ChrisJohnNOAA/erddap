@@ -1734,4 +1734,241 @@ public class EDDTableFromZarr extends EDDTable {
   public Group zarrGroup() {
     return zarrGroup;
   }
+
+  /**
+   * Generates a suggested datasets.xml configuration block for a Zarr store using default settings.
+   *
+   * @param zarrStorePath path or URL to the Zarr store
+   * @param zarrGroupName group name within the store (or "" for root)
+   * @return suggested XML string
+   * @throws Throwable if error
+   */
+  public static String generateDatasetsXml(String zarrStorePath, String zarrGroupName)
+      throws Throwable {
+    return generateDatasetsXml(
+        zarrStorePath,
+        zarrGroupName,
+        null,
+        "",
+        DEFAULT_RELOAD_EVERY_N_MINUTES,
+        null,
+        null,
+        null,
+        null);
+  }
+
+  /**
+   * Generates a suggested datasets.xml configuration block for a Zarr store with custom settings.
+   *
+   * @param zarrStorePath path or URL to the Zarr store
+   * @param zarrGroupName group name within the store (or "" for root)
+   * @param rowDimensionName target row dimension name or null
+   * @param datasetIDPrefix optional prefix for generated dataset ID
+   * @param reloadEveryNMinutes dataset reload interval in minutes
+   * @param cacheFromUrl cache directory/URL for remote store files
+   * @return suggested XML string
+   * @throws Throwable if error
+   */
+  public static String generateDatasetsXml(
+      String zarrStorePath,
+      String zarrGroupName,
+      String rowDimensionName,
+      String datasetIDPrefix,
+      int reloadEveryNMinutes,
+      String cacheFromUrl)
+      throws Throwable {
+    return generateDatasetsXml(
+        zarrStorePath,
+        zarrGroupName,
+        rowDimensionName,
+        datasetIDPrefix,
+        reloadEveryNMinutes,
+        cacheFromUrl,
+        null,
+        null,
+        null);
+  }
+
+  /**
+   * Generates a suggested datasets.xml configuration block for a Zarr store with full AWS and
+   * external global attribute customization.
+   *
+   * @param zarrStorePath path or URL to the Zarr store
+   * @param zarrGroupName group name within the store
+   * @param rowDimensionName target row dimension name or null for auto-detect
+   * @param datasetIDPrefix optional prefix for dataset ID
+   * @param reloadEveryNMinutes dataset reload interval in minutes
+   * @param cacheFromUrl cache URL/directory
+   * @param awsRegion AWS region name if applicable
+   * @param awsEndpoint custom AWS S3 endpoint if applicable
+   * @param externalAddGlobalAttributes external global attributes to merge
+   * @return suggested XML string
+   * @throws Throwable if error
+   */
+  public static String generateDatasetsXml(
+      String zarrStorePath,
+      String zarrGroupName,
+      String rowDimensionName,
+      String datasetIDPrefix,
+      int reloadEveryNMinutes,
+      String cacheFromUrl,
+      String awsRegion,
+      String awsEndpoint,
+      Attributes externalAddGlobalAttributes)
+      throws Throwable {
+
+    String2.log(
+        "\n*** EDDTableFromZarr.generateDatasetsXml"
+            + "\nzarrStorePath="
+            + zarrStorePath
+            + "\nzarrGroupName="
+            + zarrGroupName
+            + "\nrowDimensionName="
+            + rowDimensionName
+            + "\ndatasetIDPrefix="
+            + datasetIDPrefix
+            + "\nreloadEveryNMinutes="
+            + reloadEveryNMinutes
+            + "\ncacheFromUrl="
+            + cacheFromUrl
+            + "\nawsRegion="
+            + awsRegion
+            + "\nawsEndpoint="
+            + awsEndpoint);
+
+    if (!String2.isSomething(zarrStorePath)) {
+      throw new IllegalArgumentException("zarrStorePath wasn't specified.");
+    }
+    if (zarrGroupName == null) {
+      zarrGroupName = "";
+    }
+    if (reloadEveryNMinutes <= 0 || reloadEveryNMinutes == Integer.MAX_VALUE) {
+      reloadEveryNMinutes = DEFAULT_RELOAD_EVERY_N_MINUTES; // 1440
+    }
+
+    Store zarrStore = createZarrStore(zarrStorePath, awsRegion, awsEndpoint);
+    Group zarrGroup = openZarrGroup(zarrStore, zarrGroupName);
+
+    Table dataSourceTable = new Table();
+    Table dataAddTable = new Table();
+
+    try {
+      dev.zarr.zarrjava.core.Attributes zattrs = zarrGroup.metadata().attributes();
+      if (zattrs != null) {
+        populateAttributesFromZarr(zattrs, dataSourceTable.globalAttributes());
+      }
+    } catch (ZarrException ze) {
+      String2.log("Warning: Could not read Zarr global attributes: " + ze.getMessage());
+    }
+
+    Map<String, ZarrArrayInfo> arrayMap = parseZarrMetadata(zarrGroup);
+
+    String featureType = dataSourceTable.globalAttributes().getString("featureType");
+    if (!String2.isSomething(featureType)) {
+      featureType = dataSourceTable.globalAttributes().getString("CF:featureType");
+    }
+
+    int dvCount = 0;
+    for (ZarrArrayInfo info : arrayMap.values()) {
+      if (info == null || info.isUnsupportedCodec) continue;
+
+      String varName = info.name;
+      Attributes sourceAtts = new Attributes();
+      if (info.attributes != null) {
+        info.attributes.copyTo(sourceAtts);
+      }
+
+      if (!String2.isSomething(featureType)) {
+        String vft = sourceAtts.getString("featureType");
+        if (String2.isSomething(vft)) {
+          featureType = vft;
+        }
+      }
+
+      PAType paType = info.paType != null ? info.paType : PAType.DOUBLE;
+      if (info.is2DStringOrChar()) {
+        paType = PAType.STRING;
+      }
+
+      PrimitiveArray sourcePA = PrimitiveArray.factory(paType, 1, false);
+      dataSourceTable.addColumn(dvCount, varName, sourcePA, sourceAtts);
+
+      Attributes addAtts =
+          makeReadyToUseAddVariableAttributesForDatasetsXml(
+              dataSourceTable.globalAttributes(),
+              sourceAtts,
+              null,
+              varName,
+              paType != PAType.STRING,
+              paType != PAType.STRING,
+              false);
+
+      PrimitiveArray destPA = PrimitiveArray.factory(paType, 1, false);
+      dataAddTable.addColumn(dvCount, varName, destPA, addAtts);
+      dvCount++;
+    }
+
+    tryToFindLLAT(dataSourceTable, dataAddTable);
+    ensureValidNames(dataSourceTable, dataAddTable);
+
+    Attributes globalAddAtts = dataAddTable.globalAttributes();
+    String defaultCdmDataType = "Point";
+    if (String2.isSomething(featureType)) {
+      String ftLower = featureType.trim().toLowerCase();
+      if (ftLower.equals("point")) defaultCdmDataType = "Point";
+      else if (ftLower.equals("timeseries")) defaultCdmDataType = "TimeSeries";
+      else if (ftLower.equals("trajectory")) defaultCdmDataType = "Trajectory";
+      else if (ftLower.equals("profile")) defaultCdmDataType = "Profile";
+      else if (ftLower.equals("timeseriesprofile")) defaultCdmDataType = "TimeSeriesProfile";
+    }
+
+    globalAddAtts.set(
+        makeReadyToUseAddGlobalAttributesForDatasetsXml(
+            dataSourceTable.globalAttributes(),
+            defaultCdmDataType,
+            zarrStorePath,
+            externalAddGlobalAttributes,
+            suggestKeywords(dataSourceTable, dataAddTable)));
+
+    String tDatasetID =
+        EDDGridFromZarr.suggestZarrDatasetID(datasetIDPrefix, zarrStorePath, zarrGroupName);
+
+    StringBuilder sb = new StringBuilder();
+    sb.append(
+        "<dataset type=\"EDDTableFromZarr\" datasetID=\""
+            + XML.encodeAsXML(tDatasetID)
+            + "\" active=\"true\">\n");
+    sb.append("    <reloadEveryNMinutes>" + reloadEveryNMinutes + "</reloadEveryNMinutes>\n");
+
+    if (String2.isSomething(cacheFromUrl)) {
+      sb.append("    <cacheFromUrl>" + XML.encodeAsXML(cacheFromUrl) + "</cacheFromUrl>\n");
+    }
+
+    sb.append("    <zarrStorePath>" + XML.encodeAsXML(zarrStorePath) + "</zarrStorePath>\n");
+    if (String2.isSomething(zarrGroupName)) {
+      sb.append("    <zarrGroupName>" + XML.encodeAsXML(zarrGroupName) + "</zarrGroupName>\n");
+    }
+    if (String2.isSomething(rowDimensionName)) {
+      sb.append(
+          "    <rowDimensionName>"
+              + XML.encodeAsXML(rowDimensionName)
+              + "</rowDimensionName>\n");
+    }
+    if (String2.isSomething(awsRegion)) {
+      sb.append("    <awsRegion>" + XML.encodeAsXML(awsRegion) + "</awsRegion>\n");
+    }
+    if (String2.isSomething(awsEndpoint)) {
+      sb.append("    <awsEndpoint>" + XML.encodeAsXML(awsEndpoint) + "</awsEndpoint>\n");
+    }
+
+    sb.append(writeAttsForDatasetsXml(false, dataSourceTable.globalAttributes(), "    "));
+    sb.append(writeAttsForDatasetsXml(true, globalAddAtts, "    "));
+
+    sb.append(
+        writeVariablesForDatasetsXml(dataSourceTable, dataAddTable, "dataVariable", true, false));
+
+    sb.append("</dataset>\n\n");
+
+    return sb.toString();
+  }
 }
