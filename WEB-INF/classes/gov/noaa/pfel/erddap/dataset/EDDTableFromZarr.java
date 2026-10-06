@@ -614,7 +614,13 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     public boolean isScalar() {
-      return shape == null || shape.length == 0 || (shape.length == 1 && shape[0] == 1);
+      return shape == null || shape.length == 0;
+    }
+
+    public boolean isScalar(long totalNumRows) {
+      if (shape == null || shape.length == 0) return true;
+      if (shape.length == 1 && shape[0] == 1 && totalNumRows > 1) return true;
+      return false;
     }
 
     public boolean is2DStringOrChar() {
@@ -937,7 +943,7 @@ public class EDDTableFromZarr extends EDDTable {
                       + ")");
             }
           }
-        } else if (info.isScalar()) {
+        } else if (info.isScalar(numRows)) {
           isEligible = true;
         } else if (info.is2DStringOrChar()) {
           if (info.shape != null && info.shape.length == 2) {
@@ -1504,19 +1510,9 @@ public class EDDTableFromZarr extends EDDTable {
       ZarrArrayInfo info,
       EDV edv) {
     PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
-    PrimitiveArray fillPa = null;
-    if (info != null && info.attributes != null) {
-      fillPa = info.attributes.get("_FillValue");
-      if (fillPa == null) {
-        fillPa = info.attributes.get("missing_value");
-      }
-    }
-    if (fillPa != null && fillPa.size() > 0 && String2.isSomething(fillPa.getString(0))) {
-      missingPa.addNStrings(currentChunkSize, fillPa.getString(0));
-      return missingPa;
-    }
+
     if (edv != null) {
-      if (paType == PAType.STRING) {
+      if (paType == PAType.STRING || paType == PAType.CHAR) {
         String sf = edv.stringFillValue();
         if (String2.isSomething(sf)) {
           missingPa.addNStrings(currentChunkSize, sf);
@@ -1531,7 +1527,20 @@ public class EDDTableFromZarr extends EDDTable {
         }
       }
     }
-    missingPa.addNStrings(currentChunkSize, "");
+
+    if (info != null && info.attributes != null) {
+      PrimitiveArray fillPa = info.attributes.get("_FillValue");
+      if (fillPa == null) fillPa = info.attributes.get("missing_value");
+      if (fillPa != null && fillPa.size() > 0) {
+        PAOne fvOne = fillPa.getPAOne(0);
+        if (fvOne != null && !fvOne.isMissingValue()) {
+          missingPa.addNPAOnes(currentChunkSize, fvOne);
+          return missingPa;
+        }
+      }
+    }
+
+    missingPa.addNPAOnes(currentChunkSize, missingPa.missingValue());
     return missingPa;
   }
 
@@ -1562,7 +1571,7 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     // 0D or DSG Global Scalar Variable Broadcasting
-    if (info.isScalar()) {
+    if (info.isScalar(numRows)) {
       ucar.ma2.Array nc2Array = null;
       try {
         nc2Array = zarray.read();
