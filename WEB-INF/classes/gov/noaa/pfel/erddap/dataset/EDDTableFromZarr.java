@@ -859,14 +859,67 @@ public class EDDTableFromZarr extends EDDTable {
       for (ZarrArrayInfo info : arrayMap.values()) {
         if (info == null || info.isUnsupportedCodec) continue;
 
+        String name = info.name;
+        if (!String2.isSomething(name)) continue;
+
+        // Skip hidden arrays or metadata descriptor keys
+        if (name.startsWith(".") || name.startsWith("_")) continue;
+
+        // Skip auxiliary bounds, QC, flag, and ancillary count arrays
+        String lowerName = name.toLowerCase();
+        if (lowerName.endsWith("_bnds")
+            || lowerName.endsWith("_bounds")
+            || lowerName.endsWith("_qc")
+            || lowerName.endsWith("_flags")
+            || lowerName.endsWith("_flag")
+            || lowerName.endsWith("_status")
+            || lowerName.endsWith("_count")) {
+          if (verbose) String2.log("EDDTableFromZarr auto-discovery skipping auxiliary array: " + name);
+          continue;
+        }
+
+        Attributes tSourceAtt = new Attributes();
+        if (info.attributes != null) {
+          info.attributes.copyTo(tSourceAtt);
+        }
+        String stdName = tSourceAtt.getString("standard_name");
+
+        boolean isDsgRoleOrAxis =
+            "latitude".equalsIgnoreCase(name) || "lat".equalsIgnoreCase(name) || "latitude".equalsIgnoreCase(stdName)
+            || "longitude".equalsIgnoreCase(name) || "lon".equalsIgnoreCase(name) || "longitude".equalsIgnoreCase(stdName)
+            || "altitude".equalsIgnoreCase(name) || "alt".equalsIgnoreCase(name) || "altitude".equalsIgnoreCase(stdName)
+            || "depth".equalsIgnoreCase(name) || "depth".equalsIgnoreCase(stdName)
+            || "time".equalsIgnoreCase(name) || "time".equalsIgnoreCase(stdName)
+            || "station_id".equalsIgnoreCase(name) || "station".equalsIgnoreCase(name) || "station_id".equalsIgnoreCase(stdName)
+            || "trajectory_id".equalsIgnoreCase(name) || "trajectory".equalsIgnoreCase(name) || "trajectory_id".equalsIgnoreCase(stdName)
+            || "profile_id".equalsIgnoreCase(name) || "profile".equalsIgnoreCase(name) || "profile_id".equalsIgnoreCase(stdName)
+            || tSourceAtt.getString("cf_role") != null;
+
         boolean isEligible = false;
         if (info.is1D()) {
-          isEligible = true;
+          if (numRows <= 0 || info.shape[0] == numRows || isDsgRoleOrAxis) {
+            isEligible = true;
+          } else if (info.dimensionNames != null && info.dimensionNames.length > 0
+              && String2.isSomething(rowDimensionName)
+              && rowDimensionName.equals(info.dimensionNames[0])) {
+            isEligible = true;
+          } else {
+            if (verbose) {
+              String2.log(
+                  "EDDTableFromZarr auto-discovery skipping 1D array '"
+                      + name
+                      + "' with length "
+                      + info.shape[0]
+                      + " (does not match dataset numRows="
+                      + numRows
+                      + ")");
+            }
+          }
         } else if (info.isScalar()) {
           isEligible = true;
         } else if (info.is2DStringOrChar()) {
           if (info.shape != null && info.shape.length == 2) {
-            if (numRows <= 0 || info.shape[0] == numRows || info.shape[1] == numRows) {
+            if (numRows <= 0 || info.shape[0] == numRows || info.shape[1] == numRows || isDsgRoleOrAxis) {
               isEligible = true;
             }
           }
@@ -876,10 +929,6 @@ public class EDDTableFromZarr extends EDDTable {
 
         String tSourceName = info.name;
         String tDestName = tSourceName;
-        Attributes tSourceAtt = new Attributes();
-        if (info.attributes != null) {
-          info.attributes.copyTo(tSourceAtt);
-        }
 
         PAType paType = info.paType;
         if (info.is2DStringOrChar()) {
@@ -901,7 +950,6 @@ public class EDDTableFromZarr extends EDDTable {
         LocalizedAttributes tAddAtt = new LocalizedAttributes(addAtts);
 
         // Standard DSG cf_role inferrence during auto-discovery
-        String stdName = tSourceAtt.getString("standard_name");
         if ("station_id".equalsIgnoreCase(tSourceName)
             || "station_id".equalsIgnoreCase(stdName)
             || "station".equalsIgnoreCase(tSourceName)) {

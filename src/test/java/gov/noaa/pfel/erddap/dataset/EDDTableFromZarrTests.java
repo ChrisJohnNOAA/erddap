@@ -311,4 +311,100 @@ class EDDTableFromZarrTests {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
+
+  @Test
+  void testAuxiliaryAndMismatchedArrayFiltering() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_auxiliary_filtering_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // 1D Time array (dataset row dimension = obs = 5)
+      dev.zarr.zarrjava.core.Attributes timeZattrs = new dev.zarr.zarrjava.core.Attributes();
+      timeZattrs.set("units", "seconds since 1970-01-01T00:00:00Z");
+      timeZattrs.set("standard_name", "time");
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(timeZattrs),
+              true);
+
+      // Salinity data variable
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("salinity"),
+              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+              true);
+
+      // Auxiliary bounds array (time_bnds)
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time_bnds"),
+              mb -> mb.withShape(5, 2).withDataType(float64).withDimensionNames("obs", "nv"),
+              true);
+
+      // Auxiliary QC array (salinity_qc)
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("salinity_qc"),
+              mb -> mb.withShape(5).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs"),
+              true);
+
+      // Auxiliary flags array (temp_flags)
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temp_flags"),
+              mb -> mb.withShape(5).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs"),
+              true);
+
+      // Mismatched 1D array length (100 != 5)
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("unrelated_1d"),
+              mb -> mb.withShape(100).withDataType(float64).withDimensionNames("other_dim"),
+              true);
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Auxiliary Array Filtering Test");
+      globalAtts.set(0, "summary", "Test auxiliary and mismatched array filtering");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Other");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "auxiliary_filtering_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null, // auto-discovery
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      assertNotNull(dataset);
+      assertNotNull(dataset.findDataVariableByDestinationName("time"));
+      assertNotNull(dataset.findDataVariableByDestinationName("salinity"));
+
+      // Confirm auxiliary and mismatched arrays were filtered out
+      String[] dvNames = dataset.dataVariableDestinationNames();
+      assertTrue(com.cohort.util.String2.indexOf(dvNames, "time_bnds") < 0);
+      assertTrue(com.cohort.util.String2.indexOf(dvNames, "salinity_qc") < 0);
+      assertTrue(com.cohort.util.String2.indexOf(dvNames, "temp_flags") < 0);
+      assertTrue(com.cohort.util.String2.indexOf(dvNames, "unrelated_1d") < 0);
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
 }
