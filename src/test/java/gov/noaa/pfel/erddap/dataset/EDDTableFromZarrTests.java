@@ -201,6 +201,7 @@ class EDDTableFromZarrTests {
 
       assertNotNull(dataset);
       assertEquals("TimeSeries", dataset.cdmDataType(0));
+      assertEquals("station_id", dataset.combinedGlobalAttributes().getString(0, "cdm_timeseries_variables"));
       assertTrue(dataset.lonIndex() >= 0);
       assertTrue(dataset.latIndex() >= 0);
       assertTrue(dataset.timeIndex() >= 0);

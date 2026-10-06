@@ -717,6 +717,26 @@ public class EDDTableFromZarr extends EDDTable {
       featureType = combinedGlobalAttributes.getString(language, "CF:feature_type");
     }
 
+    if (!String2.isSomething(featureType) && dataVariables != null) {
+      for (EDV edv : dataVariables) {
+        if (edv != null) {
+          String cfRole = edv.combinedAttributes().getString(language, "cf_role");
+          if (String2.isSomething(cfRole)) {
+            if ("timeseries_id".equalsIgnoreCase(cfRole)) {
+              featureType = "TimeSeries";
+              break;
+            } else if ("trajectory_id".equalsIgnoreCase(cfRole)) {
+              featureType = "Trajectory";
+              break;
+            } else if ("profile_id".equalsIgnoreCase(cfRole)) {
+              featureType = "Profile";
+              break;
+            }
+          }
+        }
+      }
+    }
+
     if (!String2.isSomething(featureType) && arrayMap != null) {
       for (ZarrArrayInfo info : arrayMap.values()) {
         if (info != null && info.attributes != null) {
@@ -886,14 +906,20 @@ public class EDDTableFromZarr extends EDDTable {
             || "station_id".equalsIgnoreCase(stdName)
             || "station".equalsIgnoreCase(tSourceName)) {
           tAddAtt.set(language, "cf_role", "timeseries_id");
+          tSourceAtt.set("cf_role", "timeseries_id");
+          if (info.attributes != null) info.attributes.set("cf_role", "timeseries_id");
         } else if ("trajectory_id".equalsIgnoreCase(tSourceName)
             || "trajectory_id".equalsIgnoreCase(stdName)
             || "trajectory".equalsIgnoreCase(tSourceName)) {
           tAddAtt.set(language, "cf_role", "trajectory_id");
+          tSourceAtt.set("cf_role", "trajectory_id");
+          if (info.attributes != null) info.attributes.set("cf_role", "trajectory_id");
         } else if ("profile_id".equalsIgnoreCase(tSourceName)
             || "profile_id".equalsIgnoreCase(stdName)
             || "profile".equalsIgnoreCase(tSourceName)) {
           tAddAtt.set(language, "cf_role", "profile_id");
+          tSourceAtt.set("cf_role", "profile_id");
+          if (info.attributes != null) info.attributes.set("cf_role", "profile_id");
         }
 
         EDV edv = createEdvInstance(dv, tSourceName, tDestName, tSourceAtt, tAddAtt, tSourceType);
