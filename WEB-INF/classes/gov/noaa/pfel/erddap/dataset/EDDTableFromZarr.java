@@ -1297,20 +1297,30 @@ public class EDDTableFromZarr extends EDDTable {
     if (totalMatchingRows == 0) {
       Table emptyTable = new Table();
       for (String varName : requestedVarNames) {
-        EDV edv = findDataVariableBySourceName(varName);
-        if (edv == null) edv = findDataVariableByDestinationName(varName);
+        EDV edv = findEDV(varName);
         PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
         emptyTable.addColumn(
             edv != null ? edv.sourceName() : varName, PrimitiveArray.factory(paType, 0, false));
       }
       writeChunkToTableWriter(language, requestUrl, userDapQuery, emptyTable, tableWriter, true);
-    } else {
-      if (cumulativeBatchTable == null) {
-        cumulativeBatchTable = new Table();
-      }
+    } else if (cumulativeBatchTable != null) {
       writeChunkToTableWriter(
           language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, true);
+    } else {
+      tableWriter.finish();
     }
+  }
+
+  /**
+   * Safe helper method to find EDV by destination name or source name.
+   */
+  public EDV findEDV(String varName) {
+    if (varName == null) return null;
+    int dv = String2.indexOf(dataVariableDestinationNames(), varName);
+    if (dv >= 0) return dataVariables[dv];
+    dv = String2.indexOf(dataVariableSourceNames(), varName);
+    if (dv >= 0) return dataVariables[dv];
+    return null;
   }
 
   /**
@@ -1375,8 +1385,7 @@ public class EDDTableFromZarr extends EDDTable {
       String op = constraintOps.get(c);
       String valStr = constraintValues.get(c);
 
-      EDV edv = findDataVariableBySourceName(varName);
-      if (edv == null) edv = findDataVariableByDestinationName(varName);
+      EDV edv = findEDV(varName);
       if (edv == null) {
         if (verbose) String2.log("evaluateChunkConstraints could NOT find EDV for varName=" + varName);
         continue;
@@ -1441,8 +1450,7 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     for (String varName : requestedVarNames) {
-      EDV edv = findDataVariableBySourceName(varName);
-      if (edv == null) edv = findDataVariableByDestinationName(varName);
+      EDV edv = findEDV(varName);
       if (edv == null) continue;
 
       String sourceName = edv.sourceName();

@@ -623,4 +623,105 @@ class EDDTableFromZarrTests {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
+
+  @Test
+  void testRenamedDestinationVariablesAndMultiChunkFlush() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_renamed_vars_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // 10 rows of data across 2 chunks
+      double[] rawTemp = new double[] {15.0, 18.0, 21.0, 22.0, 25.0, 12.0, 14.0, 23.0, 24.0, 26.0};
+      double[] rawSal = new double[] {34.0, 34.5, 35.0, 35.2, 35.5, 33.0, 33.5, 35.8, 36.0, 36.2};
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("raw_temp"),
+              mb -> mb.withShape(10).withChunkShape(5).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {10}, rawTemp));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("raw_sal"),
+              mb -> mb.withShape(10).withChunkShape(5).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {10}, rawSal));
+
+      List<DataVariableInfo> dvis = new ArrayList<>();
+      LocalizedAttributes tempAddAtts = new LocalizedAttributes();
+      tempAddAtts.set(0, "units", "degree_C");
+      tempAddAtts.set(0, "ioos_category", "Temperature");
+      dvis.add(new DataVariableInfo("raw_temp", "temperature", tempAddAtts, "double"));
+
+      LocalizedAttributes salAddAtts = new LocalizedAttributes();
+      salAddAtts.set(0, "units", "PSU");
+      salAddAtts.set(0, "ioos_category", "Salinity");
+      dvis.add(new DataVariableInfo("raw_sal", "salinity", salAddAtts, "double"));
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Renamed Vars Test");
+      globalAtts.set(0, "summary", "Test renamed variables and multi-chunk flush");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Other");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "renamed_vars_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              dvis,
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      TableWriterAllWithMetadata twawm =
+          new TableWriterAllWithMetadata(
+              0,
+              dataset,
+              "",
+              dataset.cacheDirectory(),
+              "renamed_test.twawm");
+
+      dataset.getDataForDapQuery(0, null, "", "temperature,salinity&temperature>=20.0", twawm);
+      gov.noaa.pfel.coastwatch.pointdata.Table resultTable = twawm.cumulativeTable();
+
+      assertNotNull(resultTable);
+      // Expected matching rows: rawTemp >= 20.0 -> indices 2, 3, 4, 7, 8, 9 (6 matching rows)
+      assertEquals(6, resultTable.nRows());
+
+      // Verify destination column names
+      assertEquals("temperature", resultTable.getColumnName(0));
+      assertEquals("salinity", resultTable.getColumnName(1));
+
+      // Verify column values
+      assertEquals(21.0, resultTable.getColumn("temperature").getDouble(0), 1e-5);
+      assertEquals(22.0, resultTable.getColumn("temperature").getDouble(1), 1e-5);
+      assertEquals(25.0, resultTable.getColumn("temperature").getDouble(2), 1e-5);
+      assertEquals(23.0, resultTable.getColumn("temperature").getDouble(3), 1e-5);
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
 }
