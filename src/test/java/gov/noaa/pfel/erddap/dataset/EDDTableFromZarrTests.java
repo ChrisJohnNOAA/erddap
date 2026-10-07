@@ -1062,4 +1062,263 @@ class EDDTableFromZarrTests {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
+
+  @Test
+  void testMakeNewFileForDapQueryOutputFormats() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_formats_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // Create time, latitude, longitude, temperature 1D arrays
+      dev.zarr.zarrjava.core.Attributes timeZattrs = new dev.zarr.zarrjava.core.Attributes();
+      timeZattrs.set("units", "seconds since 1970-01-01T00:00:00Z");
+      timeZattrs.set("standard_name", "time");
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs").withAttributes(timeZattrs),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {1000.0, 1001.0, 1002.0}));
+
+      dev.zarr.zarrjava.core.Attributes latZattrs = new dev.zarr.zarrjava.core.Attributes();
+      latZattrs.set("units", "degrees_north");
+      latZattrs.set("standard_name", "latitude");
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("latitude"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs").withAttributes(latZattrs),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {40.0, 41.0, 42.0}));
+
+      dev.zarr.zarrjava.core.Attributes lonZattrs = new dev.zarr.zarrjava.core.Attributes();
+      lonZattrs.set("units", "degrees_east");
+      lonZattrs.set("standard_name", "longitude");
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("longitude"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs").withAttributes(lonZattrs),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {-70.0, -71.0, -72.0}));
+
+      dev.zarr.zarrjava.core.Attributes tempZattrs = new dev.zarr.zarrjava.core.Attributes();
+      tempZattrs.set("units", "degree_C");
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temperature"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs").withAttributes(tempZattrs),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {15.5, 16.2, 17.0}));
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Formats Output Test Dataset");
+      globalAtts.set(0, "summary", "Summary for formats test");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Point");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "table_formats_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null,
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      String outputDir = dataset.cacheDirectory();
+
+      // 1. Verify .csv format output
+      String csvFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature&temperature>=16.0", outputDir, "test_out", ".csv");
+      Path csvPath = Paths.get(outputDir, csvFileName);
+      assertTrue(Files.exists(csvPath));
+      String csvContent = Files.readString(csvPath);
+      assertTrue(csvContent.contains("longitude"));
+      assertTrue(csvContent.contains("temperature"));
+      assertTrue(csvContent.contains("16.2"));
+
+      // 2. Verify .json format output
+      String jsonFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature&temperature>=16.0", outputDir, "test_out", ".json");
+      Path jsonPath = Paths.get(outputDir, jsonFileName);
+      assertTrue(Files.exists(jsonPath));
+      String jsonContent = Files.readString(jsonPath);
+      assertTrue(jsonContent.contains("table"));
+      assertTrue(jsonContent.contains("columnNames"));
+
+      // 3. Verify .htmlTable format output
+      String htmlFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature&temperature>=16.0", outputDir, "test_out", ".htmlTable");
+      Path htmlPath = Paths.get(outputDir, htmlFileName);
+      assertTrue(Files.exists(htmlPath));
+      String htmlContent = Files.readString(htmlPath);
+      assertTrue(htmlContent.toLowerCase().contains("table"));
+
+      // 4. Verify .tsv format output
+      String tsvFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature&temperature>=16.0", outputDir, "test_out", ".tsv");
+      Path tsvPath = Paths.get(outputDir, tsvFileName);
+      assertTrue(Files.exists(tsvPath));
+      String tsvContent = Files.readString(tsvPath);
+      assertTrue(tsvContent.contains("longitude\tlatitude\ttime\ttemperature"));
+
+      // 5. Verify .nc NetCDF format output
+      String ncFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature&temperature>=16.0", outputDir, "test_out", ".nc");
+      Path ncPath = Paths.get(outputDir, ncFileName);
+      assertTrue(Files.exists(ncPath));
+      assertTrue(Files.size(ncPath) > 0);
+
+      // 6. Verify .mat MATLAB format output
+      String matFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature&temperature>=16.0", outputDir, "test_out", ".mat");
+      Path matPath = Paths.get(outputDir, matFileName);
+      assertTrue(Files.exists(matPath));
+      assertTrue(Files.size(matPath) > 0);
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testDatasetReloadAndRowExpansion() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_reload_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // Initial data: 3 rows
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("obs_val"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {10.0, 20.0, 30.0}));
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Reload Test Dataset");
+      globalAtts.set(0, "summary", "Summary for reload test");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Point");
+
+      EDDTableFromZarr dataset1 =
+          new EDDTableFromZarr(
+              "table_reload_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null,
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      TableWriterAllWithMetadata twawm1 =
+          new TableWriterAllWithMetadata(
+              0,
+              dataset1,
+              "",
+              dataset1.cacheDirectory(),
+              "reload1.twawm");
+      dataset1.getDataForDapQuery(0, null, "", "obs_val", twawm1);
+      gov.noaa.pfel.coastwatch.pointdata.Table t1 = twawm1.cumulativeTable();
+      assertEquals(3, t1.nRows());
+
+      // Expand store to 5 rows
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("obs_val"),
+              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {10.0, 20.0, 30.0, 40.0, 50.0}));
+
+      // Simulate dataset reload / re-initialization
+      EDDTableFromZarr dataset2 =
+          new EDDTableFromZarr(
+              "table_reload_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null,
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      TableWriterAllWithMetadata twawm2 =
+          new TableWriterAllWithMetadata(
+              0,
+              dataset2,
+              "",
+              dataset2.cacheDirectory(),
+              "reload2.twawm");
+      dataset2.getDataForDapQuery(0, null, "", "obs_val", twawm2);
+      gov.noaa.pfel.coastwatch.pointdata.Table t2 = twawm2.cumulativeTable();
+      assertEquals(5, t2.nRows());
+      assertEquals(50.0, t2.getColumn("obs_val").getDouble(4), 1e-5);
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
 }
