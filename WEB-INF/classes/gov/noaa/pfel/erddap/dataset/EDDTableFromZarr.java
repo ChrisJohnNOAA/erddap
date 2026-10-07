@@ -551,28 +551,21 @@ public class EDDTableFromZarr extends EDDTable {
     Map<String, Integer> dimFrequencyMap = new LinkedHashMap<>();
     Map<String, Long> array1DLengthMap = new LinkedHashMap<>();
 
+    Map<String, ZarrArrayInfo> arrayMap = null;
     try {
-      Node[] nodes = zarrGroup.listAsArray();
-      if (nodes != null) {
-        for (Node node : nodes) {
-          if (node instanceof Array zarray) {
-            ArrayMetadata meta = zarray.metadata();
-            if (meta == null || meta.shape == null) continue;
-            long[] shape = meta.shape;
-            String[] dims = extractDimensionNames(meta, shape.length);
-            String name = getArrayName(zarray);
-
-            for (int d = 0; d < dims.length; d++) {
-              String dimName = dims[d];
-              long dimSize = d < shape.length ? shape[d] : 0;
-              dimToSizeMap.putIfAbsent(dimName, dimSize);
-              dimFrequencyMap.put(dimName, dimFrequencyMap.getOrDefault(dimName, 0) + 1);
-            }
-
-            if (shape.length == 1) {
-              array1DLengthMap.put(name, shape[0]);
-            }
+      arrayMap = parseZarrMetadata(zarrGroup);
+      for (ZarrArrayInfo info : arrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
+        if (info.dimensionNames != null && info.shape != null) {
+          for (int d = 0; d < info.dimensionNames.length; d++) {
+            String dimName = info.dimensionNames[d];
+            long dimSize = d < info.shape.length ? info.shape[d] : 0;
+            dimToSizeMap.putIfAbsent(dimName, dimSize);
+            dimFrequencyMap.put(dimName, dimFrequencyMap.getOrDefault(dimName, 0) + 1);
           }
+        }
+        if (info.shape != null && info.shape.length == 1) {
+          array1DLengthMap.put(info.name, info.shape[0]);
         }
       }
     } catch (Throwable t) {
@@ -584,6 +577,12 @@ public class EDDTableFromZarr extends EDDTable {
       if (dimToSizeMap.containsKey(this.rowDimensionName)) {
         this.numRows = dimToSizeMap.get(this.rowDimensionName);
         return;
+      } else if (arrayMap != null && arrayMap.containsKey(this.rowDimensionName)) {
+        ZarrArrayInfo dimArrInfo = arrayMap.get(this.rowDimensionName);
+        if (dimArrInfo != null && dimArrInfo.shape != null && dimArrInfo.shape.length > 0) {
+          this.numRows = dimArrInfo.shape[0];
+          return;
+        }
       }
     }
 
@@ -1737,9 +1736,19 @@ public class EDDTableFromZarr extends EDDTable {
       return sa;
     }
 
-    // Standard 1D Variable
-    long[] offset = new long[] {startRow};
-    long[] shape = new long[] {currentChunkSize};
+    // Standard 1D or multi-dimensional Variable
+    int rank = 1;
+    if (info != null && info.shape != null && info.shape.length > 0) {
+      rank = info.shape.length;
+    }
+    long[] offset = new long[rank];
+    long[] shape = new long[rank];
+    offset[0] = startRow;
+    shape[0] = currentChunkSize;
+    for (int i = 1; i < rank; i++) {
+      offset[i] = 0;
+      shape[i] = (info != null && info.shape != null && i < info.shape.length) ? info.shape[i] : 1;
+    }
 
     ucar.ma2.Array nc2Array = null;
     try {
@@ -1756,14 +1765,18 @@ public class EDDTableFromZarr extends EDDTable {
     PrimitiveArray pa = NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned);
 
     // Handle _FillValue or missing_value conversion on raw data
-    if (info.attributes != null) {
-      String fillValStr = info.attributes.getString("_FillValue");
+    String fillValStr = edv != null ? edv.combinedAttributes().getString(0, "_FillValue") : null;
+    if (!String2.isSomething(fillValStr) && edv != null) {
+      fillValStr = edv.combinedAttributes().getString(0, "missing_value");
+    }
+    if (!String2.isSomething(fillValStr) && info != null && info.attributes != null) {
+      fillValStr = info.attributes.getString("_FillValue");
       if (!String2.isSomething(fillValStr)) {
         fillValStr = info.attributes.getString("missing_value");
       }
-      if (String2.isSomething(fillValStr)) {
-        pa.switchFromTo(fillValStr, "");
-      }
+    }
+    if (String2.isSomething(fillValStr)) {
+      pa.switchFromTo(fillValStr, "");
     }
 
     // Apply destination conversion & scale_factor / add_offset unpacking if requested
