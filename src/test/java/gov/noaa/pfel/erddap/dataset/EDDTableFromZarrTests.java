@@ -22,6 +22,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import gov.noaa.pfel.coastwatch.pointdata.Table;
+import testDataset.EDDTestDataset;
 import testDataset.Initialization;
 
 class EDDTableFromZarrTests {
@@ -1061,5 +1063,112 @@ class EDDTableFromZarrTests {
     } finally {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
+  }
+
+  @Test
+  void testZarrTableCompressedData() throws Throwable {
+    Initialization.edStatic();
+    EDDTable dataset = (EDDTable) EDDTestDataset.gettestZarr_table_compressedData();
+    assertNotNull(dataset);
+    assertEquals("zarr_table_compressedData", dataset.datasetID());
+
+
+    TableWriterAllWithMetadata tw =
+        new TableWriterAllWithMetadata(
+            0, dataset, "", dataset.cacheDirectory(), "compressed_data_test.twawm");
+
+    dataset.getDataForDapQuery(
+        0,
+        null,
+        "",
+        "null_compressor,compressed_deflate1,compressed_deflate9",
+        tw);
+
+    Table resultTable = tw.cumulativeTable();
+    assertNotNull(resultTable);
+    assertTrue(resultTable.nRows() > 0, "Compressed dataset should return rows");
+
+    // Verify columns exist and contain values without error (successful decompression)
+    assertNotNull(resultTable.getColumn("null_compressor"));
+    assertNotNull(resultTable.getColumn("compressed_deflate1"));
+    assertNotNull(resultTable.getColumn("compressed_deflate9"));
+  }
+
+  @Test
+  void testZarrTableTestDataZip() throws Throwable {
+    Initialization.edStatic();
+    EDDTable dataset = (EDDTable) EDDTestDataset.gettestZarr_table_testData();
+    assertNotNull(dataset);
+    assertEquals("zarr_table_testData", dataset.datasetID());
+
+    TableWriterAllWithMetadata tw =
+        new TableWriterAllWithMetadata(
+            0, dataset, "", dataset.cacheDirectory(), "test_data_zip_test.twawm");
+
+    dataset.getDataForDapQuery(
+        0, null, "", "dim0,dim1,dim2,dim3", tw);
+
+    Table resultTable = tw.cumulativeTable();
+    assertNotNull(resultTable);
+    assertTrue(resultTable.nRows() > 0, "Zip dataset should return rows");
+
+    assertNotNull(resultTable.getColumn("dim0"));
+    assertNotNull(resultTable.getColumn("dim1"));
+    assertNotNull(resultTable.getColumn("dim2"));
+    assertNotNull(resultTable.getColumn("dim3"));
+  }
+
+  @Test
+  void testZarrTableFillValuesAndConstraints() throws Throwable {
+    Initialization.edStatic();
+    EDDTable dataset = (EDDTable) EDDTestDataset.gettestZarr_table_fillValues();
+    assertNotNull(dataset);
+    assertEquals("zarr_table_fillValues", dataset.datasetID());
+
+    // 1. Unconstrained query to test special value deserialization (NaN, Inf, -Inf)
+    TableWriterAllWithMetadata tw1 =
+        new TableWriterAllWithMetadata(
+            0, dataset, "", dataset.cacheDirectory(), "fill_values_test1.twawm");
+
+    dataset.getDataForDapQuery(
+        0,
+        null,
+        "",
+        "dim0,dim1,double_inf,double_nan,double_ninf,float_inf,float_nan,float_ninf",
+        tw1);
+
+    Table resultTable1 = tw1.cumulativeTable();
+    assertNotNull(resultTable1);
+    assertTrue(resultTable1.nRows() > 0, "Fill values dataset should return rows");
+
+    // Verify double_nan and float_nan deserialize to Double.NaN and Float.NaN
+    double doubleNanVal = resultTable1.getColumn("double_nan").getDouble(0);
+    float floatNanVal = resultTable1.getColumn("float_nan").getFloat(0);
+    assertTrue(Double.isNaN(doubleNanVal), "double_nan should deserialize to Double.NaN");
+    assertTrue(Float.isNaN(floatNanVal), "float_nan should deserialize to Float.NaN");
+
+    // Verify double_inf, double_ninf, float_inf, float_ninf fill values map to Double.NaN / Float.NaN
+    double doubleInfVal = resultTable1.getColumn("double_inf").getDouble(0);
+    double doubleNinfVal = resultTable1.getColumn("double_ninf").getDouble(0);
+    float floatInfVal = resultTable1.getColumn("float_inf").getFloat(0);
+    float floatNinfVal = resultTable1.getColumn("float_ninf").getFloat(0);
+
+    assertTrue(Double.isNaN(doubleInfVal), "double_inf fill value should deserialize to Double.NaN");
+    assertEquals(Double.NEGATIVE_INFINITY, doubleNinfVal, "double_ninf should be NEGATIVE_INFINITY");
+    assertTrue(Float.isNaN(floatInfVal), "float_inf fill value should deserialize to Float.NaN");
+    assertEquals(Float.NEGATIVE_INFINITY, floatNinfVal, "float_ninf should be NEGATIVE_INFINITY");
+
+    // 2. Constrained query: double_nan>0 should evaluate bitset constraint mask and exclude NaN rows
+    // TableWriterAll throws SimpleException when 0 rows match a query
+    TableWriterAllWithMetadata tw2 =
+        new TableWriterAllWithMetadata(
+            0, dataset, "", dataset.cacheDirectory(), "fill_values_test2.twawm");
+
+    SimpleException se =
+        assertThrows(
+            SimpleException.class,
+            () -> dataset.getDataForDapQuery(0, null, "", "dim0,double_nan&double_nan>0", tw2));
+    assertTrue(se.getMessage().contains("no matching results"), "Should indicate 0 rows matched");
+
   }
 }
