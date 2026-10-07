@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -104,6 +105,343 @@ class EDDTableFromZarrTests {
       assertEquals("obs", dataset.rowDimensionName());
       assertNotNull(dataset.zarrStore());
       assertNotNull(dataset.zarrGroup());
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testGenerateDatasetsXmlEmptyTabularVariablesThrowsException() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_empty_tabular_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // 2D matrix array (not a 1D table column or 2D string matrix)
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("grid_var2d"),
+          mb -> mb.withShape(10, 10).withDataType(float64).withDimensionNames("y", "x"),
+          true);
+
+      SimpleException se =
+          assertThrows(
+              SimpleException.class,
+              () ->
+                  EDDTableFromZarr.generateDatasetsXml(
+                      tempDir.toString(), "", "obs", "empty_pref", 60, null, null, null, null));
+
+      assertTrue(se.getMessage().contains("No tabular variables matching row dimension"));
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testGenerateDatasetsXmlV2AndV3() throws Throwable {
+    Initialization.edStatic();
+    Path tempDirV2 = Files.createTempDirectory("zarr_v2_table_xml_test");
+    Path tempDirV3 = Files.createTempDirectory("zarr_v3_table_xml_test");
+    try {
+      // Create Zarr v2 store
+      Files.createDirectories(tempDirV2);
+      Files.writeString(tempDirV2.resolve(".zgroup"), "{\"zarr_format\": 2}");
+      Files.writeString(
+          tempDirV2.resolve(".zattrs"),
+          "{\"title\": \"V2 Test Table\", \"featureType\": \"trajectory\"}");
+
+      Files.createDirectories(tempDirV2.resolve("salinity"));
+      Files.writeString(
+          tempDirV2.resolve("salinity/.zarray"),
+          "{\"zarr_format\": 2, \"shape\": [5], \"chunks\": [5], \"dtype\": \"<f8\", \"compressor\": null, \"fill_value\": null, \"filters\": null, \"order\": \"C\"}");
+      Files.writeString(
+          tempDirV2.resolve("salinity/.zattrs"),
+          "{\"units\": \"PSU\", \"standard_name\": \"sea_water_salinity\", \"_ARRAY_DIMENSIONS\": [\"obs\"]}");
+
+      String xmlV2 =
+          EDDTableFromZarr.generateDatasetsXml(
+              tempDirV2.toString(), "", "obs", "v2_pref", 60, null, null, null, null);
+      assertNotNull(xmlV2);
+      assertTrue(xmlV2.contains("<dataset type=\"EDDTableFromZarr\""));
+      assertTrue(xmlV2.contains("datasetID=\"v2_pref_"));
+      assertTrue(xmlV2.contains("<zarrStorePath>" + tempDirV2.toString() + "</zarrStorePath>"));
+      assertTrue(xmlV2.contains("<rowDimensionName>obs</rowDimensionName>"));
+      assertTrue(xmlV2.contains("<sourceName>salinity</sourceName>"));
+      assertTrue(xmlV2.contains("cdm_data_type\">Trajectory</att>"));
+
+      // Create Zarr v3 store
+      dev.zarr.zarrjava.store.FilesystemStore storeV3 =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDirV3);
+      dev.zarr.zarrjava.v3.Group.create(
+          storeV3.resolve(),
+          new dev.zarr.zarrjava.core.Attributes()
+              .set("title", "V3 Test Table")
+              .set("featureType", "point"));
+
+      dev.zarr.zarrjava.v3.Array.create(
+          storeV3.resolve("temp"),
+          mb ->
+              mb.withShape(5)
+                  .withDataType(dev.zarr.zarrjava.v3.DataType.FLOAT64)
+                  .withDimensionNames("obs"),
+          true);
+
+      String xmlV3 =
+          EDDTableFromZarr.generateDatasetsXml(
+              tempDirV3.toString(), "", "obs", "v3_pref", 60, null, null, null, null);
+      assertNotNull(xmlV3);
+      assertTrue(xmlV3.contains("<dataset type=\"EDDTableFromZarr\""));
+      assertTrue(xmlV3.contains("<sourceName>temp</sourceName>"));
+      assertTrue(xmlV3.contains("cdm_data_type\">Point</att>"));
+
+    } finally {
+      File2.deleteAllFiles(tempDirV2.toString(), true, true);
+      File2.deleteAllFiles(tempDirV3.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testGenerateDatasetsXmlRowDimensionFiltering() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_row_dim_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // obs_var with length 10 and dim "obs"
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("obs_var"),
+          mb -> mb.withShape(10).withDataType(float64).withDimensionNames("obs"),
+          true);
+
+      // time_var with length 20 and dim "time"
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("time_var"),
+          mb -> mb.withShape(20).withDataType(float64).withDimensionNames("time"),
+          true);
+
+      // Call generateDatasetsXml explicitly requesting rowDimensionName="time"
+      String xml =
+          EDDTableFromZarr.generateDatasetsXml(
+              tempDir.toString(), "", "time", "test_prefix", 60, null, null, null, null);
+
+      assertNotNull(xml);
+      assertTrue(xml.contains("<rowDimensionName>time</rowDimensionName>"));
+      assertTrue(xml.contains("<sourceName>time_var</sourceName>"));
+      // obs_var should be skipped because its dimension "obs" does not match "time"
+      assertFalse(xml.contains("<sourceName>obs_var</sourceName>"));
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testSparseAndUnwrittenChunks() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_sparse_chunk_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // 10 rows across 2 chunks of size 5
+      // Write chunk 0 (rows 0-4), omit writing chunk 1 (rows 5-9) on disk
+      dev.zarr.zarrjava.v3.Array arr =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temperature"),
+              mb -> mb.withShape(10).withChunkShape(5).withDataType(float64).withDimensionNames("obs"),
+              true);
+
+      // Write chunk 0 only: [20.0, 21.0, 22.0, 23.0, 24.0]
+      arr.write(
+          new long[] {0},
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {20.0, 21.0, 22.0, 23.0, 24.0}));
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Sparse Chunk Test");
+      globalAtts.set(0, "summary", "Test sparse/unwritten chunks");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Other");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "sparse_chunk_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null,
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      TableWriterAllWithMetadata twawm =
+          new TableWriterAllWithMetadata(
+              0,
+              dataset,
+              "",
+              dataset.cacheDirectory(),
+              "sparse_test.twawm");
+
+      dataset.getDataForDapQuery(0, null, "", "temperature", twawm);
+      gov.noaa.pfel.coastwatch.pointdata.Table resultTable = twawm.cumulativeTable();
+
+      assertNotNull(resultTable);
+      assertEquals(10, resultTable.nRows());
+
+      // Rows 0-4 should be 20.0 to 24.0
+      assertEquals(20.0, resultTable.getColumn("temperature").getDouble(0), 1e-5);
+      assertEquals(24.0, resultTable.getColumn("temperature").getDouble(4), 1e-5);
+
+      // Rows 5-9 (unwritten chunk) should return NaN / missing value
+      assertTrue(Double.isNaN(resultTable.getColumn("temperature").getDouble(5)));
+      assertTrue(Double.isNaN(resultTable.getColumn("temperature").getDouble(9)));
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testEndToEndTableWriterStreaming() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_streaming_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.core.Attributes timeAtts = new dev.zarr.zarrjava.core.Attributes();
+      timeAtts.set("units", "seconds since 1970-01-01T00:00:00Z");
+      timeAtts.set("standard_name", "time");
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs").withAttributes(timeAtts),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {100.0, 101.0, 102.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("longitude"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {-120.0, -121.0, -122.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("latitude"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {30.0, 31.0, 32.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temperature"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {15.0, 16.0, 17.0}));
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Streaming Test");
+      globalAtts.set(0, "summary", "Test streaming table writers");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Point");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "streaming_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null,
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      String testDir = File2.addSlash(tempDir.toString());
+
+      // 1. CSV
+      String csvFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature", testDir, "test_out", ".csv");
+      Path csvPath = Paths.get(testDir, csvFileName);
+      assertTrue(Files.exists(csvPath));
+      String csvContent = Files.readString(csvPath);
+      assertTrue(csvContent.contains("longitude,latitude,time,temperature"));
+      assertTrue(csvContent.contains("-120.0"));
+      assertTrue(csvContent.contains("30.0"));
+      assertTrue(csvContent.contains("15.0"));
+
+      // 2. JSON
+      String jsonFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature", testDir, "test_out", ".json");
+      Path jsonPath = Paths.get(testDir, jsonFileName);
+      assertTrue(Files.exists(jsonPath));
+      String jsonContent = Files.readString(jsonPath);
+      assertTrue(jsonContent.contains("columnNames"));
+      assertTrue(jsonContent.contains("-120"));
+
+      // 3. HTML Table
+      String htmlFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature", testDir, "test_out", ".htmlTable");
+      Path htmlPath = Paths.get(testDir, htmlFileName);
+      assertTrue(Files.exists(htmlPath));
+      String htmlContent = Files.readString(htmlPath);
+      assertTrue(htmlContent.toLowerCase().contains("<table"));
+      assertTrue(htmlContent.contains("15.0"));
+
+      // 4. NetCDF (.nc)
+      String ncFileName =
+          dataset.makeNewFileForDapQuery(
+              0, null, null, "longitude,latitude,time,temperature", testDir, "test_out", ".nc");
+      Path ncPath = Paths.get(testDir, ncFileName);
+      assertTrue(Files.exists(ncPath));
+      assertTrue(Files.size(ncPath) > 0);
+
     } finally {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
