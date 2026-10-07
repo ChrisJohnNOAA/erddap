@@ -2710,6 +2710,8 @@ currently recommend
       <li><a rel="help" href="#EDDTableFromWFSFiles">EDDTableFromWFSFiles</a> (DEPRECATED)
         makes a local copy of all of the data from an ArcGIS MapServer WFS server
         so the data can then be re-served quickly to ERDDAP™ users.
+      <li><a rel="help" href="#EDDTableFromZarr">EDDTableFromZarr</a>
+        handles tabular data stored in Zarr store directories/URLs using zarr-java.
       <li><a rel="help" href="#EDDTableAggregateRows">EDDTableAggregateRows</a>
         can make an EDDTable dataset from a group of EDDTable datasets.
       <li><a rel="help" href="#EDDTableCopy">EDDTableCopy</a> can make a local 
@@ -6970,6 +6972,8 @@ Instead, use a subclass of EDDTableFromFiles to handle the specific file type:
   <li><a rel="help" href="#EDDTableFromWFSFiles">EDDTableFromWFSFiles</a> (DEPRECATED)
     makes a local copy of all of the data from an ArcGIS MapServer WFS server
     so the data can then be re-served quickly to ERDDAP™ users.
+  <li><a rel="help" href="#EDDTableFromZarr">EDDTableFromZarr</a>
+    handles tabular data stored in Zarr store directories/URLs using zarr-java.
   </ul>
 Currently, no other file types are supported. 
 But it is usually relatively easy to add support for other file types. Contact us if you have a request.
@@ -10189,6 +10193,51 @@ Sensor Observation Service
   <a rel="help" href="#EDDTableCopy">EDDTableCopy</a>.
 <li>See this class' superclass, <a rel="help" href="#EDDTableFromFiles">EDDTableFromFiles</a>, 
   for additional information on how this class works and how to use it.
+  <br>&nbsp;
+</ul>
+
+
+<p><a class="selfLink" id="EDDTableFromZarr" href="#EDDTableFromZarr" rel="bookmark"><strong>EDDTableFromZarr</strong></a>
+  handles tabular data stored in Zarr v2 or v3 stores (local directories, HTTP URLs, or AWS S3 URIs) using the zarr-java library.
+<ul>
+<li><kbd>&lt;zarrStorePath&gt;</kbd> specifies the location of the Zarr store. It can be a local directory path (e.g., <kbd>/data/zarr/obs.zarr</kbd>), an HTTP URL (e.g., <kbd>https://example.org/zarr/obs.zarr</kbd>), or an AWS S3 URI (e.g., <kbd>s3://bucket-name/path/obs.zarr</kbd>).
+<li><kbd>&lt;zarrGroupName&gt;</kbd> (optional, default is root "") specifies a sub-group within the Zarr store.
+<li><kbd>&lt;rowDimensionName&gt;</kbd> (optional) specifies the row dimension name (e.g., <kbd>obs</kbd>). If omitted, ERDDAP will auto-discover the row dimension name and observation length from 1D Zarr arrays in the group.
+<li><kbd>&lt;chunkCacheSize&gt;</kbd> (optional) specifies the maximum memory in bytes allocated for 1D Zarr array chunk caching.
+<li><kbd>&lt;awsRegion&gt;</kbd> (optional) specifies the AWS region for S3 buckets (e.g., <kbd>us-west-2</kbd>).
+<li><kbd>&lt;awsEndpoint&gt;</kbd> (optional) specifies a custom S3 endpoint URL for S3-compatible object stores.
+<li><kbd>&lt;cacheFromUrl&gt;</kbd> (optional) specifies whether to cache remote HTTP store metadata locally.
+
+<li><a class="selfLink" id="EDDTableFromZarrSkeletonXML" href="#EDDTableFromZarrSkeletonXML" rel="bookmark">The skeleton XML for an EDDTableFromZarr dataset is:</a>
+<pre>
+&lt;dataset type="EDDTableFromZarr" <a rel="help" href="#datasetID">datasetID</a>="..." <a rel="help" href="#active">active</a>="true"&gt;
+    &lt;zarrStorePath&gt;...&lt;/zarrStorePath&gt;
+    &lt;zarrGroupName&gt;&lt;/zarrGroupName&gt; &lt;!-- 0 or 1 --&gt;
+    &lt;rowDimensionName&gt;obs&lt;/rowDimensionName&gt; &lt;!-- 0 or 1 --&gt;
+    &lt;chunkCacheSize&gt;335544320&lt;/chunkCacheSize&gt; &lt;!-- 0 or 1 --&gt;
+    &lt;awsRegion&gt;us-west-2&lt;/awsRegion&gt; &lt;!-- 0 or 1 --&gt;
+    &lt;awsEndpoint&gt;https://s3.us-west-2.amazonaws.com&lt;/awsEndpoint&gt; &lt;!-- 0 or 1 --&gt;
+    &lt;cacheFromUrl&gt;true&lt;/cacheFromUrl&gt; &lt;!-- 0 or 1 --&gt;
+    <a rel="help" href="#reloadEveryNMinutes">&lt;reloadEveryNMinutes&gt;</a>60&lt;/reloadEveryNMinutes&gt;
+    <a rel="help" href="#defaultDataQuery">&lt;defaultDataQuery&gt;</a>...&lt;/defaultDataQuery&gt; &lt;!-- 0 or 1 --&gt;
+    <a rel="help" href="#addAttributes">&lt;addAttributes&gt;</a>
+        &lt;att name="title"&gt;...&lt;/att&gt;
+        &lt;att name="summary"&gt;...&lt;/att&gt;
+        &lt;att name="institution"&gt;...&lt;/att&gt;
+        &lt;att name="cdm_data_type"&gt;Point&lt;/att&gt;
+    &lt;/addAttributes&gt;
+    &lt;!-- dataVariable tags are auto-discovered if omitted --&gt;
+    &lt;dataVariable&gt;
+        &lt;sourceName&gt;...&lt;/sourceName&gt;
+        &lt;destinationName&gt;...&lt;/destinationName&gt;
+        &lt;dataType&gt;double&lt;/dataType&gt;
+        &lt;addAttributes&gt;
+            &lt;att name="units"&gt;...&lt;/att&gt;
+            &lt;att name="ioos_category"&gt;...&lt;/att&gt;
+        &lt;/addAttributes&gt;
+    &lt;/dataVariable&gt;
+&lt;/dataset&gt;
+</pre>
   <br>&nbsp;
 </ul>
 
