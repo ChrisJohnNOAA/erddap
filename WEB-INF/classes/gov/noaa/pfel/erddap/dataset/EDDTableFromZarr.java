@@ -6,6 +6,7 @@ package gov.noaa.pfel.erddap.dataset;
 
 import com.cohort.array.Attributes;
 import com.cohort.array.PAOne;
+import com.cohort.util.File2;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
@@ -1736,6 +1737,33 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   /**
+   * Helper method to derive a valid datasetID for an EDDTableFromZarr dataset.
+   *
+   * @param prefix optional dataset ID prefix
+   * @param zarrStorePath Zarr store path or URL
+   * @param zarrGroupName Zarr group name
+   * @return sanitized dataset ID string
+   */
+  public static String suggestZarrDatasetID(
+      String prefix, String zarrStorePath, String zarrGroupName) {
+    String source = zarrStorePath;
+    if (String2.isSomething(zarrGroupName) && !"/".equals(zarrGroupName.trim())) {
+      source = File2.addSlash(zarrStorePath) + zarrGroupName;
+    }
+    String suggested = EDD.suggestDatasetID(source);
+    if (String2.isSomething(prefix)) {
+      String cleanPrefix = String2.modifyToBeFileNameSafe(prefix).replaceAll("_+", "_");
+      if (cleanPrefix.endsWith("_")) {
+        cleanPrefix = cleanPrefix.substring(0, cleanPrefix.length() - 1);
+      }
+      if (String2.isSomething(cleanPrefix)) {
+        return cleanPrefix + "_" + suggested;
+      }
+    }
+    return suggested;
+  }
+
+  /**
    * Generates a suggested datasets.xml configuration block for a Zarr store using default settings.
    *
    * @param zarrStorePath path or URL to the Zarr store
@@ -1863,6 +1891,58 @@ public class EDDTableFromZarr extends EDDTable {
 
     Map<String, ZarrArrayInfo> arrayMap = parseZarrMetadata(zarrGroup);
 
+    Map<String, Long> dimToSizeMap = new LinkedHashMap<>();
+    Map<String, Integer> dimFrequencyMap = new LinkedHashMap<>();
+
+    for (ZarrArrayInfo info : arrayMap.values()) {
+      if (info == null || info.isUnsupportedCodec) continue;
+      if (info.dimensionNames != null && info.shape != null) {
+        for (int d = 0; d < info.dimensionNames.length; d++) {
+          String dimName = info.dimensionNames[d];
+          long dimLen = d < info.shape.length ? info.shape[d] : 0;
+          dimToSizeMap.putIfAbsent(dimName, dimLen);
+          dimFrequencyMap.put(dimName, dimFrequencyMap.getOrDefault(dimName, 0) + 1);
+        }
+      }
+    }
+
+    String targetRowDimensionName = rowDimensionName;
+    long targetNumRows = -1;
+
+    if (String2.isSomething(targetRowDimensionName)) {
+      if (dimToSizeMap.containsKey(targetRowDimensionName)) {
+        targetNumRows = dimToSizeMap.get(targetRowDimensionName);
+      } else {
+        ZarrArrayInfo dimArrInfo = arrayMap.get(targetRowDimensionName);
+        if (dimArrInfo != null && dimArrInfo.shape != null && dimArrInfo.shape.length == 1) {
+          targetNumRows = dimArrInfo.shape[0];
+        }
+      }
+    } else {
+      String[] standardCandidates = new String[] {"obs", "row", "time", "index", "record", "i"};
+      for (String cand : standardCandidates) {
+        if (dimToSizeMap.containsKey(cand)) {
+          targetRowDimensionName = cand;
+          targetNumRows = dimToSizeMap.get(cand);
+          break;
+        }
+      }
+      if (!String2.isSomething(targetRowDimensionName) && !dimToSizeMap.isEmpty()) {
+        String dominantDim = null;
+        int maxFreq = -1;
+        for (Map.Entry<String, Integer> entry : dimFrequencyMap.entrySet()) {
+          if (entry.getValue() > maxFreq) {
+            maxFreq = entry.getValue();
+            dominantDim = entry.getKey();
+          }
+        }
+        if (dominantDim != null) {
+          targetRowDimensionName = dominantDim;
+          targetNumRows = dimToSizeMap.get(dominantDim);
+        }
+      }
+    }
+
     String featureType = dataSourceTable.globalAttributes().getString("featureType");
     if (!String2.isSomething(featureType)) {
       featureType = dataSourceTable.globalAttributes().getString("CF:featureType");
@@ -1871,6 +1951,35 @@ public class EDDTableFromZarr extends EDDTable {
     int dvCount = 0;
     for (ZarrArrayInfo info : arrayMap.values()) {
       if (info == null || info.isUnsupportedCodec) continue;
+
+      if (info.is1D()) {
+        boolean matchesRowDim = false;
+        if (info.dimensionNames != null && info.dimensionNames.length > 0) {
+          if (String2.isSomething(targetRowDimensionName)
+              && targetRowDimensionName.equals(info.dimensionNames[0])) {
+            matchesRowDim = true;
+          }
+        }
+        if (!matchesRowDim && targetNumRows > 0 && info.shape != null && info.shape[0] == targetNumRows) {
+          matchesRowDim = true;
+        }
+        if (!matchesRowDim && !String2.isSomething(targetRowDimensionName)) {
+          matchesRowDim = true;
+        }
+        if (!matchesRowDim) {
+          String2.log(
+              "EDDTableFromZarr generateDatasetsXml skipping 1D array '"
+                  + info.name
+                  + "' (does not match target row dimension '"
+                  + targetRowDimensionName
+                  + "' or numRows "
+                  + targetNumRows
+                  + ")");
+          continue;
+        }
+      } else if (info.shape != null && info.shape.length > 1 && !info.is2DStringOrChar()) {
+        continue;
+      }
 
       String varName = info.name;
       Attributes sourceAtts = new Attributes();
@@ -1930,8 +2039,7 @@ public class EDDTableFromZarr extends EDDTable {
             externalAddGlobalAttributes,
             suggestKeywords(dataSourceTable, dataAddTable)));
 
-    String tDatasetID =
-        EDDGridFromZarr.suggestZarrDatasetID(datasetIDPrefix, zarrStorePath, zarrGroupName);
+    String tDatasetID = suggestZarrDatasetID(datasetIDPrefix, zarrStorePath, zarrGroupName);
 
     StringBuilder sb = new StringBuilder();
     sb.append(
@@ -1948,10 +2056,10 @@ public class EDDTableFromZarr extends EDDTable {
     if (String2.isSomething(zarrGroupName)) {
       sb.append("    <zarrGroupName>" + XML.encodeAsXML(zarrGroupName) + "</zarrGroupName>\n");
     }
-    if (String2.isSomething(rowDimensionName)) {
+    if (String2.isSomething(targetRowDimensionName)) {
       sb.append(
           "    <rowDimensionName>"
-              + XML.encodeAsXML(rowDimensionName)
+              + XML.encodeAsXML(targetRowDimensionName)
               + "</rowDimensionName>\n");
     }
     if (String2.isSomething(awsRegion)) {

@@ -129,7 +129,7 @@ class EDDTableFromZarrTests {
           "{\"zarr_format\": 2, \"shape\": [5], \"chunks\": [5], \"dtype\": \"<f8\", \"compressor\": null, \"fill_value\": null, \"filters\": null, \"order\": \"C\"}");
       Files.writeString(
           tempDirV2.resolve("salinity/.zattrs"),
-          "{\"units\": \"PSU\", \"standard_name\": \"sea_water_salinity\"}");
+          "{\"units\": \"PSU\", \"standard_name\": \"sea_water_salinity\", \"_ARRAY_DIMENSIONS\": [\"obs\"]}");
 
       String xmlV2 =
           EDDTableFromZarr.generateDatasetsXml(
@@ -170,6 +170,45 @@ class EDDTableFromZarrTests {
     } finally {
       File2.deleteAllFiles(tempDirV2.toString(), true, true);
       File2.deleteAllFiles(tempDirV3.toString(), true, true);
+    }
+  }
+
+  @Test
+  void testGenerateDatasetsXmlRowDimensionFiltering() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_row_dim_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // obs_var with length 10 and dim "obs"
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("obs_var"),
+          mb -> mb.withShape(10).withDataType(float64).withDimensionNames("obs"),
+          true);
+
+      // time_var with length 20 and dim "time"
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("time_var"),
+          mb -> mb.withShape(20).withDataType(float64).withDimensionNames("time"),
+          true);
+
+      // Call generateDatasetsXml explicitly requesting rowDimensionName="time"
+      String xml =
+          EDDTableFromZarr.generateDatasetsXml(
+              tempDir.toString(), "", "time", "test_prefix", 60, null, null, null, null);
+
+      assertNotNull(xml);
+      assertTrue(xml.contains("<rowDimensionName>time</rowDimensionName>"));
+      assertTrue(xml.contains("<sourceName>time_var</sourceName>"));
+      // obs_var should be skipped because its dimension "obs" does not match "time"
+      assertFalse(xml.contains("<sourceName>obs_var</sourceName>"));
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
 
