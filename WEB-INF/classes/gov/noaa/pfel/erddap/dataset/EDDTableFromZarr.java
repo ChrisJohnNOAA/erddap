@@ -69,6 +69,7 @@ public class EDDTableFromZarr extends EDDTable {
   private long chunkCacheSize;
   private String awsRegion;
   private String awsEndpoint;
+  private String cacheFromUrl;
 
   private Store zarrStore;
   private Group zarrGroup;
@@ -106,6 +107,7 @@ public class EDDTableFromZarr extends EDDTable {
     long tChunkCacheSize = -1;
     String tAwsRegion = null;
     String tAwsEndpoint = null;
+    String tCacheFromUrl = null;
 
     int startOfTagsN = xmlReader.stackSize();
     String startOfTags = xmlReader.allTags();
@@ -139,7 +141,8 @@ public class EDDTableFromZarr extends EDDTable {
             "<rowDimension>",
             "<chunkCacheSize>",
             "<awsRegion>",
-            "<awsEndpoint>" -> {}
+            "<awsEndpoint>",
+            "<cacheFromUrl>" -> {}
         case "</accessibleTo>" -> tAccessibleTo = content;
         case "</graphsAccessibleTo>" -> tGraphsAccessibleTo = content;
         case "</onChange>" -> tOnChange.add(content);
@@ -156,6 +159,7 @@ public class EDDTableFromZarr extends EDDTable {
         case "</chunkCacheSize>" -> tChunkCacheSize = String2.parseLong(content);
         case "</awsRegion>" -> tAwsRegion = content;
         case "</awsEndpoint>" -> tAwsEndpoint = content;
+        case "</cacheFromUrl>" -> tCacheFromUrl = content;
         default -> xmlReader.unexpectedTagException();
       }
     }
@@ -179,7 +183,8 @@ public class EDDTableFromZarr extends EDDTable {
         tRowDimensionName,
         tChunkCacheSize,
         tAwsRegion,
-        tAwsEndpoint);
+        tAwsEndpoint,
+        tCacheFromUrl);
   }
 
   /**
@@ -227,6 +232,54 @@ public class EDDTableFromZarr extends EDDTable {
       String tAwsRegion,
       String tAwsEndpoint)
       throws Throwable {
+    this(
+        tDatasetID,
+        tAccessibleTo,
+        tGraphsAccessibleTo,
+        tOnChange,
+        tFgdcFile,
+        tIso19115File,
+        tSosOfferingPrefix,
+        tDefaultDataQuery,
+        tDefaultGraphQuery,
+        tAddVariablesWhere,
+        tAddGlobalAttributes,
+        tDataVariables,
+        tReloadEveryNMinutes,
+        tZarrStorePath,
+        tZarrGroupName,
+        tRowDimensionName,
+        tChunkCacheSize,
+        tAwsRegion,
+        tAwsEndpoint,
+        null);
+  }
+
+  /**
+   * Constructs an EDDTableFromZarr instance with all settings including cacheFromUrl.
+   */
+  public EDDTableFromZarr(
+      String tDatasetID,
+      String tAccessibleTo,
+      String tGraphsAccessibleTo,
+      StringArray tOnChange,
+      String tFgdcFile,
+      String tIso19115File,
+      String tSosOfferingPrefix,
+      String tDefaultDataQuery,
+      String tDefaultGraphQuery,
+      String tAddVariablesWhere,
+      LocalizedAttributes tAddGlobalAttributes,
+      List<DataVariableInfo> tDataVariables,
+      int tReloadEveryNMinutes,
+      String tZarrStorePath,
+      String tZarrGroupName,
+      String tRowDimensionName,
+      long tChunkCacheSize,
+      String tAwsRegion,
+      String tAwsEndpoint,
+      String tCacheFromUrl)
+      throws Throwable {
 
     super();
 
@@ -257,6 +310,7 @@ public class EDDTableFromZarr extends EDDTable {
     this.chunkCacheSize = tChunkCacheSize;
     this.awsRegion = tAwsRegion;
     this.awsEndpoint = tAwsEndpoint;
+    this.cacheFromUrl = tCacheFromUrl;
 
     if (!String2.isSomething(this.zarrStorePath)) {
       throw new IllegalArgumentException(errorInMethod + "zarrStorePath wasn't specified.");
@@ -267,7 +321,9 @@ public class EDDTableFromZarr extends EDDTable {
 
     // 1. Initialize zarr-java Store reader for local, HTTP, or S3 URIs
     try {
-      this.zarrStore = createZarrStore(this.zarrStorePath, this.awsRegion, this.awsEndpoint);
+      this.zarrStore =
+          createZarrStore(
+              this.zarrStorePath, this.cacheFromUrl, this.awsRegion, this.awsEndpoint);
     } catch (Exception e) {
       throw new RuntimeException(
           errorInMethod + "Failed to initialize Zarr store at path: " + this.zarrStorePath, e);
@@ -335,7 +391,36 @@ public class EDDTableFromZarr extends EDDTable {
    */
   public static Store createZarrStore(String path, String awsRegion, String awsEndpoint)
       throws IOException {
+    return createZarrStore(path, null, awsRegion, awsEndpoint);
+  }
+
+  /**
+   * Initializes a Zarr Store handle supporting local files, zip archives, HTTP, S3 URIs,
+   * and optional cacheFromUrl fallback.
+   *
+   * @param path store URI or path
+   * @param cacheFromUrl local caching directory or fallback URL
+   * @param awsRegion AWS region name if applicable
+   * @param awsEndpoint custom AWS S3 endpoint if applicable
+   * @return initialized Store
+   * @throws IOException if error
+   */
+  public static Store createZarrStore(
+      String path, String cacheFromUrl, String awsRegion, String awsEndpoint)
+      throws IOException {
+    if (!String2.isSomething(path) && String2.isSomething(cacheFromUrl)) {
+      path = cacheFromUrl;
+    }
     if (path == null) throw new IllegalArgumentException("Zarr store path cannot be null.");
+
+    if (String2.isRemote(path)
+        && String2.isSomething(cacheFromUrl)
+        && !String2.isRemote(cacheFromUrl)) {
+      if (File2.isDirectory(cacheFromUrl) || File2.isFile(cacheFromUrl)) {
+        path = cacheFromUrl;
+      }
+    }
+
     if (path.startsWith("http://") || path.startsWith("https://")) {
       return new HttpStore(path);
     } else if (path.startsWith("s3://") || path.startsWith("s3a://")) {
@@ -1874,7 +1959,7 @@ public class EDDTableFromZarr extends EDDTable {
       reloadEveryNMinutes = DEFAULT_RELOAD_EVERY_N_MINUTES; // 1440
     }
 
-    Store zarrStore = createZarrStore(zarrStorePath, awsRegion, awsEndpoint);
+    Store zarrStore = createZarrStore(zarrStorePath, cacheFromUrl, awsRegion, awsEndpoint);
     Group zarrGroup = openZarrGroup(zarrStore, zarrGroupName);
 
     Table dataSourceTable = new Table();
@@ -2015,6 +2100,16 @@ public class EDDTableFromZarr extends EDDTable {
       PrimitiveArray destPA = PrimitiveArray.factory(paType, 1, false);
       dataAddTable.addColumn(dvCount, varName, destPA, addAtts);
       dvCount++;
+    }
+
+    if (dataSourceTable.nColumns() == 0) {
+      throw new SimpleException(
+          "No tabular variables matching row dimension '"
+              + targetRowDimensionName
+              + "' were found in Zarr group '"
+              + zarrGroupName
+              + "' at "
+              + zarrStorePath);
     }
 
     tryToFindLLAT(dataSourceTable, dataAddTable);

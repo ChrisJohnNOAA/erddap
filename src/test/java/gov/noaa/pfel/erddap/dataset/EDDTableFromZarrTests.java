@@ -111,6 +111,37 @@ class EDDTableFromZarrTests {
   }
 
   @Test
+  void testGenerateDatasetsXmlEmptyTabularVariablesThrowsException() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_empty_tabular_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // 2D matrix array (not a 1D table column or 2D string matrix)
+      dev.zarr.zarrjava.v3.Array.create(
+          store.resolve("grid_var2d"),
+          mb -> mb.withShape(10, 10).withDataType(float64).withDimensionNames("y", "x"),
+          true);
+
+      SimpleException se =
+          assertThrows(
+              SimpleException.class,
+              () ->
+                  EDDTableFromZarr.generateDatasetsXml(
+                      tempDir.toString(), "", "obs", "empty_pref", 60, null, null, null, null));
+
+      assertTrue(se.getMessage().contains("No tabular variables matching row dimension"));
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
+
+  @Test
   void testGenerateDatasetsXmlV2AndV3() throws Throwable {
     Initialization.edStatic();
     Path tempDirV2 = Files.createTempDirectory("zarr_v2_table_xml_test");
