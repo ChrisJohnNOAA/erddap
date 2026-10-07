@@ -1737,14 +1737,17 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     // Standard 1D or multi-dimensional Variable
-    int rank = (info != null && info.shape != null && info.shape.length > 0) ? info.shape.length : 1;
+    int rank = 1;
+    if (info != null && info.shape != null && info.shape.length > 0) {
+      rank = info.shape.length;
+    }
     long[] offset = new long[rank];
     long[] shape = new long[rank];
     offset[0] = startRow;
     shape[0] = currentChunkSize;
     for (int i = 1; i < rank; i++) {
       offset[i] = 0;
-      shape[i] = info.shape[i];
+      shape[i] = (info != null && info.shape != null && i < info.shape.length) ? info.shape[i] : 1;
     }
 
     ucar.ma2.Array nc2Array = null;
