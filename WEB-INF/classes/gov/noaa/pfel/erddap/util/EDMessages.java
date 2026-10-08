@@ -3771,16 +3771,12 @@ public class EDMessages {
           String2.replaceAll(
               standardShortDescriptionHtmlArray[tl],
               "&convertTimeReference;",
-              EDStatic.config.convertersActive
-                  ? translatedMessages.get(Message.CONVERT_TIME_REFERENCE)[tl]
-                  : "");
+              translatedMessages.get(Message.CONVERT_TIME_REFERENCE)[tl]);
       standardShortDescriptionHtmlArray[tl] =
           String2.replaceAll(
               standardShortDescriptionHtmlArray[tl],
               "&wmsManyDatasets;",
-              EDStatic.config.wmsActive
-                  ? translatedMessages.get(Message.WMS_MANY_DATASETS)[tl]
-                  : "");
+              translatedMessages.get(Message.WMS_MANY_DATASETS)[tl]);
     }
 
     // just one
@@ -4037,13 +4033,13 @@ public class EDMessages {
           String2.replaceAll(
               translatedMessages.get(Message.DO_WITH_GRAPHS)[tl],
               "&ssUse;",
-              EDStatic.config.slideSorterActive ? translatedMessages.get(Message.SS_USE)[tl] : "");
+              translatedMessages.get(Message.SS_USE)[tl]);
 
       translatedMessages.get(Message.THE_LONG_DESCRIPTION_HTML)[tl] =
           String2.replaceAll(
               translatedMessages.get(Message.THE_LONG_DESCRIPTION_HTML)[tl],
               "&ssUse;",
-              EDStatic.config.slideSorterActive ? translatedMessages.get(Message.SS_USE)[tl] : "");
+              translatedMessages.get(Message.SS_USE)[tl]);
       translatedMessages.get(Message.THE_LONG_DESCRIPTION_HTML)[tl] =
           String2.replaceAll(
               translatedMessages.get(Message.THE_LONG_DESCRIPTION_HTML)[tl],
