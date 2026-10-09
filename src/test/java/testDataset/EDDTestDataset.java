@@ -43536,7 +43536,8 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDTableFromZarr\" datasetID=\"zarr_table_testData\" active=\"true\">\n"
         + "    <reloadEveryNMinutes>10080</reloadEveryNMinutes>\n"
         + "    <zarrStorePath>"
-        + Path.of(EDDTestDataset.class.getResource("/data/zarr/zarr_test_data.zarr.zip").toURI()).toString()
+        + Path.of(EDDTestDataset.class.getResource("/data/zarr/zarr_test_data.zarr.zip").toURI())
+            .toString()
         + "</zarrStorePath>\n"
         + "    <zarrGroupName></zarrGroupName>\n"
         + "    <rowDimensionName></rowDimensionName>\n"
@@ -43603,7 +43604,8 @@ public class EDDTestDataset {
     return "<dataset type=\"EDDTableFromZarr\" datasetID=\"zarr_table_fillValues\" active=\"true\">\n"
         + "    <reloadEveryNMinutes>10080</reloadEveryNMinutes>\n"
         + "    <zarrStorePath>"
-        + Path.of(EDDTestDataset.class.getResource("/data/zarr/fill_values.zarr").toURI()).toString()
+        + Path.of(EDDTestDataset.class.getResource("/data/zarr/fill_values.zarr").toURI())
+            .toString()
         + "</zarrStorePath>\n"
         + "    <zarrGroupName></zarrGroupName>\n"
         + "    <rowDimensionName>dim0</rowDimensionName>\n"

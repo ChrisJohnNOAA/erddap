@@ -15,8 +15,7 @@ public class EDDTableFromZarrHandler extends BaseTableHandler {
   private String tAwsRegion = null;
   private String tAwsEndpoint = null;
 
-  public EDDTableFromZarrHandler(
-      SaxHandler saxHandler, String datasetID, State completeState) {
+  public EDDTableFromZarrHandler(SaxHandler saxHandler, String datasetID, State completeState) {
     super(saxHandler, datasetID, completeState);
   }
 

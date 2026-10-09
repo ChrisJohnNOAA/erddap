@@ -10,6 +10,7 @@ import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.S3Store;
 import dev.zarr.zarrjava.store.Store;
+import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.variable.DataVariableInfo;
@@ -22,7 +23,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import gov.noaa.pfel.coastwatch.pointdata.Table;
 import testDataset.EDDTestDataset;
 import testDataset.Initialization;
 
@@ -261,14 +261,20 @@ class EDDTableFromZarrTests {
       dev.zarr.zarrjava.v3.Array arr =
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("temperature"),
-              mb -> mb.withShape(10).withChunkShape(5).withDataType(float64).withDimensionNames("obs"),
+              mb ->
+                  mb.withShape(10)
+                      .withChunkShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs"),
               true);
 
       // Write chunk 0 only: [20.0, 21.0, 22.0, 23.0, 24.0]
       arr.write(
           new long[] {0},
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {20.0, 21.0, 22.0, 23.0, 24.0}));
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {5},
+              new double[] {20.0, 21.0, 22.0, 23.0, 24.0}));
 
       LocalizedAttributes globalAtts = new LocalizedAttributes();
       globalAtts.set(0, "title", "Sparse Chunk Test");
@@ -301,11 +307,7 @@ class EDDTableFromZarrTests {
 
       TableWriterAllWithMetadata twawm =
           new TableWriterAllWithMetadata(
-              0,
-              dataset,
-              "",
-              dataset.cacheDirectory(),
-              "sparse_test.twawm");
+              0, dataset, "", dataset.cacheDirectory(), "sparse_test.twawm");
 
       dataset.getDataForDapQuery(0, null, "", "temperature", twawm);
       gov.noaa.pfel.coastwatch.pointdata.Table resultTable = twawm.cumulativeTable();
@@ -343,7 +345,11 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
-              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs").withAttributes(timeAtts),
+              mb ->
+                  mb.withShape(3)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(timeAtts),
               true)
           .write(
               ucar.ma2.Array.factory(
@@ -429,7 +435,13 @@ class EDDTableFromZarrTests {
       // 3. HTML Table
       String htmlFileName =
           dataset.makeNewFileForDapQuery(
-              0, null, null, "longitude,latitude,time,temperature", testDir, "test_out", ".htmlTable");
+              0,
+              null,
+              null,
+              "longitude,latitude,time,temperature",
+              testDir,
+              "test_out",
+              ".htmlTable");
       Path htmlPath = Paths.get(testDir, htmlFileName);
       assertTrue(Files.exists(htmlPath));
       String htmlContent = Files.readString(htmlPath);
@@ -468,11 +480,17 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(timeZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(timeZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
 
       dev.zarr.zarrjava.core.Attributes latZattrs = new dev.zarr.zarrjava.core.Attributes();
       latZattrs.set("units", "degrees_north");
@@ -480,11 +498,17 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("latitude"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(latZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(latZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {30.0, 31.0, 32.0, 33.0, 34.0}));
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {30.0, 31.0, 32.0, 33.0, 34.0}));
 
       dev.zarr.zarrjava.core.Attributes lonZattrs = new dev.zarr.zarrjava.core.Attributes();
       lonZattrs.set("units", "degrees_east");
@@ -492,11 +516,17 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("longitude"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(lonZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(lonZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {-120.0, -121.0, -122.0, -123.0, -124.0}));
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {-120.0, -121.0, -122.0, -123.0, -124.0}));
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("salinity"),
@@ -507,9 +537,12 @@ class EDDTableFromZarrTests {
                   ucar.ma2.DataType.SHORT, new int[] {5}, new short[] {35, 35, 36, 36, 35}));
 
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("station_id"),
-              mb -> mb.withShape(5).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs"),
-              true);
+          store.resolve("station_id"),
+          mb ->
+              mb.withShape(5)
+                  .withDataType(dev.zarr.zarrjava.v3.DataType.INT8)
+                  .withDimensionNames("obs"),
+          true);
 
       LocalizedAttributes globalAtts = new LocalizedAttributes();
       globalAtts.set(0, "title", "DSG Test");
@@ -542,7 +575,9 @@ class EDDTableFromZarrTests {
 
       assertNotNull(dataset);
       assertEquals("TimeSeries", dataset.cdmDataType(0));
-      assertEquals("station_id", dataset.combinedGlobalAttributes().getString(0, "cdm_timeseries_variables"));
+      assertEquals(
+          "station_id",
+          dataset.combinedGlobalAttributes().getString(0, "cdm_timeseries_variables"));
       assertTrue(dataset.lonIndex() >= 0);
       assertTrue(dataset.latIndex() >= 0);
       assertTrue(dataset.timeIndex() >= 0);
@@ -572,14 +607,17 @@ class EDDTableFromZarrTests {
       dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
 
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("temp"),
-              mb -> mb.withShape(4).withDataType(float64).withDimensionNames("row"),
-              true);
+          store.resolve("temp"),
+          mb -> mb.withShape(4).withDataType(float64).withDimensionNames("row"),
+          true);
 
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("station_name"),
-              mb -> mb.withShape(4, 16).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("row", "str_len"),
-              true);
+          store.resolve("station_name"),
+          mb ->
+              mb.withShape(4, 16)
+                  .withDataType(dev.zarr.zarrjava.v3.DataType.INT8)
+                  .withDimensionNames("row", "str_len"),
+          true);
 
       // Auto-discovery test with 2D string array
       LocalizedAttributes globalAtts = new LocalizedAttributes();
@@ -670,39 +708,49 @@ class EDDTableFromZarrTests {
       timeZattrs.set("standard_name", "time");
 
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("time"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(timeZattrs),
-              true);
+          store.resolve("time"),
+          mb ->
+              mb.withShape(5)
+                  .withDataType(float64)
+                  .withDimensionNames("obs")
+                  .withAttributes(timeZattrs),
+          true);
 
       // Salinity data variable
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("salinity"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
-              true);
+          store.resolve("salinity"),
+          mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+          true);
 
       // Auxiliary bounds array (time_bnds)
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("time_bnds"),
-              mb -> mb.withShape(5, 2).withDataType(float64).withDimensionNames("obs", "nv"),
-              true);
+          store.resolve("time_bnds"),
+          mb -> mb.withShape(5, 2).withDataType(float64).withDimensionNames("obs", "nv"),
+          true);
 
       // Auxiliary QC array (salinity_qc)
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("salinity_qc"),
-              mb -> mb.withShape(5).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs"),
-              true);
+          store.resolve("salinity_qc"),
+          mb ->
+              mb.withShape(5)
+                  .withDataType(dev.zarr.zarrjava.v3.DataType.INT8)
+                  .withDimensionNames("obs"),
+          true);
 
       // Auxiliary flags array (temp_flags)
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("temp_flags"),
-              mb -> mb.withShape(5).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs"),
-              true);
+          store.resolve("temp_flags"),
+          mb ->
+              mb.withShape(5)
+                  .withDataType(dev.zarr.zarrjava.v3.DataType.INT8)
+                  .withDimensionNames("obs"),
+          true);
 
       // Mismatched 1D array length (100 != 5)
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("unrelated_1d"),
-              mb -> mb.withShape(100).withDataType(float64).withDimensionNames("other_dim"),
-              true);
+          store.resolve("unrelated_1d"),
+          mb -> mb.withShape(100).withDataType(float64).withDimensionNames("other_dim"),
+          true);
 
       LocalizedAttributes globalAtts = new LocalizedAttributes();
       globalAtts.set(0, "title", "Auxiliary Array Filtering Test");
@@ -763,21 +811,24 @@ class EDDTableFromZarrTests {
 
       // Array in root group
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("temp"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
-              true);
+          store.resolve("temp"),
+          mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+          true);
 
       // Array in nested child group
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("subgroup/salinity"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
-              true);
+          store.resolve("subgroup/salinity"),
+          mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+          true);
 
       // 2D Byte QC matrix (shape 5, 10, dimensions obs, level - NOT string length)
       dev.zarr.zarrjava.v3.Array.create(
-              store.resolve("qc_matrix"),
-              mb -> mb.withShape(5, 10).withDataType(dev.zarr.zarrjava.v3.DataType.INT8).withDimensionNames("obs", "level"),
-              true);
+          store.resolve("qc_matrix"),
+          mb ->
+              mb.withShape(5, 10)
+                  .withDataType(dev.zarr.zarrjava.v3.DataType.INT8)
+                  .withDimensionNames("obs", "level"),
+          true);
 
       LocalizedAttributes globalAtts = new LocalizedAttributes();
       globalAtts.set(0, "title", "Nested Group Test");
@@ -840,11 +891,17 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(timeZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(timeZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
 
       dev.zarr.zarrjava.core.Attributes latZattrs = new dev.zarr.zarrjava.core.Attributes();
       latZattrs.set("units", "degrees_north");
@@ -852,11 +909,17 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("latitude"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(latZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(latZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {30.0, 31.0, 32.0, 33.0, 34.0}));
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {30.0, 31.0, 32.0, 33.0, 34.0}));
 
       dev.zarr.zarrjava.core.Attributes lonZattrs = new dev.zarr.zarrjava.core.Attributes();
       lonZattrs.set("units", "degrees_east");
@@ -864,11 +927,17 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("longitude"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs").withAttributes(lonZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(lonZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {-120.0, -121.0, -122.0, -123.0, -124.0}));
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {-120.0, -121.0, -122.0, -123.0, -124.0}));
 
       // Salinity with scale_factor=0.1 and add_offset=30.0
       dev.zarr.zarrjava.core.Attributes salZattrs = new dev.zarr.zarrjava.core.Attributes();
@@ -878,7 +947,11 @@ class EDDTableFromZarrTests {
       // raw values: [50, 50, 60, 60, 50] -> unpacked: [35.0, 35.0, 36.0, 36.0, 35.0]
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("salinity"),
-              mb -> mb.withShape(5).withDataType(int16).withDimensionNames("obs").withAttributes(salZattrs),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(int16)
+                      .withDimensionNames("obs")
+                      .withAttributes(salZattrs),
               true)
           .write(
               ucar.ma2.Array.factory(
@@ -889,9 +962,7 @@ class EDDTableFromZarrTests {
               store.resolve("station_id"),
               mb -> mb.withShape().withDataType(dev.zarr.zarrjava.v3.DataType.INT32),
               true)
-          .write(
-              ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.INT, new int[] {}, new int[] {999}));
+          .write(ucar.ma2.Array.factory(ucar.ma2.DataType.INT, new int[] {}, new int[] {999}));
 
       LocalizedAttributes globalAtts = new LocalizedAttributes();
       globalAtts.set(0, "title", "Query Test Dataset");
@@ -926,13 +997,10 @@ class EDDTableFromZarrTests {
       // Expected rows: index 2 and 3 (unpacked salinity = 36.0)
       TableWriterAllWithMetadata twawm1 =
           new TableWriterAllWithMetadata(
-              0,
-              dataset,
-              "",
-              dataset.cacheDirectory(),
-              "query_test1.twawm");
+              0, dataset, "", dataset.cacheDirectory(), "query_test1.twawm");
 
-      dataset.getDataForDapQuery(0, null, "", "longitude,latitude,time,salinity,station_id&salinity>=36.0", twawm1);
+      dataset.getDataForDapQuery(
+          0, null, "", "longitude,latitude,time,salinity,station_id&salinity>=36.0", twawm1);
       gov.noaa.pfel.coastwatch.pointdata.Table resultTable1 = twawm1.cumulativeTable();
 
       assertNotNull(resultTable1);
@@ -942,14 +1010,11 @@ class EDDTableFromZarrTests {
       assertEquals("999", resultTable1.getColumn("station_id").getString(0));
       assertEquals("999", resultTable1.getColumn("station_id").getString(1));
 
-      // Test 2: Query with constraint matching 0 rows (TableWriterAll throws SimpleException on finish for 0 rows)
+      // Test 2: Query with constraint matching 0 rows (TableWriterAll throws SimpleException on
+      // finish for 0 rows)
       TableWriterAllWithMetadata twawm2 =
           new TableWriterAllWithMetadata(
-              0,
-              dataset,
-              "",
-              dataset.cacheDirectory(),
-              "query_test2.twawm");
+              0, dataset, "", dataset.cacheDirectory(), "query_test2.twawm");
 
       SimpleException se =
           assertThrows(
@@ -957,7 +1022,8 @@ class EDDTableFromZarrTests {
               () ->
                   dataset.getDataForDapQuery(
                       0, null, "", "longitude,latitude,salinity&salinity>100.0", twawm2));
-      assertTrue(se.getMessage().contains("no matching results") || se.getMessage().contains("nRows = 0"));
+      assertTrue(
+          se.getMessage().contains("no matching results") || se.getMessage().contains("nRows = 0"));
 
     } finally {
       File2.deleteAllFiles(tempDir.toString(), true, true);
@@ -981,19 +1047,23 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("raw_temp"),
-              mb -> mb.withShape(10).withChunkShape(5).withDataType(float64).withDimensionNames("obs"),
+              mb ->
+                  mb.withShape(10)
+                      .withChunkShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs"),
               true)
-          .write(
-              ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {10}, rawTemp));
+          .write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {10}, rawTemp));
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("raw_sal"),
-              mb -> mb.withShape(10).withChunkShape(5).withDataType(float64).withDimensionNames("obs"),
+              mb ->
+                  mb.withShape(10)
+                      .withChunkShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs"),
               true)
-          .write(
-              ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE, new int[] {10}, rawSal));
+          .write(ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {10}, rawSal));
 
       List<DataVariableInfo> dvis = new ArrayList<>();
       LocalizedAttributes tempAddAtts = new LocalizedAttributes();
@@ -1037,11 +1107,7 @@ class EDDTableFromZarrTests {
 
       TableWriterAllWithMetadata twawm =
           new TableWriterAllWithMetadata(
-              0,
-              dataset,
-              "",
-              dataset.cacheDirectory(),
-              "renamed_test.twawm");
+              0, dataset, "", dataset.cacheDirectory(), "renamed_test.twawm");
 
       dataset.getDataForDapQuery(0, null, "", "temperature,salinity&temperature>=20.0", twawm);
       gov.noaa.pfel.coastwatch.pointdata.Table resultTable = twawm.cumulativeTable();
@@ -1072,17 +1138,12 @@ class EDDTableFromZarrTests {
     assertNotNull(dataset);
     assertEquals("zarr_table_compressedData", dataset.datasetID());
 
-
     TableWriterAllWithMetadata tw =
         new TableWriterAllWithMetadata(
             0, dataset, "", dataset.cacheDirectory(), "compressed_data_test.twawm");
 
     dataset.getDataForDapQuery(
-        0,
-        null,
-        "",
-        "null_compressor,compressed_deflate1,compressed_deflate9",
-        tw);
+        0, null, "", "null_compressor,compressed_deflate1,compressed_deflate9", tw);
 
     Table resultTable = tw.cumulativeTable();
     assertNotNull(resultTable);
@@ -1105,8 +1166,7 @@ class EDDTableFromZarrTests {
         new TableWriterAllWithMetadata(
             0, dataset, "", dataset.cacheDirectory(), "test_data_zip_test.twawm");
 
-    dataset.getDataForDapQuery(
-        0, null, "", "dim0,dim1,dim2,dim3", tw);
+    dataset.getDataForDapQuery(0, null, "", "dim0,dim1,dim2,dim3", tw);
 
     Table resultTable = tw.cumulativeTable();
     assertNotNull(resultTable);
@@ -1147,18 +1207,22 @@ class EDDTableFromZarrTests {
     assertTrue(Double.isNaN(doubleNanVal), "double_nan should deserialize to Double.NaN");
     assertTrue(Float.isNaN(floatNanVal), "float_nan should deserialize to Float.NaN");
 
-    // Verify double_inf, double_ninf, float_inf, float_ninf fill values map to Double.NaN / Float.NaN
+    // Verify double_inf, double_ninf, float_inf, float_ninf fill values map to Double.NaN /
+    // Float.NaN
     double doubleInfVal = resultTable1.getColumn("double_inf").getDouble(0);
     double doubleNinfVal = resultTable1.getColumn("double_ninf").getDouble(0);
     float floatInfVal = resultTable1.getColumn("float_inf").getFloat(0);
     float floatNinfVal = resultTable1.getColumn("float_ninf").getFloat(0);
 
-    assertTrue(Double.isNaN(doubleInfVal), "double_inf fill value should deserialize to Double.NaN");
-    assertEquals(Double.NEGATIVE_INFINITY, doubleNinfVal, "double_ninf should be NEGATIVE_INFINITY");
+    assertTrue(
+        Double.isNaN(doubleInfVal), "double_inf fill value should deserialize to Double.NaN");
+    assertEquals(
+        Double.NEGATIVE_INFINITY, doubleNinfVal, "double_ninf should be NEGATIVE_INFINITY");
     assertTrue(Float.isNaN(floatInfVal), "float_inf fill value should deserialize to Float.NaN");
     assertEquals(Float.NEGATIVE_INFINITY, floatNinfVal, "float_ninf should be NEGATIVE_INFINITY");
 
-    // 2. Constrained query: double_nan>0 should evaluate bitset constraint mask and exclude NaN rows
+    // 2. Constrained query: double_nan>0 should evaluate bitset constraint mask and exclude NaN
+    // rows
     // TableWriterAll throws SimpleException when 0 rows match a query
     TableWriterAllWithMetadata tw2 =
         new TableWriterAllWithMetadata(
@@ -1169,6 +1233,5 @@ class EDDTableFromZarrTests {
             SimpleException.class,
             () -> dataset.getDataForDapQuery(0, null, "", "dim0,double_nan&double_nan>0", tw2));
     assertTrue(se.getMessage().contains("no matching results"), "Should indicate 0 rows matched");
-
   }
 }

@@ -6,12 +6,10 @@ package gov.noaa.pfel.erddap.dataset;
 
 import com.cohort.array.Attributes;
 import com.cohort.array.PAOne;
-import com.cohort.util.File2;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
-import gov.noaa.pfel.coastwatch.griddata.NcHelper;
-import com.cohort.util.MustBe;
+import com.cohort.util.File2;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -26,6 +24,7 @@ import dev.zarr.zarrjava.store.ReadOnlyZipStore;
 import dev.zarr.zarrjava.store.S3Store;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
+import gov.noaa.pfel.coastwatch.griddata.NcHelper;
 import gov.noaa.pfel.coastwatch.pointdata.Table;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.Erddap;
@@ -255,9 +254,7 @@ public class EDDTableFromZarr extends EDDTable {
         null);
   }
 
-  /**
-   * Constructs an EDDTableFromZarr instance with all settings including cacheFromUrl.
-   */
+  /** Constructs an EDDTableFromZarr instance with all settings including cacheFromUrl. */
   public EDDTableFromZarr(
       String tDatasetID,
       String tAccessibleTo,
@@ -322,8 +319,7 @@ public class EDDTableFromZarr extends EDDTable {
     // 1. Initialize zarr-java Store reader for local, HTTP, or S3 URIs
     try {
       this.zarrStore =
-          createZarrStore(
-              this.zarrStorePath, this.cacheFromUrl, this.awsRegion, this.awsEndpoint);
+          createZarrStore(this.zarrStorePath, this.cacheFromUrl, this.awsRegion, this.awsEndpoint);
     } catch (Exception e) {
       throw new RuntimeException(
           errorInMethod + "Failed to initialize Zarr store at path: " + this.zarrStorePath, e);
@@ -353,8 +349,7 @@ public class EDDTableFromZarr extends EDDTable {
       String2.log(errorInMethod + "Warning: Could not read .zattrs metadata: " + ze.getMessage());
     }
 
-    combinedGlobalAttributes =
-        new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
+    combinedGlobalAttributes = new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
     String tLicense = combinedGlobalAttributes.getString(language, "license");
     if (tLicense != null) {
       combinedGlobalAttributes.set(
@@ -395,8 +390,8 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   /**
-   * Initializes a Zarr Store handle supporting local files, zip archives, HTTP, S3 URIs,
-   * and optional cacheFromUrl fallback.
+   * Initializes a Zarr Store handle supporting local files, zip archives, HTTP, S3 URIs, and
+   * optional cacheFromUrl fallback.
    *
    * @param path store URI or path
    * @param cacheFromUrl local caching directory or fallback URL
@@ -406,8 +401,7 @@ public class EDDTableFromZarr extends EDDTable {
    * @throws IOException if error
    */
   public static Store createZarrStore(
-      String path, String cacheFromUrl, String awsRegion, String awsEndpoint)
-      throws IOException {
+      String path, String cacheFromUrl, String awsRegion, String awsEndpoint) throws IOException {
     if (!String2.isSomething(path) && String2.isSomething(cacheFromUrl)) {
       path = cacheFromUrl;
     }
@@ -759,7 +753,8 @@ public class EDDTableFromZarr extends EDDTable {
         }
       }
     } catch (Throwable t) {
-      if (verbose) String2.log("Warning in getOrOpenZarrArrayInfo for '" + name + "': " + t.getMessage());
+      if (verbose)
+        String2.log("Warning in getOrOpenZarrArrayInfo for '" + name + "': " + t.getMessage());
     }
     return null;
   }
@@ -901,11 +896,14 @@ public class EDDTableFromZarr extends EDDTable {
         }
       }
       if (roleVar != null) {
-        if ("TimeSeries".equalsIgnoreCase(cdmType) && combinedGlobalAttributes.getString(language, "cdm_timeseries_variables") == null) {
+        if ("TimeSeries".equalsIgnoreCase(cdmType)
+            && combinedGlobalAttributes.getString(language, "cdm_timeseries_variables") == null) {
           combinedGlobalAttributes.set(language, "cdm_timeseries_variables", roleVar);
-        } else if ("Trajectory".equalsIgnoreCase(cdmType) && combinedGlobalAttributes.getString(language, "cdm_trajectory_variables") == null) {
+        } else if ("Trajectory".equalsIgnoreCase(cdmType)
+            && combinedGlobalAttributes.getString(language, "cdm_trajectory_variables") == null) {
           combinedGlobalAttributes.set(language, "cdm_trajectory_variables", roleVar);
-        } else if ("Profile".equalsIgnoreCase(cdmType) && combinedGlobalAttributes.getString(language, "cdm_profile_variables") == null) {
+        } else if ("Profile".equalsIgnoreCase(cdmType)
+            && combinedGlobalAttributes.getString(language, "cdm_profile_variables") == null) {
           combinedGlobalAttributes.set(language, "cdm_profile_variables", roleVar);
         }
       }
@@ -929,8 +927,7 @@ public class EDDTableFromZarr extends EDDTable {
    * @throws Throwable if error
    */
   public EDV[] buildTableVariables(
-      List<DataVariableInfo> tDataVariables, Map<String, ZarrArrayInfo> arrayMap)
-      throws Throwable {
+      List<DataVariableInfo> tDataVariables, Map<String, ZarrArrayInfo> arrayMap) throws Throwable {
     int language = 0;
     List<EDV> edvList = new ArrayList<>();
 
@@ -960,7 +957,8 @@ public class EDDTableFromZarr extends EDDTable {
         }
         if (!String2.isSomething(tSourceType)) tSourceType = "double";
 
-        if (tSourceAtt.getString("ioos_category") == null && tAddAtt.getString(language, "ioos_category") == null) {
+        if (tSourceAtt.getString("ioos_category") == null
+            && tAddAtt.getString(language, "ioos_category") == null) {
           tAddAtt.set(language, "ioos_category", "Unknown");
         }
 
@@ -987,7 +985,8 @@ public class EDDTableFromZarr extends EDDTable {
             || lowerName.endsWith("_flag")
             || lowerName.endsWith("_status")
             || lowerName.endsWith("_count")) {
-          if (verbose) String2.log("EDDTableFromZarr auto-discovery skipping auxiliary array: " + name);
+          if (verbose)
+            String2.log("EDDTableFromZarr auto-discovery skipping auxiliary array: " + name);
           continue;
         }
 
@@ -998,21 +997,36 @@ public class EDDTableFromZarr extends EDDTable {
         String stdName = tSourceAtt.getString("standard_name");
 
         boolean isDsgRoleOrAxis =
-            "latitude".equalsIgnoreCase(name) || "lat".equalsIgnoreCase(name) || "latitude".equalsIgnoreCase(stdName)
-            || "longitude".equalsIgnoreCase(name) || "lon".equalsIgnoreCase(name) || "longitude".equalsIgnoreCase(stdName)
-            || "altitude".equalsIgnoreCase(name) || "alt".equalsIgnoreCase(name) || "altitude".equalsIgnoreCase(stdName)
-            || "depth".equalsIgnoreCase(name) || "depth".equalsIgnoreCase(stdName)
-            || "time".equalsIgnoreCase(name) || "time".equalsIgnoreCase(stdName)
-            || "station_id".equalsIgnoreCase(name) || "station".equalsIgnoreCase(name) || "station_id".equalsIgnoreCase(stdName)
-            || "trajectory_id".equalsIgnoreCase(name) || "trajectory".equalsIgnoreCase(name) || "trajectory_id".equalsIgnoreCase(stdName)
-            || "profile_id".equalsIgnoreCase(name) || "profile".equalsIgnoreCase(name) || "profile_id".equalsIgnoreCase(stdName)
-            || tSourceAtt.getString("cf_role") != null;
+            "latitude".equalsIgnoreCase(name)
+                || "lat".equalsIgnoreCase(name)
+                || "latitude".equalsIgnoreCase(stdName)
+                || "longitude".equalsIgnoreCase(name)
+                || "lon".equalsIgnoreCase(name)
+                || "longitude".equalsIgnoreCase(stdName)
+                || "altitude".equalsIgnoreCase(name)
+                || "alt".equalsIgnoreCase(name)
+                || "altitude".equalsIgnoreCase(stdName)
+                || "depth".equalsIgnoreCase(name)
+                || "depth".equalsIgnoreCase(stdName)
+                || "time".equalsIgnoreCase(name)
+                || "time".equalsIgnoreCase(stdName)
+                || "station_id".equalsIgnoreCase(name)
+                || "station".equalsIgnoreCase(name)
+                || "station_id".equalsIgnoreCase(stdName)
+                || "trajectory_id".equalsIgnoreCase(name)
+                || "trajectory".equalsIgnoreCase(name)
+                || "trajectory_id".equalsIgnoreCase(stdName)
+                || "profile_id".equalsIgnoreCase(name)
+                || "profile".equalsIgnoreCase(name)
+                || "profile_id".equalsIgnoreCase(stdName)
+                || tSourceAtt.getString("cf_role") != null;
 
         boolean isEligible = false;
         if (info.is1D()) {
           if (numRows <= 0 || info.shape[0] == numRows || isDsgRoleOrAxis) {
             isEligible = true;
-          } else if (info.dimensionNames != null && info.dimensionNames.length > 0
+          } else if (info.dimensionNames != null
+              && info.dimensionNames.length > 0
               && String2.isSomething(rowDimensionName)
               && rowDimensionName.equals(info.dimensionNames[0])) {
             isEligible = true;
@@ -1032,7 +1046,10 @@ public class EDDTableFromZarr extends EDDTable {
           isEligible = true;
         } else if (info.is2DStringOrChar()) {
           if (info.shape != null && info.shape.length == 2) {
-            if (numRows <= 0 || info.shape[0] == numRows || info.shape[1] == numRows || isDsgRoleOrAxis) {
+            if (numRows <= 0
+                || info.shape[0] == numRows
+                || info.shape[1] == numRows
+                || isDsgRoleOrAxis) {
               isEligible = true;
             }
           }
@@ -1184,7 +1201,8 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   /**
-   * Discovers variables, 1D array column mappings, and CF Discrete Sampling Geometry (DSG) structure from Zarr metadata.
+   * Discovers variables, 1D array column mappings, and CF Discrete Sampling Geometry (DSG)
+   * structure from Zarr metadata.
    *
    * @return Map of array names to ZarrArrayInfo objects
    * @throws Throwable if error
@@ -1200,10 +1218,9 @@ public class EDDTableFromZarr extends EDDTable {
    * @return Map of array name to ZarrArrayInfo
    * @throws Throwable if error
    */
-  /**
-   * Helper to recursively traverse group nodes in non-listable or fallback Zarr stores.
-   */
-  protected static void traverseGroupNodes(Group group, String prefix, Map<String, ZarrArrayInfo> arrayMap) {
+  /** Helper to recursively traverse group nodes in non-listable or fallback Zarr stores. */
+  protected static void traverseGroupNodes(
+      Group group, String prefix, Map<String, ZarrArrayInfo> arrayMap) {
     if (group == null) return;
     try {
       Node[] nodes = group.listAsArray();
@@ -1404,9 +1421,7 @@ public class EDDTableFromZarr extends EDDTable {
     }
   }
 
-  /**
-   * Safe helper method to find EDV by destination name or source name.
-   */
+  /** Safe helper method to find EDV by destination name or source name. */
   public EDV findEDV(String varName) {
     if (varName == null) return null;
     int dv = String2.indexOf(dataVariableDestinationNames(), varName);
@@ -1424,17 +1439,12 @@ public class EDDTableFromZarr extends EDDTable {
    * @param tableWriter table writer output sink
    * @throws Throwable if error
    */
-  public void getDataForQuery(
-      String userDapQuery,
-      String loggedInAs,
-      TableWriter tableWriter)
+  public void getDataForQuery(String userDapQuery, String loggedInAs, TableWriter tableWriter)
       throws Throwable {
     getDataForDapQuery(0, loggedInAs, "", userDapQuery, tableWriter);
   }
 
-  /**
-   * Evaluates query constraints on a chunk batch using filter-first BitSet strategy.
-   */
+  /** Evaluates query constraints on a chunk batch using filter-first BitSet strategy. */
   protected BitSet evaluateChunkConstraints(
       long startRow,
       int currentChunkSize,
@@ -1480,7 +1490,8 @@ public class EDDTableFromZarr extends EDDTable {
 
       EDV edv = findEDV(varName);
       if (edv == null) {
-        if (verbose) String2.log("evaluateChunkConstraints could NOT find EDV for varName=" + varName);
+        if (verbose)
+          String2.log("evaluateChunkConstraints could NOT find EDV for varName=" + varName);
         continue;
       }
 
@@ -1509,28 +1520,20 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   /**
-   * Extracts requested variable columns for rows matching rowMask in a chunk batch.
-   * Note: Columns are added using edv.sourceName() so that downstream call to
-   * writeChunkToTableWriter -> standardizeResultsTable converts source names to destination
-   * names and applies destination variable attributes.
+   * Extracts requested variable columns for rows matching rowMask in a chunk batch. Note: Columns
+   * are added using edv.sourceName() so that downstream call to writeChunkToTableWriter ->
+   * standardizeResultsTable converts source names to destination names and applies destination
+   * variable attributes.
    */
   protected Table extractRowBatch(
-      long startRow,
-      BitSet rowMask,
-      String[] requestedVarNames,
-      Map<String, Array> zarrArrayMap)
+      long startRow, BitSet rowMask, String[] requestedVarNames, Map<String, Array> zarrArrayMap)
       throws Throwable {
     int currentChunkSize =
         (numRows > 0 && numRows > startRow)
             ? (int) Math.min(10000, numRows - startRow)
             : rowMask.size();
     return extractRowBatch(
-        startRow,
-        currentChunkSize,
-        rowMask,
-        requestedVarNames,
-        zarrArrayMap,
-        parseZarrMetadata());
+        startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, parseZarrMetadata());
   }
 
   protected Table extractRowBatch(
@@ -1600,10 +1603,7 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   private PrimitiveArray makeMissingPrimitiveArray(
-      PAType paType,
-      int currentChunkSize,
-      ZarrArrayInfo info,
-      EDV edv) {
+      PAType paType, int currentChunkSize, ZarrArrayInfo info, EDV edv) {
     PrimitiveArray missingPa = PrimitiveArray.factory(paType, currentChunkSize, false);
 
     if (edv != null) {
@@ -1676,9 +1676,7 @@ public class EDDTableFromZarr extends EDDTable {
       }
 
       PrimitiveArray scalarPa =
-          nc2Array != null
-              ? NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned)
-              : null;
+          nc2Array != null ? NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned) : null;
 
       PrimitiveArray broadcastPa = PrimitiveArray.factory(paType, currentChunkSize, false);
       if (scalarPa != null && scalarPa.size() > 0) {
@@ -1695,8 +1693,7 @@ public class EDDTableFromZarr extends EDDTable {
 
     // 2D Character or Byte Matrix String Variable
     if (info.is2DStringOrChar()) {
-      int stringLength =
-          (info.shape != null && info.shape.length == 2) ? (int) info.shape[1] : 1;
+      int stringLength = (info.shape != null && info.shape.length == 2) ? (int) info.shape[1] : 1;
       long[] offset = new long[] {startRow, 0};
       long[] shape = new long[] {currentChunkSize, stringLength};
 
@@ -1786,7 +1783,8 @@ public class EDDTableFromZarr extends EDDTable {
       } else if (info.attributes != null) {
         double scale = info.attributes.getDouble("scale_factor");
         double offsetVal = info.attributes.getDouble("add_offset");
-        if ((!Double.isNaN(scale) && scale != 1.0) || (!Double.isNaN(offsetVal) && offsetVal != 0.0)) {
+        if ((!Double.isNaN(scale) && scale != 1.0)
+            || (!Double.isNaN(offsetVal) && offsetVal != 0.0)) {
           if (Double.isNaN(scale)) scale = 1.0;
           if (Double.isNaN(offsetVal)) offsetVal = 0.0;
           pa.scaleAddOffset(scale, offsetVal);
@@ -2058,7 +2056,10 @@ public class EDDTableFromZarr extends EDDTable {
             matchesRowDim = true;
           }
         }
-        if (!matchesRowDim && targetNumRows > 0 && info.shape != null && info.shape[0] == targetNumRows) {
+        if (!matchesRowDim
+            && targetNumRows > 0
+            && info.shape != null
+            && info.shape[0] == targetNumRows) {
           matchesRowDim = true;
         }
         if (!matchesRowDim && !String2.isSomething(targetRowDimensionName)) {
