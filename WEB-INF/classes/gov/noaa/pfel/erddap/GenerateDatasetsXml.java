@@ -23,6 +23,7 @@ import gov.noaa.pfel.erddap.dataset.EDDGridFromErddap;
 import gov.noaa.pfel.erddap.dataset.EDDGridFromMergeIRFiles;
 import gov.noaa.pfel.erddap.dataset.EDDGridFromNcFiles;
 import gov.noaa.pfel.erddap.dataset.EDDGridFromNcFilesUnpacked;
+import gov.noaa.pfel.erddap.dataset.EDDGridFromZarr;
 import gov.noaa.pfel.erddap.dataset.EDDGridLon0360;
 import gov.noaa.pfel.erddap.dataset.EDDGridLonPM180;
 import gov.noaa.pfel.erddap.dataset.EDDTableFromAsciiFiles;
@@ -49,6 +50,7 @@ import gov.noaa.pfel.erddap.dataset.EDDTableFromParquetFiles;
 import gov.noaa.pfel.erddap.dataset.EDDTableFromSOS;
 import gov.noaa.pfel.erddap.dataset.EDDTableFromThreddsFiles;
 import gov.noaa.pfel.erddap.dataset.EDDTableFromWFSFiles;
+import gov.noaa.pfel.erddap.dataset.EDDTableFromZarr;
 import gov.noaa.pfel.erddap.dataset.FindDuplicateTime;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import java.io.BufferedReader;
@@ -79,9 +81,11 @@ public class GenerateDatasetsXml {
   private void printToBoth(String s) throws IOException {
     String2.log(s);
     String2.flushLog();
-    outFile.write(s);
-    outFile.write('\n');
-    outFile.flush();
+    if (outFile != null) {
+      outFile.write(s);
+      outFile.write('\n');
+      outFile.flush();
+    }
   }
 
   /**
@@ -230,6 +234,7 @@ public class GenerateDatasetsXml {
         "EDDGridFromNcFiles",
         "EDDGridFromNcFilesUnpacked",
         "EDDGridFromThreddsCatalog",
+        "EDDGridFromZarr",
         "EDDGridLonPM180FromErddapCatalog",
         "EDDGridLon0360FromErddapCatalog",
         "EDDTableFromAsciiFiles",
@@ -259,6 +264,7 @@ public class GenerateDatasetsXml {
         "EDDTableFromSOS",
         "EDDTableFromThreddsFiles",
         "EDDTableFromWFSFiles",
+        "EDDTableFromZarr",
         "EDDsFromFiles",
         "addFillValueAttributes",
         "findDuplicateTime",
@@ -494,6 +500,9 @@ public class GenerateDatasetsXml {
               s2 = get(args, 2, s2, "Dataset name regex (usually \".*\")");
               String2.log("working...");
               printToBoth(EDDGridLon0360.generateDatasetsXmlFromErddapCatalog(s1, s2));
+            }
+            case "EDDGridFromZarr" -> {
+              doGridFromZarr(args);
 
               // EDDTable
             }
@@ -1226,6 +1235,9 @@ public class GenerateDatasetsXml {
                       String2.parseInt(s8),
                       null));
             }
+            case "EDDTableFromZarr" -> {
+              doTableFromZarr(args);
+            }
             case "EDDsFromFiles" -> {
               s1 = get(args, 1, s1, "Starting directory");
               String2.log("working...");
@@ -1447,5 +1459,69 @@ public class GenerateDatasetsXml {
 
     new GenerateDatasetsXml().doIt(args, true);
     System.exit(0);
+  }
+
+  /**
+   * Auto-generates ERDDAP datasets.xml chunk for an EDDGridFromZarr dataset.
+   *
+   * @param args command line / interactive arguments
+   * @throws Throwable if error
+   */
+  /**
+   * Auto-generates ERDDAP datasets.xml chunk for an EDDTableFromZarr dataset.
+   *
+   * @param args command line / interactive arguments
+   * @throws Throwable if error
+   */
+  public void doTableFromZarr(String args[]) throws Throwable {
+    String s1 =
+        get(args, 1, "", "Zarr store path or URL (local file path, http://, https://, or s3://)");
+    String s2 = get(args, 2, "", "Sub-group path (or \"\" for root)");
+    String s3 =
+        get(
+            args,
+            3,
+            "",
+            "Target row dimension name (e.g., \"obs\", \"row\", \"time\", or blank for auto-detect)");
+    String s4 = get(args, 4, "", "Dataset ID prefix (or \"\" for default)");
+    String s5 =
+        get(
+            args,
+            5,
+            Integer.toString(EDD.DEFAULT_RELOAD_EVERY_N_MINUTES),
+            "ReloadEveryNMinutes (e.g., " + EDD.DEFAULT_RELOAD_EVERY_N_MINUTES + ")");
+    String s6 = get(args, 6, "", "cacheFromUrl");
+    String s7 = get(args, 7, "", "AWS Region (for private S3 buckets)");
+    String s8 = get(args, 8, "", "AWS S3 Endpoint URL");
+    String2.log("working...");
+    printToBoth(
+        EDDTableFromZarr.generateDatasetsXml(
+            s1,
+            s2,
+            s3,
+            s4,
+            String2.parseInt(s5, EDD.DEFAULT_RELOAD_EVERY_N_MINUTES),
+            s6,
+            s7,
+            s8,
+            null));
+  }
+
+  public void doGridFromZarr(String args[]) throws Throwable {
+    String s1 =
+        get(args, 1, "", "Zarr store path or URL (local file path, http://, https://, or s3://)");
+    String s2 = get(args, 2, "", "Sub-group path (or \"\" for root)");
+    String s3 = get(args, 3, "", "Dataset ID prefix (or \"\" for default)");
+    String s4 =
+        get(
+            args,
+            4,
+            Integer.toString(EDD.DEFAULT_RELOAD_EVERY_N_MINUTES),
+            "ReloadEveryNMinutes (e.g., " + EDD.DEFAULT_RELOAD_EVERY_N_MINUTES + ")");
+    String s5 = get(args, 5, "", "cacheFromUrl");
+    String2.log("working...");
+    printToBoth(
+        EDDGridFromZarr.generateDatasetsXml(
+            s1, s2, s3, String2.parseInt(s4, EDD.DEFAULT_RELOAD_EVERY_N_MINUTES), s5));
   }
 }
