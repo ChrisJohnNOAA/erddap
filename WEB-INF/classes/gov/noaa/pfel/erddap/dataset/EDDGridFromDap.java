@@ -36,6 +36,7 @@ import gov.noaa.pfel.erddap.variable.*;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,6 +53,7 @@ import thredds.client.catalog.builder.CatalogBuilder;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDataset.Enhance;
 import ucar.nc2.dataset.NetcdfDatasets;
 
 /**
@@ -243,7 +245,7 @@ public class EDDGridFromDap extends EDDGrid {
    */
   public static NetcdfDataset openDataset(String url) throws Exception {
     DatasetUrl durl = DatasetUrl.create(thredds.client.catalog.ServiceType.OPENDAP, url);
-    return NetcdfDatasets.openDataset(durl, null, -1, null, null);
+    return NetcdfDatasets.openDataset(durl, EnumSet.noneOf(Enhance.class), -1, null, null);
   }
 
   public EDDGridFromDap(
@@ -305,12 +307,16 @@ public class EDDGridFromDap extends EDDGrid {
       // This will fail (good) if dataset has changed significantly and
       //  quickRestart file has outdated information.
       quickRestartAttributes = NcHelper.readAttributesFromNc3(quickRestartFullFileName());
+      String cachedSourceUrl = quickRestartAttributes.getString("localSourceUrl");
+      if (cachedSourceUrl != null && !cachedSourceUrl.equals(tLocalSourceUrl)) {
+        quickRestartAttributes = null;
+      } else {
+        if (verbose) String2.log("  using info from quickRestartFile");
 
-      if (verbose) String2.log("  using info from quickRestartFile");
-
-      // set creationTimeMillis to time of previous creation, so next time
-      // to be reloaded will be same as if ERDDAP hadn't been restarted.
-      creationTimeMillis = quickRestartAttributes.getLong("creationTimeMillis");
+        // set creationTimeMillis to time of previous creation, so next time
+        // to be reloaded will be same as if ERDDAP hadn't been restarted.
+        creationTimeMillis = quickRestartAttributes.getLong("creationTimeMillis");
+      }
     }
 
     if (quickRestartAttributes != null) {
@@ -615,6 +621,7 @@ public class EDDGridFromDap extends EDDGrid {
         try {
           quickRestartAttributes = new Attributes();
           quickRestartAttributes.set("creationTimeMillis", "" + creationTimeMillis);
+          quickRestartAttributes.set("localSourceUrl", tLocalSourceUrl);
 
           // 1. Save global attributes
           for (String key : sourceGlobalAttributes.getNames()) {
