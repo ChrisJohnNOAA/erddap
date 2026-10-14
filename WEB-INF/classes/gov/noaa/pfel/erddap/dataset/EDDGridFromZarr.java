@@ -990,7 +990,7 @@ public class EDDGridFromZarr extends EDDGrid {
         return false;
       }
 
-      // Atomically construct new EDVGridAxis and update axisVariables[0]
+      // Atomically construct new EDVGridAxis
       EDVGridAxis newAxisVar =
           makeAxisVariable(
               datasetID,
@@ -1000,8 +1000,6 @@ public class EDDGridFromZarr extends EDDGrid {
               outerAxis.sourceAttributes(),
               outerAxis.addAttributes(),
               newSourceValues);
-
-      this.axisVariables[0] = newAxisVar;
 
       // Update temporal global attributes if primary axis is time
       if (newAxisVar.destinationName().equals(EDV.TIME_NAME)
@@ -1030,9 +1028,24 @@ public class EDDGridFromZarr extends EDDGrid {
         }
       }
 
-      // Update store handles
-      this.zarrStore = freshStore;
-      this.zarrGroup = freshGroup;
+      // Atomically swap store handles and axisVariables[0] under lock
+      Store oldStore = null;
+      synchronized (this) {
+        oldStore = this.zarrStore;
+        this.zarrStore = freshStore;
+        this.zarrGroup = freshGroup;
+        this.axisVariables[0] = newAxisVar;
+      }
+
+      // Close previous store if open
+      if (oldStore != null && oldStore != freshStore) {
+        if (oldStore instanceof AutoCloseable ac) {
+          try {
+            ac.close();
+          } catch (Throwable ignore) {
+          }
+        }
+      }
 
       if (verbose) {
         String2.log(

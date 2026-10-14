@@ -1389,13 +1389,11 @@ class EDDGridFromZarrTests {
       // 4. Verify axis length T + K = 4
       assertEquals(4, dataset.axisVariables()[0].sourceValues().size());
 
-      // 5. Verify updated time_coverage_end reflects new maximum time value
+      // 5. Verify updated time_coverage_end reflects exact new maximum time value
       String timeEnd =
           dataset.combinedGlobalAttributes().getString(0, "time_coverage_end");
       assertNotNull(timeEnd);
-      assertTrue(
-          timeEnd.contains("1970-01-01T01:06:40") || timeEnd.contains("4000"),
-          "time_coverage_end should reflect updated max timestamp. Found: " + timeEnd);
+      assertEquals("1970-01-01T01:06:40Z", timeEnd);
 
       // 6. Query data at the newest time index T + K - 1 = 3
       com.cohort.array.PrimitiveArray res =
@@ -1411,6 +1409,47 @@ class EDDGridFromZarrTests {
       assertEquals(28.0, res.getDouble(1), 1e-6);
       assertEquals(29.0, res.getDouble(2), 1e-6);
       assertEquals(30.0, res.getDouble(3), 1e-6);
+
+      // 7. Verify subsequent lowUpdate returns false when no further changes exist
+      boolean secondCallNoChange =
+          dataset.lowUpdate(0, "testSecondUnchanged", System.currentTimeMillis());
+      assertFalse(secondCallNoChange);
+
+      // 8. Append another 2 time steps (T = 6) and verify second successful update
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(6).withDataType(float64).withDimensionNames("time"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {6},
+                  new double[] {1000.0, 2000.0, 3000.0, 4000.0, 36000.0, 86400.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temperature"),
+              mb ->
+                  mb.withShape(6, 2, 2)
+                      .withDataType(float64)
+                      .withDimensionNames("time", "latitude", "longitude"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {6, 2, 2},
+                  new double[] {
+                    15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0,
+                    23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0,
+                    31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0
+                  }));
+
+      boolean thirdCallHasUpdate =
+          dataset.lowUpdate(0, "testThirdCallAppended", System.currentTimeMillis());
+      assertTrue(thirdCallHasUpdate);
+      assertEquals(6, dataset.axisVariables()[0].sourceValues().size());
+      assertEquals(
+          "1970-01-02T00:00:00Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
 
     } finally {
       com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
