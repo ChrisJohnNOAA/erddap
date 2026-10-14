@@ -38,7 +38,9 @@ import gov.noaa.pfel.erddap.variable.DataVariableInfo;
 import gov.noaa.pfel.erddap.variable.EDV;
 import gov.noaa.pfel.erddap.variable.EDVGridAxis;
 import gov.noaa.pfel.erddap.variable.EDVTime;
+import gov.noaa.pfel.erddap.variable.EDVTimeGridAxis;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
+import gov.noaa.pfel.erddap.variable.EDVTimeStampGridAxis;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -895,13 +897,170 @@ public class EDDGridFromZarr extends EDDGrid {
    * @param startUpdateMillis start timestamp of update
    * @return true if updated
    * @throws Throwable if error
-   *     <p>// TODO (Prompt 2) / // TODO (Prompt 3)
    */
   @Override
   public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
-    // TODO (Prompt 2) / // TODO (Prompt 3): Implement lowUpdate for checking growing dimensions in
-    // Zarr store
-    return false;
+    if (axisVariables == null || axisVariables.length == 0) {
+      if (reallyVerbose) String2.log(msg + "EDDGridFromZarr.lowUpdate: axisVariables is empty.");
+      return false;
+    }
+
+    EDVGridAxis outerAxis = axisVariables[0];
+    if (outerAxis == null) {
+      return false;
+    }
+
+    String outerAxisSourceName = outerAxis.sourceName();
+    int currentAxisLength = outerAxis.sourceValues().size();
+
+    Store freshStore = null;
+    try {
+      freshStore = createZarrStore(this.zarrStorePath);
+      Group freshGroup = openZarrGroup(freshStore, this.zarrGroupName);
+
+      Map<String, ZarrArrayInfo> freshArrayMap = parseZarrMetadata(freshGroup);
+      ZarrArrayInfo outerAxisInfo =
+          getOrOpenZarrArrayInfo(freshGroup, outerAxisSourceName, freshArrayMap);
+
+      if (outerAxisInfo == null || outerAxisInfo.shape == null || outerAxisInfo.shape.length == 0) {
+        if (reallyVerbose) {
+          String2.log(
+              msg
+                  + "EDDGridFromZarr.lowUpdate: Outer axis info for '"
+                  + outerAxisSourceName
+                  + "' not found or shape is empty.");
+        }
+        return false;
+      }
+
+      int newAxisLength = (int) outerAxisInfo.shape[0];
+
+      if (newAxisLength <= currentAxisLength) {
+        if (reallyVerbose) {
+          String2.log(
+              msg
+                  + "EDDGridFromZarr.lowUpdate: No change to outer axis '"
+                  + outerAxisSourceName
+                  + "' (newLength="
+                  + newAxisLength
+                  + " <= currentLength="
+                  + currentAxisLength
+                  + ").");
+        }
+        return false;
+      }
+
+      // Verify that all dependent data variables sharing the outer dimension have reached newAxisLength
+      if (dataVariables != null) {
+        for (EDV dv : dataVariables) {
+          if (dv == null || !String2.isSomething(dv.sourceName())) continue;
+          ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
+          if (dvInfo != null && dvInfo.shape != null && dvInfo.shape.length > 0) {
+            long dvOuterShape = dvInfo.shape[0];
+            if (dvOuterShape < newAxisLength) {
+              String2.log(
+                  msg
+                      + " Data variable '"
+                      + dv.sourceName()
+                      + "' shape ("
+                      + dvOuterShape
+                      + ") has not caught up to axis length ("
+                      + newAxisLength
+                      + "). Deferring update.");
+              return false;
+            }
+          }
+        }
+      }
+
+      // Read updated coordinate values from Zarr store
+      PrimitiveArray newSourceValues = null;
+      if (outerAxisInfo.array != null) {
+        ucar.ma2.Array nc2Array = outerAxisInfo.array.read();
+        boolean isUnsigned = NcHelper.isUnsigned(nc2Array.getDataType());
+        newSourceValues = NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned);
+      }
+
+      if (newSourceValues == null || newSourceValues.size() < newAxisLength) {
+        String2.log(
+            msg
+                + "EDDGridFromZarr.lowUpdate: Failed to read updated axis values for '"
+                + outerAxisSourceName
+                + "'.");
+        return false;
+      }
+
+      // Atomically construct new EDVGridAxis and update axisVariables[0]
+      EDVGridAxis newAxisVar =
+          makeAxisVariable(
+              datasetID,
+              0,
+              outerAxis.sourceName(),
+              outerAxis.destinationName(),
+              outerAxis.sourceAttributes(),
+              outerAxis.addAttributes(),
+              newSourceValues);
+
+      this.axisVariables[0] = newAxisVar;
+
+      // Update temporal global attributes if primary axis is time
+      if (newAxisVar.destinationName().equals(EDV.TIME_NAME)
+          || newAxisVar instanceof EDVTimeGridAxis
+          || newAxisVar instanceof EDVTimeStampGridAxis) {
+        String startTimeStr = newAxisVar.destinationMinString();
+        String endTimeStr = newAxisVar.destinationMaxString();
+
+        if (combinedGlobalAttributes.getString(language, "time_coverage_start") == null) {
+          combinedGlobalAttributes.set(language, "time_coverage_start", startTimeStr);
+        }
+        combinedGlobalAttributes.set(language, "time_coverage_end", endTimeStr);
+
+        try {
+          double startSec = newAxisVar.destinationMinDouble();
+          double endSec = newAxisVar.destinationMaxDouble();
+          if (!Double.isNaN(startSec) && !Double.isNaN(endSec)) {
+            double durationSec = endSec - startSec;
+            if (durationSec >= 0) {
+              combinedGlobalAttributes.set(
+                  language, "time_coverage_duration", "PT" + durationSec + "S");
+            }
+          }
+        } catch (Throwable tDuration) {
+          // ignore duration calc errors
+        }
+      }
+
+      // Update store handles
+      this.zarrStore = freshStore;
+      this.zarrGroup = freshGroup;
+
+      if (verbose) {
+        String2.log(
+            msg
+                + "EDDGridFromZarr.lowUpdate: Successfully updated outer axis '"
+                + outerAxisSourceName
+                + "' from "
+                + currentAxisLength
+                + " to "
+                + newAxisLength
+                + " points.");
+      }
+
+      return true;
+
+    } catch (Throwable t) {
+      String2.log(msg + " Error during lowUpdate: " + com.cohort.util.MustBe.throwableToString(t));
+      return false;
+    } finally {
+      if (freshStore != null && freshStore != this.zarrStore) {
+        if (freshStore instanceof AutoCloseable ac) {
+          try {
+            ac.close();
+          } catch (Throwable ignore) {
+          }
+        }
+      }
+    }
   }
 
   /**
