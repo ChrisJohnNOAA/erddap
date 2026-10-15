@@ -933,7 +933,16 @@ public class EDDGridFromZarr extends EDDGrid {
         return false;
       }
 
-      int newAxisLength = (int) outerAxisInfo.shape[0];
+      long newAxisLengthLong = outerAxisInfo.shape[0];
+      if (newAxisLengthLong > Integer.MAX_VALUE) {
+        String2.log(
+            msg
+                + "EDDGridFromZarr.lowUpdate: New axis length ("
+                + newAxisLengthLong
+                + ") exceeds Integer.MAX_VALUE.");
+        return false;
+      }
+      int newAxisLength = (int) newAxisLengthLong;
 
       if (newAxisLength <= currentAxisLength) {
         if (reallyVerbose) {
@@ -1001,40 +1010,41 @@ public class EDDGridFromZarr extends EDDGrid {
               outerAxis.addAttributes(),
               newSourceValues);
 
-      // Update temporal global attributes if primary axis is time
-      if (newAxisVar.destinationName().equals(EDV.TIME_NAME)
-          || newAxisVar instanceof EDVTimeGridAxis
-          || newAxisVar instanceof EDVTimeStampGridAxis) {
-        String startTimeStr = newAxisVar.destinationMinString();
-        String endTimeStr = newAxisVar.destinationMaxString();
-
-        if (combinedGlobalAttributes.getString(language, "time_coverage_start") == null) {
-          combinedGlobalAttributes.set(language, "time_coverage_start", startTimeStr);
-        }
-        combinedGlobalAttributes.set(language, "time_coverage_end", endTimeStr);
-
-        try {
-          double startSec = newAxisVar.destinationMinDouble();
-          double endSec = newAxisVar.destinationMaxDouble();
-          if (!Double.isNaN(startSec) && !Double.isNaN(endSec)) {
-            double durationSec = endSec - startSec;
-            if (durationSec >= 0) {
-              combinedGlobalAttributes.set(
-                  language, "time_coverage_duration", "PT" + durationSec + "S");
-            }
-          }
-        } catch (Throwable tDuration) {
-          // ignore duration calc errors
-        }
-      }
-
-      // Atomically swap store handles and axisVariables[0] under lock
+      // Atomically swap store handles, axisVariables[0], and combinedGlobalAttributes under lock
       Store oldStore = null;
       synchronized (this) {
         oldStore = this.zarrStore;
         this.zarrStore = freshStore;
         this.zarrGroup = freshGroup;
         this.axisVariables[0] = newAxisVar;
+
+        // Update temporal global attributes if primary axis is time
+        if (newAxisVar.destinationName().equals(EDV.TIME_NAME)
+            || newAxisVar instanceof EDVTimeGridAxis
+            || newAxisVar instanceof EDVTimeStampGridAxis) {
+          String startTimeStr = newAxisVar.destinationMinString();
+          String endTimeStr = newAxisVar.destinationMaxString();
+
+          if (combinedGlobalAttributes.getString(language, "time_coverage_start") == null) {
+            combinedGlobalAttributes.set(language, "time_coverage_start", startTimeStr);
+          }
+          combinedGlobalAttributes.set(language, "time_coverage_end", endTimeStr);
+
+          try {
+            double startSec = newAxisVar.destinationMinDouble();
+            double endSec = newAxisVar.destinationMaxDouble();
+            if (!Double.isNaN(startSec) && !Double.isNaN(endSec)) {
+              double durationSec = endSec - startSec;
+              if (durationSec >= 0) {
+                long durationIntSec = Math.round(durationSec);
+                combinedGlobalAttributes.set(
+                    language, "time_coverage_duration", "PT" + durationIntSec + "S");
+              }
+            }
+          } catch (Throwable tDuration) {
+            // ignore duration calc errors
+          }
+        }
       }
 
       // Close previous store if open

@@ -1455,4 +1455,121 @@ class EDDGridFromZarrTests {
       com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
+
+  @Test
+  void testLowUpdateDeferredWhenDataVariableLags() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_deferred_update_test");
+
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      // Initial T = 2 time steps
+      dev.zarr.zarrjava.v3.Array timeArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("time"),
+              true);
+      dev.zarr.zarrjava.core.Attributes timeAtts = new dev.zarr.zarrjava.core.Attributes();
+      timeAtts.set("units", "seconds since 1970-01-01T00:00:00Z");
+      timeArray.setAttributes(timeAtts);
+      timeArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {1000.0, 2000.0}));
+
+      dev.zarr.zarrjava.v3.Array latArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("latitude"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("latitude"),
+              true);
+      latArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {0.0, 10.0}));
+
+      dev.zarr.zarrjava.v3.Array lonArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("longitude"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("longitude"),
+              true);
+      lonArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {100.0, 110.0}));
+
+      dev.zarr.zarrjava.v3.Array tempArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temperature"),
+              mb ->
+                  mb.withShape(2, 2, 2)
+                      .withDataType(float64)
+                      .withDimensionNames("time", "latitude", "longitude"),
+              true);
+      dev.zarr.zarrjava.core.Attributes tempAtts = new dev.zarr.zarrjava.core.Attributes();
+      tempAtts.set("ioos_category", "Temperature");
+      tempArray.setAttributes(tempAtts);
+      tempArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {2, 2, 2},
+              new double[] {15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0}));
+
+      LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
+      addGlobalAtts.set(0, "title", "Lagging Data Variable Store");
+      addGlobalAtts.set(0, "summary", "Test Summary");
+      addGlobalAtts.set(0, "institution", "NOAA");
+      addGlobalAtts.set(0, "infoUrl", "https://example.org");
+
+      EDDGridFromZarr dataset =
+          new EDDGridFromZarr(
+              "zarr_lagging_grid_id",
+              null,
+              null,
+              true,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              addGlobalAtts,
+              new ArrayList<>(),
+              new ArrayList<>(),
+              10080,
+              0,
+              tempDir.toString(),
+              "",
+              -1,
+              -1,
+              true);
+
+      assertNotNull(dataset);
+      assertEquals(2, dataset.axisVariables()[0].sourceValues().size());
+
+      // Expand time array to T = 4, but leave temperature array shape at T = 2
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(4).withDataType(float64).withDimensionNames("time"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {4},
+                  new double[] {1000.0, 2000.0, 3000.0, 4000.0}));
+
+      // Call lowUpdate: should detect temperature outer shape (2) < time outer shape (4) and defer
+      boolean updated = dataset.lowUpdate(0, "testLaggingUpdate", System.currentTimeMillis());
+      assertFalse(
+          updated,
+          "lowUpdate should return false when dependent data variable shape lags behind axis length.");
+      assertEquals(
+          2,
+          dataset.axisVariables()[0].sourceValues().size(),
+          "Axis length should remain unchanged when update is deferred.");
+
+    } finally {
+      com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
 }
