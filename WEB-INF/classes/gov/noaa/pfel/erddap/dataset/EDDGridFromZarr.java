@@ -66,6 +66,7 @@ public class EDDGridFromZarr extends EDDGrid {
   private long chunkCacheSize;
   private Store zarrStore;
   private Group zarrGroup;
+  private final Object zarrLock = new Object();
 
   /**
    * Static factory method to construct an EDDGridFromZarr dataset from an XML configuration.
@@ -965,12 +966,25 @@ public class EDDGridFromZarr extends EDDGrid {
           if (dv == null || !String2.isSomething(dv.sourceName())) continue;
           ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
           if (dvInfo != null && dvInfo.shape != null && dvInfo.shape.length > 0) {
-            long dvOuterShape = dvInfo.shape[0];
+            int outerDimIdx = 0;
+            if (dvInfo.dimensionNames != null && dvInfo.dimensionNames.length == dvInfo.shape.length) {
+              for (int d = 0; d < dvInfo.dimensionNames.length; d++) {
+                if (outerAxisSourceName.equals(dvInfo.dimensionNames[d])) {
+                  outerDimIdx = d;
+                  break;
+                }
+              }
+            }
+            long dvOuterShape = dvInfo.shape[outerDimIdx];
             if (dvOuterShape < newAxisLength) {
               String2.log(
                   msg
                       + " Data variable '"
                       + dv.sourceName()
+                      + "' dimension '"
+                      + (dvInfo.dimensionNames != null && outerDimIdx < dvInfo.dimensionNames.length
+                          ? dvInfo.dimensionNames[outerDimIdx]
+                          : "dim" + outerDimIdx)
                       + "' shape ("
                       + dvOuterShape
                       + ") has not caught up to axis length ("
@@ -1012,7 +1026,7 @@ public class EDDGridFromZarr extends EDDGrid {
 
       // Atomically swap store handles, axisVariables[0], and combinedGlobalAttributes under lock
       Store oldStore = null;
-      synchronized (this) {
+      synchronized (zarrLock) {
         oldStore = this.zarrStore;
         this.zarrStore = freshStore;
         this.zarrGroup = freshGroup;
