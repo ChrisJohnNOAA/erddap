@@ -2131,8 +2131,16 @@ public class File2 {
         while (transferred < count) {
           long bytes = srcChannel.transferTo(start + transferred, count - transferred, destChannel);
           if (bytes <= 0) {
+            zeroCount++;
+            if (verbose) {
+              String2.log(
+                  "File2.copy transferTo returned 0 bytes (attempt "
+                      + zeroCount
+                      + "/3) for "
+                      + source);
+            }
             // Allow up to 3 transient zero-byte yields before treating as an incomplete transfer
-            if (++zeroCount >= 3) {
+            if (zeroCount >= 3) {
               throw new IOException(
                   "Incomplete transfer: stalled after " + transferred + " of " + count + " bytes.");
             }
