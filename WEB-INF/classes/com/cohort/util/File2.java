@@ -2089,8 +2089,15 @@ public class File2 {
   }
 
   /**
-   * This makes a copy of a file. If the source might be remote, use SSR.downloadFile(source, dest,
-   * false) instead.
+   * This makes a copy of a file. !!!If the source might be remote, use SSR.downloadFile(source,
+   * dest, false) instead.
+   *
+   * @param source the full file name of the source file. If compressed, this doesn't decompress!
+   * @param destination the full file name of the destination file. If the directory doesn't exist,
+   *     it will be created. It is closed at the end.
+   * @param first the first byte to be transferred (0..)
+   * @param last the last byte to be transferred (inclusive), or -1 to transfer to the end.
+   * @return true if successful. If not successful, the destination file won't exist.
    */
   public static boolean copy(String source, String destination, long first, long last) {
     if (source.equals(destination)) return false;
@@ -2176,7 +2183,15 @@ public class File2 {
     return copy(source, out, 0, -1);
   }
 
-  /** Copies a local or remote file to an OutputStream. */
+  /**
+   * This makes a copy of a file to an outputStream.
+   *
+   * @param source the full file name of the source. If compressed, this doesn't decompress!
+   * @param out Best if buffered. It is flushed, but not closed, at the end
+   * @param first the first byte to be transferred (0..)
+   * @param last the last byte to be transferred (inclusive), or -1 to transfer to the end.
+   * @return true if successful.
+   */
   public static boolean copy(String source, OutputStream out, long first, long last) {
     // Avoid double buffering on local files: FileInputStream is used directly
     // since copy(InputStream, OutputStream) already manages a 64 KB buffer.
@@ -2194,7 +2209,15 @@ public class File2 {
     return copy(in, out, 0, -1);
   }
 
-  /** Copies a range from an inputStream to an outputStream. */
+  /**
+   * This copies a range from an inputStream to an outputStream.
+   *
+   * @param in Best if buffered. At the end, this is NOT closed.
+   * @param out Best if buffered. It is flushed, but not closed, at the end
+   * @param first the first byte to be transferred (0..)
+   * @param last the last byte to be transferred (inclusive), or -1 to transfer to the end.
+   * @return true if successful.
+   */
   public static boolean copy(InputStream in, OutputStream out, long first, long last) {
     // Reusable ThreadLocal buffer eliminates per-request GC allocations
     byte[] buffer = COPY_BUFFER.get();
@@ -2235,7 +2258,13 @@ public class File2 {
     }
   }
 
-  /** Fully skips the specified number of bytes from the InputStream. */
+   /**
+   * This fully skips the specified number of bytes from the inputstream.
+   *
+   * @param inputStream Best if buffered.
+   * @param nToSkip the number of bytes to be read
+   * @throws IOException if trouble
+   */
   public static void skipFully(InputStream inputStream, long nToSkip) throws IOException {
     if (nToSkip <= 0) return;
     // Uses OpenJDK's robust implementation (falls back to read() if skip() returns 0)
