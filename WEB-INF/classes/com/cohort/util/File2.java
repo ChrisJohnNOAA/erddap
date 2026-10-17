@@ -2078,7 +2078,8 @@ public class File2 {
   // 64 KB aligns with Linux page cache readahead and TCP socket buffers
   private static final int COPY_BUFFER_SIZE = 65536;
 
-  // Reusable per-thread buffer eliminates all heap allocations during streaming
+  // Reusable per-thread buffer eliminates all heap allocations during streaming.
+  // Bounded and safe under servlet container thread pools (e.g. 200 threads * 64 KB = ~12.8 MB).
   private static final ThreadLocal<byte[]> COPY_BUFFER =
       ThreadLocal.withInitial(() -> new byte[COPY_BUFFER_SIZE]);
 
@@ -2126,13 +2127,20 @@ public class File2 {
         if (count <= 0) return true;
 
         long transferred = 0;
+        int zeroCount = 0;
         while (transferred < count) {
           long bytes = srcChannel.transferTo(start + transferred, count - transferred, destChannel);
           if (bytes <= 0) {
-            throw new IOException(
-                "Incomplete transfer: transferred " + transferred + " of " + count + " bytes.");
+            // Allow up to 3 transient zero-byte yields before treating as an incomplete transfer
+            if (++zeroCount >= 3) {
+              throw new IOException(
+                  "Incomplete transfer: stalled after " + transferred + " of " + count + " bytes.");
+            }
+            Thread.yield();
+          } else {
+            zeroCount = 0;
+            transferred += bytes;
           }
-          transferred += bytes;
         }
         return true;
       } catch (Exception e) {

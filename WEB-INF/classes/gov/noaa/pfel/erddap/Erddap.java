@@ -226,6 +226,15 @@ public class Erddap extends HttpServlet {
       categoryInfo = new ConcurrentHashMap<>(16, 0.75f, 4);
   public long lastClearedFailedLogins = System.currentTimeMillis();
 
+  // Bounded lock stripes prevent cache stampedes without String.intern() memory leaks
+  private static final Object[] CACHE_DOWNLOAD_LOCKS = new Object[256];
+
+  static {
+    for (int i = 0; i < CACHE_DOWNLOAD_LOCKS.length; i++) {
+      CACHE_DOWNLOAD_LOCKS[i] = new Object();
+    }
+  }
+
   /**
    * The constructor.
    *
@@ -7439,8 +7448,9 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         String cacheDir = edd.cacheDirectory() + (nextPath == null ? "" : nextPath);
         String targetCacheFile = cacheDir + nameAndExt;
 
-        // Synchronize on interned path to avoid concurrent downloads to the same cache file
-        synchronized (targetCacheFile.intern()) {
+        // Use striped lock on path hash to avoid String.intern() string pool pollution
+        int lockIndex = (targetCacheFile.hashCode() & 0x7fffffff) % CACHE_DOWNLOAD_LOCKS.length;
+        synchronized (CACHE_DOWNLOAD_LOCKS[lockIndex]) {
           if (File2.isFile(targetCacheFile)) {
             File2.touch(targetCacheFile);
           } else {
@@ -7450,7 +7460,6 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         }
         localDir = cacheDir;
       }
-
       // Copy to awsS3OutputBucket and redirect
       String contentType = OutputStreamFromHttpResponse.getFileContentType(ext, ext);
       String fullAwsUrl =
