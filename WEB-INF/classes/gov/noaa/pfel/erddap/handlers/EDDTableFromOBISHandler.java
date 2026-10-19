@@ -12,7 +12,7 @@ public class EDDTableFromOBISHandler extends BaseTableHandler {
     super(saxHandler, datasetID, completeState);
   }
 
-  private String tLocalSourceUrl = null, tSourceCode = null;
+  private String tSourceCode = null;
   private double tLongitudeSourceMinimum = Double.NaN;
   private double tLongitudeSourceMaximum = Double.NaN;
   private double tLatitudeSourceMinimum = Double.NaN;
@@ -35,7 +35,7 @@ public class EDDTableFromOBISHandler extends BaseTableHandler {
       return true;
     }
     switch (localName) {
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "sourceCode" -> tSourceCode = contentStr;
       case "longitudeSourceMinimum" -> tLongitudeSourceMinimum = String2.parseDouble(contentStr);
       case "longitudeSourceMaximum" -> tLongitudeSourceMaximum = String2.parseDouble(contentStr);
@@ -68,7 +68,7 @@ public class EDDTableFromOBISHandler extends BaseTableHandler {
         tDefaultGraphQuery,
         tAddVariablesWhere,
         tGlobalAttributes,
-        tLocalSourceUrl,
+        tSourceUrl,
         tSourceCode,
         tReloadEveryNMinutes,
         tLongitudeSourceMinimum,

@@ -27,8 +27,12 @@ import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.variable.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -49,6 +53,8 @@ public class EDDTableAggregateRows extends EDDTable {
   // erddap.tableDatasetHashMap.get(localChildrenID).
   private Erddap erddap;
   private String localChildrenID[]; // [c] is null if NOT local fromErddap
+  protected final Map<String, Set<String>> scriptNeedsColumns = new HashMap<>();
+  protected boolean hasDerivedVariables = false;
 
   /**
    * This constructs an EDDTableAggregateRows based on the information in an .xml file.
@@ -68,6 +74,7 @@ public class EDDTableAggregateRows extends EDDTable {
     if (verbose) String2.log("\n*** constructing EDDTableAggregateRows(xmlReader)...");
     String tDatasetID = xmlReader.attributeValue("datasetID");
     ArrayList<EDDTable> tChildren = new ArrayList<>();
+    List<DataVariableInfo> tDataVariables = new ArrayList<>();
     LocalizedAttributes tAddGlobalAttributes = null;
     String tAccessibleTo = null;
     String tGraphsAccessibleTo = null;
@@ -140,10 +147,18 @@ public class EDDTableAggregateRows extends EDDTable {
         case "</fgdcFile>" -> tFgdcFile = content;
         case "</iso19115File>" -> tIso19115File = content;
         case "</sosOfferingPrefix>" -> tSosOfferingPrefix = content;
+        case "</dataVariable>",
+            "sourceName",
+            "/sourceName",
+            "dataType",
+            "/dataType",
+            "destinationName",
+            "/destinationName" -> {}
         case "</defaultDataQuery>" -> tDefaultDataQuery = content;
         case "</defaultGraphQuery>" -> tDefaultGraphQuery = content;
         case "</addVariablesWhere>" -> tAddVariablesWhere = content;
         case "<addAttributes>" -> tAddGlobalAttributes = getAttributesFromXml(xmlReader);
+        case "<dataVariable>" -> tDataVariables.add(getSDADVariableFromXml(xmlReader));
         default -> xmlReader.unexpectedTagException();
       }
     }
@@ -167,7 +182,8 @@ public class EDDTableAggregateRows extends EDDTable {
         tAddGlobalAttributes,
         tReloadEveryNMinutes,
         tUpdateEveryNMillis,
-        ttChildren);
+        ttChildren,
+        tDataVariables);
   }
 
   /**
@@ -190,7 +206,8 @@ public class EDDTableAggregateRows extends EDDTable {
       LocalizedAttributes tAddGlobalAttributes,
       int tReloadEveryNMinutes,
       int tUpdateEveryNMillis,
-      EDDTable oChildren[])
+      EDDTable oChildren[],
+      List<DataVariableInfo> tDataVariables)
       throws Throwable {
 
     if (verbose) String2.log("\n*** constructing EDDTableAggregateRows " + tDatasetID);
@@ -303,115 +320,241 @@ public class EDDTableAggregateRows extends EDDTable {
     // quickRestart is handled by tChildren
 
     // dataVariables
-    dataVariables = new EDV[ndv];
-    for (int dv = 0; dv < ndv; dv++) {
-      // variables in this class just see the destination name/type/... of the child0 variable
-      EDV childVar = child0.dataVariables[dv];
-      String tSourceName = childVar.destinationName();
-      Attributes tSourceAtts = childVar.combinedAttributes().toAttributes(language);
-      LocalizedAttributes tAddAtts = new LocalizedAttributes();
-      String tDataType = childVar.destinationDataType();
-      String tUnits = childVar.units();
-      double tMV = childVar.destinationMissingValue();
-      double tFV = childVar.destinationFillValue();
+    if (tDataVariables.size() > 0) {
+      ndv = tDataVariables.size();
+      dataVariables = new EDV[ndv];
+      for (int dv = 0; dv < ndv; dv++) {
+        DataVariableInfo dvi = tDataVariables.get(dv);
+        String tSourceName = dvi.sourceName();
+        String tDestName = dvi.destinationName();
+        if (tDestName == null || tDestName.length() == 0) tDestName = tSourceName;
+        String tDataType = dvi.dataType();
+        LocalizedAttributes tAddAtts = dvi.attributes();
 
-      // ensure all tChildren are consistent
-      for (int c = 1; c < nChildren; c++) {
-        EDV cEdv = tChildren[c].dataVariables[dv];
-        String cName = cEdv.destinationName();
-        if (!Test.equal(tSourceName, cName))
-          throw new RuntimeException(
+        hasDerivedVariables = true;
+        if (tSourceName.startsWith("=")) {
+          scriptNeedsColumns.put(
+              tSourceName, com.cohort.util.Script2.jexlScriptNeedsColumns(tSourceName));
+        } else if (tSourceName.startsWith("variable:")) {
+          String s = tSourceName.substring(9);
+          int cpo = s.indexOf(':');
+          if (cpo <= 0) {
+            throw new SimpleException(
+                "datasets.xml error: "
+                    + "To convert variable metadata to data, sourceName should be "
+                    + "variable:[varName]:[attributeName]. "
+                    + "Invalid sourceName="
+                    + tSourceName);
+          }
+        } else if (tSourceName.startsWith("global:")) {
+          // nothing special to do
+        } else if (tSourceName.startsWith("***")) {
+          throw new SimpleException(
+              "datasets.xml error: EDDTableAggregateRows doesn't support sourceName starting with *** yet.");
+        }
+
+        // is tSourceName in any child?
+        EDV childVar = null;
+        List<EDDTable> childrenWithVar = new ArrayList<>();
+        int firstChildWithVar = -1;
+        for (int c = 0; c < nChildren; c++) {
+          EDV tChildVar = null;
+          try {
+            tChildVar = tChildren[c].findDataVariableByDestinationName(tSourceName);
+          } catch (Exception e) {
+            // ignore
+          }
+          if (tChildVar != null) {
+            if (childVar == null) {
+              childVar = tChildVar;
+              firstChildWithVar = c;
+            }
+            childrenWithVar.add(tChildren[c]);
+          }
+        }
+
+        Attributes tSourceAtts =
+            childVar == null
+                ? new Attributes()
+                : childVar.combinedAttributes().toAttributes(language);
+        LocalizedAttributes tVarAddAtts = new LocalizedAttributes();
+        tVarAddAtts.add(tAddAtts.toAttributes(language));
+        PAOne tMin = new PAOne(PAType.fromCohortString(tDataType), "");
+        PAOne tMax = new PAOne(PAType.fromCohortString(tDataType), "");
+        if (childVar != null) {
+          int cdvIndex =
+              String2.indexOf(
+                  tChildren[firstChildWithVar].dataVariableDestinationNames(), tSourceName);
+          Pair<PAOne, PAOne> actualRange =
+              accumulateActualRange(childrenWithVar, cdvIndex, childVar.destinationDataPAType());
+          tMin = actualRange.getLeft();
+          tMax = actualRange.getRight();
+        }
+
+        // make the variable
+        EDV newVar = null;
+        if (tDestName.equals(EDV.LON_NAME)) {
+          newVar =
+              new EDVLon(datasetID, tSourceName, tSourceAtts, tVarAddAtts, tDataType, tMin, tMax);
+          lonIndex = dv;
+        } else if (tDestName.equals(EDV.LAT_NAME)) {
+          newVar =
+              new EDVLat(datasetID, tSourceName, tSourceAtts, tVarAddAtts, tDataType, tMin, tMax);
+          latIndex = dv;
+        } else if (tDestName.equals(EDV.ALT_NAME)) {
+          newVar =
+              new EDVAlt(datasetID, tSourceName, tSourceAtts, tVarAddAtts, tDataType, tMin, tMax);
+          altIndex = dv;
+        } else if (tDestName.equals(EDV.DEPTH_NAME)) {
+          newVar =
+              new EDVDepth(datasetID, tSourceName, tSourceAtts, tVarAddAtts, tDataType, tMin, tMax);
+          depthIndex = dv;
+        } else if (tSourceName.equals(EDV.TIME_NAME)) { // do time before timeStamp
+          newVar =
+              new EDVTime(
+                  datasetID,
+                  tSourceName,
+                  tSourceAtts,
+                  tVarAddAtts,
+                  tDataType); // this constructor gets source / sets destination actual_range
+          timeIndex = dv;
+        } else if (EDVTimeStamp.hasTimeUnits(language, tSourceAtts, tVarAddAtts)) {
+          newVar =
+              new EDVTimeStamp(
+                  datasetID,
+                  tSourceName,
+                  tDestName,
+                  tSourceAtts,
+                  tVarAddAtts,
+                  tDataType); // this constructor gets source / sets destination actual_range
+        } else
+          newVar =
+              new EDV(
+                  datasetID,
+                  tSourceName,
+                  tDestName,
+                  tSourceAtts,
+                  tVarAddAtts,
+                  tDataType,
+                  tMin,
+                  tMax);
+
+        newVar.setActualRangeFromDestinationMinMax(language);
+        dataVariables[dv] = newVar;
+      }
+    } else {
+      dataVariables = new EDV[ndv];
+      for (int dv = 0; dv < ndv; dv++) {
+        // variables in this class just see the destination name/type/... of the child0 variable
+        EDV childVar = child0.dataVariables[dv];
+        String tSourceName = childVar.destinationName();
+        Attributes tSourceAtts = childVar.combinedAttributes().toAttributes(language);
+        LocalizedAttributes tAddAtts = new LocalizedAttributes();
+        String tDataType = childVar.destinationDataType();
+        String tUnits = childVar.units();
+        double tMV = childVar.destinationMissingValue();
+        double tFV = childVar.destinationFillValue();
+
+        // ensure all tChildren are consistent
+        for (int c = 1; c < nChildren; c++) {
+          EDV cEdv = tChildren[c].dataVariables[dv];
+          String cName = cEdv.destinationName();
+          if (!Test.equal(tSourceName, cName))
+            throw new RuntimeException(
+                errorInMethod
+                    + "child dataset["
+                    + c
+                    + "]="
+                    + tChildren[c].datasetID()
+                    + " variable #"
+                    + dv
+                    + " destinationName="
+                    + cName
+                    + " should have destinationName="
+                    + tSourceName
+                    + ".");
+
+          String hasADifferent =
               errorInMethod
                   + "child dataset["
                   + c
                   + "]="
                   + tChildren[c].datasetID()
-                  + " variable #"
-                  + dv
-                  + " destinationName="
-                  + cName
-                  + " should have destinationName="
+                  + " variable="
                   + tSourceName
-                  + ".");
+                  + " has a different ";
+          String than =
+              " than the same variable in child dataset[0]=" + tChildren[0].datasetID() + " ";
 
-        String hasADifferent =
-            errorInMethod
-                + "child dataset["
-                + c
-                + "]="
-                + tChildren[c].datasetID()
-                + " variable="
-                + tSourceName
-                + " has a different ";
-        String than =
-            " than the same variable in child dataset[0]=" + tChildren[0].datasetID() + " ";
+          String cDataType = cEdv.destinationDataType();
+          if (!Test.equal(tDataType, cDataType))
+            throw new RuntimeException(
+                hasADifferent + "dataType=" + cDataType + than + "dataType=" + tDataType + ".");
+          String cUnits = cEdv.units();
+          if (!Test.equal(tUnits, cUnits))
+            throw new RuntimeException(
+                hasADifferent + "units=" + cUnits + than + "units=" + tUnits + ".");
+          double cMV = cEdv.destinationMissingValue();
+          if (!Test.equal(tMV, cMV)) // 9 digits
+          throw new RuntimeException(
+                hasADifferent + "missing_value=" + cMV + than + "missing_value=" + tMV + ".");
+          double cFV = cEdv.destinationFillValue();
+          if (!Test.equal(tFV, cFV)) // 9 digits
+          throw new RuntimeException(
+                hasADifferent + "_FillValue=" + cFV + than + "_FillValue=" + tFV + ".");
+        }
 
-        String cDataType = cEdv.destinationDataType();
-        if (!Test.equal(tDataType, cDataType))
-          throw new RuntimeException(
-              hasADifferent + "dataType=" + cDataType + than + "dataType=" + tDataType + ".");
-        String cUnits = cEdv.units();
-        if (!Test.equal(tUnits, cUnits))
-          throw new RuntimeException(
-              hasADifferent + "units=" + cUnits + than + "units=" + tUnits + ".");
-        double cMV = cEdv.destinationMissingValue();
-        if (!Test.equal(tMV, cMV)) // 9 digits
-        throw new RuntimeException(
-              hasADifferent + "missing_value=" + cMV + than + "missing_value=" + tMV + ".");
-        double cFV = cEdv.destinationFillValue();
-        if (!Test.equal(tFV, cFV)) // 9 digits
-        throw new RuntimeException(
-              hasADifferent + "_FillValue=" + cFV + than + "_FillValue=" + tFV + ".");
+        Pair<PAOne, PAOne> actualRange =
+            accumulateActualRange(List.of(tChildren), dv, childVar.destinationDataPAType());
+
+        PAOne tMin = actualRange.getLeft();
+        PAOne tMax = actualRange.getRight();
+
+        PrimitiveArray pa = PrimitiveArray.factory(childVar.destinationDataPAType(), 2, false);
+        pa.addPAOne(tMin);
+        pa.addPAOne(tMax);
+        tSourceAtts.set("actual_range", pa);
+
+        // make the variable
+        EDV newVar = null;
+        if (tSourceName.equals(EDV.LON_NAME)) {
+          newVar = new EDVLon(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
+          lonIndex = dv;
+        } else if (tSourceName.equals(EDV.LAT_NAME)) {
+          newVar = new EDVLat(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
+          latIndex = dv;
+        } else if (tSourceName.equals(EDV.ALT_NAME)) {
+          newVar = new EDVAlt(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
+          altIndex = dv;
+        } else if (tSourceName.equals(EDV.DEPTH_NAME)) {
+          newVar =
+              new EDVDepth(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
+          depthIndex = dv;
+        } else if (tSourceName.equals(EDV.TIME_NAME)) { // do time before timeStamp
+          newVar =
+              new EDVTime(
+                  datasetID,
+                  tSourceName,
+                  tSourceAtts,
+                  tAddAtts,
+                  tDataType); // this constructor gets source / sets destination actual_range
+          timeIndex = dv;
+        } else if (EDVTimeStamp.hasTimeUnits(language, tSourceAtts, tAddAtts)) {
+          newVar =
+              new EDVTimeStamp(
+                  datasetID,
+                  tSourceName,
+                  "",
+                  tSourceAtts,
+                  tAddAtts,
+                  tDataType); // this constructor gets source / sets destination actual_range
+        } else
+          newVar =
+              new EDV(datasetID, tSourceName, "", tSourceAtts, tAddAtts, tDataType, tMin, tMax);
+
+        newVar.setActualRangeFromDestinationMinMax(language);
+        dataVariables[dv] = newVar;
       }
-
-      Pair<PAOne, PAOne> actualRange =
-          accumulateActualRange(List.of(tChildren), dv, childVar.destinationDataPAType());
-
-      PAOne tMin = actualRange.getLeft();
-      PAOne tMax = actualRange.getRight();
-
-      PrimitiveArray pa = PrimitiveArray.factory(childVar.destinationDataPAType(), 2, false);
-      pa.addPAOne(tMin);
-      pa.addPAOne(tMax);
-      tSourceAtts.set("actual_range", pa);
-
-      // make the variable
-      EDV newVar = null;
-      if (tSourceName.equals(EDV.LON_NAME)) {
-        newVar = new EDVLon(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
-        lonIndex = dv;
-      } else if (tSourceName.equals(EDV.LAT_NAME)) {
-        newVar = new EDVLat(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
-        latIndex = dv;
-      } else if (tSourceName.equals(EDV.ALT_NAME)) {
-        newVar = new EDVAlt(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
-        altIndex = dv;
-      } else if (tSourceName.equals(EDV.DEPTH_NAME)) {
-        newVar = new EDVDepth(datasetID, tSourceName, tSourceAtts, tAddAtts, tDataType, tMin, tMax);
-        depthIndex = dv;
-      } else if (tSourceName.equals(EDV.TIME_NAME)) { // do time before timeStamp
-        newVar =
-            new EDVTime(
-                datasetID,
-                tSourceName,
-                tSourceAtts,
-                tAddAtts,
-                tDataType); // this constructor gets source / sets destination actual_range
-        timeIndex = dv;
-      } else if (EDVTimeStamp.hasTimeUnits(language, tSourceAtts, tAddAtts)) {
-        newVar =
-            new EDVTimeStamp(
-                datasetID,
-                tSourceName,
-                "",
-                tSourceAtts,
-                tAddAtts,
-                tDataType); // this constructor gets source / sets destination actual_range
-      } else
-        newVar = new EDV(datasetID, tSourceName, "", tSourceAtts, tAddAtts, tDataType, tMin, tMax);
-
-      newVar.setActualRangeFromDestinationMinMax(language);
-      dataVariables[dv] = newVar;
     }
 
     // make addVariablesWhereAttNames and addVariablesWhereAttValues
@@ -529,7 +672,7 @@ public class EDDTableAggregateRows extends EDDTable {
   }
 
   /** This gets the specified child dataset, whether local fromErddap or otherwise. */
-  private EDDTable getChild(int language, int c) {
+  public EDDTable getChild(int language, int c) {
     EDDTable tChild = children[c];
     if (tChild == null) {
       tChild = erddap.tableDatasetHashMap.get(localChildrenID[c]);
@@ -568,38 +711,250 @@ public class EDDTableAggregateRows extends EDDTable {
       TableWriter tableWriter)
       throws Throwable {
 
-    // tableWriter
-    tableWriter.ignoreFinish = true;
+    if (!hasDerivedVariables) {
+      // old behavior
+      // tableWriter
+      tableWriter.ignoreFinish = true;
 
-    // pass the request to each child, and accumulate the results
-    for (int c = 0; c < nChildren; c++) {
+      // pass the request to each child, and accumulate the results
+      for (int c = 0; c < nChildren; c++) {
+        try {
+          // get data from this child. It's nice that:
+          // * each child can parse and handle parts its own way
+          //  e.g., sourceCanConstrainStringData
+          // * each child handles standardizeResultsTable and applies constraints.
+          // * each child has the same destination names and units for the same vars.
+          // * this will call tableWriter.finish(), but it will be ignored
+          getChild(language, c)
+              .getDataForDapQuery(
+                  language, EDStatic.loggedInAsSuperuser, requestUrl, userDapQuery, tableWriter);
+
+          // no more data?
+          if (tableWriter.noMoreDataPlease) break;
+
+        } catch (Throwable t) {
+          // no results is okay
+          String msg = t.toString();
+          if (msg.indexOf(MustBe.THERE_IS_NO_DATA) >= 0) continue;
+
+          // rethrow, including WaitThenTryAgainException
+          throw t;
+        }
+      }
+
+      // finish
+      tableWriter.ignoreFinish = false;
+      tableWriter.finish();
+      return;
+    }
+
+    // New behavior to support derived variables
+    // pick the query apart
+    StringArray resultsVariables = new StringArray();
+    StringArray constraintVariables = new StringArray();
+    StringArray constraintOps = new StringArray();
+    StringArray constraintValues = new StringArray();
+    parseUserDapQuery(
+        language,
+        userDapQuery,
+        resultsVariables,
+        constraintVariables,
+        constraintOps,
+        constraintValues,
+        false); // don't repair
+
+    // what variables are needed from children?
+    HashSet<String> neededVars = new HashSet<>();
+    for (int i = 0; i < resultsVariables.size(); i++) {
+      String rv = resultsVariables.get(i);
+      EDV edv = null;
       try {
-        // get data from this child. It's nice that:
-        // * each child can parse and handle parts its own way
-        //  e.g., sourceCanConstrainStringData
-        // * each child handles standardizeResultsTable and applies constraints.
-        // * each child has the same destination names and units for the same vars.
-        // * this will call tableWriter.finish(), but it will be ignored
-        getChild(language, c)
-            .getDataForDapQuery(
-                language, EDStatic.loggedInAsSuperuser, requestUrl, userDapQuery, tableWriter);
-
-        // no more data?
-        if (tableWriter.noMoreDataPlease) break;
-
-      } catch (Throwable t) {
-        // no results is okay
-        String msg = t.toString();
-        if (msg.indexOf(MustBe.THERE_IS_NO_DATA) >= 0) continue;
-
-        // rethrow, including WaitThenTryAgainException
-        throw t;
+        edv = findDataVariableByDestinationName(rv);
+      } catch (Exception e) {
+      }
+      if (edv != null) {
+        String sn = edv.sourceName();
+        if (sn.startsWith("=")) {
+          neededVars.addAll(scriptNeedsColumns.get(sn));
+        } else if (sn.startsWith("global:")) {
+          // no other vars needed
+        } else if (sn.startsWith("variable:")) {
+          String s = sn.substring(9);
+          int cpo = s.indexOf(':');
+          neededVars.add(s.substring(0, cpo));
+        } else {
+          neededVars.add(sn);
+        }
+      }
+    }
+    for (int i = 0; i < constraintVariables.size(); i++) {
+      String cv = constraintVariables.get(i);
+      EDV edv = null;
+      try {
+        edv = findDataVariableByDestinationName(cv);
+      } catch (Exception e) {
+      }
+      if (edv != null) {
+        String sn = edv.sourceName();
+        if (sn.startsWith("=")) {
+          neededVars.addAll(scriptNeedsColumns.get(sn));
+        } else if (sn.startsWith("global:")) {
+          // no other vars needed
+        } else if (sn.startsWith("variable:")) {
+          String s = sn.substring(9);
+          int cpo = s.indexOf(':');
+          neededVars.add(s.substring(0, cpo));
+        } else {
+          neededVars.add(sn);
+        }
       }
     }
 
-    // finish
-    tableWriter.ignoreFinish = false;
-    tableWriter.finish();
+    // build the child query
+    String childQuery = String.join(",", neededVars.toArray(new String[0]));
+    // Add constraints that are on 'real' variables
+    StringBuilder sb = new StringBuilder(childQuery);
+    for (int i = 0; i < constraintVariables.size(); i++) {
+      String cv = constraintVariables.get(i);
+      EDV edv = null;
+      try {
+        edv = findDataVariableByDestinationName(cv);
+      } catch (Exception e) {
+      }
+      if (edv == null) continue;
+      String sn = edv.sourceName();
+      if (!sn.startsWith("=") && !sn.startsWith("global:") && !sn.startsWith("variable:")) {
+        sb.append("&").append(sn).append(constraintOps.get(i)).append(constraintValues.get(i));
+      }
+    }
+    childQuery = sb.toString();
+
+    // Use a custom TableWriter to add derived variables
+    TableWriterAggregateRows twar =
+        new TableWriterAggregateRows(
+            language, this, loggedInAs, requestUrl, userDapQuery, tableWriter);
+
+    twar.ignoreFinish = true;
+    for (int c = 0; c < nChildren; c++) {
+      try {
+        getChild(language, c)
+            .getDataForDapQuery(
+                language, EDStatic.loggedInAsSuperuser, requestUrl, childQuery, twar);
+        if (twar.noMoreDataPlease) break;
+      } catch (Throwable t) {
+        String msg = t.toString();
+        if (msg.indexOf(MustBe.THERE_IS_NO_DATA) >= 0) continue;
+        throw t;
+      }
+    }
+    twar.ignoreFinish = false;
+    twar.finish();
+  }
+
+  private class TableWriterAggregateRows extends TableWriter {
+    TableWriter finalTableWriter;
+    String requestUrl;
+    String userDapQuery;
+
+    public TableWriterAggregateRows(
+        int tLanguage,
+        EDD tEdd,
+        String tLoggedInAs,
+        String tRequestUrl,
+        String tUserDapQuery,
+        TableWriter tFinalTableWriter) {
+      super(tLanguage, tEdd, null, null);
+      requestUrl = tRequestUrl;
+      userDapQuery = tUserDapQuery;
+      finalTableWriter = tFinalTableWriter;
+    }
+
+    @Override
+    public void writeSome(Table table) throws Throwable {
+      if (table.nRows() == 0) return;
+      int nRows = table.nRows();
+      int ndv = dataVariables.length;
+
+      // 1. Rename columns already in the table to their aggregate SOURCE names.
+      // (This is primarily to handle cases where child destination names might differ from
+      // aggregate source names,
+      // although they usually match).
+      // We also need this so that scripts can find the columns using the names they expect (usually
+      // source names).
+      for (int dv = 0; dv < ndv; dv++) {
+        String sn = dataVariables[dv].sourceName();
+        String dn = dataVariables[dv].destinationName();
+        if (!sn.startsWith("=") && !sn.startsWith("global:") && !sn.startsWith("variable:")) {
+          // If the table already has the source name, great.
+          if (table.findColumnNumber(sn) >= 0) continue;
+
+          // If not, it might have the destination name (from child's standardizeResultsTable).
+          int col = table.findColumnNumber(dn);
+          if (col >= 0) {
+            table.setColumnName(col, sn);
+          }
+        }
+      }
+
+      // 2. Add derived variables using their SOURCE names.
+      for (int dv = 0; dv < ndv; dv++) {
+        String sn = dataVariables[dv].sourceName();
+        if (table.findColumnNumber(sn) >= 0) continue; // already there
+
+        if (sn.startsWith("=")) {
+          EDDTable.convertScriptColumnsToDataColumns(
+              "",
+              table,
+              new StringArray(new String[] {sn}),
+              new StringArray(new String[] {dataVariables[dv].sourceDataType()}),
+              scriptNeedsColumns);
+          // convertScriptColumnsToDataColumns adds the column with name 'sn'.
+        } else if (sn.startsWith("global:")) {
+          String val = combinedGlobalAttributes.getString(language, sn.substring(7));
+          PrimitiveArray pa =
+              PrimitiveArray.factory(
+                  PAType.fromCohortString(dataVariables[dv].sourceDataType()), nRows, false);
+          for (int r = 0; r < nRows; r++) pa.addObject(val);
+          table.addColumn(sn, pa);
+        } else if (sn.startsWith("variable:")) {
+          String s = sn.substring(9);
+          int cpo = s.indexOf(':');
+          String varName = s.substring(0, cpo);
+          String attName = s.substring(cpo + 1);
+          // Look in dataVariables of THIS (aggregate) dataset.
+          EDV v = null;
+          for (int i = 0; i < ndv; i++) {
+            if (dataVariables[i].destinationName().equals(varName)
+                || dataVariables[i].sourceName().equals(varName)) {
+              v = dataVariables[i];
+              break;
+            }
+          }
+          String val = v == null ? null : v.combinedAttributes().getString(language, attName);
+          PrimitiveArray pa =
+              PrimitiveArray.factory(
+                  PAType.fromCohortString(dataVariables[dv].sourceDataType()), nRows, false);
+          for (int r = 0; r < nRows; r++) pa.addObject(val);
+          table.addColumn(sn, pa);
+        }
+      }
+
+      standardizeResultsTable(language, requestUrl, userDapQuery, table);
+      finalTableWriter.writeSome(table);
+      if (finalTableWriter.noMoreDataPlease) noMoreDataPlease = true;
+    }
+
+    @Override
+    public void finish() throws Throwable {
+      if (ignoreFinish) return;
+      finalTableWriter.ignoreFinish = false;
+      finalTableWriter.finish();
+    }
+
+    @Override
+    public void close() throws Exception {
+      finalTableWriter.close();
+    }
   }
 
   @Override

@@ -16,7 +16,6 @@ public class EDDTableFromErddapHandler extends BaseTableHandler {
   private boolean tAccessibleViaFiles = EDStatic.config.defaultAccessibleViaFiles;
   private boolean tSubscribeToRemoteErddapDataset = EDStatic.config.subscribeToRemoteErddapDataset;
   private boolean tRedirect = true;
-  private String tLocalSourceUrl = null;
 
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes)
@@ -29,7 +28,7 @@ public class EDDTableFromErddapHandler extends BaseTableHandler {
     }
     switch (localName) {
       case "accessibleViaFiles" -> tAccessibleViaFiles = String2.parseBoolean(contentStr);
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "subscribeToRemoteErddapDataset" ->
           tSubscribeToRemoteErddapDataset = String2.parseBoolean(contentStr);
       case "redirect" -> tRedirect = String2.parseBoolean(contentStr);
@@ -55,7 +54,7 @@ public class EDDTableFromErddapHandler extends BaseTableHandler {
         tDefaultGraphQuery,
         tAddVariablesWhere,
         tReloadEveryNMinutes,
-        tLocalSourceUrl,
+        tSourceUrl,
         tSubscribeToRemoteErddapDataset,
         tRedirect);
   }

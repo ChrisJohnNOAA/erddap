@@ -4302,93 +4302,17 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
     // convert global: metadata to be data columns
     if (sourceInfo.globalNames != null) {
       Attributes globalAtts = table.globalAttributes();
-      int nGlobalNames = sourceInfo.globalNames.size();
-      for (int gni = 0; gni < nGlobalNames; gni++) {
-        PrimitiveArray pa = globalAtts.remove(sourceInfo.globalNames.get(gni));
-        if (pa != null && pa.size() > 0) {
-
-          // make pa size=1
-          if (pa.size() > 1) pa.removeRange(1, pa.size()); // just the first value
-
-          // force column to be specified type
-          PrimitiveArray newPa =
-              PrimitiveArray.factory(
-                  PAType.fromCohortString(sourceInfo.globalTypes.get(gni)), 1, false);
-          newPa.append(pa);
-          pa = newPa;
-
-          int count = nRows - 1;
-          if (nRows == 0) {
-            count = 1;
-          }
-          // duplicate the value
-          if (nRows == 0 && !mustGetData) {
-            // e.g., when just getting metadata
-            pa.clear();
-          } else if (pa instanceof StringArray) {
-            String ts = pa.getString(0);
-            pa.addNStrings(count, ts == null ? "" : ts);
-          } else {
-            pa.addNDoubles(count, pa.getDouble(0));
-          }
-
-          // add pa to the table
-          table.addColumn("global:" + sourceInfo.globalNames.get(gni), pa);
-        } // If att not in results, just don't add to results table.
+      EDDTable.convertGlobalAttributeColumnsToDataColumns(
+          globalAtts, table, sourceInfo.globalNames, sourceInfo.globalTypes, mustGetData);
+      for (int gni = 0; gni < sourceInfo.globalNames.size(); gni++) {
+        globalAtts.remove(sourceInfo.globalNames.get(gni));
       }
     }
 
     // convert variable: metadata to be data columns
     if (sourceInfo.variableNames != null) {
-      int nVariableNames = sourceInfo.variableNames.size();
-      for (int vni = 0; vni < nVariableNames; vni++) {
-        int col = table.findColumnNumber(sourceInfo.variableNames.get(vni));
-        if (col >= 0) {
-          // var is in file. Try to get attribute
-          PrimitiveArray sourcePa =
-              table.columnAttributes(col).get(sourceInfo.variableAttNames.get(vni));
-          if (sourcePa != null && sourcePa.size() > 0) {
-            // We force a copy of the pa because there are destructive operations below.
-            PrimitiveArray pa =
-                PrimitiveArray.copyFactory(
-                    PAType.fromCohortString(sourceInfo.variableTypes.get(vni)), sourcePa);
-
-            // make pa size=1
-            if (pa.size() > 1) {
-              if (pa instanceof StringArray) {
-                String ts = pa.toString(); // eg actual_range as stringArray -> "0.0, 94.0"
-                pa.setString(0, ts);
-              }
-              pa.removeRange(1, pa.size()); // just the first value
-            }
-
-            // duplicate the value
-            if (nRows == 0) {
-              pa.clear();
-            } else {
-              if (pa instanceof StringArray) {
-                String ts = pa.getString(0);
-                pa.addNStrings(nRows - 1, ts == null ? "" : ts);
-              } else {
-                pa.addNDoubles(nRows - 1, pa.getDouble(0));
-              }
-            }
-
-            // add pa to the table
-            table.addColumn(
-                "variable:"
-                    + sourceInfo.variableNames.get(vni)
-                    + ":"
-                    + sourceInfo.variableAttNames.get(vni),
-                pa);
-          }
-        } else {
-          if (reallyVerbose)
-            String2.log(
-                "WARNING: extract varName=" + sourceInfo.variableNames.get(vni) + " not in table.");
-        }
-        // If var or att not in results, just don't add to results table.
-      }
+      EDDTable.convertVariableAttributeColumnsToDataColumns(
+          table, sourceInfo.variableNames, sourceInfo.variableAttNames, sourceInfo.variableTypes);
     }
 
     // convert "***fileName," extract into data column
