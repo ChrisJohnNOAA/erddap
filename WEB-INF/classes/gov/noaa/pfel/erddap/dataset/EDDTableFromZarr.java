@@ -9,7 +9,9 @@ import com.cohort.array.PAOne;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
+import com.cohort.util.Calendar2;
 import com.cohort.util.File2;
+import com.cohort.util.MustBe;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -73,6 +75,7 @@ public class EDDTableFromZarr extends EDDTable {
   private Store zarrStore;
   private Group zarrGroup;
   private long numRows = -1;
+  private final Object zarrLock = new Object();
 
   /**
    * Static factory method to construct an EDDTableFromZarr dataset from an XML configuration.
@@ -1332,15 +1335,19 @@ public class EDDTableFromZarr extends EDDTable {
     StringArray[] constraintVarsAndOps =
         new StringArray[] {constraintVariables, constraintOps, constraintValues};
 
+    // Capture active group and numRows to ensure thread-safe snapshot during lowUpdate swaps
+    Group activeGroup = this.zarrGroup;
+    long activeNumRows = this.numRows;
+
     // Map source array names to Array handles
     Map<String, Array> zarrArrayMap = new LinkedHashMap<>();
-    Map<String, ZarrArrayInfo> metadataMap = parseZarrMetadata();
+    Map<String, ZarrArrayInfo> metadataMap = parseZarrMetadata(activeGroup);
     for (EDV edv : dataVariables) {
       if (edv != null) {
         String sName = edv.sourceName();
         ZarrArrayInfo info = metadataMap.get(sName);
-        if (info == null && zarrGroup != null) {
-          info = getOrOpenZarrArrayInfo(zarrGroup, sName, metadataMap);
+        if (info == null && activeGroup != null) {
+          info = getOrOpenZarrArrayInfo(activeGroup, sName, metadataMap);
         }
         if (info != null && info.array != null) {
           zarrArrayMap.put(sName, info.array);
@@ -1368,13 +1375,13 @@ public class EDDTableFromZarr extends EDDTable {
     Table cumulativeBatchTable = null;
 
     // 3. Main chunk scanning loop over dataset rows
-    for (long startRow = 0; startRow < numRows; startRow += chunkSize) {
-      int currentChunkSize = (int) Math.min(chunkSize, numRows - startRow);
+    for (long startRow = 0; startRow < activeNumRows; startRow += chunkSize) {
+      int currentChunkSize = (int) Math.min(chunkSize, activeNumRows - startRow);
 
       // Pass 1: Evaluate constraints against chunk data
       BitSet rowMask =
           evaluateChunkConstraints(
-              startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap);
+              startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap, activeGroup);
 
       int cardinal = rowMask.cardinality();
       if (cardinal == 0) {
@@ -1386,7 +1393,7 @@ public class EDDTableFromZarr extends EDDTable {
       // Pass 2: Extract requested variable row batch
       Table batchTable =
           extractRowBatch(
-              startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap);
+              startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap, activeGroup);
 
       if (cumulativeBatchTable == null) {
         cumulativeBatchTable = batchTable;
@@ -1462,6 +1469,18 @@ public class EDDTableFromZarr extends EDDTable {
       Map<String, Array> zarrArrayMap,
       Map<String, ZarrArrayInfo> metadataMap)
       throws Throwable {
+    return evaluateChunkConstraints(
+        startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap, this.zarrGroup);
+  }
+
+  protected BitSet evaluateChunkConstraints(
+      long startRow,
+      int currentChunkSize,
+      StringArray[] constraintVarsAndOps,
+      Map<String, Array> zarrArrayMap,
+      Map<String, ZarrArrayInfo> metadataMap,
+      Group activeGroup)
+      throws Throwable {
 
     BitSet rowMask = new BitSet(currentChunkSize);
     rowMask.set(0, currentChunkSize);
@@ -1479,7 +1498,7 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     if (metadataMap == null) {
-      metadataMap = parseZarrMetadata();
+      metadataMap = parseZarrMetadata(activeGroup);
     }
 
     int nConstraints = constraintVars.size();
@@ -1497,8 +1516,8 @@ public class EDDTableFromZarr extends EDDTable {
 
       String sourceName = edv.sourceName();
       ZarrArrayInfo info = metadataMap.get(sourceName);
-      if (info == null && zarrGroup != null) {
-        info = getOrOpenZarrArrayInfo(zarrGroup, sourceName, metadataMap);
+      if (info == null && activeGroup != null) {
+        info = getOrOpenZarrArrayInfo(activeGroup, sourceName, metadataMap);
       }
       Array zarray = zarrArrayMap.get(sourceName);
       if (zarray == null && info != null) {
@@ -1544,12 +1563,31 @@ public class EDDTableFromZarr extends EDDTable {
       Map<String, Array> zarrArrayMap,
       Map<String, ZarrArrayInfo> metadataMap)
       throws Throwable {
+    return extractRowBatch(
+        startRow,
+        currentChunkSize,
+        rowMask,
+        requestedVarNames,
+        zarrArrayMap,
+        metadataMap,
+        this.zarrGroup);
+  }
+
+  protected Table extractRowBatch(
+      long startRow,
+      int currentChunkSize,
+      BitSet rowMask,
+      String[] requestedVarNames,
+      Map<String, Array> zarrArrayMap,
+      Map<String, ZarrArrayInfo> metadataMap,
+      Group activeGroup)
+      throws Throwable {
 
     Table batchTable = new Table();
     int nMatchingRows = rowMask.cardinality();
 
     if (metadataMap == null) {
-      metadataMap = parseZarrMetadata();
+      metadataMap = parseZarrMetadata(activeGroup);
     }
 
     for (String varName : requestedVarNames) {
@@ -1558,8 +1596,8 @@ public class EDDTableFromZarr extends EDDTable {
 
       String sourceName = edv.sourceName();
       ZarrArrayInfo info = metadataMap.get(sourceName);
-      if (info == null && zarrGroup != null) {
-        info = getOrOpenZarrArrayInfo(zarrGroup, sourceName, metadataMap);
+      if (info == null && activeGroup != null) {
+        info = getOrOpenZarrArrayInfo(activeGroup, sourceName, metadataMap);
       }
       Array zarray = zarrArrayMap.get(sourceName);
       if (zarray == null && info != null) {
@@ -1793,6 +1831,233 @@ public class EDDTableFromZarr extends EDDTable {
     }
 
     return pa;
+  }
+
+  /**
+   * Incremental update method for real-time dataset growth in tabular Zarr stores.
+   *
+   * @param language user language
+   * @param msg log prefix message
+   * @param startUpdateMillis start timestamp of update
+   * @return true if updated, false if no update or deferred
+   * @throws Throwable if unhandled error
+   */
+  @Override
+  public boolean lowUpdate(int language, String msg, long startUpdateMillis) throws Throwable {
+    Store freshStore = null;
+    try {
+      // 1. Store Re-inspection & Shape Detection
+      freshStore =
+          createZarrStore(
+              this.zarrStorePath, this.cacheFromUrl, this.awsRegion, this.awsEndpoint);
+      Group freshGroup = openZarrGroup(freshStore, this.zarrGroupName);
+      Map<String, ZarrArrayInfo> freshArrayMap = parseZarrMetadata(freshGroup);
+
+      String targetRowDimName = this.rowDimensionName;
+      long newNumRowsL = -1;
+
+      Map<String, Long> dimToSizeMap = new LinkedHashMap<>();
+      Map<String, Integer> dimFrequencyMap = new LinkedHashMap<>();
+      Map<String, Long> array1DLengthMap = new LinkedHashMap<>();
+
+      for (ZarrArrayInfo info : freshArrayMap.values()) {
+        if (info == null || info.isUnsupportedCodec) continue;
+        if (info.dimensionNames != null && info.shape != null) {
+          for (int d = 0; d < info.dimensionNames.length; d++) {
+            String dimName = info.dimensionNames[d];
+            long dimSize = d < info.shape.length ? info.shape[d] : 0;
+            dimToSizeMap.putIfAbsent(dimName, dimSize);
+            dimFrequencyMap.put(dimName, dimFrequencyMap.getOrDefault(dimName, 0) + 1);
+          }
+        }
+        if (info.shape != null && info.shape.length == 1) {
+          array1DLengthMap.put(info.name, info.shape[0]);
+        }
+      }
+
+      if (String2.isSomething(targetRowDimName)) {
+        if (dimToSizeMap.containsKey(targetRowDimName)) {
+          newNumRowsL = dimToSizeMap.get(targetRowDimName);
+        } else if (freshArrayMap.containsKey(targetRowDimName)) {
+          ZarrArrayInfo dimArrInfo = freshArrayMap.get(targetRowDimName);
+          if (dimArrInfo != null && dimArrInfo.shape != null && dimArrInfo.shape.length > 0) {
+            newNumRowsL = dimArrInfo.shape[0];
+          }
+        }
+      }
+
+      if (newNumRowsL < 0) {
+        String[] standardCandidates = new String[] {"obs", "row", "time", "index", "record", "i"};
+        for (String cand : standardCandidates) {
+          if (dimToSizeMap.containsKey(cand)) {
+            targetRowDimName = cand;
+            newNumRowsL = dimToSizeMap.get(cand);
+            break;
+          }
+        }
+      }
+
+      if (newNumRowsL < 0 && !dimToSizeMap.isEmpty()) {
+        String dominantDim = null;
+        int maxFreq = -1;
+        for (Map.Entry<String, Integer> entry : dimFrequencyMap.entrySet()) {
+          if (entry.getValue() > maxFreq) {
+            maxFreq = entry.getValue();
+            dominantDim = entry.getKey();
+          }
+        }
+        if (dominantDim != null) {
+          targetRowDimName = dominantDim;
+          newNumRowsL = dimToSizeMap.get(dominantDim);
+        }
+      }
+
+      if (newNumRowsL < 0 && !array1DLengthMap.isEmpty()) {
+        Map.Entry<String, Long> first1D = array1DLengthMap.entrySet().iterator().next();
+        targetRowDimName = "obs";
+        newNumRowsL = first1D.getValue();
+      }
+
+      if (newNumRowsL <= 0) {
+        if (reallyVerbose) {
+          String2.log(
+              msg
+                  + "EDDTableFromZarr.lowUpdate: Could not determine valid row count from fresh store.");
+        }
+        return false;
+      }
+
+      if (newNumRowsL <= this.numRows) {
+        if (reallyVerbose) {
+          String2.log(
+              msg
+                  + "EDDTableFromZarr.lowUpdate: No change to row count (newNumRows="
+                  + newNumRowsL
+                  + " <= currentNumRows="
+                  + this.numRows
+                  + ").");
+        }
+        return false;
+      }
+
+      long newNumRows = newNumRowsL;
+
+      // 2. Column Synchronization Check
+      if (dataVariables != null) {
+        for (EDV edv : dataVariables) {
+          if (edv == null) continue;
+          String sName = edv.sourceName();
+          ZarrArrayInfo info = getOrOpenZarrArrayInfo(freshGroup, sName, freshArrayMap);
+          if (info == null || info.isUnsupportedCodec) continue;
+
+          if (info.is1D() || info.is2DStringOrChar()) {
+            if (info.shape != null && info.shape.length > 0) {
+              long colLen = info.shape[0];
+              if (colLen < newNumRows) {
+                String2.log(
+                    msg
+                        + " Column ["
+                        + sName
+                        + "] row count ("
+                        + colLen
+                        + ") lags behind primary dimension ("
+                        + newNumRows
+                        + "). Deferring update.");
+                return false;
+              }
+            }
+          }
+        }
+      }
+
+      // 3. State & Attribute Synchronization
+      String newTimeEndIso = null;
+      double newTimeEndSec = Double.NaN;
+      double timeStartSec = Double.NaN;
+
+      if (timeIndex >= 0 && timeIndex < dataVariables.length) {
+        EDV timeEdv = dataVariables[timeIndex];
+        if (timeEdv != null) {
+          String sName = timeEdv.sourceName();
+          ZarrArrayInfo timeInfo = freshArrayMap.get(sName);
+          if (timeInfo == null) {
+            timeInfo = getOrOpenZarrArrayInfo(freshGroup, sName, freshArrayMap);
+          }
+          if (timeInfo != null && timeInfo.array != null) {
+            PrimitiveArray timePa =
+                readChunkDataForVar(
+                    sName, timeInfo.array, timeInfo, timeEdv, newNumRows - 1, 1, true);
+            if (timePa != null && timePa.size() > 0) {
+              newTimeEndSec = timePa.getDouble(0);
+              if (!Double.isNaN(newTimeEndSec)) {
+                newTimeEndIso = Calendar2.epochSecondsToIsoStringTZ(newTimeEndSec);
+              }
+            }
+          }
+        }
+      }
+
+      Store oldStore = null;
+      synchronized (zarrLock) {
+        oldStore = this.zarrStore;
+        this.zarrStore = freshStore;
+        this.zarrGroup = freshGroup;
+        this.numRows = newNumRows;
+        if (String2.isSomething(targetRowDimName)) {
+          this.rowDimensionName = targetRowDimName;
+        }
+
+        if (newTimeEndIso != null) {
+          combinedGlobalAttributes.set(language, "time_coverage_end", newTimeEndIso);
+          String timeStartStr =
+              combinedGlobalAttributes.getString(language, "time_coverage_start");
+          if (timeStartStr != null) {
+            timeStartSec = Calendar2.isoStringToEpochSeconds(timeStartStr);
+            if (!Double.isNaN(timeStartSec)
+                && !Double.isNaN(newTimeEndSec)
+                && newTimeEndSec >= timeStartSec) {
+              long durationIntSec = Math.round(newTimeEndSec - timeStartSec);
+              combinedGlobalAttributes.set(
+                  language, "time_coverage_duration", "PT" + durationIntSec + "S");
+            }
+          }
+        }
+      }
+
+      if (oldStore != null && oldStore != freshStore) {
+        if (oldStore instanceof AutoCloseable ac) {
+          try {
+            ac.close();
+          } catch (Throwable ignore) {
+          }
+        }
+      }
+
+      if (verbose) {
+        String2.log(
+            msg
+                + "EDDTableFromZarr.lowUpdate: Successfully updated dataset '"
+                + datasetID
+                + "' row count to "
+                + newNumRows
+                + " rows.");
+      }
+
+      return true;
+
+    } catch (Throwable t) {
+      String2.log(msg + " Error during lowUpdate: " + MustBe.throwableToString(t));
+      return false;
+    } finally {
+      if (freshStore != null && freshStore != this.zarrStore) {
+        if (freshStore instanceof AutoCloseable ac) {
+          try {
+            ac.close();
+          } catch (Throwable ignore) {
+          }
+        }
+      }
+    }
   }
 
   // Getters for configuration and state
