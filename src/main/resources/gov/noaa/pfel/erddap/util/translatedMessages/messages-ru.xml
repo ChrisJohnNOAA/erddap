@@ -2692,6 +2692,22 @@ tabledap использует
 Осуществляется поиск значений axisVariable [0].
 
 ---</EDDTableFromEDDGridSummary>
+<EDDTableApplyConstraintHtml><![CDATA[
+Применять <br> Ограничение
+
+]]></EDDTableApplyConstraintHtml>
+<EDDTableApplyConstraintTooltip><![CDATA[
+Проверьте, чтобы применить дополнительные ограничения для этой переменной, или отмените проверку, чтобы пропустить их.
+
+]]></EDDTableApplyConstraintTooltip>
+<EDDTableCheckAllConstraintsTooltip><![CDATA[
+Проверьте все галочки Apply Constraint.
+
+]]></EDDTableCheckAllConstraintsTooltip>
+<EDDTableUncheckAllConstraintsTooltip><![CDATA[
+Отключите все контрольные коробки Apply Constraint.
+
+]]></EDDTableUncheckAllConstraintsTooltip>
 <EDDTableOptConstraint1Html><![CDATA[
 По желанию
 <br>Ограничение №1

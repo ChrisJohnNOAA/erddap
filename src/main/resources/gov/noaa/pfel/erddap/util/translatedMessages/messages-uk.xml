@@ -2772,6 +2772,22 @@ tabledap використовує
 Пошук значень axisVariable[0].
 
 ---</EDDTableFromEDDGridSummary>
+<EDDTableApplyConstraintHtml><![CDATA[
+Застосувати <br> Концентрат
+
+]]></EDDTableApplyConstraintHtml>
+<EDDTableApplyConstraintTooltip><![CDATA[
+Перевірте, щоб застосувати додаткові обмеження для цієї змінної, або пропустити їх.
+
+]]></EDDTableApplyConstraintTooltip>
+<EDDTableCheckAllConstraintsTooltip><![CDATA[
+Перевірити всі Застосувати прапорці.
+
+]]></EDDTableCheckAllConstraintsTooltip>
+<EDDTableUncheckAllConstraintsTooltip><![CDATA[
+Зніміть всі нанесіть прапорці обмеження.
+
+]]></EDDTableUncheckAllConstraintsTooltip>
 <EDDTableOptConstraint1Html><![CDATA[
 Додатково
 <br>Обмеження №1

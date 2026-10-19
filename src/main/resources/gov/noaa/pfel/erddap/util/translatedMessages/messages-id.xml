@@ -2745,6 +2745,22 @@ apa axisVariable[0] (biasanya &quot;waktu&quot;) sehingga datanya tidak lebih da
 nilai axisVariable[0] dicari.
 
 ---</EDDTableFromEDDGridSummary>
+<EDDTableApplyConstraintHtml><![CDATA[
+Sitemap <br> Login
+
+]]></EDDTableApplyConstraintHtml>
+<EDDTableApplyConstraintTooltip><![CDATA[
+Periksa untuk menerapkan batasan opsional untuk variabel ini, atau uncheck untuk melewatkannya.
+
+]]></EDDTableApplyConstraintTooltip>
+<EDDTableCheckAllConstraintsTooltip><![CDATA[
+Cek semua Terapkan kotak centang Constraint.
+
+]]></EDDTableCheckAllConstraintsTooltip>
+<EDDTableUncheckAllConstraintsTooltip><![CDATA[
+Periksa semua Terapkan kotak cek Constraint.
+
+]]></EDDTableUncheckAllConstraintsTooltip>
 <EDDTableOptConstraint1Html><![CDATA[
 Opsional
 <br>Batasan #1

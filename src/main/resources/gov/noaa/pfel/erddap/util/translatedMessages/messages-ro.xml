@@ -2595,6 +2595,22 @@ ce a fost axisVariable[0] (de obicei „timp”), astfel încât datele pentru n
 Sunt căutate valorile axisVariable[0].
 
 ---</EDDTableFromEDDGridSummary>
+<EDDTableApplyConstraintHtml><![CDATA[
+Aplicare <br> Constrângere
+
+]]></EDDTableApplyConstraintHtml>
+<EDDTableApplyConstraintTooltip><![CDATA[
+Verificați să aplicați constrângerile opționale pentru această variabilă sau să nu le verificați.
+
+]]></EDDTableApplyConstraintTooltip>
+<EDDTableCheckAllConstraintsTooltip><![CDATA[
+Verificați toate caseta de verificare Aplicați Constrângerea.
+
+]]></EDDTableCheckAllConstraintsTooltip>
+<EDDTableUncheckAllConstraintsTooltip><![CDATA[
+@ info: whatsthis
+
+]]></EDDTableUncheckAllConstraintsTooltip>
 <EDDTableOptConstraint1Html><![CDATA[
 Opțional
 <br>Constrângerea #1

@@ -2839,6 +2839,22 @@ sin embargo, si consulta cualquiera de las variables de datos originales, debe r
 Se buscan los valores de axisVariable[0].
 
 ---</EDDTableFromEDDGridSummary>
+<EDDTableApplyConstraintHtml><![CDATA[
+Aplicar <br> Constraint
+
+]]></EDDTableApplyConstraintHtml>
+<EDDTableApplyConstraintTooltip><![CDATA[
+Compruebe para aplicar las restricciones opcionales para esta variable, o desmarque para saltar.
+
+]]></EDDTableApplyConstraintTooltip>
+<EDDTableCheckAllConstraintsTooltip><![CDATA[
+Verifique todas las casillas de verificación Apply Constraint.
+
+]]></EDDTableCheckAllConstraintsTooltip>
+<EDDTableUncheckAllConstraintsTooltip><![CDATA[
+Desmarque todas las casillas de verificación Apply Constraint.
+
+]]></EDDTableUncheckAllConstraintsTooltip>
 <EDDTableOptConstraint1Html><![CDATA[
 Opcional
 <br>Restricción n.º 1
