@@ -51,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
@@ -72,10 +73,10 @@ public class EDDTableFromZarr extends EDDTable {
   private String awsEndpoint;
   private String cacheFromUrl;
 
-  private Store zarrStore;
-  private Group zarrGroup;
-  private long numRows = -1;
-  private final Object zarrLock = new Object();
+  private volatile Store zarrStore;
+  private volatile Group zarrGroup;
+  private volatile long numRows = -1;
+  private final ReentrantReadWriteLock zarrLock = new ReentrantReadWriteLock();
 
   /**
    * Static factory method to construct an EDDTableFromZarr dataset from an XML configuration.
@@ -1335,9 +1336,16 @@ public class EDDTableFromZarr extends EDDTable {
     StringArray[] constraintVarsAndOps =
         new StringArray[] {constraintVariables, constraintOps, constraintValues};
 
-    // Capture active group and numRows to ensure thread-safe snapshot during lowUpdate swaps
-    Group activeGroup = this.zarrGroup;
-    long activeNumRows = this.numRows;
+    // Capture active group and numRows under read lock to ensure thread-safe snapshot during lowUpdate swaps
+    Group activeGroup;
+    long activeNumRows;
+    zarrLock.readLock().lock();
+    try {
+      activeGroup = this.zarrGroup;
+      activeNumRows = this.numRows;
+    } finally {
+      zarrLock.readLock().unlock();
+    }
 
     // Map source array names to Array handles
     Map<String, Array> zarrArrayMap = new LinkedHashMap<>();
@@ -1998,7 +2006,8 @@ public class EDDTableFromZarr extends EDDTable {
       }
 
       Store oldStore = null;
-      synchronized (zarrLock) {
+      zarrLock.writeLock().lock();
+      try {
         oldStore = this.zarrStore;
         this.zarrStore = freshStore;
         this.zarrGroup = freshGroup;
@@ -2022,6 +2031,8 @@ public class EDDTableFromZarr extends EDDTable {
             }
           }
         }
+      } finally {
+        zarrLock.writeLock().unlock();
       }
 
       if (oldStore != null && oldStore != freshStore) {

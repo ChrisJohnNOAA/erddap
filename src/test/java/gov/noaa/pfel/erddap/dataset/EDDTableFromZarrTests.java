@@ -1514,4 +1514,154 @@ class EDDTableFromZarrTests {
       File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
+
+  @Test
+  void testLowUpdateConcurrentQuery() throws Throwable {
+    Initialization.edStatic();
+    Path tempDir = Files.createTempDirectory("zarr_table_concurrent_query_test");
+    try {
+      dev.zarr.zarrjava.store.FilesystemStore store =
+          new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
+      dev.zarr.zarrjava.v3.Group.create(store.resolve());
+
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.core.Attributes timeZattrs = new dev.zarr.zarrjava.core.Attributes();
+      timeZattrs.set("units", "seconds since 1970-01-01T00:00:00Z");
+      timeZattrs.set("standard_name", "time");
+
+      // Initial state: N = 3 rows
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb ->
+                  mb.withShape(3)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(timeZattrs),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {100.0, 101.0, 102.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("salinity"),
+              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {35.0, 35.1, 35.2}));
+
+      LocalizedAttributes globalAtts = new LocalizedAttributes();
+      globalAtts.set(0, "title", "Concurrent Query Test");
+      globalAtts.set(0, "summary", "Test lowUpdate concurrent queries");
+      globalAtts.set(0, "institution", "NOAA");
+      globalAtts.set(0, "infoUrl", "https://example.org");
+      globalAtts.set(0, "cdm_data_type", "Other");
+
+      EDDTableFromZarr dataset =
+          new EDDTableFromZarr(
+              "concurrent_query_test",
+              null,
+              null,
+              new StringArray(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              globalAtts,
+              null, // auto-discovery
+              60,
+              tempDir.toString(),
+              "",
+              "obs",
+              -1,
+              null,
+              null);
+
+      // Append rows in store to N = 5 rows before starting concurrent workers
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb ->
+                  mb.withShape(5)
+                      .withDataType(float64)
+                      .withDimensionNames("obs")
+                      .withAttributes(timeZattrs),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
+
+      dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("salinity"),
+              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
+              true)
+          .write(
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE,
+                  new int[] {5},
+                  new double[] {35.0, 35.1, 35.2, 35.3, 35.4}));
+
+      // Launch concurrent query workers
+      int numThreads = 4;
+      java.util.concurrent.ExecutorService executor =
+          java.util.concurrent.Executors.newFixedThreadPool(numThreads);
+      java.util.concurrent.atomic.AtomicBoolean running =
+          new java.util.concurrent.atomic.AtomicBoolean(true);
+      java.util.concurrent.atomic.AtomicInteger queryErrorCount =
+          new java.util.concurrent.atomic.AtomicInteger(0);
+
+      for (int i = 0; i < numThreads; i++) {
+        final int threadIdx = i;
+        executor.submit(
+            () -> {
+              int queryNum = 0;
+              while (running.get()) {
+                try {
+                  TableWriterAllWithMetadata tw =
+                      new TableWriterAllWithMetadata(
+                          0,
+                          dataset,
+                          "",
+                          dataset.cacheDirectory(),
+                          "concurrent_" + threadIdx + "_" + (queryNum++) + ".twawm");
+                  dataset.getDataForDapQuery(0, null, "", "time,salinity", tw);
+                  Table t = tw.cumulativeTable();
+                  if (t == null || (t.nRows() != 3 && t.nRows() != 5)) {
+                    com.cohort.util.String2.log(
+                        "Unexpected nRows in concurrent test: " + (t == null ? "null" : t.nRows()));
+                    queryErrorCount.incrementAndGet();
+                  }
+                } catch (Throwable ex) {
+                  com.cohort.util.String2.log(
+                      "Exception in concurrent test query: "
+                          + com.cohort.util.MustBe.throwableToString(ex));
+                  queryErrorCount.incrementAndGet();
+                }
+              }
+            });
+      }
+
+      Thread.sleep(100);
+
+      // Invoke lowUpdate while concurrent query workers are executing
+      boolean updated =
+          dataset.lowUpdate(0, "testLowUpdateConcurrentQuery: ", System.currentTimeMillis());
+      assertTrue(updated, "lowUpdate should succeed during concurrent queries");
+
+      Thread.sleep(100);
+      running.set(false);
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS));
+
+      assertEquals(0, queryErrorCount.get(), "Concurrent queries should encounter 0 errors");
+      assertEquals(5, dataset.numRows());
+
+    } finally {
+      File2.deleteAllFiles(tempDir.toString(), true, true);
+    }
+  }
 }
