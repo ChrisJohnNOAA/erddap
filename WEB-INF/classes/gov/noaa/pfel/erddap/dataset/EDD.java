@@ -568,7 +568,7 @@ public abstract class EDD {
             .enableMethodInfo()
             .acceptPackages(FileTypeInterface.class.getPackageName())
             .scan()) {
-      return scanResult.getAllClassesImplementing(FileTypeInterface.class).stream()
+      return scanResult.getAllSubclasses(FileTypeInterface.class).stream()
           .filter(c -> !c.isAbstract())
           .filter(c -> c.hasAnnotation(FileTypeClass.class.getName()))
           .collect(
