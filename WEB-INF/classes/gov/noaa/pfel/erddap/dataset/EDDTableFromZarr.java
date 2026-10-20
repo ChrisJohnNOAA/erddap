@@ -1891,10 +1891,17 @@ public class EDDTableFromZarr extends EDDTable {
           if (dimArrInfo != null && dimArrInfo.shape != null && dimArrInfo.shape.length > 0) {
             newNumRowsL = dimArrInfo.shape[0];
           }
+        } else {
+          if (reallyVerbose) {
+            String2.log(
+                msg
+                    + "EDDTableFromZarr.lowUpdate: Configured row dimension '"
+                    + targetRowDimName
+                    + "' not found in fresh store. Deferring update.");
+          }
+          return false;
         }
-      }
-
-      if (newNumRowsL < 0) {
+      } else {
         String[] standardCandidates = new String[] {"obs", "row", "time", "index", "record", "i"};
         for (String cand : standardCandidates) {
           if (dimToSizeMap.containsKey(cand)) {
@@ -1903,27 +1910,27 @@ public class EDDTableFromZarr extends EDDTable {
             break;
           }
         }
-      }
 
-      if (newNumRowsL < 0 && !dimToSizeMap.isEmpty()) {
-        String dominantDim = null;
-        int maxFreq = -1;
-        for (Map.Entry<String, Integer> entry : dimFrequencyMap.entrySet()) {
-          if (entry.getValue() > maxFreq) {
-            maxFreq = entry.getValue();
-            dominantDim = entry.getKey();
+        if (newNumRowsL < 0 && !dimToSizeMap.isEmpty()) {
+          String dominantDim = null;
+          int maxFreq = -1;
+          for (Map.Entry<String, Integer> entry : dimFrequencyMap.entrySet()) {
+            if (entry.getValue() > maxFreq) {
+              maxFreq = entry.getValue();
+              dominantDim = entry.getKey();
+            }
+          }
+          if (dominantDim != null) {
+            targetRowDimName = dominantDim;
+            newNumRowsL = dimToSizeMap.get(dominantDim);
           }
         }
-        if (dominantDim != null) {
-          targetRowDimName = dominantDim;
-          newNumRowsL = dimToSizeMap.get(dominantDim);
-        }
-      }
 
-      if (newNumRowsL < 0 && !array1DLengthMap.isEmpty()) {
-        Map.Entry<String, Long> first1D = array1DLengthMap.entrySet().iterator().next();
-        targetRowDimName = "obs";
-        newNumRowsL = first1D.getValue();
+        if (newNumRowsL < 0 && !array1DLengthMap.isEmpty()) {
+          Map.Entry<String, Long> first1D = array1DLengthMap.entrySet().iterator().next();
+          targetRowDimName = "obs";
+          newNumRowsL = first1D.getValue();
+        }
       }
 
       if (newNumRowsL <= 0) {
