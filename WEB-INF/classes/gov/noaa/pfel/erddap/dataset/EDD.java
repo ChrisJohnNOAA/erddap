@@ -541,15 +541,30 @@ public abstract class EDD {
   }
 
   /**
+   * Helper method to load a class by name using the context ClassLoader.
+   */
+  @SuppressWarnings("unchecked")
+  private static <T> Class<T> loadClass(
+      ClassInfo classInfo, Class<T> superType, ClassLoader webappClassLoader) {
+    try {
+      return (Class<T>) Class.forName(classInfo.getName(), false, webappClassLoader);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Failed to load class " + classInfo.getName(), e);
+    }
+  }
+
+  /**
    * Scan classpath for concrete/non-abstract EDD subclasses in package gov.noaa.pfel.erddap.dataset
    * and store metadata for each discovered subclass in map of EDDClassInfo objects.
    */
   private static final Map<String, EDDFileTypeInfo> initEddFileTypeInfoMap() {
     String2.log("Scanning FileType classes in package " + FileTypeInterface.class.getPackageName());
+    ClassLoader webappClassLoader = Thread.currentThread().getContextClassLoader();
     try (ScanResult scanResult =
         new ClassGraph()
-            .enableAnnotationInfo()
+            .addClassLoader(webappClassLoader)
             .enableClassInfo()
+            .enableAnnotationInfo()
             .enableMethodInfo()
             .acceptPackages(FileTypeInterface.class.getPackageName())
             .scan()) {
@@ -561,7 +576,7 @@ public abstract class EDD {
                   classInfo -> getFileTypeName(classInfo),
                   classInfo ->
                       new EDDFileTypeInfo(
-                          classInfo.loadClass(FileTypeInterface.class),
+                          loadClass(classInfo, FileTypeInterface.class, webappClassLoader),
                           classInfo.getAnnotationInfo(FileTypeClass.class))));
     }
   }
@@ -603,10 +618,12 @@ public abstract class EDD {
    */
   private static final Map<String, EDDClassInfo> initEddClassInfoMap() {
     String2.log("Scanning EDD classes in package " + EDD.class.getPackageName());
+    ClassLoader webappClassLoader = Thread.currentThread().getContextClassLoader();
     try (ScanResult scanResult =
         new ClassGraph()
-            .enableAnnotationInfo()
+            .addClassLoader(webappClassLoader)
             .enableClassInfo()
+            .enableAnnotationInfo()
             .enableMethodInfo()
             .acceptPackages(EDD.class.getPackageName())
             .scan()) {
@@ -617,9 +634,9 @@ public abstract class EDD {
                   ClassInfo::getSimpleName,
                   classInfo ->
                       new EDDClassInfo(
-                          classInfo.loadClass(EDD.class),
+                          loadClass(classInfo, EDD.class, webappClassLoader),
                           getFromXmlMethod(classInfo),
-                          getSaxHandler(classInfo))));
+                          getSaxHandler(classInfo, webappClassLoader))));
     }
   }
 
@@ -629,7 +646,8 @@ public abstract class EDD {
    * @param eddClassInfo the ClassInfo object to check
    * @return Optional of a State subclass
    */
-  private static final Optional<Class<State>> getSaxHandler(ClassInfo classInfo) {
+  private static final Optional<Class<State>> getSaxHandler(
+      ClassInfo classInfo, ClassLoader webappClassLoader) {
     return Stream.of(classInfo.getAnnotationInfo(SaxHandlerClass.class))
         .filter(Objects::nonNull)
         .map(AnnotationInfo::getParameterValues)
@@ -637,7 +655,17 @@ public abstract class EDD {
         .filter(Objects::nonNull)
         .map(annotationParameterValue -> (AnnotationClassRef) annotationParameterValue.getValue())
         .filter(Objects::nonNull)
-        .map(annotationClassRef -> (Class<State>) annotationClassRef.loadClass())
+        .map(
+            annotationClassRef -> {
+              try {
+                @SuppressWarnings("unchecked")
+                Class<State> clazz =
+                    (Class<State>) Class.forName(annotationClassRef.getName(), false, webappClassLoader);
+                return clazz;
+              } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+              }
+            })
         .filter(Objects::nonNull)
         .findFirst();
   }
