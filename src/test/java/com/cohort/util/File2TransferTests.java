@@ -175,4 +175,21 @@ public class File2TransferTests {
     assertFalse(ok, "Inverted range (first > last) should return false");
     assertEquals(0, out.size());
   }
+
+  /**
+   * Verifies that File2.copy can overwrite an existing non-empty file with a 0-byte file
+   * by truncating it without throwing FileAlreadyExistsException.
+   */
+  @Test
+  public void testFile2CopyOverwriteWithZeroByteFile() throws Exception {
+    Path emptySrc = tempDir.resolve("empty_src.dat");
+    Path dst = tempDir.resolve("existing_dst.dat");
+
+    Files.write(emptySrc, new byte[0]);
+    Files.write(dst, "existing content to be truncated".getBytes());
+
+    boolean ok = File2.copy(emptySrc.toString(), dst.toString(), 0, -1);
+    assertTrue(ok, "Overwriting existing file with 0-byte file should succeed");
+    assertEquals(0, Files.size(dst), "Destination file should be truncated to 0 bytes");
+  }
 }

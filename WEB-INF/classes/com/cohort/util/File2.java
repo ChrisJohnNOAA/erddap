@@ -2118,8 +2118,8 @@ public class File2 {
 
         // Range boundary validation
         if (fileSize == 0 && first == 0) {
-          Files.createFile(destPath);
-          return true; // Legitimate 0-byte file copy
+          Files.write(destPath, new byte[0]);
+          return true; // Legitimate 0-byte file copy (creates or truncates)
         }
         if (first > fileSize || (fileSize > 0 && first >= fileSize)) {
           return false; // Out-of-bounds start position; destination file must not exist
