@@ -59,7 +59,6 @@ import io.github.classgraph.AnnotationClassRef;
 import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
-import io.github.classgraph.MethodInfo;
 import io.github.classgraph.ScanResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -82,7 +81,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,7 +88,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -540,9 +537,7 @@ public abstract class EDD {
         .toList();
   }
 
-  /**
-   * Helper method to load a class by name using the context ClassLoader.
-   */
+  /** Helper method to load a class by name using the context ClassLoader. */
   @SuppressWarnings("unchecked")
   private static <T> Class<T> loadClass(
       ClassInfo classInfo, Class<T> superType, ClassLoader webappClassLoader) {
