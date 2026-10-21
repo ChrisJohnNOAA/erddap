@@ -2109,26 +2109,20 @@ public class File2 {
     String destBro[] = String2.parseAwsS3Url(destination);
 
     // Fast-path zero-copy OS kernel transfer for uncompressed local files
-    if (sourceBro == null && destBro == null && !isDecompressible(getExtension(source))) {
+    if (sourceBro == null && destBro == null && !isDecompressible(getExtension(source)) && File2.isFile(source)) {
       Path sourcePath = Paths.get(source);
       Path destPath = Paths.get(destination);
 
-      try (FileChannel srcChannel = FileChannel.open(sourcePath, StandardOpenOption.READ);
-          FileChannel destChannel =
-              FileChannel.open(
-                  destPath,
-                  StandardOpenOption.CREATE,
-                  StandardOpenOption.WRITE,
-                  StandardOpenOption.TRUNCATE_EXISTING)) {
-
+      try (FileChannel srcChannel = FileChannel.open(sourcePath, StandardOpenOption.READ)) {
         long fileSize = srcChannel.size();
 
         // Range boundary validation
         if (fileSize == 0 && first == 0) {
+          Files.createFile(destPath);
           return true; // Legitimate 0-byte file copy
         }
-        if (first > fileSize || (fileSize > 0 && first == fileSize)) {
-          return false; // Out-of-bounds start position
+        if (first > fileSize || (fileSize > 0 && first >= fileSize)) {
+          return false; // Out-of-bounds start position; destination file must not exist
         }
 
         long start = Math.max(0, first);
@@ -2136,18 +2130,26 @@ public class File2 {
         long count = (last < 0) ? maxAvailable : Math.min(last - start + 1, maxAvailable);
         if (count <= 0) return false;
 
-        long transferred = 0;
-        long chunkSize = 32 * 1024 * 1024L; // 32 MB chunks
-        while (transferred < count) {
-          long bytesToTransfer = Math.min(count - transferred, chunkSize);
-          long bytes = srcChannel.transferTo(start + transferred, bytesToTransfer, destChannel);
-          if (bytes <= 0) {
-            throw new IOException(
-                "Incomplete transfer: transferTo returned " + bytes + " after " + transferred + " of " + count + " bytes.");
+        try (FileChannel destChannel =
+            FileChannel.open(
+                destPath,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING)) {
+
+          long transferred = 0;
+          long chunkSize = 32 * 1024 * 1024L; // 32 MB chunks
+          while (transferred < count) {
+            long bytesToTransfer = Math.min(count - transferred, chunkSize);
+            long bytes = srcChannel.transferTo(start + transferred, bytesToTransfer, destChannel);
+            if (bytes <= 0) {
+              throw new IOException(
+                  "Incomplete transfer: transferTo returned " + bytes + " after " + transferred + " of " + count + " bytes.");
+            }
+            transferred += bytes;
           }
-          transferred += bytes;
+          return true;
         }
-        return true;
       } catch (Exception e) {
         String2.log(String2.ERROR + " in File2.copy (FileChannel) source=" + source + "\n" + e);
         delete(destination);
@@ -2209,6 +2211,9 @@ public class File2 {
    * @return true if successful.
    */
   public static boolean copy(InputStream in, OutputStream out, long first, long last) {
+    if (first < 0 || (last >= 0 && first > last)) {
+      return false;
+    }
     byte[] buffer = new byte[COPY_BUFFER_SIZE];
     long remain = (last < 0) ? Long.MAX_VALUE : (1 + last - first);
 

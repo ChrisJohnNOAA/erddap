@@ -13905,11 +13905,17 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
         // Standard range: "bytes=0-1023" or open-ended "bytes=1024-"
         first = String2.parseLong(s.substring(6, dash));
         String lastStr = s.substring(dash + 1);
-        long parsedLast = lastStr.isEmpty() ? (fileSize >= 0 ? fileSize - 1 : -1) : String2.parseLong(lastStr);
-        if (parsedLast == Long.MAX_VALUE) {
-          parsedLast = fileSize >= 0 ? fileSize - 1 : -1;
+        if (lastStr.isEmpty()) {
+          last = fileSize >= 0 ? fileSize - 1 : -1;
+        } else {
+          last = String2.parseLong(lastStr);
+          if (last < 0 || last == Long.MAX_VALUE) {
+            if (verbose) String2.log("doTransfer invalid last byte in range: " + s);
+            response.setHeader("Content-Range", "bytes */" + (fileSize >= 0 ? fileSize : "*"));
+            throw new SimpleException(
+                EDStatic.REQUESTED_RANGE_NOT_SATISFIABLE + "Invalid last byte position in Range header.");
+          }
         }
-        last = parsedLast;
       }
 
       // Speculative range request: if last >= fileSize, clamp to fileSize - 1 per RFC 9110 §14.1.2
@@ -13939,12 +13945,20 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
                 + last);
       }
 
-      response.setStatus(206); // 206 = Partial Content
-      String value = "bytes " + first + "-" + (last >= 0 ? last : "") + "/" + (fileSize >= 0 ? "" + fileSize : "*");
-      response.setHeader("Content-Range", value);
-      if (last >= 0) {
-        response.setContentLengthLong(1 + last - first);
+      if (last < 0) {
+        if (fileSize < 0) {
+          response.setHeader("Content-Range", "bytes */*");
+          throw new SimpleException(
+              EDStatic.REQUESTED_RANGE_NOT_SATISFIABLE
+                  + "Invalid Range requested: last byte not specified, but file size isn't known for remote files.");
+        }
+        last = fileSize - 1;
       }
+
+      response.setStatus(206); // 206 = Partial Content
+      String value = "bytes " + first + "-" + last + "/" + (fileSize >= 0 ? "" + fileSize : "*");
+      response.setHeader("Content-Range", value);
+      response.setContentLengthLong(1 + last - first);
 
     } else {
       // Not a range request
