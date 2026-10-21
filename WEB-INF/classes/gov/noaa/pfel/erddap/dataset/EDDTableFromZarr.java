@@ -1356,107 +1356,102 @@ public class EDDTableFromZarr extends EDDTable {
     StringArray[] constraintVarsAndOps =
         new StringArray[] {constraintVariables, constraintOps, constraintValues};
 
-    // Capture active group, numRows, and metadataMap under read lock to avoid redundant network reads
-    Group activeGroup;
-    long activeNumRows;
-    Map<String, ZarrArrayInfo> cachedMetadataMap;
+    // Hold read lock across entire query execution to ensure oldStore is not closed mid-read
     zarrLock.readLock().lock();
     try {
-      activeGroup = this.zarrGroup;
-      activeNumRows = this.numRows;
-      cachedMetadataMap = this.zarrArrayInfoMap;
-    } finally {
-      zarrLock.readLock().unlock();
-    }
+      Group activeGroup = this.zarrGroup;
+      long activeNumRows = this.numRows;
+      Map<String, ZarrArrayInfo> metadataMap =
+          this.zarrArrayInfoMap != null ? this.zarrArrayInfoMap : parseZarrMetadata(activeGroup);
 
-    Map<String, ZarrArrayInfo> metadataMap =
-        cachedMetadataMap != null ? cachedMetadataMap : parseZarrMetadata(activeGroup);
-
-    // Map source array names to Array handles
-    Map<String, Array> zarrArrayMap = new LinkedHashMap<>();
-    for (EDV edv : dataVariables) {
-      if (edv != null) {
-        String sName = edv.sourceName();
-        ZarrArrayInfo info = metadataMap.get(sName);
-        if (info == null && activeGroup != null) {
-          info = getOrOpenZarrArrayInfo(activeGroup, sName, metadataMap);
-        }
-        if (info != null && info.array != null) {
-          zarrArrayMap.put(sName, info.array);
-        }
-      }
-    }
-
-    // 2. Determine chunk batch size along main row dimension
-    int chunkSize = 10000; // default buffer size
-    if (metadataMap != null && !metadataMap.isEmpty()) {
-      for (ZarrArrayInfo info : metadataMap.values()) {
-        if (info != null && info.chunkShape != null && info.chunkShape.length > 0) {
-          int c0 = info.chunkShape[0];
-          if (c0 > 0) {
-            chunkSize = c0;
-            break;
+      // Map source array names to Array handles
+      Map<String, Array> zarrArrayMap = new LinkedHashMap<>();
+      for (EDV edv : dataVariables) {
+        if (edv != null) {
+          String sName = edv.sourceName();
+          ZarrArrayInfo info = metadataMap.get(sName);
+          if (info == null && activeGroup != null) {
+            info = getOrOpenZarrArrayInfo(activeGroup, sName, metadataMap);
+          }
+          if (info != null && info.array != null) {
+            zarrArrayMap.put(sName, info.array);
           }
         }
       }
-    }
-    if (chunkSize < 100) chunkSize = 100;
-    if (chunkSize > 100000) chunkSize = 100000;
 
-    long totalMatchingRows = 0;
-    Table cumulativeBatchTable = null;
+      // 2. Determine chunk batch size along main row dimension
+      int chunkSize = 10000; // default buffer size
+      if (metadataMap != null && !metadataMap.isEmpty()) {
+        for (ZarrArrayInfo info : metadataMap.values()) {
+          if (info != null && info.chunkShape != null && info.chunkShape.length > 0) {
+            int c0 = info.chunkShape[0];
+            if (c0 > 0) {
+              chunkSize = c0;
+              break;
+            }
+          }
+        }
+      }
+      if (chunkSize < 100) chunkSize = 100;
+      if (chunkSize > 100000) chunkSize = 100000;
 
-    // 3. Main chunk scanning loop over dataset rows
-    for (long startRow = 0; startRow < activeNumRows; startRow += chunkSize) {
-      int currentChunkSize = (int) Math.min(chunkSize, activeNumRows - startRow);
+      long totalMatchingRows = 0;
+      Table cumulativeBatchTable = null;
 
-      // Pass 1: Evaluate constraints against chunk data
-      BitSet rowMask =
-          evaluateChunkConstraints(
-              startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap, activeGroup);
+      // 3. Main chunk scanning loop over dataset rows
+      for (long startRow = 0; startRow < activeNumRows; startRow += chunkSize) {
+        int currentChunkSize = (int) Math.min(chunkSize, activeNumRows - startRow);
 
-      int cardinal = rowMask.cardinality();
-      if (cardinal == 0) {
-        continue;
+        // Pass 1: Evaluate constraints against chunk data
+        BitSet rowMask =
+            evaluateChunkConstraints(
+                startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap, activeGroup);
+
+        int cardinal = rowMask.cardinality();
+        if (cardinal == 0) {
+          continue;
+        }
+
+        totalMatchingRows += cardinal;
+
+        // Pass 2: Extract requested variable row batch
+        Table batchTable =
+            extractRowBatch(
+                startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap, activeGroup);
+
+        if (cumulativeBatchTable == null) {
+          cumulativeBatchTable = batchTable;
+        } else {
+          cumulativeBatchTable.append(batchTable);
+        }
+
+        // Stream sub-table batch into tableWriter if buffer size threshold met.
+        // Note: writeChunkToTableWriter calls standardizeResultsTable, which converts
+        // source column names to destination names and re-orders columns to match the query.
+        if (writeChunkToTableWriter(
+            language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, false)) {
+          cumulativeBatchTable = null;
+        }
       }
 
-      totalMatchingRows += cardinal;
-
-      // Pass 2: Extract requested variable row batch
-      Table batchTable =
-          extractRowBatch(
-              startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap, activeGroup);
-
-      if (cumulativeBatchTable == null) {
-        cumulativeBatchTable = batchTable;
+      // 4. Handle empty results or finalize tableWriter
+      if (totalMatchingRows == 0) {
+        Table emptyTable = new Table();
+        for (String varName : requestedVarNames) {
+          EDV edv = findEDV(varName);
+          PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
+          emptyTable.addColumn(
+              edv != null ? edv.sourceName() : varName, PrimitiveArray.factory(paType, 0, false));
+        }
+        writeChunkToTableWriter(language, requestUrl, userDapQuery, emptyTable, tableWriter, true);
+      } else if (cumulativeBatchTable != null) {
+        writeChunkToTableWriter(
+            language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, true);
       } else {
-        cumulativeBatchTable.append(batchTable);
+        tableWriter.finish();
       }
-
-      // Stream sub-table batch into tableWriter if buffer size threshold met.
-      // Note: writeChunkToTableWriter calls standardizeResultsTable, which converts
-      // source column names to destination names and re-orders columns to match the query.
-      if (writeChunkToTableWriter(
-          language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, false)) {
-        cumulativeBatchTable = null;
-      }
-    }
-
-    // 4. Handle empty results or finalize tableWriter
-    if (totalMatchingRows == 0) {
-      Table emptyTable = new Table();
-      for (String varName : requestedVarNames) {
-        EDV edv = findEDV(varName);
-        PAType paType = edv != null ? edv.sourceDataPAType() : PAType.DOUBLE;
-        emptyTable.addColumn(
-            edv != null ? edv.sourceName() : varName, PrimitiveArray.factory(paType, 0, false));
-      }
-      writeChunkToTableWriter(language, requestUrl, userDapQuery, emptyTable, tableWriter, true);
-    } else if (cumulativeBatchTable != null) {
-      writeChunkToTableWriter(
-          language, requestUrl, userDapQuery, cumulativeBatchTable, tableWriter, true);
-    } else {
-      tableWriter.finish();
+    } finally {
+      zarrLock.readLock().unlock();
     }
   }
 
@@ -1731,7 +1726,11 @@ public class EDDTableFromZarr extends EDDTable {
 
     // Handle missing or unwritten Zarr array
     if (zarray == null || info == null) {
-      return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+      PrimitiveArray missingPa = makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+      if (unpackToDestination && edv != null) {
+        missingPa = edv.toDestination(missingPa);
+      }
+      return missingPa;
     }
 
     boolean isUnsigned = false;
@@ -1757,7 +1756,7 @@ public class EDDTableFromZarr extends EDDTable {
         PAOne scalarVal = scalarPa.getPAOne(0);
         broadcastPa.addNPAOnes(currentChunkSize, scalarVal);
       } else {
-        return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+        broadcastPa = makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
       }
       if (unpackToDestination && edv != null) {
         broadcastPa = edv.toDestination(broadcastPa);
@@ -1912,10 +1911,10 @@ public class EDDTableFromZarr extends EDDTable {
       }
 
       if (nc2Array == null) {
-        return makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+        pa = makeMissingPrimitiveArray(paType, currentChunkSize, info, edv);
+      } else {
+        pa = NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned);
       }
-
-      pa = NcHelper.getPrimitiveArray(nc2Array, true, isUnsigned);
     }
 
     if (unpackToDestination) {

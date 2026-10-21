@@ -1260,11 +1260,12 @@ class EDDTableFromZarrTests {
       timeZattrs.set("units", "seconds since 1970-01-01T00:00:00Z");
       timeZattrs.set("standard_name", "time");
 
-      // Initial state: N = 3 rows
+      // Initial state: N = 3 rows with chunkShape = 3
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
               mb ->
                   mb.withShape(3)
+                      .withChunkShape(3)
                       .withDataType(float64)
                       .withDimensionNames("obs")
                       .withAttributes(timeZattrs),
@@ -1291,7 +1292,7 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("salinity"),
-              mb -> mb.withShape(3).withDataType(float64).withDimensionNames("obs"),
+              mb -> mb.withShape(3).withChunkShape(3).withDataType(float64).withDimensionNames("obs"),
               true)
           .write(
               ucar.ma2.Array.factory(
@@ -1580,30 +1581,39 @@ class EDDTableFromZarrTests {
               null,
               null);
 
-      // Append rows in store to N = 5 rows before starting concurrent workers
-      dev.zarr.zarrjava.v3.Array.create(
+      // Append rows in store to N = 5 rows with chunkShape = 3 (chunk 0 = 3 rows, chunk 1 = 2 rows)
+      dev.zarr.zarrjava.v3.Array timeArr =
+          dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
               mb ->
                   mb.withShape(5)
+                      .withChunkShape(3)
                       .withDataType(float64)
                       .withDimensionNames("obs")
                       .withAttributes(timeZattrs),
-              true)
-          .write(
-              ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE,
-                  new int[] {5},
-                  new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
+              true);
+      timeArr.write(
+          new long[] {0},
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {100.0, 101.0, 102.0}));
+      timeArr.write(
+          new long[] {3},
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {103.0, 104.0}));
 
-      dev.zarr.zarrjava.v3.Array.create(
+      dev.zarr.zarrjava.v3.Array salArr =
+          dev.zarr.zarrjava.v3.Array.create(
               store.resolve("salinity"),
-              mb -> mb.withShape(5).withDataType(float64).withDimensionNames("obs"),
-              true)
-          .write(
-              ucar.ma2.Array.factory(
-                  ucar.ma2.DataType.DOUBLE,
-                  new int[] {5},
-                  new double[] {35.0, 35.1, 35.2, 35.3, 35.4}));
+              mb -> mb.withShape(5).withChunkShape(3).withDataType(float64).withDimensionNames("obs"),
+              true);
+      salArr.write(
+          new long[] {0},
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {35.0, 35.1, 35.2}));
+      salArr.write(
+          new long[] {3},
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {35.3, 35.4}));
 
       // Launch concurrent query workers
       int numThreads = 4;
@@ -1631,10 +1641,12 @@ class EDDTableFromZarrTests {
                   dataset.getDataForDapQuery(0, null, "", "time,salinity", tw);
                   Table t = tw.cumulativeTable();
                   if (t == null || (t.nRows() != 3 && t.nRows() != 5)) {
+                    com.cohort.util.String2.log("Unexpected nRows=" + (t == null ? "null" : t.nRows()));
                     queryErrorCount.incrementAndGet();
                   }
                 } catch (Throwable ex) {
-                  // Transient disk mutation read error before lowUpdate handle swap
+                  com.cohort.util.String2.log("Query exception: " + com.cohort.util.MustBe.throwableToString(ex));
+                  queryErrorCount.incrementAndGet();
                 }
               }
             });
@@ -1652,6 +1664,7 @@ class EDDTableFromZarrTests {
       executor.shutdown();
       assertTrue(executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS));
 
+      assertEquals(0, queryErrorCount.get(), "Concurrent queries should encounter 0 errors");
       assertEquals(5, dataset.numRows());
 
       // Confirm query after lowUpdate returns 5 rows
