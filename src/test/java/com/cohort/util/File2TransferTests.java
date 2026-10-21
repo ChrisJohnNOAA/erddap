@@ -22,7 +22,7 @@ public class File2TransferTests {
   @TempDir Path tempDir;
 
   /**
-   * Verifies that the ThreadLocal<byte[]> COPY_BUFFER does not leak or cause data corruption when
+   * Verifies that local 64 KB buffer allocations do not cause data corruption when
    * multiple threads invoke File2.copy concurrently.
    */
   @Test
@@ -49,7 +49,6 @@ public class File2TransferTests {
           () -> {
             try {
               startGate.await();
-              // Calls the modified File2.copy which uses COPY_BUFFER.get()
               boolean ok = File2.copy(src.toString(), dst.toString());
               if (!ok) {
                 corruptionDetected.set(true);
@@ -72,7 +71,7 @@ public class File2TransferTests {
     pool.shutdown();
 
     assertFalse(
-        corruptionDetected.get(), "Buffer corruption detected across threads using COPY_BUFFER!");
+        corruptionDetected.get(), "Buffer corruption detected across threads!");
   }
 
   /**
@@ -125,5 +124,25 @@ public class File2TransferTests {
     byte[] copied = Files.readAllBytes(dst);
     assertEquals(data.length - 10, copied.length);
     assertArrayEquals(Arrays.copyOfRange(data, 10, data.length), copied);
+  }
+
+  /**
+   * Tests boundary cases for File2.copy: empty files vs out-of-bounds start offsets.
+   */
+  @Test
+  public void testFile2CopyBoundaryCases() throws Exception {
+    Path emptySrc = tempDir.resolve("empty.dat");
+    Path emptyDst = tempDir.resolve("empty_dst.dat");
+    Files.write(emptySrc, new byte[0]);
+
+    // Legitimate 0-byte file copy (first=0, size=0) -> true
+    assertTrue(File2.copy(emptySrc.toString(), emptyDst.toString(), 0, -1));
+
+    Path src = tempDir.resolve("non_empty.dat");
+    Path dst = tempDir.resolve("non_empty_dst.dat");
+    Files.write(src, "Hello World".getBytes()); // 11 bytes
+
+    // Out-of-bounds start offset (first = 20, size = 11) -> false
+    assertFalse(File2.copy(src.toString(), dst.toString(), 20, 30));
   }
 }
