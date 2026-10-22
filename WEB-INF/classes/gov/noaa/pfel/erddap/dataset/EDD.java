@@ -677,18 +677,24 @@ public abstract class EDD {
    */
   private static final Optional<Method> getFromXmlMethod(
       ClassInfo classInfo, ClassLoader webappClassLoader) {
-    if (classInfo.getMethodInfo("fromXml").stream()
-        .anyMatch(mi -> mi.hasAnnotation(EDDFromXmlMethod.class.getName()))) {
-      try {
-        Class<?> clazz = Class.forName(classInfo.getName(), false, webappClassLoader);
-        Method m = clazz.getDeclaredMethod("fromXml", Erddap.class, SimpleXMLReader.class);
-        m.setAccessible(true);
-        return Optional.of(m);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to load method fromXml for " + classInfo.getName(), e);
-      }
-    }
-    return Optional.empty();
+    return classInfo.getMethodInfo("fromXml").stream()
+        .filter(mi -> mi.hasAnnotation(EDDFromXmlMethod.class.getName()))
+        .findFirst()
+        .map(
+            mi -> {
+              try {
+                Class<?> declaringClass =
+                    Class.forName(mi.getClassInfo().getName(), false, webappClassLoader);
+                Method m =
+                    declaringClass.getDeclaredMethod(
+                        "fromXml", Erddap.class, SimpleXMLReader.class);
+                m.setAccessible(true);
+                return m;
+              } catch (Exception e) {
+                throw new RuntimeException(
+                    "Failed to load method fromXml for " + classInfo.getName(), e);
+              }
+            });
   }
 
   /**
