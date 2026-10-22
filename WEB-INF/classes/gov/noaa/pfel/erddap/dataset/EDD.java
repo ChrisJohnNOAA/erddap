@@ -542,7 +542,8 @@ public abstract class EDD {
   private static <T> Class<T> loadClass(
       ClassInfo classInfo, Class<T> superType, ClassLoader webappClassLoader) {
     try {
-      return (Class<T>) Class.forName(classInfo.getName(), false, webappClassLoader);
+      return (Class<T>)
+          Class.forName(classInfo.getName(), false, webappClassLoader).asSubclass(superType);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Failed to load class " + classInfo.getName(), e);
     }
@@ -656,7 +657,8 @@ public abstract class EDD {
     try {
       @SuppressWarnings("unchecked")
       Class<State> clazz =
-          (Class<State>) Class.forName(classRef.getName(), false, webappClassLoader);
+          (Class<State>)
+              Class.forName(classRef.getName(), false, webappClassLoader).asSubclass(State.class);
       return Optional.of(clazz);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Failed to load SaxHandler class " + classRef.getName(), e);
@@ -671,7 +673,8 @@ public abstract class EDD {
    */
   private static final Optional<Method> getFromXmlMethod(
       ClassInfo classInfo, ClassLoader webappClassLoader) {
-    if (classInfo.hasMethodAnnotation(EDDFromXmlMethod.class.getName())) {
+    if (classInfo.getMethodInfo("fromXml").stream()
+        .anyMatch(mi -> mi.hasAnnotation(EDDFromXmlMethod.class.getName()))) {
       try {
         Class<?> clazz = Class.forName(classInfo.getName(), false, webappClassLoader);
         Method m = clazz.getMethod("fromXml", Erddap.class, SimpleXMLReader.class);
