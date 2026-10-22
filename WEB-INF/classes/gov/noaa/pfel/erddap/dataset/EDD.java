@@ -59,6 +59,7 @@ import io.github.classgraph.AnnotationClassRef;
 import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
