@@ -561,10 +561,13 @@ public abstract class EDD {
             .enableClassLoaders(webappClassLoader)
             .enableClassInfo()
             .enableAnnotationInfo()
-            .enableMethodInfo()
             .acceptPackages(FileTypeInterface.class.getPackageName())
             .scan()) {
-      return scanResult.getAllSubclasses(FileTypeInterface.class).stream()
+      ClassInfoList classes =
+          FileTypeInterface.class.isInterface()
+              ? scanResult.getAllClassesImplementing(FileTypeInterface.class)
+              : scanResult.getAllSubclasses(FileTypeInterface.class);
+      return classes.stream()
           .filter(c -> !c.isAbstract())
           .filter(c -> c.hasAnnotation(FileTypeClass.class.getName()))
           .collect(
@@ -677,7 +680,8 @@ public abstract class EDD {
         .anyMatch(mi -> mi.hasAnnotation(EDDFromXmlMethod.class.getName()))) {
       try {
         Class<?> clazz = Class.forName(classInfo.getName(), false, webappClassLoader);
-        Method m = clazz.getMethod("fromXml", Erddap.class, SimpleXMLReader.class);
+        Method m = clazz.getDeclaredMethod("fromXml", Erddap.class, SimpleXMLReader.class);
+        m.setAccessible(true);
         return Optional.of(m);
       } catch (Exception e) {
         throw new RuntimeException("Failed to load method fromXml for " + classInfo.getName(), e);
