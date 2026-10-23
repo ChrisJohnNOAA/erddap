@@ -98,11 +98,8 @@ import org.opengis.metadata.spatial.Dimension;
 import org.opengis.metadata.spatial.DimensionNameType;
 import org.opengis.util.CodeList;
 import org.opengis.util.InternationalString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MetadataBuilder {
-  private static final Logger log = LoggerFactory.getLogger(MetadataBuilder.class);
 
   public static Metadata buildMetadata(
       int language,
@@ -924,7 +921,8 @@ public class MetadataBuilder {
   }
 
   // https://wiki.esipfed.org/ISO_19115-3_Codelists#DCPList
-  private static class DistributedComputingPlatform extends CodeList<DistributedComputingPlatform> {
+  private static final class DistributedComputingPlatform
+      extends CodeList<DistributedComputingPlatform> {
     private static final List<DistributedComputingPlatform> VALUES = new ArrayList<>();
     public static final DistributedComputingPlatform HTTP =
         new DistributedComputingPlatform("HTTP");

@@ -2529,7 +2529,7 @@ class EDDTableFromNccsvFilesTests {
             dir,
             eddTable.className() + "_charjp",
             ".ncoJson");
-    results = String2.annotatedString(File2.directReadFromFile(dir + tName, File2.UTF_8));
+    results = String2.annotatedString(File2.directReadFromFile(dir + tName, File2.UTF_8_CHARSET));
     // String2.log(results);
     expected =
         "myFunctionName("

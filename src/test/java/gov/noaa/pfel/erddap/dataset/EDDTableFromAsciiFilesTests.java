@@ -878,7 +878,18 @@ class EDDTableFromAsciiFilesTests {
     // String testColumns[], double testMin[], double testMax[],
     // String loadColumns[], boolean simplify) throws Exception {
     table.readASCII(
-        dir + "standardizeWhat1.csv", "", "", "", 0, 1, null, null, null, null, null, false);
+        dir + "standardizeWhat1.csv",
+        File2.ISO_8859_1_CHARSET,
+        "",
+        "",
+        0,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        false);
     results = table.dataToString();
     expected = "date,data\n" + "20100101000000,1\n" + "20100102000000,2\n";
     Test.ensureEqual(results, expected, "results=\n" + results);
@@ -2018,7 +2029,18 @@ class EDDTableFromAsciiFilesTests {
     // String testColumns[], double testMin[], double testMax[],
     // String loadColumns[], boolean simplify) throws Exception {
     table.readASCII(
-        dataDir + "standardizeWhat1.csv", "", "", "", 0, 1, null, null, null, null, null, false);
+        dataDir + "standardizeWhat1.csv",
+        File2.ISO_8859_1_CHARSET,
+        "",
+        "",
+        0,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        false);
     results = table.dataToString();
     expected = "date,data\n" + "20100101000000,1\n" + "20100102000000,2\n";
     Test.ensureEqual(results, expected, "results=\n" + results);

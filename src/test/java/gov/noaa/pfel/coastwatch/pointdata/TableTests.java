@@ -1071,7 +1071,8 @@ public class TableTests {
     // read it from the file
     Table table2 = new Table();
     // // Table.debugMode = true;
-    table2.readASCII(fileName, File2.ISO_8859_1, "", "", 0, 1, null, null, null, null, null, true);
+    table2.readASCII(
+        fileName, File2.ISO_8859_1_CHARSET, "", "", 0, 1, null, null, null, null, null, true);
     // // Table.debugMode = false;
 
     // check units on 1st data row
@@ -1107,7 +1108,7 @@ public class TableTests {
     table2 = new Table();
     table2.readASCII(
         fileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         "",
         "",
         0,
@@ -1131,7 +1132,7 @@ public class TableTests {
     table2 = new Table();
     table2.readASCII(
         fileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         "",
         "",
         -1,
@@ -1526,7 +1527,8 @@ public class TableTests {
       Test.ensureTrue(fileLength > 1335000, "fileName=" + fileName + " length=" + fileLength);
       time = System.currentTimeMillis();
       Table table = new Table();
-      table.readASCII(fileName, File2.ISO_8859_1, "", "", 0, 1, null, null, null, null, null, true);
+      table.readASCII(
+          fileName, File2.ISO_8859_1_CHARSET, "", "", 0, 1, null, null, null, null, null, true);
       time = System.currentTimeMillis() - time;
 
       String results = table.dataToString(3);
@@ -1741,7 +1743,8 @@ public class TableTests {
             .toString();
     String destName = File2.getSystemTempDirectory() + "testSaveAsSpeed";
     Table table = new Table();
-    table.readASCII(sourceName, File2.ISO_8859_1, "", "", 0, 1, null, null, null, null, null, true);
+    table.readASCII(
+        sourceName, File2.ISO_8859_1_CHARSET, "", "", 0, 1, null, null, null, null, null, true);
     Test.ensureEqual(table.nColumns(), 16, "nColumns=" + table.nColumns());
     Test.ensureEqual(table.nRows(), 17117, "nRows=" + table.nRows());
     table.saveAsCsvASCII(destName + ".csv");
@@ -3523,7 +3526,7 @@ public class TableTests {
     table.allowRaggedRightInReadASCII = true;
     table.readASCII(
         fileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         skipHeaderToRegex,
         skipLinesRegex,
         0,
@@ -3562,7 +3565,7 @@ public class TableTests {
     table.allowRaggedRightInReadASCII = false;
     table.readASCII(
         fileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         skipHeaderToRegex,
         skipLinesRegex,
         0,
@@ -3599,7 +3602,7 @@ public class TableTests {
     table.allowRaggedRightInReadASCII = false;
     table.readASCII(
         fileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         skipHeaderToRegex,
         skipLinesRegex,
         0,
@@ -3639,7 +3642,8 @@ public class TableTests {
     // read as Strings
     table = new Table();
     table.allowRaggedRightInReadASCII = true;
-    table.readASCII(fileName, File2.ISO_8859_1, "", "", 0, 1, "", null, null, null, null, false);
+    table.readASCII(
+        fileName, File2.ISO_8859_1_CHARSET, "", "", 0, 1, "", null, null, null, null, false);
     results = table.dataToString();
     expected =
         "aString,aChar,aBoolean,aByte,aShort,anInt,aLong,aFloat,aDouble\n"
@@ -3665,7 +3669,8 @@ public class TableTests {
     // test simplify
     table = new Table();
     table.allowRaggedRightInReadASCII = true;
-    table.readASCII(fileName, File2.ISO_8859_1, "", "", 0, 1, "", null, null, null, null, true);
+    table.readASCII(
+        fileName, File2.ISO_8859_1_CHARSET, "", "", 0, 1, "", null, null, null, null, true);
     results = table.dataToString();
     expected =
         "aString,aChar,aBoolean,aByte,aShort,anInt,aLong,aFloat,aDouble\n"
@@ -3693,7 +3698,7 @@ public class TableTests {
     table.allowRaggedRightInReadASCII = true;
     table.readASCII(
         fileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         "",
         "",
         0,
@@ -3745,7 +3750,15 @@ public class TableTests {
     Arrays.fill(colPAType, PAType.STRING);
     Table table = new Table();
     table.readColumnarASCIIFile(
-        fullFileName, "", skipHeaderToRegex, skipLinesRegex, 3, colNames, start, end, colPAType);
+        fullFileName,
+        File2.ISO_8859_1_CHARSET,
+        skipHeaderToRegex,
+        skipLinesRegex,
+        3,
+        colNames,
+        start,
+        end,
+        colPAType);
     results = table.dataToString();
     expected =
         "aDouble,aString,aChar,aBoolean,aByte,aShort,anInt,aLong,aFloat\n"
@@ -3770,7 +3783,15 @@ public class TableTests {
 
     // simplify
     table.readColumnarASCIIFile(
-        fullFileName, "", skipHeaderToRegex, skipLinesRegex, 3, colNames, start, end, null);
+        fullFileName,
+        File2.ISO_8859_1_CHARSET,
+        skipHeaderToRegex,
+        skipLinesRegex,
+        3,
+        colNames,
+        start,
+        end,
+        null);
     results = table.dataToString();
     expected =
         "aDouble,aString,aChar,aBoolean,aByte,aShort,anInt,aLong,aFloat\n"
@@ -3807,7 +3828,15 @@ public class TableTests {
           PAType.FLOAT
         };
     table.readColumnarASCIIFile(
-        fullFileName, "", skipHeaderToRegex, skipLinesRegex, 3, colNames, start, end, colPAType);
+        fullFileName,
+        File2.ISO_8859_1_CHARSET,
+        skipHeaderToRegex,
+        skipLinesRegex,
+        3,
+        colNames,
+        start,
+        end,
+        colPAType);
     results = table.dataToString();
     expected =
         "aDouble,aString,aChar,aBoolean,aByte,aShort,anInt,aLong,aFloat\n"
@@ -17600,7 +17629,7 @@ public class TableTests {
                     .getResource("/largeFiles/biddle/3937_v1_CTD_Profiles.tsv.gz")
                     .toURI())
             .toString(),
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         "",
         "",
         0,

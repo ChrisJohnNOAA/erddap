@@ -3411,7 +3411,7 @@ public class EDDTableFromSOS extends EDDTable {
       } else if (xmlReader.tag(0).equals("sos:Capabilities")) {
         sosPrefix = "sos:"; // oostethys
       } else {
-        String2.log(File2.readFromFile(safeFileName, File2.UTF_8)[1]);
+        String2.log(File2.readFromFile(safeFileName, File2.UTF_8_CHARSET)[1]);
         throw new RuntimeException(
             "The first SOS capabilities tag=\""
                 + tags

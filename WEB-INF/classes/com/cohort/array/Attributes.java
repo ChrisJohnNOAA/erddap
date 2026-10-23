@@ -10,7 +10,6 @@ import com.cohort.util.String2;
 import com.cohort.util.Test;
 import com.cohort.util.Units2;
 import java.math.BigInteger;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -119,7 +118,7 @@ public class Attributes {
    * @return an array with the names of all of the attributes, sorted in a case-insensitive way.
    */
   public String[] getNames() {
-    StringArray names = new StringArray(hashmap.keys());
+    StringArray names = new StringArray(hashmap.keySet().toArray(new String[hashmap.size()]));
     names.sortIgnoreCase();
     return names.toArray();
   }
@@ -384,11 +383,11 @@ public class Attributes {
    * @param moreImportant the Attributes to be added.
    */
   public void set(Attributes moreImportant) {
-    Enumeration<String> en = moreImportant.hashmap.keys();
-    while (en.hasMoreElements()) {
-      String name = en.nextElement();
-      set(name, (PrimitiveArray) moreImportant.get(name).clone());
-    }
+    moreImportant.hashmap.keySet().stream()
+        .forEach(
+            name -> {
+              set(name, (PrimitiveArray) moreImportant.get(name).clone());
+            });
   }
 
   /**
@@ -704,11 +703,11 @@ public class Attributes {
    */
   public void copyTo(Attributes destination) {
     destination.hashmap.clear();
-    Enumeration<String> en = hashmap.keys();
-    while (en.hasMoreElements()) {
-      String name = en.nextElement();
-      destination.set(name, (PrimitiveArray) get(name).clone());
-    }
+    hashmap.keySet().stream()
+        .forEach(
+            name -> {
+              destination.set(name, (PrimitiveArray) get(name).clone());
+            });
   }
 
   /**

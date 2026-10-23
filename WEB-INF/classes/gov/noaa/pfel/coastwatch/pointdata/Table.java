@@ -56,6 +56,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -148,11 +149,11 @@ import ucar.nc2.write.NetcdfFormatWriter;
  */
 public class Table {
 
-  public static interface Rounder {
+  public interface Rounder {
     double round(Double value) throws Exception;
   }
 
-  private static interface WithColumnNames {
+  private interface WithColumnNames {
     void apply(String[] columnNames) throws Exception;
   }
 
@@ -2493,7 +2494,7 @@ public class Table {
    */
   public void readASCII(
       String fullFileName,
-      String charset,
+      Charset charset,
       String skipHeaderToRegex,
       String skipLinesRegex,
       int columnNamesLine,
@@ -2531,7 +2532,7 @@ public class Table {
 
     readASCII(
         fullFileName,
-        File2.ISO_8859_1,
+        File2.ISO_8859_1_CHARSET,
         "",
         "",
         columnNamesLine,
@@ -3167,7 +3168,7 @@ public class Table {
    */
   public void readColumnarASCIIFile(
       String fullFileName,
-      String charset,
+      Charset charset,
       String skipHeaderToRegex,
       String skipLinesRegex,
       int dataStartLine,
@@ -5115,7 +5116,7 @@ public class Table {
       String fullFileName, int skipNTables, boolean secondRowHasUnits, boolean simplify)
       throws Exception {
 
-    String sar[] = File2.readFromFile(fullFileName, File2.UTF_8, 2);
+    String sar[] = File2.readFromFile(fullFileName, File2.UTF_8_CHARSET, 2);
     Test.ensureEqual(sar[0].length(), 0, sar[0]); // check that there was no error
     // String2.log(String2.annotatedString(sar[1]));
     readHtml(fullFileName, sar[1], skipNTables, secondRowHasUnits, simplify);
@@ -13827,7 +13828,7 @@ public class Table {
       throws Exception {
     clear();
     try (BufferedReader reader =
-        File2.getDecompressedBufferedFileReader(fullFileName, File2.UTF_8)) {
+        File2.getDecompressedBufferedFileReader(fullFileName, File2.UTF_8_CHARSET)) {
       readJsonlCSV(reader, fullFileName, colNames, colTypes, simplify);
     }
   }
@@ -14047,12 +14048,10 @@ public class Table {
       // write the data
       int nr = nRows();
       for (int r = 0; r < nr; r++) {
-        boolean somethingWritten = false;
         jsonSB.setLength(0);
         for (int c = 0; c < nc; c++) {
           jsonSB.append(c != 0 ? ',' : '[');
           columns.get(c).getJsonString(r, jsonSB);
-          somethingWritten = true;
         }
         jsonSB.append("]\n");
         bw.write(jsonSB.toString());

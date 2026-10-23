@@ -206,7 +206,6 @@ public class GridDataAllAccessor implements AutoCloseable {
             try {
               String sanitized = sanitizePath(baseFileName + dv);
               File2.delete(sanitized);
-              continue;
             } catch (Throwable t1) {
               File2.delete(baseFileName + dv);
             }

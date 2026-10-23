@@ -1162,7 +1162,6 @@ public class FloatArray extends PrimitiveArray {
     if (length == 0) {
       return 0L;
     }
-    if (length == 0) return 0L;
 
     final int bytesPerElement = 4;
     final int CHUNK_BYTES = 64 * 1024;

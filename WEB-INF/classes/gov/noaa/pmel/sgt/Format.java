@@ -265,7 +265,7 @@ public class Format {
    *           </dl>
    *     </ul>
    *
-   * @exception IllegalArgumentException if bad format
+   * @throws IllegalArgumentException if bad format
    */
   public Format(String s) {
     width = 0;
@@ -375,7 +375,7 @@ public class Format {
    *
    * @param x the number to format
    * @return the formatted string
-   * @exception IllegalArgumentException if bad argument
+   * @throws IllegalArgumentException if bad argument
    */
   public String form(double x) {
     String r;

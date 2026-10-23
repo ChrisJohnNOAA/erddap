@@ -568,8 +568,7 @@ public class GridDataAccessor implements AutoCloseable {
       if (!tb) {
         return false;
       }
-      @SuppressWarnings("unused")
-      boolean unused =
+      boolean _ =
           rowMajor ? partialIndex.increment() : partialIndex.incrementCM(); // should succeed
     } else {
       // subsequent times

@@ -7557,16 +7557,16 @@ public class TestUtil {
     String shouldBe =
         "This is a UTF-8 file with special characters like [255], [8364], [968], [8644], and [24179][25104]![10]\n[end]";
 
-    sar = File2.readFromFile(utff + ".txt", File2.UTF_8, 1);
+    sar = File2.readFromFile(utff + ".txt", File2.UTF_8_CHARSET, 1);
     String2.log("?" + String2.annotatedString(sar[1]) + "?");
     Test.ensureEqual(sar[0], "", "error msg:" + sar[0]);
     Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" + sar[1]);
 
-    sar = File2.readFromFile(utff + ".txt.bz2", File2.UTF_8, 1);
+    sar = File2.readFromFile(utff + ".txt.bz2", File2.UTF_8_CHARSET, 1);
     Test.ensureEqual(sar[0], "", "error msg:" + sar[0]);
     Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" + sar[1]);
 
-    sar = File2.readFromFile(utff + ".txt.gz", File2.UTF_8, 1);
+    sar = File2.readFromFile(utff + ".txt.gz", File2.UTF_8_CHARSET, 1);
     Test.ensureEqual(sar[0], "", "error msg:" + sar[0]);
     Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" + sar[1]);
 
@@ -7576,15 +7576,15 @@ public class TestUtil {
     // Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" +
     // sar[1]);
 
-    sar = File2.readFromFile(sd + ".tar.gz", File2.UTF_8, 1);
+    sar = File2.readFromFile(sd + ".tar.gz", File2.UTF_8_CHARSET, 1);
     Test.ensureEqual(sar[0], "", "error msg:" + sar[0]);
     Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" + sar[1]);
 
-    sar = File2.readFromFile(sd + ".tgz", File2.UTF_8, 1);
+    sar = File2.readFromFile(sd + ".tgz", File2.UTF_8_CHARSET, 1);
     Test.ensureEqual(sar[0], "", "error msg:" + sar[0]);
     Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" + sar[1]);
 
-    sar = File2.readFromFile(sd + ".zip", File2.UTF_8, 1);
+    sar = File2.readFromFile(sd + ".zip", File2.UTF_8_CHARSET, 1);
     Test.ensureEqual(sar[0], "", "error msg:" + sar[0]);
     Test.ensureEqual(String2.annotatedString(sar[1]), shouldBe, "sar[1]=" + sar[1]);
 

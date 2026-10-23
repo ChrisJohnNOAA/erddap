@@ -38,7 +38,8 @@ class Units2Tests {
    */
   private static void gatherUniqueCFUnits(String fullCFXMLFileName) throws Exception {
 
-    List<String> lines = File2.readLinesFromFile(fullCFXMLFileName, File2.UTF_8, 1); // nAttempts
+    List<String> lines =
+        File2.readLinesFromFile(fullCFXMLFileName, File2.UTF_8_CHARSET, 1); // nAttempts
     HashSet<String> reject = new HashSet<>();
     HashSet<String> set = new HashSet<>();
     set.add("degree_C"); // test it, too
@@ -96,7 +97,7 @@ class Units2Tests {
                   ? "datasetsFED31UAF.xml"
                   : f == 1 ? "datasetsFEDCW.xml" : "uniqueCFUnits.txt");
 
-      List<String> lines = File2.readLinesFromFile(fileName, File2.UTF_8, 1); // nAttempts
+      List<String> lines = File2.readLinesFromFile(fileName, File2.UTF_8_CHARSET, 1); // nAttempts
       int nLines = lines.size();
       for (int i = 0; i < nLines; i++) {
         String s = String2.extractCaptureGroup(lines.get(i), pattern, 1); // captureGroupNumber

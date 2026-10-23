@@ -91,7 +91,7 @@ public class GeoDate implements java.io.Serializable, Comparable<GeoDate> {
    * @param min minutes
    * @param sec seconds
    * @param msec milliseconds
-   * @exception IllegalTimeValue The constructor was called with a set of parameters that does not
+   * @throws IllegalTimeValue The constructor was called with a set of parameters that does not
    *     constitute a legitimate time value.
    */
   public GeoDate(int mon, int day, int year, int hour, int min, int sec, int msec)
@@ -143,7 +143,7 @@ public class GeoDate implements java.io.Serializable, Comparable<GeoDate> {
    * @param min minutes
    * @param sec seconds
    * @param msec milliseconds
-   * @exception IllegalTimeValue The parameters passed to this method represent a time value that is
+   * @throws IllegalTimeValue The parameters passed to this method represent a time value that is
    *     invalid
    */
   public void set(int mon, int day, int year, int hour, int min, int sec, int msec)

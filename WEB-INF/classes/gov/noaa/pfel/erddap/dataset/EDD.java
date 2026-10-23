@@ -2393,7 +2393,7 @@ public abstract class EDD {
    */
   protected abstract void writeFGDC(int language, Writer writer) throws Throwable;
 
-  public enum ISO_VERSION {
+  public enum IsoVersion {
     ISO19115_2,
     ISO19139_2007,
     ISO19115_3_2016,
@@ -2436,7 +2436,7 @@ public abstract class EDD {
    * @param version the ISO version to write.
    * @throws Throwable if trouble
    */
-  public abstract void writeISO19115(int language, Writer writer, ISO_VERSION version)
+  public abstract void writeISO19115(int language, Writer writer, IsoVersion version)
       throws Throwable;
 
   /**
@@ -12306,7 +12306,7 @@ public abstract class EDD {
       }
 
       // read the json pngInfo file
-      String sa[] = File2.readFromFile(infoFileName, File2.UTF_8, 1);
+      String sa[] = File2.readFromFile(infoFileName, File2.UTF_8_CHARSET, 1);
       if (sa[0].length() > 0) throw new Exception(sa[0]);
       JSONTokener jTok = new JSONTokener(sa[1]);
       JSONObject jDictionary = new JSONObject(jTok);
@@ -13826,7 +13826,7 @@ public abstract class EDD {
       Table table = new Table();
       table.readASCII(
           csvChangesFileName,
-          File2.UTF_8,
+          File2.UTF_8_CHARSET,
           "",
           "",
           0,

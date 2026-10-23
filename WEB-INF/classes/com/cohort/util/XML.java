@@ -589,7 +589,8 @@ public class XML {
    */
   public static Document parseXml(String fileName, boolean validating, boolean withEnvSubstitutions)
       throws Exception {
-    try (BufferedReader reader = File2.getDecompressedBufferedFileReader(fileName, File2.UTF_8)) {
+    try (BufferedReader reader =
+        File2.getDecompressedBufferedFileReader(fileName, File2.UTF_8_CHARSET)) {
       InputSource source;
       if (withEnvSubstitutions) {
         source = new InputSource(new StringSubstitutorReader(reader, new StringSubstitutor()));

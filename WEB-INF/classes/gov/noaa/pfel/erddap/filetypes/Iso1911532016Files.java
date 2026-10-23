@@ -1,7 +1,7 @@
 package gov.noaa.pfel.erddap.filetypes;
 
 import com.cohort.util.File2;
-import gov.noaa.pfel.erddap.dataset.EDD.ISO_VERSION;
+import gov.noaa.pfel.erddap.dataset.EDD.IsoVersion;
 import gov.noaa.pfel.erddap.util.EDMessages.Message;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import java.io.BufferedWriter;
@@ -21,7 +21,7 @@ public class Iso1911532016Files extends FileTypeInterface {
         File2.getBufferedWriterUtf8(requestInfo.outputStream().outputStream(File2.UTF_8))) {
       requestInfo
           .getEDDTable()
-          .writeISO19115(requestInfo.language(), writer, ISO_VERSION.ISO19115_3_2016);
+          .writeISO19115(requestInfo.language(), writer, IsoVersion.ISO19115_3_2016);
     }
   }
 
@@ -31,7 +31,7 @@ public class Iso1911532016Files extends FileTypeInterface {
         File2.getBufferedWriterUtf8(requestInfo.outputStream().outputStream(File2.UTF_8))) {
       requestInfo
           .getEDDGrid()
-          .writeISO19115(requestInfo.language(), writer, ISO_VERSION.ISO19115_3_2016);
+          .writeISO19115(requestInfo.language(), writer, IsoVersion.ISO19115_3_2016);
     }
   }
 

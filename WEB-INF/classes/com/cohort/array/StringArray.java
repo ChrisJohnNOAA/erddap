@@ -307,22 +307,22 @@ public class StringArray extends PrimitiveArray {
 
   /** This reads the text contents of the specified file using File2.ISO_8859_1. */
   public static StringArray fromFile88591(final String fileName) throws Exception {
-    return fromFile(fileName, File2.ISO_8859_1);
+    return fromFile(fileName, File2.ISO_8859_1_CHARSET);
   }
 
   /** This reads the text contents of the specified file using File2.UTF_8. */
   public static StringArray fromFileUtf8(final String fileName) throws Exception {
-    return fromFile(fileName, File2.UTF_8);
+    return fromFile(fileName, File2.UTF_8_CHARSET);
   }
 
   /** This reads the text contents of the specified file using File2.ISO_8859_1. */
   public static StringArray fromFile88591(final URL resourceFile) throws Exception {
-    return fromFile(resourceFile, File2.ISO_8859_1);
+    return fromFile(resourceFile, File2.ISO_8859_1_CHARSET);
   }
 
   /** This reads the text contents of the specified file using File2.UTF_8. */
   public static StringArray fromFileUtf8(final URL resourceFile) throws Exception {
-    return fromFile(resourceFile, File2.UTF_8);
+    return fromFile(resourceFile, File2.UTF_8_CHARSET);
   }
 
   /**
@@ -334,7 +334,8 @@ public class StringArray extends PrimitiveArray {
    *     usually all different).
    * @throws Exception if trouble (e.g., file not found)
    */
-  public static StringArray fromFile(final String fileName, final String charset) throws Exception {
+  public static StringArray fromFile(final String fileName, final Charset charset)
+      throws Exception {
     Math2.ensureMemoryAvailable(
         File2.length(fileName), "StringArray.fromFile"); // canonical may lessen memory requirement
     final StringArray sa = new StringArray();
@@ -358,7 +359,7 @@ public class StringArray extends PrimitiveArray {
    *     usually all different).
    * @throws Exception if trouble (e.g., file not found)
    */
-  public static StringArray fromFile(final URL resourceFile, final String charset)
+  public static StringArray fromFile(final URL resourceFile, final Charset charset)
       throws Exception {
     final StringArray sa = new StringArray();
     try (InputStreamReader reader = new InputStreamReader(resourceFile.openStream(), charset);

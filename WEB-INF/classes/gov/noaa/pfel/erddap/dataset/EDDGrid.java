@@ -11300,7 +11300,7 @@ public abstract class EDDGrid extends EDD {
             + "</metadata>\n");
   }
 
-  private void lower_writeISO19115(int language, Writer writer, ISO_VERSION version)
+  private void lower_writeISO19115(int language, Writer writer, IsoVersion version)
       throws UnsupportedStorageException, DataStoreException, JAXBException, IOException {
 
     Metadata metadata =
@@ -11319,10 +11319,10 @@ public abstract class EDDGrid extends EDD {
      * The legacy version can be requested with the `METADATA_VERSION` property.
      */
     Map<String, String> config = new HashMap<>();
-    if (version == ISO_VERSION.ISO19139_2007) {
+    if (version == IsoVersion.ISO19139_2007) {
       config = Map.of(org.apache.sis.xml.XML.METADATA_VERSION, "2007");
     }
-    if (version == ISO_VERSION.ISO19115_3_2016) {
+    if (version == IsoVersion.ISO19115_3_2016) {
       config = Map.of(org.apache.sis.xml.XML.METADATA_VERSION, "2016");
     }
     org.apache.sis.xml.XML.marshal(metadata, new StreamResult(writer), config);
@@ -11356,15 +11356,15 @@ public abstract class EDDGrid extends EDD {
         language,
         writer,
         EDStatic.config.useSisISO19115
-            ? ISO_VERSION.ISO19115_3_2016
-            : EDStatic.config.useSisISO19139 ? ISO_VERSION.ISO19139_2007 : ISO_VERSION.ISO19115_2);
+            ? IsoVersion.ISO19115_3_2016
+            : EDStatic.config.useSisISO19139 ? IsoVersion.ISO19139_2007 : IsoVersion.ISO19115_2);
   }
 
   @Override
-  public void writeISO19115(int language, Writer writer, ISO_VERSION version) throws Throwable {
+  public void writeISO19115(int language, Writer writer, IsoVersion version) throws Throwable {
     // FUTURE: support datasets with x,y (and not longitude,latitude)?
 
-    if (version == ISO_VERSION.ISO19115_3_2016 || version == ISO_VERSION.ISO19139_2007) {
+    if (version == IsoVersion.ISO19115_3_2016 || version == IsoVersion.ISO19139_2007) {
       lower_writeISO19115(language, writer, version);
       return;
     }

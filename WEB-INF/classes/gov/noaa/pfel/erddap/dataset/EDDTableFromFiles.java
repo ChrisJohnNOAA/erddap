@@ -52,6 +52,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,7 +117,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    */
   protected boolean filesAreLocal;
 
-  protected String charset; // may be null or ""
+  protected Charset charset; // may be null or ""
   protected String skipHeaderToRegex; // may be null or ""
   protected String skipLinesRegex; // may be null or ""
   protected int columnNamesRow = 1, firstDataRow = 2;
@@ -1347,7 +1348,10 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
     recursive = tRecursive;
     pathRegex = tPathRegex == null || tPathRegex.length() == 0 ? ".*" : tPathRegex;
     metadataFrom = tMetadataFrom;
-    charset = tCharset;
+    charset =
+        tCharset == null || tCharset.length() == 0 || !Charset.isSupported(tCharset)
+            ? File2.UTF_8_CHARSET
+            : Charset.forName(tCharset);
     skipHeaderToRegex = tSkipHeaderToRegex;
     skipLinesRegex = tSkipLinesRegex;
     columnNamesRow = tColumnNamesRow;
@@ -4031,7 +4035,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
       boolean mustGetData)
       throws Throwable;
 
-  private static class SourceDataInfo {
+  private static final class SourceDataInfo {
     String columnNameForExtractType = null;
     StringArray globalNames = null;
     StringArray globalTypes = null;
@@ -5153,7 +5157,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
     tableWriter.finish();
   }
 
-  private static class ResultStatisticsAccumulator {
+  private static final class ResultStatisticsAccumulator {
     private int nReadHaveMatch = 0;
     private int nReadNoMatch = 0;
 

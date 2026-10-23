@@ -25,6 +25,7 @@ import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.variable.*;
 import java.io.BufferedReader;
+import java.nio.charset.Charset;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
@@ -439,10 +440,13 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
     // and a parallel table to hold the addAttributes
     Table dataSourceTable = new Table();
     Table dataAddTable = new Table();
-    if (charset == null || charset.length() == 0) charset = File2.ISO_8859_1;
+    Charset cs =
+        String2.isSomething(charset) && Charset.isSupported(charset)
+            ? Charset.forName(charset)
+            : File2.ISO_8859_1_CHARSET;
     dataSourceTable.readASCII(
         sampleFileName,
-        charset,
+        cs,
         "",
         "", // skipHeaderToRegex, skipLinesRegex,
         columnNamesRow - 1,
@@ -600,7 +604,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
             + tStandardizeWhat
             + "</standardizeWhat>\n"
             + "    <charset>"
-            + charset
+            + cs.displayName()
             + "</charset>\n"
             + "    <columnSeparator>"
             + XML.encodeAsXML(columnSeparator)
@@ -784,7 +788,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
     }
 
     { // display what's in the .xml file
-      String readXml[] = File2.readFromFile(xmlFileName, File2.UTF_8, 1);
+      String readXml[] = File2.readFromFile(xmlFileName, File2.UTF_8_CHARSET, 1);
       if (readXml[0].length() > 0) throw new RuntimeException(readXml[0]);
       if (whichChild == 0) {
         String2.log("Here's what is in the InPort .xml file:");
@@ -1760,7 +1764,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
           Table fileTable = new Table();
           fileTable.readASCII(
               tDataDir + tDataFileName,
-              File2.ISO_8859_1,
+              File2.ISO_8859_1_CHARSET,
               "",
               "",
               0,
@@ -2056,7 +2060,7 @@ public class EDDTableFromAsciiFiles extends EDDTableFromFiles {
   //  they will be encoded as \\uxxxx"
   //  and tsv are "us-ascii".
   // so safe to use ISO_8859_1 or UTF_8 to decode them.
-  public static final String bcodmoCharset = File2.ISO_8859_1;
+  public static final Charset bcodmoCharset = File2.ISO_8859_1_CHARSET;
 
   /**
    * This is a helper for generateDatasetsXmlFromBCODMO.

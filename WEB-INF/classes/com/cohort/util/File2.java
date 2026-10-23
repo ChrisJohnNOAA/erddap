@@ -1528,12 +1528,12 @@ public class File2 {
 
   public static BufferedReader getDecompressedBufferedFileReader88591(String fullFileName)
       throws Exception {
-    return getDecompressedBufferedFileReader(fullFileName, ISO_8859_1);
+    return getDecompressedBufferedFileReader(fullFileName, ISO_8859_1_CHARSET);
   }
 
   public static BufferedReader getDecompressedBufferedFileReaderUtf8(String fullFileName)
       throws Exception {
-    return getDecompressedBufferedFileReader(fullFileName, UTF_8);
+    return getDecompressedBufferedFileReader(fullFileName, UTF_8_CHARSET);
   }
 
   /**
@@ -1544,16 +1544,14 @@ public class File2 {
    * @throws IOException if trouble
    */
   public static BufferedReader getDecompressedBufferedFileReader(
-      String fullFileName, String charset) throws Exception {
+      String fullFileName, Charset charset) throws Exception {
 
     InputStream is = getDecompressedBufferedInputStream(fullFileName);
     try {
       return new BufferedReader(
           new InputStreamReader(
               is,
-              String2.isSomething(charset)
-                  ? charset
-                  : ISO_8859_1)); // invalid charset throws exception
+              charset != null ? charset : ISO_8859_1_CHARSET)); // invalid charset throws exception
     } catch (Exception e) {
       try {
         if (is != null) is.close();
@@ -1565,12 +1563,12 @@ public class File2 {
 
   /** This calls directReadFromFile with charset= UTF_8 */
   public static String directReadFromUtf8File(String fileName) throws Exception {
-    return directReadFromFile(fileName, UTF_8);
+    return directReadFromFile(fileName, UTF_8_CHARSET);
   }
 
   /** This calls directReadFromFile with charset= ISO_8859_1 */
   public static String directReadFrom88591File(String fileName) throws Exception {
-    return directReadFromFile(fileName, ISO_8859_1);
+    return directReadFromFile(fileName, ISO_8859_1_CHARSET);
   }
 
   /**
@@ -1586,15 +1584,14 @@ public class File2 {
    * @return a String with the decoded contents of the file.
    * @throws Exception if trouble
    */
-  public static String directReadFromFile(String fileName, String charset) throws Exception {
+  public static String directReadFromFile(String fileName, Charset charset) throws Exception {
     String bro[] = String2.parseAwsS3Url(fileName);
     String ext = getExtension(fileName);
 
     // Modern NIO fast-path for uncompressed local files
     if (bro == null && !isDecompressible(ext)) {
       Path path = Paths.get(fileName);
-      Charset cs =
-          String2.isSomething(charset) ? Charset.forName(charset) : StandardCharsets.ISO_8859_1;
+      Charset cs = charset != null ? charset : StandardCharsets.ISO_8859_1;
 
       try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
         long size = channel.size();
@@ -1627,7 +1624,7 @@ public class File2 {
    * apart) to read the file.
    */
   public static String[] readFromFile88591(String fileName) {
-    return readFromFile(fileName, ISO_8859_1, 3);
+    return readFromFile(fileName, ISO_8859_1_CHARSET, 3);
   }
 
   /**
@@ -1635,14 +1632,14 @@ public class File2 {
    * apart) to read the file.
    */
   public static String[] readFromFileUtf8(String fileName) {
-    return readFromFile(fileName, UTF_8, 3);
+    return readFromFile(fileName, UTF_8_CHARSET, 3);
   }
 
   /**
    * This is a variant of readFromFile that uses the specified character set and 3 tries (1 second
    * apart) to read the file.
    */
-  public static String[] readFromFile(String fileName, String charset) {
+  public static String[] readFromFile(String fileName, Charset charset) {
     return readFromFile(fileName, charset, 3);
   }
 
@@ -1666,7 +1663,7 @@ public class File2 {
    *     the file. ***This ensures that the last character in the file (if any) is \n. This behavior
    *     varies from other implementations of readFromFile.
    */
-  public static String[] readFromFile(String fileName, String charset, int maxAttempt) {
+  public static String[] readFromFile(String fileName, Charset charset, int maxAttempt) {
 
     // declare the BufferedReader variable
     // declare the results variable: String results[] = {"", ""};
@@ -1751,7 +1748,7 @@ public class File2 {
    * @return ArrayList with the lines from the file
    * @throws Exception if trouble
    */
-  public static List<String> readLinesFromFile(String fileName, String charset, int maxAttempt)
+  public static List<String> readLinesFromFile(String fileName, Charset charset, int maxAttempt)
       throws Exception {
 
     BufferedReader bufferedReader = null;

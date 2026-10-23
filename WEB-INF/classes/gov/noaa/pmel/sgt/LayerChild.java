@@ -31,7 +31,7 @@ public interface LayerChild extends Selectable {
    * Draw the <code>LayerChild</code>.
    *
    * @param g Graphics context
-   * @exception LayerNotFoundException No layer is associated with the <code>LayerChild</code>.
+   * @throws LayerNotFoundException No layer is associated with the <code>LayerChild</code>.
    */
   public void draw(Graphics g) throws LayerNotFoundException;
 

@@ -45,7 +45,7 @@ public class TableWriterOrderByMean extends TableWriterAll {
   protected final Map<String, Integer> rowmap = new HashMap<>();
   // used when calculating degree means at the end, one key for each row.
   protected final StringArray keymap = new StringArray();
-  protected final Map<String, DegreesAccumulator> degreesMap = new HashMap<>();
+  private final Map<String, DegreesAccumulator> degreesMap = new HashMap<>();
 
   protected Attributes oColumnAtts[] = null; // from incoming table or edd
 

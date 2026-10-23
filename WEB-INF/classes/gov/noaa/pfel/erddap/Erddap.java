@@ -386,9 +386,7 @@ public class Erddap extends HttpServlet {
     EDStatic.cleaner.register(this, new CleanupErddap());
   }
 
-  private static class CleanupErddap implements Runnable {
-
-    private CleanupErddap() {}
+  private static final class CleanupErddap implements Runnable {
 
     @Override
     public void run() {
@@ -18042,7 +18040,7 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
       if (edd instanceof EDDTable) {
         ncoJsonFiles.saveTableAsNcoJson(
             outSource,
-            new NcoJsonFiles().new NcoJsonEDDTableMetadataProvider((EDDTable) edd, language),
+            new NcoJsonFiles.NcoJsonEDDTableMetadataProvider((EDDTable) edd, language),
             null,
             jsonp);
       } else if (edd instanceof EDDGrid) {

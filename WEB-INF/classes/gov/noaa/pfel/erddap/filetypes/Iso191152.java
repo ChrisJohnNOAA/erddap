@@ -1,7 +1,7 @@
 package gov.noaa.pfel.erddap.filetypes;
 
 import com.cohort.util.File2;
-import gov.noaa.pfel.erddap.dataset.EDD.ISO_VERSION;
+import gov.noaa.pfel.erddap.dataset.EDD.IsoVersion;
 import gov.noaa.pfel.erddap.util.EDMessages.Message;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import java.io.BufferedWriter;
@@ -12,7 +12,7 @@ import java.io.BufferedWriter;
     infoUrl = "https://en.wikipedia.org/wiki/Geospatial_metadata",
     versionAdded = "2.29.0",
     contentType = "application/xml")
-public class Iso19115_2 extends FileTypeInterface {
+public class Iso191152 extends FileTypeInterface {
 
   @Override
   public void writeTableToStream(DapRequestInfo requestInfo) throws Throwable {
@@ -21,7 +21,7 @@ public class Iso19115_2 extends FileTypeInterface {
         File2.getBufferedWriterUtf8(requestInfo.outputStream().outputStream(File2.UTF_8))) {
       requestInfo
           .getEDDTable()
-          .writeISO19115(requestInfo.language(), writer, ISO_VERSION.ISO19115_2);
+          .writeISO19115(requestInfo.language(), writer, IsoVersion.ISO19115_2);
     }
   }
 
@@ -29,9 +29,7 @@ public class Iso19115_2 extends FileTypeInterface {
   public void writeGridToStream(DapRequestInfo requestInfo) throws Throwable {
     try (BufferedWriter writer =
         File2.getBufferedWriterUtf8(requestInfo.outputStream().outputStream(File2.UTF_8))) {
-      requestInfo
-          .getEDDGrid()
-          .writeISO19115(requestInfo.language(), writer, ISO_VERSION.ISO19115_2);
+      requestInfo.getEDDGrid().writeISO19115(requestInfo.language(), writer, IsoVersion.ISO19115_2);
     }
   }
 

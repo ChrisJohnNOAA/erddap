@@ -35,6 +35,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -118,7 +119,7 @@ public class SSR {
    *     found).
    * @throws Exception if error opening, reading, or closing the file
    */
-  public static String getFirstLineStartsWith(URL resourceFile, String charset, String start)
+  public static String getFirstLineStartsWith(URL resourceFile, Charset charset, String start)
       throws Exception {
     try (InputStream decompressedStream = File2.getDecompressedBufferedInputStream(resourceFile);
         InputStreamReader reader = new InputStreamReader(decompressedStream, charset);
@@ -1420,7 +1421,8 @@ public class SSR {
    */
   public static List<String> getUrlResponseArrayList(String urlString) throws Exception {
     try {
-      if (!String2.isUrl(urlString)) return File2.readLinesFromFile(urlString, File2.UTF_8, 1);
+      if (!String2.isUrl(urlString))
+        return File2.readLinesFromFile(urlString, File2.UTF_8_CHARSET, 1);
 
       long time = System.currentTimeMillis();
       try (BufferedReader in = getBufferedUrlReader(urlString)) {
@@ -1500,7 +1502,7 @@ public class SSR {
     }
 
     // if file -- Trouble! it assumes 8859-1 encoding.  Who uses this?
-    String sar[] = File2.readFromFile(urlString, File2.ISO_8859_1, 2); // uses newline
+    String sar[] = File2.readFromFile(urlString, File2.ISO_8859_1_CHARSET, 2); // uses newline
     if (sar[0].length() > 0) throw new IOException(sar[0]);
     return sar[1];
   }

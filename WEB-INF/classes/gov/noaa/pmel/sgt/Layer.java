@@ -340,7 +340,7 @@ public class Layer extends Component implements Cloneable, LayerControl {
    * Draw the Layer and its attached classes.
    *
    * @param g graphics context
-   * @exception PaneNotFoundException if a pane object is not found
+   * @throws PaneNotFoundException if a pane object is not found
    */
   @Override
   public void draw(Graphics g) throws PaneNotFoundException {

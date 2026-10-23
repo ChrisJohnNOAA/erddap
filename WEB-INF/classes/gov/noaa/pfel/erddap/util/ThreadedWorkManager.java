@@ -29,8 +29,7 @@ public class ThreadedWorkManager<T> {
       FutureTask<T> task = new FutureTask<>(callable);
       taskList.add(task);
       if (executorService != null) {
-        @SuppressWarnings("unused")
-        Future<?> unused = executorService.submit(task);
+        Future<?> _ = executorService.submit(task);
       }
     } else {
       // No threading here, just do the work and process it.

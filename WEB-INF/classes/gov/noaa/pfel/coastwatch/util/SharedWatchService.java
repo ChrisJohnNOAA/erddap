@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SharedWatchService {
+public final class SharedWatchService {
   public static final WatchEvent.Kind<Path> CREATE = StandardWatchEventKinds.ENTRY_CREATE;
   public static final WatchEvent.Kind<Path> DELETE = StandardWatchEventKinds.ENTRY_DELETE;
   public static final WatchEvent.Kind<Path> MODIFY = StandardWatchEventKinds.ENTRY_MODIFY;
@@ -29,6 +29,8 @@ public class SharedWatchService {
       new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<String, WatchUpdateHandler> handlerIdToHandler =
       new ConcurrentHashMap<>();
+
+  private SharedWatchService() {} // don't allow instantiation
 
   /**
    * Registers a directory with the shared watch service.
@@ -135,7 +137,7 @@ public class SharedWatchService {
         }
 
         for (WatchEvent<?> event : key.pollEvents()) {
-          if (event.kind() == SharedWatchService.OVERFLOW) {
+          if (SharedWatchService.OVERFLOW.equals(event.kind())) {
             handlerToReset.add(handlerId);
             // If we're doing a full reset we don't need to process the events.
             break;

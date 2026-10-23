@@ -101,60 +101,68 @@ public class NcoJsonFiles extends TableWriterFileType {
 
   /** Interface for providing metadata about a table in needed to write ncoJson. */
   public interface NcoJsonTableMetadataProvider {
-    public abstract Attributes globalAttributes();
+    Attributes globalAttributes();
 
-    public abstract int nColumns();
+    int nColumns();
 
-    public abstract String columnName(int col);
+    String columnName(int col);
 
-    public abstract PAType columnType(int col);
+    PAType columnType(int col);
 
-    public abstract Attributes columnAttributes(int col);
+    Attributes columnAttributes(int col);
 
-    public abstract long columnMaxStringLength(int col);
+    long columnMaxStringLength(int col);
 
-    public abstract long nRows();
+    long nRows();
   }
 
   /** Implementation of NcoJsonTableMetadataProvider for TableWriterAllWithMetadata. */
-  public class NcoJsonTableWriterTableMetadataProvider implements NcoJsonTableMetadataProvider {
+  public static class NcoJsonTableWriterTableMetadataProvider
+      implements NcoJsonTableMetadataProvider {
     final TableWriterAllWithMetadata twawm;
 
     public NcoJsonTableWriterTableMetadataProvider(TableWriterAllWithMetadata twawm) {
       this.twawm = twawm;
     }
 
+    @Override
     public Attributes globalAttributes() {
       return twawm.globalAttributes();
     }
 
+    @Override
     public int nColumns() {
       return twawm.nColumns();
     }
 
+    @Override
     public String columnName(int col) {
       return twawm.columnName(col);
     }
 
+    @Override
     public PAType columnType(int col) {
       return twawm.columnType(col);
     }
 
+    @Override
     public Attributes columnAttributes(int col) {
       return twawm.columnAttributes(col);
     }
 
+    @Override
     public long columnMaxStringLength(int col) {
       return twawm.columnMaxStringLength(col);
     }
 
+    @Override
     public long nRows() {
       return twawm.nRows();
     }
   }
 
   /** Implementation of NcoJsonTableMetadataProvider for EDDTable. */
-  public class NcoJsonEDDTableMetadataProvider implements NcoJsonTableMetadataProvider {
+  public static class NcoJsonEDDTableMetadataProvider implements NcoJsonTableMetadataProvider {
     final EDDTable edd;
     final int language;
 
@@ -163,30 +171,37 @@ public class NcoJsonFiles extends TableWriterFileType {
       this.language = language;
     }
 
+    @Override
     public Attributes globalAttributes() {
       return edd.combinedGlobalAttributes().toAttributes(language);
     }
 
+    @Override
     public int nColumns() {
       return edd.dataVariables().length;
     }
 
+    @Override
     public String columnName(int col) {
       return edd.dataVariables()[col].destinationName();
     }
 
+    @Override
     public PAType columnType(int col) {
       return edd.dataVariables()[col].destinationDataPAType();
     }
 
+    @Override
     public Attributes columnAttributes(int col) {
       return edd.dataVariables()[col].combinedAttributes().toAttributes(language);
     }
 
+    @Override
     public long columnMaxStringLength(int col) {
       return 0; // metadata only
     }
 
+    @Override
     public long nRows() {
       return 0; // metadata only
     }

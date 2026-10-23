@@ -250,21 +250,21 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at manifest
-    String ra[] = File2.readFromFile(tempDir + "manifest-md5.txt", File2.UTF_8);
+    String ra[] = File2.readFromFile(tempDir + "manifest-md5.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "[0-9a-f]{32}  data/cwwcNDBCMet.nc\n"; // 2017-03-07 actual md5 verified by hand
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at bagit.txt
-    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "BagIt-Version: 0.97\n" + "Tag-File-Character-Encoding: UTF-8\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional bag-info.txt
-    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -284,7 +284,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional tagmanifest-md5.txt
-    ra = File2.readFromFile(tempDir + "tagmanifest-md5.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "tagmanifest-md5.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = // 2017-03-07 actual md5's verified by hand
@@ -353,21 +353,21 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at manifest
-    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8);
+    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "[0-9a-f]{64}  data/cwwcNDBCMet.nc\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at bagit.txt
-    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "BagIt-Version: 0.97\n" + "Tag-File-Character-Encoding: UTF-8\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional bag-info.txt
-    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -387,7 +387,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional tagmanifest-sha256.txt
-    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = // 2017-03-07 actual sha256's verified by hand
@@ -526,21 +526,21 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at manifest
-    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8);
+    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "[0-9a-f]{64}  data/sp051-20141112.nc\n" + "[0-9a-f]{64}  data/sp052-20140814.nc\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at bagit.txt
-    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "BagIt-Version: 0.97\n" + "Tag-File-Character-Encoding: UTF-8\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional bag-info.txt
-    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -560,7 +560,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional tagmanifest-sha256.txt
-    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -693,7 +693,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at manifest
-    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8);
+    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -701,14 +701,14 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at bagit.txt
-    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "BagIt-Version: 0.97\n" + "Tag-File-Character-Encoding: UTF-8\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional bag-info.txt
-    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -726,7 +726,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional tagmanifest-sha256.txt
-    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -852,21 +852,21 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at manifest
-    String ra[] = File2.readFromFile(tempDir + "manifest-sha1.txt", File2.UTF_8);
+    String ra[] = File2.readFromFile(tempDir + "manifest-sha1.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "[0-9a-f]{40}  data/20150302000000Z.nc\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at bagit.txt
-    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "BagIt-Version: 0.97\n" + "Tag-File-Character-Encoding: UTF-8\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional bag-info.txt
-    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -884,7 +884,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional tagmanifest-sha1.txt
-    ra = File2.readFromFile(tempDir + "tagmanifest-sha1.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "tagmanifest-sha1.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -951,7 +951,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at manifest
-    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8);
+    String ra[] = File2.readFromFile(tempDir + "manifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -959,14 +959,14 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at bagit.txt
-    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bagit.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected = "BagIt-Version: 0.97\n" + "Tag-File-Character-Encoding: UTF-8\n";
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional bag-info.txt
-    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "bag-info.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =
@@ -984,7 +984,7 @@ class ArchiveADatasetTests {
     Test.ensureLinesMatch(results, expected, "results=\n" + results);
 
     // look at optional tagmanifest-sha256.txt
-    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8);
+    ra = File2.readFromFile(tempDir + "tagmanifest-sha256.txt", File2.UTF_8_CHARSET);
     Test.ensureEqual(ra[0], "", "ra[0]=" + ra[0]);
     results = ra[1];
     expected =

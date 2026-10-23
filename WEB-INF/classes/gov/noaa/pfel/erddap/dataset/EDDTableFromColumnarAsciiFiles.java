@@ -23,6 +23,7 @@ import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
 import gov.noaa.pfel.erddap.util.EDStatic;
 import gov.noaa.pfel.erddap.variable.*;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.List;
 
@@ -226,7 +227,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
    */
   public static void getColumnInfo(
       String sampleFileName,
-      String charset,
+      Charset charset,
       int columnNamesRow,
       int firstDataRow,
       StringArray colNames,
@@ -394,6 +395,10 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
             + tTitle
             + "\nexternalAddGlobalAttributes="
             + externalAddGlobalAttributes);
+    Charset cs =
+        String2.isSomething(charset) && Charset.isSupported(charset)
+            ? Charset.forName(charset)
+            : File2.ISO_8859_1_CHARSET;
     if (!String2.isSomething(tFileDir))
       throw new IllegalArgumentException("fileDir wasn't specified.");
     tFileDir = File2.addSlash(tFileDir); // ensure it has trailing slash
@@ -402,7 +407,6 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
       FileVisitorDNLS.sync(
           tCacheFromUrl, tFileDir, tFileNameRegex, true, ".*", false); // not fullSync
     firstDataRow = Math.max(1, firstDataRow); // 1..
-    if (charset == null || charset.length() == 0) charset = File2.ISO_8859_1;
     tColumnNameForExtract =
         String2.isSomething(tColumnNameForExtract) ? tColumnNameForExtract.trim() : "";
     // tSortedColumnSourceName = String2.isSomething(tSortedColumnSourceName)?
@@ -417,11 +421,10 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
                       tFileDir, tFileNameRegex, true, ".*"))); // recursive, pathRegex
 
     // get info from the sampleFile
-    if (charset == null || charset.length() == 0) charset = File2.ISO_8859_1;
     StringArray colNames = new StringArray();
     IntArray start = new IntArray();
     IntArray stop = new IntArray();
-    getColumnInfo(sampleFileName, charset, columnNamesRow, firstDataRow, colNames, start, stop);
+    getColumnInfo(sampleFileName, cs, columnNamesRow, firstDataRow, colNames, start, stop);
 
     // *** basically, make a table to hold the sourceAttributes
     // and a parallel table to hold the addAttributes
@@ -429,7 +432,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
     Table dataAddTable = new Table();
     dataSourceTable.readColumnarASCIIFile(
         sampleFileName,
-        charset,
+        cs,
         "",
         "", // skipHeaderToRegex, skipLinesRegex,
         firstDataRow - 1,
@@ -581,7 +584,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
             + "    <pathRegex>.*</pathRegex>\n"
             + "    <metadataFrom>last</metadataFrom>\n"
             + "    <charset>"
-            + charset
+            + cs.displayName()
             + "</charset>\n"
             + "    <columnNamesRow>"
             + columnNamesRow
@@ -827,8 +830,8 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
     if (!String2.isSomething(emlFileName))
       throw new IllegalArgumentException("Big ERROR: emlFileName wasn't specified.");
     if (!String2.isSomething(localTimeZone)) localTimeZone = "";
-    String charset = null; // for the sample data file
-    String defaultDatafileCharset = File2.ISO_8859_1; // for the sample data file
+    Charset charset = null; // for the sample data file
+    Charset defaultDatafileCharset = File2.ISO_8859_1_CHARSET; // for the sample data file
     Table addTable = new Table();
     Attributes addGlobalAtts = addTable.globalAttributes();
     tStandardizeWhat =
@@ -1730,7 +1733,7 @@ public class EDDTableFromColumnarAsciiFiles extends EDDTableFromFiles {
 
     // *** read the sample file: make a table to hold the sourceAttributes
     Table sourceTable = new Table();
-    if (charset == null || charset.length() == 0) charset = defaultDatafileCharset;
+    if (charset == null) charset = defaultDatafileCharset;
     boolean columnar = false; // are there any? how detect?
 
     IntArray colStart = new IntArray();

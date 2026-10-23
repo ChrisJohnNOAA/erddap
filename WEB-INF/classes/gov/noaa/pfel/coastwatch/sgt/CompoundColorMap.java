@@ -146,7 +146,7 @@ public class CompoundColorMap extends ColorMap {
    * @param cptFileName the complete name of the .cpt file
    */
   public CompoundColorMap(String cptFileName) throws Exception {
-    List<String> lines = File2.readLinesFromFile(cptFileName, File2.ISO_8859_1, 3);
+    List<String> lines = File2.readLinesFromFile(cptFileName, File2.ISO_8859_1_CHARSET, 3);
     populate(this, cptFileName, lines);
   }
 
@@ -464,7 +464,7 @@ public class CompoundColorMap extends ColorMap {
     if (reallyVerbose) String2.log("nPieces=" + nPieces);
     String cptFileName =
         makeCPT(baseDir, palette, "Linear", 0, nPieces, nPieces, continuous, resultDir);
-    List<String> lines = File2.readLinesFromFile(cptFileName, File2.ISO_8859_1, 3);
+    List<String> lines = File2.readLinesFromFile(cptFileName, File2.ISO_8859_1_CHARSET, 3);
     populate(this, cptFileName, lines);
 
     // put tRangeLow, tRangeHigh, tLeftLabel, tLastLabel into place

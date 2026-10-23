@@ -328,8 +328,11 @@ public class TestSSR {
     URL tFileName = tFilePath.toUri().toURL();
     File2.writeToFile88591(tFilePath.toString(), "This is\na file\nwith a few lines.");
     Test.ensureEqual(
-        SSR.getFirstLineStartsWith(tFileName, File2.ISO_8859_1, "with "), "with a few lines.", "a");
-    Test.ensureEqual(SSR.getFirstLineStartsWith(tFileName, File2.ISO_8859_1, "hi "), null, "b");
+        SSR.getFirstLineStartsWith(tFileName, File2.ISO_8859_1_CHARSET, "with "),
+        "with a few lines.",
+        "a");
+    Test.ensureEqual(
+        SSR.getFirstLineStartsWith(tFileName, File2.ISO_8859_1_CHARSET, "hi "), null, "b");
 
     Test.ensureTrue(File2.delete(tFilePath.toString()), "delete " + tFileName);
 
