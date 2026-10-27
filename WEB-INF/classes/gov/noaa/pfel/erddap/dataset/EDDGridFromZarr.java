@@ -324,7 +324,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       }
 
       // Build grid axes
-      this.axisVariables = buildGridAxes(tAxisVariables, arrayMap);
+      this.axisVariables = buildGridAxes(tAxisVariables, tDataVariables, arrayMap);
 
       // Collect axis source names
       Set<String> axisSourceNames = new HashSet<>();
@@ -719,12 +719,48 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       double sourceFillDouble = edv.sourceFillValue();
       double destMissingDouble = edv.destinationMissingValue();
 
-      // Check Zarr parsed fill value from metadata if available
-      Object parsedFV = metadata.parsedFillValue();
-      if (parsedFV instanceof Number n) {
-        double fvDouble = n.doubleValue();
-        if (Double.isNaN(sourceFillDouble)) {
-          sourceFillDouble = fvDouble;
+      Long sourceMissingLong = null;
+      Long sourceFillLong = null;
+
+      if ((destPAType == PAType.LONG || destPAType == PAType.ULONG) && !unpack) {
+        Object fv = metadata.parsedFillValue();
+        if (fv instanceof Number n) {
+          sourceFillLong = n.longValue();
+        } else if (fv instanceof String s) {
+          try {
+            sourceFillLong = Long.parseUnsignedLong(s.trim());
+          } catch (Exception e) {
+            try {
+              sourceFillLong = String2.parseLong(s);
+            } catch (Exception e2) {
+              // ignore
+            }
+          }
+        }
+
+        if (edv.sourceAttributes() != null) {
+          PrimitiveArray ma = edv.sourceAttributes().get("missing_value");
+          if (ma != null && ma.size() > 0) {
+            sourceMissingLong = ma.getLong(0);
+          }
+          PrimitiveArray fa = edv.sourceAttributes().get("_FillValue");
+          if (fa != null && fa.size() > 0) {
+            sourceFillLong = fa.getLong(0);
+          }
+        }
+        if (sourceMissingLong == null && !Double.isNaN(sourceMissingDouble)) {
+          sourceMissingLong = (long) sourceMissingDouble;
+        }
+        if (sourceFillLong == null && !Double.isNaN(sourceFillDouble)) {
+          sourceFillLong = (long) sourceFillDouble;
+        }
+      } else {
+        Object parsedFV = metadata.parsedFillValue();
+        if (parsedFV instanceof Number n) {
+          double fvDouble = n.doubleValue();
+          if (Double.isNaN(sourceFillDouble)) {
+            sourceFillDouble = fvDouble;
+          }
         }
       }
 
@@ -807,8 +843,12 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         try {
           chunkData = zarray.readChunk(chunkCoords);
         } catch (Throwable t) {
-          // Unwritten, missing, or empty chunk -> treated as missing fill region
-          chunkData = null;
+          if (isMissingChunkException(t)) {
+            // Unwritten, missing, or empty chunk -> treated as missing fill region
+            chunkData = null;
+          } else {
+            throw t;
+          }
         }
 
         // Calculate total element iterations within overlap for this chunk
@@ -848,6 +888,17 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               Object obj = chunkData.getObject(ma2Idx);
               String sVal = obj != null ? obj.toString() : "";
               destPA.setString(outIdx, sVal);
+            } else if ((destPAType == PAType.LONG || destPAType == PAType.ULONG) && !unpack) {
+              long rawLong = chunkData.getLong(ma2Idx);
+              boolean isMissing =
+                  (sourceMissingLong != null && rawLong == sourceMissingLong)
+                      || (sourceFillLong != null && rawLong == sourceFillLong);
+
+              if (isMissing) {
+                setMissingInDest(destPA, outIdx, destPAType, destMissingDouble);
+              } else {
+                destPA.setLong(outIdx, rawLong);
+              }
             } else {
               double rawVal = chunkData.getDouble(ma2Idx);
 
@@ -881,6 +932,9 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       PrimitiveArray destPA, int index, PAType paType, double missingDouble) {
     if (paType == PAType.STRING || paType == PAType.CHAR) {
       destPA.setString(index, "");
+    } else if (paType == PAType.LONG || paType == PAType.ULONG) {
+      destPA.setLong(
+          index, Double.isNaN(missingDouble) ? Long.MAX_VALUE : (long) missingDouble);
     } else if (Double.isNaN(missingDouble)) {
       destPA.setDouble(index, Double.NaN);
     } else {
@@ -1023,16 +1077,25 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           if (dv == null || !String2.isSomething(dv.sourceName())) continue;
           ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
           if (dvInfo != null && dvInfo.shape != null && dvInfo.shape.length > 0) {
-            int outerDimIdx = 0;
-            if (dvInfo.dimensionNames != null
-                && dvInfo.dimensionNames.length == dvInfo.shape.length) {
+            int outerDimIdx = -1;
+            boolean isFallback = isFallbackDimensionNames(dvInfo);
+
+            if (!isFallback) {
               for (int d = 0; d < dvInfo.dimensionNames.length; d++) {
-                if (outerAxisSourceName.equals(dvInfo.dimensionNames[d])) {
+                if (isDimNameMatch(outerAxisSourceName, dvInfo.dimensionNames[d])) {
                   outerDimIdx = d;
                   break;
                 }
               }
+              if (outerDimIdx < 0) continue;
+            } else {
+              if (dvInfo.shape.length == axisVariables.length) {
+                outerDimIdx = 0;
+              } else {
+                continue;
+              }
             }
+
             long dvOuterShape = dvInfo.shape[outerDimIdx];
             if (dvOuterShape < newAxisLength) {
               String2.log(
@@ -1336,6 +1399,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         if (info == null || info.isUnsupportedCodec) continue;
         if (axisNameSet.contains(info.name)) continue;
         if (info.is1D() && isLikelyAxisArray(info)) continue;
+        if (!isMatchingGridDimensions(info, axisNames, dimLengths)) continue;
 
         String varName = info.name;
         Attributes sourceAtts = new Attributes();
@@ -1477,11 +1541,53 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     public PAType paType;
     public Attributes attributes;
     public String[] dimensionNames;
+    public boolean hasExplicitDimensionNames = false;
     public boolean isUnsupportedCodec = false;
 
     public boolean is1D() {
       return shape != null && shape.length == 1;
     }
+  }
+
+  protected static boolean isMissingChunkException(Throwable t) {
+    Throwable current = t;
+    while (current != null) {
+      if (current instanceof java.nio.file.NoSuchFileException
+          || current instanceof java.io.FileNotFoundException
+          || current instanceof software.amazon.awssdk.services.s3.model.NoSuchKeyException) {
+        return true;
+      }
+      if (current instanceof software.amazon.awssdk.services.s3.model.S3Exception s3e) {
+        if (s3e.statusCode() == 404) {
+          return true;
+        }
+      }
+      String msg = current.getMessage();
+      if (msg == null) msg = current.toString();
+      if (msg != null) {
+        String lowerMsg = msg.toLowerCase();
+        if (lowerMsg.contains("not found")
+            || lowerMsg.contains("404")
+            || lowerMsg.contains("nosuchkey")
+            || lowerMsg.contains("does not exist")
+            || lowerMsg.contains("missing chunk")) {
+          return true;
+        }
+      }
+      current = current.getCause();
+    }
+    return false;
+  }
+
+  private static boolean startsWithKeys(String[] entryKeys, String[] groupKeys) {
+    if (groupKeys == null || groupKeys.length == 0 || entryKeys == null) return false;
+    if (entryKeys.length <= groupKeys.length) return false;
+    for (int i = 0; i < groupKeys.length; i++) {
+      if (!groupKeys[i].equals(entryKeys[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean isCodecError(Throwable t) {
@@ -1528,13 +1634,18 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       try {
         List<String[]> entries = listable.list(groupKeys).toList();
         for (String[] entryKeys : entries) {
-          if (entryKeys.length >= 2) {
-            String lastPart = entryKeys[entryKeys.length - 1];
+          int lastIdx = entryKeys.length - 1;
+          if (lastIdx >= 1) {
+            String lastPart = entryKeys[lastIdx];
             if (".zarray".equals(lastPart) || "zarr.json".equals(lastPart)) {
-              String[] relParts = new String[entryKeys.length - 1];
-              System.arraycopy(entryKeys, 0, relParts, 0, entryKeys.length - 1);
-              String relName = String.join("/", relParts);
-              getOrOpenZarrArrayInfo(zarrGroup, relName, arrayMap);
+              int startIdx = startsWithKeys(entryKeys, groupKeys) ? groupKeys.length : 0;
+              if (lastIdx > startIdx) {
+                int relLength = lastIdx - startIdx;
+                String[] relParts = new String[relLength];
+                System.arraycopy(entryKeys, startIdx, relParts, 0, relLength);
+                String relName = String.join("/", relParts);
+                getOrOpenZarrArrayInfo(zarrGroup, relName, arrayMap);
+              }
             }
           }
         }
@@ -1689,7 +1800,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       }
     }
 
-    String[] dimNames = extractDimensionNames(metadata, shape.length);
+    boolean[] hasExplicit = new boolean[1];
+    String[] dimNames = extractDimensionNames(metadata, shape.length, hasExplicit);
 
     ZarrArrayInfo info = new ZarrArrayInfo();
     info.name = name;
@@ -1699,10 +1811,13 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     info.paType = paType;
     info.attributes = erddapAtts;
     info.dimensionNames = dimNames;
+    info.hasExplicitDimensionNames = hasExplicit[0];
     return info;
   }
 
-  private static String[] extractDimensionNames(ArrayMetadata metadata, int rank) {
+  private static String[] extractDimensionNames(ArrayMetadata metadata, int rank, boolean[] hasExplicit) {
+    if (hasExplicit != null && hasExplicit.length > 0) hasExplicit[0] = false;
+
     // 1. Check Zarr v3 dimensionNames
     if (metadata instanceof dev.zarr.zarrjava.v3.ArrayMetadata v3Meta) {
       if (v3Meta.dimensionNames != null && v3Meta.dimensionNames.length == rank) {
@@ -1713,7 +1828,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
             break;
           }
         }
-        if (valid) return v3Meta.dimensionNames;
+        if (valid) {
+          if (hasExplicit != null && hasExplicit.length > 0) hasExplicit[0] = true;
+          return v3Meta.dimensionNames;
+        }
       }
     }
 
@@ -1724,6 +1842,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         Object obj = zattrs.get("_ARRAY_DIMENSIONS");
         String[] dims = parseStringArrayObject(obj);
         if (dims != null && dims.length == rank) {
+          if (hasExplicit != null && hasExplicit.length > 0) hasExplicit[0] = true;
           return dims;
         }
       }
@@ -1790,7 +1909,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
    * @throws Throwable if error or missing/invalid axes
    */
   protected EDVGridAxis[] buildGridAxes(
-      List<AxisVariableInfo> tAxisVariables, Map<String, ZarrArrayInfo> arrayMap) throws Throwable {
+      List<AxisVariableInfo> tAxisVariables,
+      List<DataVariableInfo> tDataVariables,
+      Map<String, ZarrArrayInfo> arrayMap)
+      throws Throwable {
 
     List<EDVGridAxis> axesList = new ArrayList<>();
 
@@ -1854,6 +1976,25 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       List<String> orderedDimNames = new ArrayList<>();
       Map<String, Long> dimLengths = new LinkedHashMap<>();
 
+      // First priority: gather dimension names from explicit data variables if present
+      if (tDataVariables != null && !tDataVariables.isEmpty()) {
+        for (DataVariableInfo dvi : tDataVariables) {
+          if (dvi == null || !String2.isSomething(dvi.sourceName())) continue;
+          ZarrArrayInfo info = getOrOpenZarrArrayInfo(dvi.sourceName(), arrayMap);
+          if (info != null && !info.isUnsupportedCodec && info.dimensionNames != null) {
+            for (int d = 0; d < info.dimensionNames.length; d++) {
+              String dimName = info.dimensionNames[d];
+              long len = (info.shape != null && d < info.shape.length) ? info.shape[d] : 0;
+              if (!dimLengths.containsKey(dimName)) {
+                orderedDimNames.add(dimName);
+                dimLengths.put(dimName, len);
+              }
+            }
+          }
+        }
+      }
+
+      // Second priority: iterate over all N-dimensional data arrays in arrayMap
       for (ZarrArrayInfo info : arrayMap.values()) {
         if (info == null || info.isUnsupportedCodec) continue;
         if (!info.is1D() && info.dimensionNames != null) {
@@ -1936,6 +2077,90 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
    * @return EDV[] array of constructed data variables
    * @throws Throwable if error
    */
+  private static boolean isFallbackDimensionNames(ZarrArrayInfo info) {
+    if (info == null) return true;
+    if (!info.hasExplicitDimensionNames) return true;
+    if (info.dimensionNames == null || info.dimensionNames.length == 0) return true;
+    return false;
+  }
+
+  private static boolean isDimNameMatch(String expectedAxisName, String varDimName) {
+    if (expectedAxisName == null || varDimName == null) return false;
+    if (expectedAxisName.equals(varDimName)) return true;
+    if (expectedAxisName.endsWith("/" + varDimName)) return true;
+    String cleanAxis = expectedAxisName.substring(expectedAxisName.lastIndexOf('/') + 1);
+    String cleanVar = varDimName.substring(varDimName.lastIndexOf('/') + 1);
+    return cleanAxis.equals(cleanVar);
+  }
+
+  protected static boolean isMatchingGridDimensions(ZarrArrayInfo info, EDVGridAxis[] axes) {
+    if (info == null || info.shape == null || axes == null) return false;
+    int axisCount = axes.length;
+    if (info.shape.length != axisCount) return false;
+
+    if (isFallbackDimensionNames(info)) {
+      for (int i = 0; i < axisCount; i++) {
+        long expectedLen = (axes[i] != null && axes[i].sourceValues() != null) ? axes[i].sourceValues().size() : -1;
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      for (int i = 0; i < axisCount; i++) {
+        String expectedName = axes[i] != null ? axes[i].sourceName() : null;
+        if (!isDimNameMatch(expectedName, info.dimensionNames[i])) {
+          return false;
+        }
+        long expectedLen = (axes[i] != null && axes[i].sourceValues() != null) ? axes[i].sourceValues().size() : -1;
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  protected static boolean isMatchingGridDimensions(
+      ZarrArrayInfo info, List<String> axisNames, Map<String, Long> dimLengths) {
+    if (info == null || info.shape == null || axisNames == null) return false;
+    int axisCount = axisNames.size();
+    if (info.shape.length != axisCount) return false;
+
+    if (isFallbackDimensionNames(info)) {
+      for (int i = 0; i < axisCount; i++) {
+        String axisName = axisNames.get(i);
+        long expectedLen = dimLengths != null ? dimLengths.getOrDefault(axisName, -1L) : -1L;
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      for (int i = 0; i < axisCount; i++) {
+        String expectedName = axisNames.get(i);
+        if (!isDimNameMatch(expectedName, info.dimensionNames[i])) {
+          return false;
+        }
+        long expectedLen = dimLengths != null ? dimLengths.getOrDefault(expectedName, -1L) : -1L;
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  /**
+   * Builds ERDDAP EDV data variables for gridded data arrays.
+   *
+   * @param tDataVariables explicit data variable specifications from XML (or null/empty for
+   *     auto-discovery)
+   * @param arrayMap map of Zarr array metadata
+   * @param axisSourceNames set of array names used as coordinate axes
+   * @return EDV[] array of constructed data variables
+   * @throws Throwable if error
+   */
   protected EDV[] buildDataVariables(
       List<DataVariableInfo> tDataVariables,
       Map<String, ZarrArrayInfo> arrayMap,
@@ -1960,9 +2185,20 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
                   + "' due to unsupported Zarr codec.");
           continue;
         }
+        if (info == null) {
+          throw new SimpleException(
+              "Data variable '" + tDataSourceName + "' not found in Zarr store.");
+        }
+
+        if (!isMatchingGridDimensions(info, this.axisVariables)) {
+          throw new SimpleException(
+              "Data variable '"
+                  + tDataSourceName
+                  + "' dimensions do not match the grid axes.");
+        }
 
         Attributes tDataSourceAtts = new Attributes();
-        if (info != null && info.attributes != null) {
+        if (info.attributes != null) {
           info.attributes.copyTo(tDataSourceAtts);
         }
 
@@ -2011,6 +2247,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         if (info == null || info.isUnsupportedCodec) continue;
         if (axisSourceNames.contains(info.name)) continue;
         if (info.is1D() && isLikelyAxisArray(info)) continue;
+        if (!isMatchingGridDimensions(info, this.axisVariables)) continue;
 
         String tDataSourceName = info.name;
         String tDataDestName = info.name;

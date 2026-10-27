@@ -53,6 +53,31 @@ class EDDGridFromZarrTests {
       dev.zarr.zarrjava.store.FilesystemStore store =
           new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
       dev.zarr.zarrjava.v3.Group.create(store.resolve());
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.v3.Array timeArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("time"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("time"),
+              true);
+      dev.zarr.zarrjava.core.Attributes timeAtts = new dev.zarr.zarrjava.core.Attributes();
+      timeAtts.set("units", "seconds since 1970-01-01T00:00:00Z");
+      timeArray.setAttributes(timeAtts);
+      timeArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {1000.0, 2000.0}));
+
+      dev.zarr.zarrjava.v3.Array tempArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temperature"),
+              mb ->
+                  mb.withShape(2)
+                      .withDataType(float64)
+                      .withDimensionNames("time"),
+              true);
+      tempArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {15.0, 16.0}));
 
       String datasetID = "test_zarr_dataset";
       LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
@@ -314,6 +339,16 @@ class EDDGridFromZarrTests {
       dev.zarr.zarrjava.store.FilesystemStore store =
           new dev.zarr.zarrjava.store.FilesystemStore(tempDir);
       dev.zarr.zarrjava.v3.Group.create(store.resolve());
+      dev.zarr.zarrjava.v3.DataType float64 = dev.zarr.zarrjava.v3.DataType.FLOAT64;
+
+      dev.zarr.zarrjava.v3.Array tempArray =
+          dev.zarr.zarrjava.v3.Array.create(
+              store.resolve("temp"),
+              mb -> mb.withShape(2).withDataType(float64).withDimensionNames("dim0"),
+              true);
+      tempArray.write(
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {15.0, 16.0}));
 
       String xml =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
