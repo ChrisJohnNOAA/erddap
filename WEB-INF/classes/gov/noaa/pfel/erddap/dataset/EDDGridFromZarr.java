@@ -324,7 +324,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       }
 
       // Build grid axes
-      this.axisVariables = buildGridAxes(tAxisVariables, arrayMap);
+      this.axisVariables = buildGridAxes(tAxisVariables, tDataVariables, arrayMap);
 
       // Collect axis source names
       Set<String> axisSourceNames = new HashSet<>();
@@ -1909,7 +1909,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
    * @throws Throwable if error or missing/invalid axes
    */
   protected EDVGridAxis[] buildGridAxes(
-      List<AxisVariableInfo> tAxisVariables, Map<String, ZarrArrayInfo> arrayMap) throws Throwable {
+      List<AxisVariableInfo> tAxisVariables,
+      List<DataVariableInfo> tDataVariables,
+      Map<String, ZarrArrayInfo> arrayMap)
+      throws Throwable {
 
     List<EDVGridAxis> axesList = new ArrayList<>();
 
@@ -1973,6 +1976,25 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       List<String> orderedDimNames = new ArrayList<>();
       Map<String, Long> dimLengths = new LinkedHashMap<>();
 
+      // First priority: gather dimension names from explicit data variables if present
+      if (tDataVariables != null && !tDataVariables.isEmpty()) {
+        for (DataVariableInfo dvi : tDataVariables) {
+          if (dvi == null || !String2.isSomething(dvi.sourceName())) continue;
+          ZarrArrayInfo info = getOrOpenZarrArrayInfo(dvi.sourceName(), arrayMap);
+          if (info != null && !info.isUnsupportedCodec && info.dimensionNames != null) {
+            for (int d = 0; d < info.dimensionNames.length; d++) {
+              String dimName = info.dimensionNames[d];
+              long len = (info.shape != null && d < info.shape.length) ? info.shape[d] : 0;
+              if (!dimLengths.containsKey(dimName)) {
+                orderedDimNames.add(dimName);
+                dimLengths.put(dimName, len);
+              }
+            }
+          }
+        }
+      }
+
+      // Second priority: iterate over all N-dimensional data arrays in arrayMap
       for (ZarrArrayInfo info : arrayMap.values()) {
         if (info == null || info.isUnsupportedCodec) continue;
         if (!info.is1D() && info.dimensionNames != null) {
