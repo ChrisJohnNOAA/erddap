@@ -728,9 +728,13 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           sourceFillLong = n.longValue();
         } else if (fv instanceof String s) {
           try {
-            sourceFillLong = String2.parseLong(s);
+            sourceFillLong = Long.parseUnsignedLong(s.trim());
           } catch (Exception e) {
-            // ignore
+            try {
+              sourceFillLong = String2.parseLong(s);
+            } catch (Exception e2) {
+              // ignore
+            }
           }
         }
 
@@ -1078,7 +1082,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
 
             if (!isFallback) {
               for (int d = 0; d < dvInfo.dimensionNames.length; d++) {
-                if (outerAxisSourceName.equals(dvInfo.dimensionNames[d])) {
+                if (isDimNameMatch(outerAxisSourceName, dvInfo.dimensionNames[d])) {
                   outerDimIdx = d;
                   break;
                 }
@@ -2075,7 +2079,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     if (isFallbackDimensionNames(info)) {
       for (int i = 0; i < axisCount; i++) {
         long expectedLen = (axes[i] != null && axes[i].sourceValues() != null) ? axes[i].sourceValues().size() : -1;
-        if (expectedLen >= 0 && info.shape[i] < expectedLen) {
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
           return false;
         }
       }
@@ -2084,6 +2088,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       for (int i = 0; i < axisCount; i++) {
         String expectedName = axes[i] != null ? axes[i].sourceName() : null;
         if (!isDimNameMatch(expectedName, info.dimensionNames[i])) {
+          return false;
+        }
+        long expectedLen = (axes[i] != null && axes[i].sourceValues() != null) ? axes[i].sourceValues().size() : -1;
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
           return false;
         }
       }
@@ -2110,6 +2118,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       for (int i = 0; i < axisCount; i++) {
         String expectedName = axisNames.get(i);
         if (!isDimNameMatch(expectedName, info.dimensionNames[i])) {
+          return false;
+        }
+        long expectedLen = dimLengths != null ? dimLengths.getOrDefault(expectedName, -1L) : -1L;
+        if (expectedLen >= 0 && info.shape[i] != expectedLen) {
           return false;
         }
       }

@@ -1,338 +1,64 @@
 package testDataset;
 
-import gov.noaa.pfel.erddap.dataset.EDD;
-import gov.noaa.pfel.erddap.util.EDStatic;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import testSupport.ExternalTestUrls;
-
-public class EDDTestDataset {
-  public static void generateDatasetsXml() throws URISyntaxException, FileNotFoundException {
-    if (EDStatic.config.useSaxParser) {
-      // This section writes xml files that represent parts of a dataset. These are to show using
-      // XInclude
-      // to load information into the datasets.xml file.
-      // One thing to note, these xml files can only have 1 root node, so even if there are multiple
-      // variables
-      // (like lat and lon) that you want to reuse, you'll likely need to make 1 file per variable
-      // if you are using XInclude the way it is used here.
-      // You can also use XInclude to define each dataset in it's own file. (not done here)
-      try (PrintWriter datasetsXml = new PrintWriter("development/test/PH53_axis_lat.xml")) {
-        datasetsXml.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-        datasetsXml.append(xmlFragment_PH53_axis_lat());
-      }
-
-      try (PrintWriter datasetsXml = new PrintWriter("development/test/PH53_axis_lon.xml")) {
-        datasetsXml.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-        datasetsXml.append(xmlFragment_PH53_axis_lon());
-      }
-
-      try (PrintWriter datasetsXml = new PrintWriter("development/test/PH53_data_quality.xml")) {
-        datasetsXml.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-        datasetsXml.append(xmlFragment_PH53_data_quality());
-      }
-
-      try (PrintWriter datasetsXml =
-          new PrintWriter("development/test/PH53_data_pathfinder_quality.xml")) {
-        datasetsXml.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-        datasetsXml.append(xmlFragment_PH53_data_pathfinder_quality());
-      }
-
-      try (PrintWriter datasetsXml =
-          new PrintWriter("development/test/PH53_dataVariable_seaSurfaceTemp.xml")) {
-        datasetsXml.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-        datasetsXml.append(xmlFragment_PH53_dataVariable_seaSurfaceTemp());
-      }
-
-      try (PrintWriter datasetsXml =
-          new PrintWriter("development/test/PH53_dataVariable_dtAnalysis.xml")) {
-        datasetsXml.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n");
-        datasetsXml.append(xmlFragment_PH53_dataVariable_dtAnalysis());
-      }
-    }
-
-    try (PrintWriter datasetsXml = new PrintWriter("development/test/datasets.xml")) {
-      datasetsXml.append(
-          "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n"
-              + (EDStatic.config.useSaxParser ? "<!DOCTYPE note [<!ENTITY deg '&#176;'>]>\n" : "")
-              + "<erddapDatasets xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n"
-              // Try to set this so the datasets that need to load in the background have a chance
-              // and this runs again before the jetty tests to ensure all the datasets are loaded.
-              + "<loadDatasetsMinMinutes>4</loadDatasetsMinMinutes>\n"
-              + "<loadDatasetsMaxMinutes>8</loadDatasetsMaxMinutes>\n");
-
-      if (EDStatic.config.useSaxParser) {
-        datasetsXml.append(
-            "<displayInfo>summary,license,display1,display2</displayInfo>\n"
-                + "<displayAttribute>summary,license,att1,att2</displayAttribute>\n");
-      }
-
-      datasetsXml.append(xmlFragment_test_chars());
-      datasetsXml.append(xmlFragment_testZarr_compressedData());
-      datasetsXml.append(xmlFragment_testZarr_fillValues());
-      datasetsXml.append(xmlFragment_testZarr_testData());
-
-      datasetsXml.append(xmlFragment_testZarr_gridCompressedData());
-      datasetsXml.append(xmlFragment_testZarr_gridFillValues());
-      datasetsXml.append(xmlFragment_testZarr_gridTestData());
-      datasetsXml.append(xmlFragment_testZarr_griddTypes());
-      datasetsXml.append(xmlFragment_testZarr_gridCompressedData_ZarrJava());
-      datasetsXml.append(xmlFragment_testZarr_gridFillValues_ZarrJava());
-      datasetsXml.append(xmlFragment_testZarr_gridTestData_ZarrJava());
-      datasetsXml.append(xmlFragment_testZarr_griddTypes_ZarrJava());
-
-      datasetsXml.append(xmlFragment_hawaii_d90f_20ee_c4cb());
-      datasetsXml.append(xmlFragment_hawaii_d90f_20ee_c4cb_LonPM180());
-      // datasetsXml.append(xmlFragment_erdMHchla8day()); // thredds, fails
-      datasetsXml.append(xmlFragment_testActualRange());
-      datasetsXml.append(xmlFragment_testActualRange2());
-      // datasetsXml.append(xmlFragment_hycom_GLBa008_tyx()); // thredds, fails
-      // datasetsXml.append(xmlFragment_erdBAssta5day()); // thredds, fails
-      // datasetsXml.append(xmlFragment_NCOM_Region7_2D()); // external server fails
-      // datasetsXml.append(xmlFragment_jplNesdisG17v271()); // thredds, fails
-      // datasetsXml.append(xmlFragment_usgsCeCrm10()); // thredds, fails
-      // datasetsXml.append(xmlFragment_mb7201adc()); // thredds, fails
-      datasetsXml.append(xmlFragment_nodcPH2sstd1day());
-      // datasetsXml.append(xmlFragment_testDataVarOrder()); // external dataset no longer
-      // available?
-      datasetsXml.append(xmlFragment_etopo180());
-      datasetsXml.append(xmlFragment_etopo360());
-      // datasetsXml.append(xmlFragment_ndbcCWind41002()); // thredds, fails
-      // datasetsXml.append(xmlFragment_cwwcNDBCMet()); // very large files, not
-      // currently loaded
-      datasetsXml.append(xmlFragment_erdCinpKfmSFNH());
-      datasetsXml.append(xmlFragment_testNc2D());
-      datasetsXml.append(xmlFragment_testNc3D());
-      datasetsXml.append(xmlFragment_pmelTaoDySst());
-      datasetsXml.append(xmlFragment_testGlobal());
-      datasetsXml.append(xmlFragment_miniNdbc());
-      datasetsXml.append(xmlFragment_testGlobecBottle());
-      datasetsXml.append(xmlFragment_erdGlobecBirds());
-      datasetsXml.append(xmlFragment_erdGlobecVpt());
-      datasetsXml.append(xmlFragment_erdGlobecMoc1());
-      datasetsXml.append(xmlFragment_earthCubeKgsBoreTempWV());
-      datasetsXml.append(xmlFragment_testTableWithDepth());
-      // datasetsXml.append(xmlFragment_erdGtsppBest()); // very large files, not
-      // currently loaded
-      datasetsXml.append(xmlFragment_erdFedRockfishStation());
-      datasetsXml.append(xmlFragment_testSimpleTestNcTable());
-      datasetsXml.append(xmlFragment_testTimeAxis());
-      // datasetsXml.append(xmlFragment_erdGtsppBestNc()); // very large files, not
-      // currently loaded
-      datasetsXml.append(xmlFragment_erdNph());
-      datasetsXml.append(xmlFragment_testTimePrecisionMillisTable());
-      datasetsXml.append(xmlFragment_LiquidR_HBG3_2015_weather());
-      datasetsXml.append(xmlFragment_testPrecision());
-      datasetsXml.append(xmlFragment_erdCAMarCatSY());
-      datasetsXml.append(xmlFragment_erdCAMarCatSM());
-      datasetsXml.append(xmlFragment_erdCAMarCatLM());
-      datasetsXml.append(xmlFragment_erdCAMarCatLY());
-      datasetsXml.append(xmlFragment_nwioosCoral());
-      datasetsXml.append(xmlFragment_erdCinpKfmT());
-      datasetsXml.append(xmlFragment_epaseamapTimeSeriesProfiles());
-      datasetsXml.append(xmlFragment_fedCalLandings());
-      // Tests rely on copying these files themselves, don't add the dataset
-      // datasetsXml.append(xmlFragment_testEDDTableCopyFiles());
-      datasetsXml.append(xmlFragment_ndbcSosWaves());
-      datasetsXml.append(xmlFragment_testTablePseudoSourceNames());
-      // reloading from source can be extremely slow
-      // datasetsXml.append(xmlFragment_fsuNoaaShipWTEP()); // not used in server tests
-      // datasetsXml.append(xmlFragment_fsuNoaaShipWTEPnrt()); // not used in server tests
-      datasetsXml.append(xmlFragment_pmelTaoDyAirt());
-      datasetsXml.append(xmlFragment_miniNdbc410());
-      // datasetsXml.append(xmlFragment_testEDDTableCacheFiles()); // todo re-enable,
-      // but dir doesn't exist till dataset is cached
-      datasetsXml.append(xmlFragment_testEDDGridFromNcFilesUnpacked());
-      datasetsXml.append(xmlFragment_testUInt16FileUnpacked());
-      datasetsXml.append(xmlFragment_testSuperPreciseTimeUnits());
-      datasetsXml.append(xmlFragment_erdMPOC1day());
-      datasetsXml.append(xmlFragment_testGridCopy());
-      // datasetsXml.append(xmlFragment_testOnlySince());
-      datasetsXml.append(xmlFragment_nosSosATemp());
-      datasetsXml.append(xmlFragment_nosSosBPres());
-      datasetsXml.append(xmlFragment_nosSosCond());
-      datasetsXml.append(xmlFragment_nosSosCurrents());
-      datasetsXml.append(xmlFragment_nosSosSalinity());
-      datasetsXml.append(xmlFragment_nosSosWind());
-      datasetsXml.append(xmlFragment_nosSosWLevel());
-      datasetsXml.append(xmlFragment_nosSosWTemp());
-      // datasetsXml.append(xmlFragment_ndbcSosCurrents()); // ndbcSos not available
-      // datasetsXml.append(xmlFragment_ndbcSosSalinity()); // ndbcSos not available
-      // datasetsXml.append(xmlFragment_ndbcSosWTemp()); // ndbcSos not available
-      // datasetsXml.append(xmlFragment_ndbcSosWLevel()); // ndbcSos not available
-      // datasetsXml.append(xmlFragment_ndbcSosWind()); // ndbcSos not available
-      // datasetsXml.append(xmlFragment_gomoosBuoy()); // external server not available
-      // datasetsXml.append(xmlFragment_neracoosSos()); // external server not available
-      // datasetsXml.append(xmlFragment_tamuSos()); // external server not available
-      // datasetsXml.append(xmlFragment_tabletest2DVSameSource()); // external server not available
-      // datasetsXml.append(xmlFragment_tabletest2DVSameDestination()); // external server not
-      // available
-      // datasetsXml.append(xmlFragment_testErddapSos()); // very large files, not
-      // currently loaded
-      // datasetsXml.append(xmlFragment_kgsBoreTempWVTRUE()); // dataset fails
-      datasetsXml.append(xmlFragment_testFromHttpGet());
-      datasetsXml.append(xmlFragment_testTableColumnarAscii());
-      datasetsXml.append(xmlFragment_glerlAvgTemp());
-      datasetsXml.append(xmlFragment_glerlIce());
-      datasetsXml.append(xmlFragment_glerlLTAvgTemp());
-      datasetsXml.append(xmlFragment_testTableAscii());
-      datasetsXml.append(xmlFragment_testTableAscii2());
-      datasetsXml.append(xmlFragment_testWTDLwSV());
-      datasetsXml.append(xmlFragment_testWTDLwoSV());
-      datasetsXml.append(xmlFragment_ndbcMet2Csv());
-      datasetsXml.append(xmlFragment_testStandardizeWhat());
-      datasetsXml.append(xmlFragment_knb_lter_sbc_14_t1());
-      datasetsXml.append(xmlFragment_knb_lter_sbc_15_t1());
-      datasetsXml.append(xmlFragment_testTimeZone());
-      datasetsXml.append(xmlFragment_testTimeZone2());
-      datasetsXml.append(xmlFragment_testTimeMV());
-      datasetsXml.append(xmlFragment_testFileNames());
-      // datasetsXml.append(xmlFragment_testFileNamesAwsS3()); // aws credentials
-      // datasetsXml.append(xmlFragment_awsS3NoaaGoes17()); // aws credentials
-      // the two below datasets are not used in local server tests and significantly
-      // impact how long it takes for the server to load its data. Disabling them from
-      // the server.
-      // datasetsXml.append(xmlFragment_awsS3NoaaGoes17partial()); // loads slowly
-      // datasetsXml.append(xmlFragment_awsS3NoaaGoes17all()); // loads slowly
-      // datasetsXml.append(xmlFragment_testBadNcFile()); // bad file for tests
-      datasetsXml.append(xmlFragment_testGriddedNcFiles());
-      datasetsXml.append(xmlFragment_testGribFiles_42());
-      datasetsXml.append(xmlFragment_testGrib2_42());
-      datasetsXml.append(xmlFragment_testGribFiles_43());
-      datasetsXml.append(xmlFragment_testGrib2_43());
-      // datasetsXml.append(xmlFragment_testPrivateAwsS3()); // aws credentials
-      // datasetsXml.append(xmlFragment_testAwsS3()); // very large files, not
-      // currently loaded
-      datasetsXml.append(xmlFragment_testCwHdf());
-      // datasetsXml.append(xmlFragment_testGridGroups2a()); // sourceAxis==null
-      // datasetsXml.append(xmlFragment_testGridGroups2()); // sourceAxis==null
-      // datasetsXml.append(xmlFragment_testGridGroups()); // sourceAxis==null
-      // datasetsXml.append(xmlFragment_testGridGroupsNavigation()); // sourceAxis==null
-      datasetsXml.append(xmlFragment_testAwsXml());
-      datasetsXml.append(xmlFragment_testTableWav());
-      // datasetsXml.append(xmlFragment_testAVDVSameSource()); // sameSource used in tests
-      // datasetsXml.append(xmlFragment_test2DVSameSource()); // sameSource used in tests
-      // datasetsXml.append(xmlFragment_testAVDVSameDestination()); // errors, used for testing
-      // datasetsXml.append(xmlFragment_test2DVSameDestination()); // throws error, used for testing
-      datasetsXml.append(xmlFragment_testTimePrecisionMillis());
-      datasetsXml.append(xmlFragment_testSimpleTestNc());
-      // datasetsXml.append(xmlFragment_testRemoteThreddsFiles()); // source 404
-      datasetsXml.append(xmlFragment_testUInt16File());
-      datasetsXml.append(xmlFragment_erdSW1chlamday());
-      datasetsXml.append(xmlFragment_testSpecialAxis0FileNameInt());
-      // datasetsXml.append(xmlFragment_testSpecialAxis0PathNameInt()); // sourceAxisValues null
-      datasetsXml.append(xmlFragment_testSpecialAxis0GlobalDouble());
-      datasetsXml.append(xmlFragment_erdMH1chla1day());
-      datasetsXml.append(xmlFragment_erdMH1chla8day());
-      datasetsXml.append(xmlFragment_erdMH1chlamday());
-      datasetsXml.append(xmlFragment_nceiPH53sstd1day(EDStatic.config.useSaxParser));
-      datasetsXml.append(xmlFragment_nceiPH53sstn1day(EDStatic.config.useSaxParser));
-      datasetsXml.append(xmlFragment_testGridFromErddap());
-      datasetsXml.append(xmlFragment_testUnsignedGrid());
-      datasetsXml.append(xmlFragment_testGridNThreads());
-      datasetsXml.append(xmlFragment_testStructure());
-      datasetsXml.append(xmlFragment_testStructurePrivate());
-      // datasetsXml.append(xmlFragment_testFromErddapFromErddap());
-      datasetsXml.append(xmlFragment_testQuotes());
-      datasetsXml.append(xmlFragment_ChukchiSea_454a_037a_fcf4());
-      datasetsXml.append(xmlFragment_erdGlobecBottle());
-      datasetsXml.append(xmlFragment_testTableCopy());
-      datasetsXml.append(xmlFragment_repPostDet());
-      // datasetsXml.append(xmlFragment_jplMURSST41()); // very large files, not
-      // currently loaded
-      // datasetsXml.append(xmlFragment_testGroups());// sourceAxisValues null
-      datasetsXml.append(xmlFragment_testIslandShift());
-      datasetsXml.append(xmlFragment_testMinimalReadSource(EDStatic.config.useSaxParser));
-      // datasetsXml.append(xmlFragment_nosCoopsWLR6()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLR1()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLV6()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLV60()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLVHL()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLTPHL()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLTP6()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsWLTP60()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMAT()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMBP()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMC()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMRF()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMRH()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMWT()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMW()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsMV()); //stationTable=null
-      // datasetsXml.append(xmlFragment_nosCoopsCA()); //stationTable=null
-      // datasetsXml.append(xmlFragment_cimtPsdac()); // dods fails
-      datasetsXml.append(xmlFragment_nwioosGroundfish());
-      // datasetsXml.append(xmlFragment_nosCoopsRWL()); //stationTable=null
-      datasetsXml.append(xmlFragment_erdQSwindmday());
-      datasetsXml.append(xmlFragment_erdQSwindmday_LonPM180());
-      // datasetsXml.append(xmlFragment_erdQSwind8day()); // very large files, not
-      // currently loaded
-      // datasetsXml.append(xmlFragment_erdQSstress1day()); // very large files, not
-      // currently loaded
-      // datasetsXml.append(xmlFragment_testDuplicateSourceNames()); // very large
-      // files, not currently loaded
-      datasetsXml.append(xmlFragment_erdSWchlamday());
-      datasetsXml.append(xmlFragment_erdVHNchlamday());
-      datasetsXml.append(xmlFragment_test_erdVHNchlamday_Lon0360());
-      // datasetsXml.append(xmlFragment_test_nesdisVHNchlaWeekly_Lon0360());
-      // datasetsXml.append(xmlFragment_ecocast_Lon0360());
-      datasetsXml.append(xmlFragment_test_etopo180_Lon0360());
-      // datasetsXml.append(xmlFragment_notApplicable_Lon0360()); // source 404
-      datasetsXml.append(xmlFragment_testLon0360Insert());
-      // datasetsXml.append(xmlFragment_erdRWdhws1day_LonPM180()); // source 404
-      // datasetsXml.append(xmlFragment_test_erdMHsstnmday_LonPM180()); // source 404
-      // datasetsXml.append(xmlFragment_notApplicable_LonPM180()); longitude axis has
-      // no values >180
-      datasetsXml.append(xmlFragment_erdMBsstdmday());
-      datasetsXml.append(xmlFragment_erdMBsstdmday_LonPM180());
-      // datasetsXml.append(xmlFragment_test_erdPHsstamday_LonPM180()); //AxisVariable=time has tied
-      datasetsXml.append(xmlFragment_ecmwfTest_LonPM180());
-      // values
-      datasetsXml.append(xmlFragment_testPM180LonValidMinMax());
-      datasetsXml.append(xmlFragment_testInvalidCRAFiles());
-      datasetsXml.append(xmlFragment_testJsonlCSV());
-      datasetsXml.append(xmlFragment_mergeIR());
-      datasetsXml.append(xmlFragment_mergeIRZ());
-      datasetsXml.append(xmlFragment_mergeIRgz());
-      datasetsXml.append(xmlFragment_testNcCF1b());
-      datasetsXml.append(xmlFragment_testKevin20130109());
-      datasetsXml.append(xmlFragment_pmelTaoMonPos());
-      // datasetsXml.append(xmlFragment_testNoAttName1()); // error for testing
-      datasetsXml.append(xmlFragment_UMaineAccB01());
-      datasetsXml.append(xmlFragment_testNcCF7SampleDimensions());
-      datasetsXml.append(xmlFragment_ArgoFloats());
-      datasetsXml.append(xmlFragment_testTreatDimensionsAs());
-      datasetsXml.append(xmlFragment_testTreatDimensionsAs2());
-      datasetsXml.append(xmlFragment_testLong());
-      // datasetsXml.append(xmlFragment_W1M3A()); // no valid files?
-      datasetsXml.append(xmlFragment_testCharAsString());
-      datasetsXml.append(xmlFragment_testCharAsChar());
-      // datasetsXml.append(xmlFragment_testEDDTableFromHyraxFiles()); // dataset fails
-      // datasetsXml.append(xmlFragment_testGridFromTable()); // todo missing dataset
-      // get the data
-      datasetsXml.append(xmlFragment_testGridWav());
-      // datasetsXml.append(xmlFragment_TS_SLEV_TAD()); // dataset not available
-      datasetsXml.append(xmlFragment_TS_ATMP_AAD());
-      datasetsXml.append(xmlFragment_erdMPOC1day_AsATable());
-      datasetsXml.append(xmlFragment_testParquet());
-      datasetsXml.append(xmlFragment_TableAggregateRows_nceiPH53sst());
-
-      datasetsXml.append(xmlFragment_publicAWSGridFromFiles());
-      datasetsXml.append(xmlFragment_Grid_NC_1D_2D());
-      datasetsXml.append(xmlFragment_binnedCUGN90());
-
-      datasetsXml.append(
-          "<!-- Here are some excellent gridded datasets that you can include in your ERDDAP\n"
-              + "     via EDDGridFromErddap links. All requests for actual data from these\n"
-              + "     datasets get rerouted to the source server. -->\n"
-              + "\n"
-              + "<!-- Miami Currents -->\n"
-              + "<dataset type=\"EDDGridFromErddap\" datasetID=\"miamicurrents\">\n"
-              + "  <defaultGraphQuery>&amp;.draw=vectors</defaultGraphQuery>\n"
-              + "  <sourceUrl>http://cwcgom.aoml.noaa.gov/erddap/griddap/miamicurrents</sourceUrl>\n"
-              + "</dataset>\n"
+import go        + "    <dataVariable>
+"
+        + "        <sourceName>byte_ordered_group/little_endian/double_data</sourceName>
+"
+        + "        <destinationName>byte_ordered_group_little_endian_double_data</destinationName>
+"
+        + "        <dataType>double</dataType>
+"
+        + "        <addAttributes>
+"
+        + "            <att name="ioos_category">Unknown</att>
+"
+        + "            <att name="long_name">Double Data</att>
+"
+        + "        </addAttributes>
+"
+        + "    </dataVariable>
+"
+        + "    <dataVariable>
+"
+        + "        <sourceName>byte_ordered_group/little_endian/long_data</sourceName>
+"
+        + "        <destinationName>byte_ordered_group_little_endian_long_data</destinationName>
+"
+        + "        <dataType>long</dataType>
+"
+        + "        <addAttributes>
+"
+        + "            <att name="_FillValue" type="long">9223372036854775807</att>
+"
+        + "            <att name="ioos_category">Unknown</att>
+"
+        + "            <att name="long_name">Long Data</att>
+"
+        + "        </addAttributes>
+"
+        + "    </dataVariable>
+"
+        + "    <dataVariable>
+"
+        + "        <sourceName>byte_ordered_group/little_endian/ulong_data</sourceName>
+"
+        + "        <destinationName>byte_ordered_group_little_endian_ulong_data</destinationName>
+"
+        + "        <dataType>ulong</dataType>
+"
+        + "        <addAttributes>
+"
+        + "            <att name="_FillValue" type="ulong">18446744073709551615</att>
+"
+        + "            <att name="ioos_category">Unknown</att>
+"
+        + "            <att name="long_name">Ulong Data</att>
+"
+        + "        </addAttributes>
+"
+        + "    </dataVariable>
+"
+</dataset>\n"
               + "\n" //
           );
 
@@ -8780,22 +8506,6 @@ public class EDDTestDataset {
         + "        <att name=\"summary\">Data from a local source.</att>\n"
         + "        <att name=\"title\">Data from a local source.</att>\n"
         + "    </addAttributes>\n"
-        + "    <axisVariable>\n"
-        + "        <sourceName>byte_ordered_group/big_endian/dim1</sourceName>\n"
-        + "        <destinationName>byte_ordered_group_big_endian_dim1</destinationName>\n"
-        + "        <addAttributes>\n"
-        + "            <att name=\"ioos_category\">Unknown</att>\n"
-        + "            <att name=\"long_name\">Dim1</att>\n"
-        + "        </addAttributes>\n"
-        + "    </axisVariable>\n"
-        + "    <axisVariable>\n"
-        + "        <sourceName>byte_ordered_group/big_endian/dim0</sourceName>\n"
-        + "        <destinationName>byte_ordered_group_big_endian_dim0</destinationName>\n"
-        + "        <addAttributes>\n"
-        + "            <att name=\"ioos_category\">Unknown</att>\n"
-        + "            <att name=\"long_name\">Dim0</att>\n"
-        + "        </addAttributes>\n"
-        + "    </axisVariable>\n"
         + "    <dataVariable>\n"
         + "        <sourceName>row</sourceName>\n"
         + "        <destinationName>row</destinationName>\n"
@@ -45575,7 +45285,36 @@ public class EDDTestDataset {
         + "            <att name=\"ioos_category\">Unknown</att>\n"
         + "            <att name=\"long_name\">Ulong Data</att>\n"
         + "        </addAttributes>\n"
+        + "    </dataVariable>\n"        + "    <dataVariable>\n"
+        + "        <sourceName>byte_ordered_group/little_endian/double_data</sourceName>\n"
+        + "        <destinationName>byte_ordered_group_little_endian_double_data</destinationName>\n"
+        + "        <dataType>double</dataType>\n"
+        + "        <addAttributes>\n"
+        + "            <att name=\"ioos_category\">Unknown</att>\n"
+        + "            <att name=\"long_name\">Double Data</att>\n"
+        + "        </addAttributes>\n"
         + "    </dataVariable>\n"
+        + "    <dataVariable>\n"
+        + "        <sourceName>byte_ordered_group/little_endian/long_data</sourceName>\n"
+        + "        <destinationName>byte_ordered_group_little_endian_long_data</destinationName>\n"
+        + "        <dataType>long</dataType>\n"
+        + "        <addAttributes>\n"
+        + "            <att name=\"_FillValue\" type=\"long\">9223372036854775807</att>\n"
+        + "            <att name=\"ioos_category\">Unknown</att>\n"
+        + "            <att name=\"long_name\">Long Data</att>\n"
+        + "        </addAttributes>\n"
+        + "    </dataVariable>\n"
+        + "    <dataVariable>\n"
+        + "        <sourceName>byte_ordered_group/little_endian/ulong_data</sourceName>\n"
+        + "        <destinationName>byte_ordered_group_little_endian_ulong_data</destinationName>\n"
+        + "        <dataType>ulong</dataType>\n"
+        + "        <addAttributes>\n"
+        + "            <att name=\"_FillValue\" type=\"ulong\">18446744073709551615</att>\n"
+        + "            <att name=\"ioos_category\">Unknown</att>\n"
+        + "            <att name=\"long_name\">Ulong Data</att>\n"
+        + "        </addAttributes>\n"
+        + "    </dataVariable>\n"
+
         + "    <dataVariable>\n"
         + "        <sourceName>byte_ordered_group/little_endian/double_data</sourceName>\n"
         + "        <destinationName>byte_ordered_group_little_endian_double_data</destinationName>\n"

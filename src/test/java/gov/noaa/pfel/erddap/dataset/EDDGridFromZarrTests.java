@@ -1739,13 +1739,13 @@ class EDDGridFromZarrTests {
       String dasFileName =
           dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_dtypes", ".das");
       String dasContent = Files.readString(Paths.get(dir, dasFileName));
-      assertTrue(dasContent.contains("byte_ordered_group_little_endian_double_data {"));
+      assertTrue(dasContent.contains("byte_ordered_group_big_endian_double_data {"));
 
       String ddsFileName =
           dataset.makeNewFileForDapQuery(0, null, null, "", dir, "zarr_dtypes", ".dds");
       String ddsContent = Files.readString(Paths.get(dir, ddsFileName));
-      assertTrue(ddsContent.contains("byte_ordered_group_little_endian_double_data"));
-      assertTrue(ddsContent.contains("byte_ordered_group_little_endian_ulong_data"));
+      assertTrue(ddsContent.contains("byte_ordered_group_big_endian_double_data"));
+      assertTrue(ddsContent.contains("byte_ordered_group_big_endian_ulong_data"));
     } finally {
       com.cohort.util.File2.deleteAllFiles(testDir.toString(), true, true);
     }
@@ -1754,14 +1754,36 @@ class EDDGridFromZarrTests {
     int[] stride = new int[] {1, 1};
     int[] stop = new int[] {0, 1};
 
-    EDV littleDouble =
-        dataset.findDataVariableByDestinationName("byte_ordered_group_little_endian_double_data");
-    assertNotNull(littleDouble);
+    String2.log("DEBUG active DVs: " + String2.toCSSVString(dataset.dataVariableDestinationNames()));
+    for (EDV dv : dataset.dataVariables()) {
+      String2.log("  DV source: " + dv.sourceName() + " dest: " + dv.destinationName());
+    }
+    EDV bigDouble =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_double_data");
+    assertNotNull(bigDouble);
 
-    com.cohort.array.PrimitiveArray paLittleDouble =
-        dataset.getSourceDataFromFile(littleDouble, start, stride, stop);
-    assertNotNull(paLittleDouble);
-    assertTrue(paLittleDouble.size() > 0);
+    com.cohort.array.PrimitiveArray paBigDouble =
+        dataset.getSourceDataFromFile(bigDouble, start, stride, stop);
+    assertNotNull(paBigDouble);
+    assertTrue(paBigDouble.size() > 0);
+
+    EDV bigLong =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_long_data");
+    assertNotNull(bigLong);
+    com.cohort.array.PrimitiveArray paBigLong =
+        dataset.getSourceDataFromFile(bigLong, start, stride, stop);
+    assertNotNull(paBigLong);
+    assertTrue(paBigLong.size() > 0);
+    assertEquals(PAType.LONG, paBigLong.elementType());
+
+    EDV bigUlong =
+        dataset.findDataVariableByDestinationName("byte_ordered_group_big_endian_ulong_data");
+    assertNotNull(bigUlong);
+    com.cohort.array.PrimitiveArray paBigUlong =
+        dataset.getSourceDataFromFile(bigUlong, start, stride, stop);
+    assertNotNull(paBigUlong);
+    assertTrue(paBigUlong.size() > 0);
+    assertEquals(PAType.ULONG, paBigUlong.elementType());
   }
 
   @Test
