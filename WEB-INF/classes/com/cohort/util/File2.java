@@ -1789,7 +1789,7 @@ public class File2 {
    * @return ArrayList with the lines from the file
    * @throws Exception if trouble
    */
-  public static List<String> readLinesFromFile(URL resourceFile, String charset, int maxAttempt)
+  public static List<String> readLinesFromFile(URL resourceFile, Charset charset, int maxAttempt)
       throws Exception {
 
     for (int i = 0; i < maxAttempt; i++) {

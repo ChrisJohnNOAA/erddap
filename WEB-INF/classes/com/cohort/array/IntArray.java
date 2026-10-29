@@ -974,8 +974,6 @@ public class IntArray extends PrimitiveArray {
    * 1 character. String returns a json String with chars above 127 encoded as \\udddd.
    *
    * @param index the index number 0 ... size-1
-   * @return For numeric types, this returns ("" + ar[index]), or "null" for NaN or infinity. If
-   *     this PA is unsigned, this method returns the unsigned value (never "null").
    */
   @Override
   public void getJsonString(final int index, final StringBuilder sb) {

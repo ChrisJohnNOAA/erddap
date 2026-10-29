@@ -3048,7 +3048,7 @@ public class EDStatic {
     table.addColumn("fullName", col2);
     URL resourceFile =
         Resources.getResource("gov/noaa/pfel/erddap/util/OceanicAtmosphericAcronyms.tsv");
-    List<String> lines = File2.readLinesFromFile(resourceFile, File2.UTF_8, 1);
+    List<String> lines = File2.readLinesFromFile(resourceFile, File2.UTF_8_CHARSET, 1);
     int nLines = lines.size();
     for (int i = 1; i < nLines; i++) { // 1 because skip colNames
       String s = lines.get(i).trim();
@@ -3079,7 +3079,7 @@ public class EDStatic {
     table.addColumn("fullName", col2);
     URL resourceFile =
         Resources.getResource("gov/noaa/pfel/erddap/util/OceanicAtmosphericVariableNames.tsv");
-    List<String> lines = File2.readLinesFromFile(resourceFile, File2.UTF_8, 1);
+    List<String> lines = File2.readLinesFromFile(resourceFile, File2.UTF_8_CHARSET, 1);
     int nLines = lines.size();
     for (int i = 1; i < nLines; i++) {
       String s = lines.get(i).trim();

@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -76,14 +77,14 @@ public class SimpleXMLReader {
         }
       }
       String2.log("SimpleXmlReader encoding=" + encoding);
+      Charset charset =
+          encoding.length() > 0 && Charset.isSupported(encoding)
+              ? Charset.forName(encoding)
+              : StandardCharsets.UTF_8;
 
       // make the reader with the proper encoding
       // String2.log("SimpleXMLReader constructor found encoding=" + encoding);
-      reader =
-          new BufferedReader(
-              encoding.length() == 0
-                  ? new InputStreamReader(inputStream, StandardCharsets.UTF_8)
-                  : new InputStreamReader(inputStream, encoding));
+      reader = new BufferedReader(new InputStreamReader(inputStream, charset));
     } catch (Exception e) {
       try {
         inputStream.close();

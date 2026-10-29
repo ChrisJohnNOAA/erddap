@@ -14,7 +14,7 @@ import com.google.common.collect.ImmutableList;
  *
  * @author Bob Simons (was bob.simons@noaa.gov, now BobSimons2.00@gmail.com) 2005-12-07
  */
-public class DataHelper {
+public final class DataHelper {
 
   /**
    * Set this to true (by calling verbose=true in your program, not by changing the code here) if
@@ -60,6 +60,8 @@ public class DataHelper {
    */
   public static final ImmutableList<String> TABLE_VARIABLE_NAMES =
       ImmutableList.of("LON", "LAT", "DEPTH", "TIME", "ID");
+
+  private DataHelper() {} // don't allow instantiation of this class
 
   /**
    * The returns a new, revised, history attribute. This avoids adding a second entries for today
@@ -205,21 +207,6 @@ public class DataHelper {
   }
 
   /**
-   * Given a startIndex, endIndex and nPointsNeeded, this determines the maximum stride you can use
-   * and still get at least nPoints.
-   *
-   * @param startIndex
-   * @param endIndex
-   * @param nPointsNeeded If nPointsNeeded is really big, this still returns 1.
-   * @return the optimal stride
-   */
-  // public static int findStride(int startIndex, int endIndex, int nPointsNeeded) {
-  //    //why -1?  to catch the first and last point,
-  //    //    consider 0,900,301  ->  900/300 = 3
-  //    return Math.max(1, (endIndex - startIndex) / (nPointsNeeded - 1));
-  // }
-
-  /**
    * This calculates the lowest stride value to get nPointsNeeded.
    *
    * @param nLons the number of lon points you have, lastLonIndex - firstLonIndex + 1
@@ -314,7 +301,7 @@ public class DataHelper {
    *     format):\n"
    * @throws Exception if the values in the array are not evenly spaced (within Math2.almostEqual7).
    */
-  public static void ensureEvenlySpaced(double lon[], String msg) {
+  public static void ensureEvenlySpaced(double lon[], String msg) throws RuntimeException {
     if (lon.length <= 2) return;
     double lonSpacing = lon[1] - lon[0];
     for (int i = 2; i < lon.length; i++)

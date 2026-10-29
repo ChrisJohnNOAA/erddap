@@ -1490,9 +1490,7 @@ public class SgtMap {
                     legendTextY,
                     fontFamily,
                     labelHeightPixels,
-                    gdl.boldTitle == null
-                        ? null
-                        : SgtUtil.makeShortLines(maxBoldCharsPerLine, gdl.boldTitle, null, null),
+                    SgtUtil.makeShortLines(maxBoldCharsPerLine, gdl.boldTitle, null, null),
                     SgtUtil.makeShortLines(maxCharsPerLine, gdl.title2, gdl.title3, gdl.title4));
           } else {
             // draw LEGEND_RIGHT

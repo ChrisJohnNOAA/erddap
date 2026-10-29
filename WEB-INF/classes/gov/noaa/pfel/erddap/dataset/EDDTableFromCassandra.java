@@ -1604,8 +1604,7 @@ public class EDDTableFromCassandra extends EDDTable {
     // https://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#one--
     for (Row r : rs) {
       if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched()) {
-        @SuppressWarnings("unused")
-        ListenableFuture<ResultSet> unused = rs.fetchMoreResults();
+        ListenableFuture<ResultSet> _ = rs.fetchMoreResults();
       }
 
       stats[1]++;

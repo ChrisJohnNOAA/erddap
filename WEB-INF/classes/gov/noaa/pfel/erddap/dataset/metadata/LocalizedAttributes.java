@@ -420,7 +420,7 @@ public class LocalizedAttributes {
           if (v == null) {
             return v;
           }
-          if (v != null && v.elementType() != PAType.STRING) {
+          if (v.elementType() != PAType.STRING) {
             return v;
           }
           if (String2.indexOf(EDStatic.messages.updateUrlsSkipAttributes, k) >= 0) {

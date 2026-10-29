@@ -2228,7 +2228,6 @@ public abstract class EDDGrid extends EDD {
    *     of 3 int's: start0, stride0, stop0, start1, stride1, stop1, ...
    * @return the array part of an OPeNDAP DAP-style grid-style query, e.g.,
    *     [start1:stop1][start2:stride2:stop2].
-   * @throws Throwable if invalid query (0 resultsVariables is a valid query)
    */
   public static String buildDapQuery(StringArray destinationNames, IntArray constraints) {
     String arrayQuery = buildDapArrayQuery(constraints);
@@ -2245,7 +2244,6 @@ public abstract class EDDGrid extends EDD {
    *     of 3 int's: start0, stride0, stop0, start1, stride1, stop1, ...
    * @return the array part of an OPeNDAP DAP-style grid-style query, e.g.,
    *     [start1:stop1][start2:stride2:stop2].
-   * @throws Throwable if invalid query (0 resultsVariables is a valid query)
    */
   public static String buildDapArrayQuery(IntArray constraints) {
     StringBuilder sb = new StringBuilder();
@@ -9017,7 +9015,6 @@ public abstract class EDDGrid extends EDD {
                       """);
 
       // for each requested
-      //// ???
       for (String coverage : coverages) {
         EDV edv = findDataVariableByDestinationName(coverage);
         writer.write(
@@ -9072,7 +9069,6 @@ public abstract class EDDGrid extends EDD {
         //                     depthEdv != null? " " + depthEdv.destinationMinString() : "") +
         //               "</gml:pos>\n" +
         // "          </gml:origin>\n" +
-        //// ???
         // "          <gml:offsetVector>0.04166667052552379 0.0 0.0</gml:offsetVector>\n" +
         // "          <gml:offsetVector>0.0 0.0416666635795323 0.0</gml:offsetVector>\n" +
         // "          <gml:offsetVector>0.0 0.0 0.0</gml:offsetVector>\n" +

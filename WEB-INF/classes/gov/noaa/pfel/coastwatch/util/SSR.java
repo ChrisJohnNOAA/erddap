@@ -1233,7 +1233,7 @@ public class SSR {
     BufferedInputStream is =
         getBufferedInputStream(
             urlString, conn); // This is in SSR, not File2. This deals with compressed content.
-    String charset = getCharset(urlString, conn);
+    Charset charset = getCharset(urlString, conn);
 
     // String2.log(">>charset=" + charset);
     return new Object[] {conn, is, charset};
@@ -1302,7 +1302,7 @@ public class SSR {
                 if (encoding.indexOf("gzip") >= 0) es = new GZIPInputStream(es);
                 else if (encoding.indexOf("deflate") >= 0) es = new InflaterInputStream(es);
               }
-              String charset = getCharset(urlString, httpUrlCon);
+              Charset charset = getCharset(urlString, httpUrlCon);
               msg =
                   readerToString(
                       urlString, // may throw exception
@@ -1339,7 +1339,7 @@ public class SSR {
    *
    * @param urlString is for diagnostic messages only
    */
-  public static String getCharset(String urlString, URLConnection conn) {
+  public static Charset getCharset(String urlString, URLConnection conn) {
     // typical: Content-Type: text/html; charset=utf-8
     // default charset="ISO-8859-1"
     // see https://www.w3.org/International/articles/http-charset/index
@@ -1373,7 +1373,7 @@ public class SSR {
         }
       }
     }
-    return charset;
+    return Charset.isSupported(charset) ? Charset.forName(charset) : File2.ISO_8859_1_CHARSET;
   }
 
   /**
@@ -1403,7 +1403,7 @@ public class SSR {
    */
   public static BufferedReader getBufferedUrlReader(String urlString) throws Exception {
     Object[] o3 = getUrlConnBufferedInputStream(urlString, 120000);
-    return new BufferedReader(new InputStreamReader((InputStream) o3[1], (String) o3[2]));
+    return new BufferedReader(new InputStreamReader((InputStream) o3[1], (Charset) o3[2]));
   }
 
   /**
@@ -1676,7 +1676,7 @@ public class SSR {
     }
 
     BufferedInputStream is = getBufferedInputStream(urlString, con); // this is in SSR, not File2
-    String charset = getCharset(urlString, con);
+    Charset charset = getCharset(urlString, con);
     return new Object[] {con, is, charset};
   }
 
@@ -1695,7 +1695,7 @@ public class SSR {
             "application/x-www-form-urlencoded; charset=UTF-8",
             po < 0 ? "" : urlString.substring(po + 1));
     try (BufferedReader bufReader =
-        new BufferedReader(new InputStreamReader((InputStream) ob3[1], (String) ob3[2]))) {
+        new BufferedReader(new InputStreamReader((InputStream) ob3[1], (Charset) ob3[2]))) {
       return readerToString(urlString, bufReader);
     }
   }

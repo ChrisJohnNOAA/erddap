@@ -32,7 +32,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -217,19 +216,6 @@ public class StringArray extends PrimitiveArray {
     array = new String[8];
     while (iterator.hasNext()) {
       add(iterator.next().toString());
-    }
-  }
-
-  /**
-   * A constructor which gets the toString values from the objects from an enumeration.
-   *
-   * @param enumeration which needs to be thread-safe if the backing data store may be changed by
-   *     another thread (e.g., use ConcurrentHashMap instead of HashMap).
-   */
-  public StringArray(final Enumeration<?> enumeration) {
-    array = new String[8];
-    while (enumeration.hasMoreElements()) {
-      add(enumeration.nextElement().toString());
     }
   }
 
@@ -1246,7 +1232,6 @@ public class StringArray extends PrimitiveArray {
    * 1 character. String returns a json String with chars above 127 encoded as \\udddd.
    *
    * @param index the index number 0 ... size-1
-   * @return For numeric types, this returns ("" + ar[index]), or null for NaN or infinity.
    */
   @Override
   public void getJsonString(final int index, final StringBuilder sb) {
@@ -1814,21 +1799,6 @@ public class StringArray extends PrimitiveArray {
     for (int i = 0; i < n; i++) add(dis.readUTF());
   }
 
-  /**
-   * This writes a short with the classIndex() of the PA, an int with the 'size', then the elements
-   * to a DataOutputStream. Only StringArray overwrites this.
-   *
-   * @param dos the DataOutputStream
-   * @throws IOException if trouble
-   */
-  /* project not finished or tested
-      public void writeNccsvDos(DataOutputStream dos) throws Exception {
-          dos.writeShort(elementTypeIndex());
-          dos.writeInt(size);
-          for (int i = 0; i < size; i++)
-              String2.writeNccsvDos(dos, get(i));
-      }
-  */
   /**
    * This writes one element to an NCCSV DataOutputStream. Only StringArray overwrites this.
    *
@@ -2672,75 +2642,6 @@ public class StringArray extends PrimitiveArray {
     }
     return al;
   }
-
-  /**
-   * This makes a StringArray from the comma separated list of strings in csv. If a string has an
-   * internal comma or double quotes, it must have double quotes at the beginning and end and the
-   * internal double quotes must be doubled; otherwise it doesn't.
-   *
-   * @param csv e.g., "He said, ""Hi"".", 2nd phrase, "3rd phrase"
-   * @return a StringArray with the strings (trimmed) from csv. csv=null returns StringArray of
-   *     length 0. csv="" returns StringArray of length 0.
-   */
-  /* not bad, but doesn't support \" encoding of internal quote
-  public static StringArray fromCSV(String csv) {
-      StringArray sa = new StringArray();
-      if (csv == null || csv.length() == 0)
-          return sa;
-      int n = csv.length();
-      if (n == 0)
-          return sa;
-      int po = 0;
-      boolean something = false;
-
-      while (po < n) {
-          char ch = csv.charAt(po);
-          if (ch == ' ') {
-              po++;
-              something = true;
-          } else if (ch == ',') {
-              sa.add("");
-              po++;
-              something = true;
-          } else if (ch == '"') {
-              //a quoted string
-              int po2 = po + 1;
-              while (po2 < n) {
-                  if (csv.charAt(po2) == '"') {
-                      //is it 2 double quotes?
-                      if (po2 + 1 < n && csv.charAt(po2+1) == '"')
-                          po2 += 2; //yes, so continue
-                      else break; //no, it's the end quote; what if next thing isn't a comma???
-                  } else {
-                      po2++;
-                  }
-              }
-              String s = csv.substring(po + 1, po2);
-              sa.add(String2.replaceAll(s, "\"\"", "\""));
-
-              //should be only spaces till next comma
-              //whatever it is, trash it
-              po = po2 + 1;
-              while (po < n && csv.charAt(po) != ',')
-                  po++;
-              if (po < n && csv.charAt(po) == ',') {
-                  po++; something = true;
-              } else {po = n; something = false;
-              }
-          } else {
-              //an unquoted string
-              int po2 = csv.indexOf(',', po + 1);
-              if (po2 >= 0) {something = true;
-              } else {po2 = n; something = false;
-              }
-              sa.add(csv.substring(po, po2).trim());
-              po = po2 + 1;
-          }
-      }
-      if (something)
-          sa.add("");
-      return sa;
-  } */
 
   /**
    * This is a purposely <strong>simple</strong>, 2-double-quotes-aware, backslash-aware, splitter

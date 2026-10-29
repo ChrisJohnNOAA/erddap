@@ -3469,13 +3469,6 @@ public abstract class EDDTable extends EDD {
     Table table = new Table();
     if (withAttributes) {
       setResponseGlobalAttributes(language, requestUrl, userDapQuery, table);
-
-      // pre 2013-05-28 was
-      // table.globalAttributes().set(combinedGlobalAttributes); //make a copy
-      //// fix up global attributes  (always to a local COPY of global attributes)
-      // EDD.addToHistory(table.globalAttributes(), publicSourceUrl());
-      // EDD.addToHistory(table.globalAttributes(),
-      //    EDStatic.config.baseUrl + requestUrl); //userDapQuery is irrelevant
     }
 
     // add the columns
@@ -12908,21 +12901,6 @@ public abstract class EDDTable extends EDD {
   public boolean isProcessingSubset() {
     return processingSubset;
   }
-
-  /**
-   * This is called by EDDTable.ensureValid by subclass constructors, to go through the metadata of
-   * the dataVariables and gather all unique sosObservedProperties.
-   */
-  /*protected void gatherSosObservedProperties() {
-      HashSet<String> set = new HashSet(Math2.roundToInt(1.4 * dataVariables.length));
-      for (int dv = 0; dv < dataVariables.length; dv++) {
-          String s = dataVariables[dv].combinedAttributes().getString("observedProperty");
-          if (s != null)
-             set.add(s);
-      }
-      sosObservedProperties = set.toArray(new String[0]);
-      Arrays.sort(sosObservedProperties);
-  }*/
 
   /** This indicates why the dataset isn't accessible via Make A Graph (or "" if it is). */
   @Override

@@ -204,7 +204,7 @@ public class Erddap extends HttpServlet {
   public final AtomicInteger totalNRequests = new AtomicInteger();
   public String lastReportDate = "";
 
-  /** Set by loadDatasets. */
+  /* Set by loadDatasets. */
   /**
    * datasetHashMaps are read from many threads and written to by loadDatasets, so need to
    * synchronize these maps. grid/tableDatasetHashMap are key=datasetID value=edd. [See
@@ -420,7 +420,7 @@ public class Erddap extends HttpServlet {
    * @return a StringArray with all the datasetIDs for all of the grid datasets (unsorted.
    */
   public StringArray gridDatasetIDs() {
-    return new StringArray(gridDatasetHashMap.keys());
+    return new StringArray(gridDatasetHashMap.keySet().iterator());
   }
 
   /**
@@ -429,7 +429,7 @@ public class Erddap extends HttpServlet {
    * @return a StringArray with all the datasetIDs for all of the table datasets (unsorted).
    */
   public StringArray tableDatasetIDs() {
-    return new StringArray(tableDatasetHashMap.keys());
+    return new StringArray(tableDatasetHashMap.keySet().iterator());
   }
 
   /**
@@ -438,8 +438,8 @@ public class Erddap extends HttpServlet {
    * @return a StringArray with all the datasetIDs for all of the datasets (unsorted).
    */
   public StringArray allDatasetIDs() {
-    StringArray sa = new StringArray(gridDatasetHashMap.keys());
-    sa.append(new StringArray(tableDatasetHashMap.keys()));
+    StringArray sa = new StringArray(gridDatasetHashMap.keySet().iterator());
+    sa.append(new StringArray(tableDatasetHashMap.keySet().iterator()));
     return sa;
   }
 
@@ -452,7 +452,7 @@ public class Erddap extends HttpServlet {
   public StringArray categoryInfo(String attribute) {
     ConcurrentHashMap<String, ConcurrentHashMap<String, Boolean>> hm = categoryInfo.get(attribute);
     if (hm == null) return new StringArray();
-    StringArray sa = new StringArray(hm.keys());
+    StringArray sa = new StringArray(hm.keySet().iterator());
     sa.sortIgnoreCase();
     return sa;
   }
@@ -471,7 +471,7 @@ public class Erddap extends HttpServlet {
     if (hm == null) return new StringArray();
     ConcurrentHashMap<String, Boolean> hs = hm.get(value);
     if (hs == null) return new StringArray();
-    StringArray sa = new StringArray(hs.keys());
+    StringArray sa = new StringArray(hs.keySet().iterator());
     sa.sortIgnoreCase();
     return sa;
   }
@@ -939,7 +939,7 @@ public class Erddap extends HttpServlet {
       } else if (endOfRequest.equals("version_string")) {
         doVersionString(request, response);
       } else if (endOfRequest.equals("suggestVariableAttributes")) {
-        doSuggestVariableAttributes(language, requestNumber, request, response);
+        doSuggestVariableAttributes(requestNumber, request, response);
       } else {
         sendResourceNotFoundError(
             requestNumber,
@@ -1071,14 +1071,13 @@ public class Erddap extends HttpServlet {
    * and return variable attribute suggestions provided by
    * EDD.makeReadyToUseAddVariableAttributesForDatasetsXml
    *
-   * @param language the language index
    * @param requestNumber the request number
    * @param request the HttpServletRequest
    * @param response the HttpServletResponse
    * @throws Throwable if an error is encountered during request processing
    */
   private void doSuggestVariableAttributes(
-      int language, int requestNumber, HttpServletRequest request, HttpServletResponse response)
+      int requestNumber, HttpServletRequest request, HttpServletResponse response)
       throws Throwable {
     String contentType = request.getHeader("Content-Type");
     String applicationJson = "application/json";
@@ -17254,11 +17253,9 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
     if (advancedQuery.length() > 0)
       refine =
           // "&nbsp;\n" +
-          //// Or, View All Datasets
           // "<br>Or, <a href=\"" + tErddapUrl + "/info/index.html?" +
           //    EDStatic.encodedPassThroughPIppQueryPage1(request) + "\">" +
           // EDStatic.viewAllDatasetsHtml + "</a>\n" +
-          //// Or, search text
           // "<p>" + getSearchFormHtml(language, request, loggedInAs,
           // EDStatic.messages.get(Message.OR_COMMA, language),
           // ":\n<br>", "") +
@@ -18550,15 +18547,17 @@ widgets.select("frequencyOption", "", 1, frequencyOptions, frequencyOption, "") 
               + "    \"encodingFormat\": \"text/csv\"\n"
               + "  },\n");
       writer.write(
-          "  {\n"
-              + "    \"@type\": \"cr:FileSet\",\n"
-              + "    \"@id\": \"files\",\n"
-              + "    \"name\": \"files\",\n"
-              + "    \"description\": \"The set of data files.\",\n"
-              + "    \"containedIn\": { \"@id\": \"manifest\" },\n"
-              + "    \"encodingFormat\": \"*/*\",\n"
-              + "    \"includes\": \"*\"\n"
-              + "  }\n");
+          """
+      {
+        "@type": "cr:FileSet",
+        "@id": "files",
+        "name": "files",
+        "description": "The set of data files.",
+        "containedIn": { "@id": "manifest" },
+        "encodingFormat": "*/*",
+        "includes": "*"
+      }
+    """);
       writer.write("  ],\n");
     }
     try {

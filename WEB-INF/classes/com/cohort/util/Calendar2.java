@@ -2260,18 +2260,20 @@ public class Calendar2 {
   public static final HashMap<String, Pattern> dateTimeFormatPatternHM = new HashMap<>();
 
   // can't test hasComma because of e.g., {1,6}
-  public static char[] digitRegexTimeFormatLastChar =
+  private static char[] digitRegexTimeFormatLastChar =
       new char[digitRegexTimeFormat.size()]; // to catch/match C|T|Z
-  public static final BitSet digitRegexTimeFormatHasColon = new BitSet(digitRegexTimeFormat.size());
-  public static final BitSet digitRegexTimeFormatHasPeriod =
+  private static final BitSet digitRegexTimeFormatHasColon =
+      new BitSet(digitRegexTimeFormat.size());
+  private static final BitSet digitRegexTimeFormatHasPeriod =
       new BitSet(digitRegexTimeFormat.size()); // all periods in regexes are literals
-  public static final BitSet digitRegexTimeFormatHasSlash = new BitSet(digitRegexTimeFormat.size());
+  private static final BitSet digitRegexTimeFormatHasSlash =
+      new BitSet(digitRegexTimeFormat.size());
   // not hasT because of 'T'hursday
-  public static char[] letterRegexTimeFormatLastChar = new char[letterRegexTimeFormat.size()];
+  private static char[] letterRegexTimeFormatLastChar = new char[letterRegexTimeFormat.size()];
 
-  public static final Pattern[] digitRegexTimeFormatPatterns =
+  private static final Pattern[] digitRegexTimeFormatPatterns =
       new Pattern[digitRegexTimeFormat.size()];
-  public static final Pattern[] letterRegexTimeFormatPatterns =
+  private static final Pattern[] letterRegexTimeFormatPatterns =
       new Pattern[letterRegexTimeFormat.size()];
 
   static {

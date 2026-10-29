@@ -199,8 +199,8 @@ public class EDDTableFromAllDatasets extends EDDTable {
    */
   public Table makeDatasetTable(int language, String loggedInAs) {
 
-    StringArray datasetIDs = new StringArray(gridDatasetHashMap.keys());
-    datasetIDs.append(new StringArray(tableDatasetHashMap.keys()));
+    StringArray datasetIDs = new StringArray(gridDatasetHashMap.keySet().iterator());
+    datasetIDs.append(new StringArray(tableDatasetHashMap.keySet().iterator()));
 
     String tErddapUrl = EDStatic.erddapUrl(null, loggedInAs, language);
     String roles[] = EDStatic.getRoles(loggedInAs);

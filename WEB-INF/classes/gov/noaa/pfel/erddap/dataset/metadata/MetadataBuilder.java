@@ -924,15 +924,10 @@ public class MetadataBuilder {
   private static final class DistributedComputingPlatform
       extends CodeList<DistributedComputingPlatform> {
     private static final List<DistributedComputingPlatform> VALUES = new ArrayList<>();
-    public static final DistributedComputingPlatform HTTP =
-        new DistributedComputingPlatform("HTTP");
 
+    @SuppressWarnings("unused")
     private DistributedComputingPlatform(String name) {
       super(name, VALUES);
-    }
-
-    public static DistributedComputingPlatform valueOf(String code) {
-      return valueOf(DistributedComputingPlatform.class, code);
     }
 
     @Override

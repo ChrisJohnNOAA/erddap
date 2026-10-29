@@ -284,7 +284,9 @@ public class ResourceBundle2 {
    */
   public String[] getKeys() {
     ArrayList<String> cumulative = new ArrayList<>();
-    if (concurrentHashMap != null) cumulative.addAll(String2.toArrayList(concurrentHashMap.keys()));
+    if (concurrentHashMap != null) {
+      cumulative.addAll(concurrentHashMap.keySet().stream().toList());
+    }
     if (primaryRB != null) cumulative.addAll(String2.toArrayList(primaryRB.getKeys()));
     if (secondaryRB != null) cumulative.addAll(String2.toArrayList(secondaryRB.getKeys()));
     String sar[] = String2.toStringArray(cumulative.toArray());

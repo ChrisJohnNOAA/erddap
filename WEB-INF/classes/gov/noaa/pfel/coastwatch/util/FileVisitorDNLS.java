@@ -203,6 +203,7 @@ public class FileVisitorDNLS extends SimpleFileVisitor<Path> {
 
   /** Invoked before entering a directory. */
   @Override
+  @SuppressWarnings("JdkObsolete") // For matcher.hitEnd() which is being used properly.
   public FileVisitResult preVisitDirectory(Path tDir, BasicFileAttributes attrs)
       throws IOException {
 

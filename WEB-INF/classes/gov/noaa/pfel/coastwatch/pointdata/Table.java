@@ -1560,7 +1560,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as a String.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public String getStringData(int col, int row) {
     return getColumn(col).getString(row);
@@ -1572,7 +1571,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as a PAOne.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public PAOne getPAOneData(int col, int row) {
     return getColumn(col).getPAOne(row);
@@ -1584,8 +1582,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as a float.
-   * @throws Exception if trouble (e.g., row or col out of range) Strings return the parsed value of
-   *     the string (Double.NaN if not a number).
    */
   public float getFloatData(int col, int row) {
     return getColumn(col).getFloat(row);
@@ -1597,8 +1593,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as a double.
-   * @throws Exception if trouble (e.g., row or col out of range) Strings return the parsed value of
-   *     the string (Double.NaN if not a number).
    */
   public double getDoubleData(int col, int row) {
     return getColumn(col).getDouble(row);
@@ -1611,8 +1605,6 @@ public class Table {
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as a nice double (rounded to 7 significant digits, so not
    *     bruised).
-   * @throws Exception if trouble (e.g., row or col out of range) Strings return the parsed value of
-   *     the string (Double.NaN if not a number).
    */
   public double getNiceDoubleData(int col, int row) {
     return getColumn(col).getNiceDouble(row);
@@ -1624,8 +1616,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as a long.
-   * @throws Exception if trouble (e.g., row or col out of range) Strings return the parsed value of
-   *     the string (Long.MAX_VALUE if not a number).
    */
   public long getLongData(int col, int row) {
     return getColumn(col).getLong(row);
@@ -1637,8 +1627,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @return the value of one datum as an int.
-   * @throws Exception if trouble (e.g., row or col out of range) Strings return the parsed value of
-   *     the string (Integer.MAX_VALUE if not a number).
    */
   public int getIntData(int col, int row) {
     return getColumn(col).getInt(row);
@@ -1650,7 +1638,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @param s the value of one datum as a String.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void setStringData(int col, int row, String s) {
     getColumn(col).setString(row, s);
@@ -1662,7 +1649,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @param d the value of one datum as a float.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void setFloatData(int col, int row, float d) {
     getColumn(col).setFloat(row, d);
@@ -1674,7 +1660,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @param d the value of one datum as a double.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void setDoubleData(int col, int row, double d) {
     getColumn(col).setDouble(row, d);
@@ -1686,7 +1671,6 @@ public class Table {
    * @param col the column number (0 ... nColumns-1 )
    * @param row the row number (0 ... nRows-1 )
    * @param i the value of one datum as an int.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void setIntData(int col, int row, int i) {
     getColumn(col).setInt(row, i);
@@ -1698,7 +1682,6 @@ public class Table {
    *
    * @param col the column number (0 ... nColumns-1 )
    * @param s the value of one datum as a String.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void addStringData(int col, String s) {
     getColumn(col).addString(s);
@@ -1710,7 +1693,6 @@ public class Table {
    *
    * @param col the column number (0 ... nColumns-1 )
    * @param d the value of one datum as a float.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void addFloatData(int col, float d) {
     getColumn(col).addFloat(d);
@@ -1722,7 +1704,6 @@ public class Table {
    *
    * @param col the column number (0 ... nColumns-1 )
    * @param d the value of one datum as a double.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void addDoubleData(int col, double d) {
     getColumn(col).addDouble(d);
@@ -1734,7 +1715,6 @@ public class Table {
    *
    * @param col the column number (0 ... nColumns-1 )
    * @param d the value of one datum as an int.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void addIntData(int col, int d) {
     getColumn(col).addInt(d);
@@ -1746,7 +1726,6 @@ public class Table {
    *
    * @param col the column number (0 ... nColumns-1 )
    * @param d the value of one datum as an int.
-   * @throws Exception if trouble (e.g., row or col out of range)
    */
   public void addLongData(int col, long d) {
     getColumn(col).addLong(d);
@@ -5049,7 +5028,7 @@ public class Table {
 
               // Check for href and mouseover to see if there's something like an anchor tag which
               // the url extraction will mangle.
-            } else if (!needEncodingAsHtml && !s.contains("href=") && !s.contains("onmouseover")) {
+            } else if (!s.contains("href=") && !s.contains("onmouseover")) {
               String decodedS = XML.decodeEntities(s);
               StringBuilder output = new StringBuilder();
               if (LinkHelper.linkify(
@@ -5068,7 +5047,7 @@ public class Table {
                   })) {
                 s = output.toString();
               }
-            } else if (!needEncodingAsHtml && String2.isUrl(XML.decodeEntities(s))) {
+            } else if (String2.isUrl(XML.decodeEntities(s))) {
               s = XML.decodeEntities(s);
               s =
                   "<a href=\""
@@ -5078,10 +5057,8 @@ public class Table {
                       + "</a>";
             } else if (String2.isEmailAddress(s)) {
               // to improve security, convert "@" to " at "
-              s = needEncodingAsHtml ? s : XML.decodeEntities(s); // now decoded
+              s = XML.decodeEntities(s); // now decoded
               s = XML.encodeAsHTML(String2.replaceAll(s, "@", " at "));
-            } else if (needEncodingAsHtml) {
-              s = XML.encodeAsHTML(s);
             }
           }
 
@@ -10222,8 +10199,8 @@ public class Table {
 
       ucar.nc2.Structure outerSequence = null;
       for (Variable var : ncd.getVariables()) {
-        if (var instanceof ucar.nc2.Structure) {
-          outerSequence = (ucar.nc2.Structure) var;
+        if (var instanceof ucar.nc2.Structure structure) {
+          outerSequence = structure;
           break;
         }
       }
@@ -10240,7 +10217,7 @@ public class Table {
       ucar.nc2.Structure innerSequence = null;
       for (int outerCol = 0; outerCol < nOuterColumns; outerCol++) {
         Variable obt = outerVars.get(outerCol);
-        if (obt instanceof ucar.nc2.Structure) {
+        if (obt instanceof ucar.nc2.Structure structure) {
           // *** Start Dealing With InnerSequence
           // Ensure this is the first innerSequence.
           // If there are two, the response can't be represented as a simple table.
@@ -10256,7 +10233,7 @@ public class Table {
           innerSequenceColumn = outerCol;
           if (reallyVerbose) String2.log("  innerSequenceColumn=" + innerSequenceColumn);
 
-          innerSequence = (ucar.nc2.Structure) obt;
+          innerSequence = structure;
           List<Variable> innerVars = innerSequence.getVariables();
           nInnerColumns = innerVars.size();
           for (int innerCol = 0; innerCol < nInnerColumns; innerCol++) {
@@ -14219,7 +14196,7 @@ public class Table {
       String s;
       for (int c = 0; c < nc; c++) {
         PrimitiveArray pa = getColumn(c);
-        if (!(pa instanceof StringArray)) {
+        if (!(pa instanceof StringArray stringArray)) {
           continue;
         }
 
@@ -14233,8 +14210,7 @@ public class Table {
           }
         }
         if (isString) {
-          ((StringArray) pa).fromJson();
-
+          stringArray.fromJson();
         } else {
           // are they all true|false?
           boolean tIsBoolean = true;

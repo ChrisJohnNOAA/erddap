@@ -3292,7 +3292,6 @@ public abstract class EDD {
    * @param userDapQuery
    * @param fileTypeName
    * @return a suggested fileName (no dir or extension)
-   * @throws Exception if trouble (in practice, it shouldn't)
    */
   public String suggestFileName(String loggedInAs, String userDapQuery, String fileTypeName) {
 
@@ -4416,7 +4415,6 @@ public abstract class EDD {
    *
    * @param phrase
    * @param hashset
-   * @return the same hashSet for convenience
    */
   public static void addAllAndParts(String phrase, Set<String> hashSet) {
     if (phrase == null || phrase.length() == 0) return;
@@ -5259,7 +5257,7 @@ public abstract class EDD {
       if (addMvFvAttsIfNeeded(
           addTable.getColumnName(col),
           sourceTable.getColumn(col),
-          sourceTable == null ? null : sourceTable.columnAttributes(col),
+          sourceTable.columnAttributes(col),
           addTable.columnAttributes(col))) changeMade = true;
     }
     return changeMade;
@@ -11651,8 +11649,6 @@ public abstract class EDD {
   /**
    * This is used by subclass's generateDatasetsXml methods to write the cdm_data_type-related info
    * to the writer in the datasets.xml format.
-   *
-   * @throws Throwable if trouble
    */
   public static String cdmSuggestion() {
     return """
@@ -12359,7 +12355,7 @@ public abstract class EDD {
    * will just catch one of those).
    *
    * @return a suggested chunk of xml for all datasets it can find for use in datasets.xml
-   * @throws Throwable if trouble, e.g., startDir not found or no valid datasets were made. If no
+   * @throws Exception if trouble, e.g., startDir not found or no valid datasets were made. If no
    *     trouble, then a valid dataset.xml chunk has been returned.
    */
   public static String generateDatasetsXmlFromFiles(String startDir) throws Exception {
@@ -12786,11 +12782,7 @@ public abstract class EDD {
     return results.toString();
   }
 
-  /**
-   * This sets verbose=true and reallyVerbose=true for this class and related clases, for tests.
-   *
-   * @throws Throwable if trouble
-   */
+  /** This sets verbose=true and reallyVerbose=true for this class and related clases, for tests. */
   public static void testVerboseOn() {
     testVerbose(true);
   }
@@ -12825,7 +12817,7 @@ public abstract class EDD {
     Attributes gatts = combinedGlobalAttributes().toAttributes(language);
     String now = Calendar2.getCompactCurrentISODateTimeStringLocal();
 
-    /// help/xml-loader documentation says:
+    // help/xml-loader documentation says:
     // An omitted tag causes previous value to be preserved -- sounds accident-prone.
     // An empty tag causes value to be "nulled out" (emptied) -- sounds safer -- do this.
 
@@ -13609,11 +13601,7 @@ public abstract class EDD {
     return sb.toString();
   }
 
-  /**
-   * This sets verbose=on and reallyVerbose=on for this class and related clases, for tests.
-   *
-   * @throws Throwable if trouble
-   */
+  /** This sets verbose=on and reallyVerbose=on for this class and related clases, for tests. */
   public static void testVerbose(boolean on) {
     verbose = on;
     reallyVerbose = on;
