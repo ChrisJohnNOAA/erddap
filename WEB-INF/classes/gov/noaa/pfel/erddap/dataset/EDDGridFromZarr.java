@@ -2185,20 +2185,17 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
                   + "' due to unsupported Zarr codec.");
           continue;
         }
-        if (info == null) {
-          throw new SimpleException(
-              "Data variable '" + tDataSourceName + "' not found in Zarr store.");
-        }
-
-        if (!isMatchingGridDimensions(info, this.axisVariables)) {
-          throw new SimpleException(
-              "Data variable '"
-                  + tDataSourceName
-                  + "' dimensions do not match the grid axes.");
+        if (info != null && this.axisVariables != null && this.axisVariables.length > 0) {
+          if (!isMatchingGridDimensions(info, this.axisVariables)) {
+            throw new SimpleException(
+                "Data variable '"
+                    + tDataSourceName
+                    + "' dimensions do not match the grid axes.");
+          }
         }
 
         Attributes tDataSourceAtts = new Attributes();
-        if (info.attributes != null) {
+        if (info != null && info.attributes != null) {
           info.attributes.copyTo(tDataSourceAtts);
         }
 
