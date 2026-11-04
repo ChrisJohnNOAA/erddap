@@ -13,6 +13,7 @@ import com.cohort.array.StringArray;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
+import java.math.BigInteger;
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
 import dev.zarr.zarrjava.core.ArrayMetadata;
@@ -89,6 +90,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
   private Store zarrStore;
   private S3Client s3Client;
   private Group zarrGroup;
+  private Map<String, ZarrArrayInfo> zarrArrayMap;
   private final ReentrantReadWriteLock zarrReadWriteLock = new ReentrantReadWriteLock();
 
   /**
@@ -334,6 +336,9 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         }
       }
 
+      // Cache arrayMap
+      this.zarrArrayMap = arrayMap;
+
       // Build data variables
       this.dataVariables = buildDataVariables(tDataVariables, arrayMap, axisSourceNames);
 
@@ -384,6 +389,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         s3Client = null;
       }
       zarrGroup = null;
+      if (zarrArrayMap != null) {
+        zarrArrayMap.clear();
+        zarrArrayMap = null;
+      }
     } finally {
       zarrReadWriteLock.writeLock().unlock();
     }
@@ -410,8 +419,15 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
   }
 
   private static Group openZarrGroup(Store store, String groupName) throws Exception {
+    String cleanGroupName = groupName != null ? groupName.trim() : "";
+    while (cleanGroupName.startsWith("/")) {
+      cleanGroupName = cleanGroupName.substring(1).trim();
+    }
+    while (cleanGroupName.endsWith("/")) {
+      cleanGroupName = cleanGroupName.substring(0, cleanGroupName.length() - 1).trim();
+    }
     StoreHandle handle;
-    if (groupName == null || groupName.isEmpty() || "/".equals(groupName.trim())) {
+    if (cleanGroupName.isEmpty()) {
       handle = store.resolve();
       try {
         return Group.open(handle);
@@ -448,7 +464,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         throw e;
       }
     } else {
-      String[] groupKeys = String2.split(groupName, '/');
+      String[] groupKeys = String2.split(cleanGroupName, '/');
       handle = store.resolve(groupKeys);
       return Group.open(handle);
     }
@@ -636,8 +652,11 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         throw new IllegalArgumentException("EDV sourceName is empty.");
       }
 
-      // Retrieve Zarr array handle
-      ZarrArrayInfo info = getOrOpenZarrArrayInfo(sourceName, new LinkedHashMap<>());
+      // Retrieve Zarr array handle from cached zarrArrayMap
+      ZarrArrayInfo info = zarrArrayMap != null ? zarrArrayMap.get(sourceName) : null;
+      if (info == null) {
+        info = getOrOpenZarrArrayInfo(sourceName, zarrArrayMap != null ? zarrArrayMap : new LinkedHashMap<>());
+      }
       Array zarray = info != null ? info.array : null;
       if (zarray == null && zarrGroup != null) {
         try {
@@ -738,7 +757,16 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           }
         }
 
-        if (edv.sourceAttributes() != null) {
+        if (edv.combinedAttributes() != null) {
+          PrimitiveArray ma = edv.combinedAttributes().get(0, "missing_value");
+          if (ma != null && ma.size() > 0) {
+            sourceMissingLong = ma.getLong(0);
+          }
+          PrimitiveArray fa = edv.combinedAttributes().get(0, "_FillValue");
+          if (fa != null && fa.size() > 0) {
+            sourceFillLong = fa.getLong(0);
+          }
+        } else if (edv.sourceAttributes() != null) {
           PrimitiveArray ma = edv.sourceAttributes().get("missing_value");
           if (ma != null && ma.size() > 0) {
             sourceMissingLong = ma.getLong(0);
@@ -748,11 +776,13 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
             sourceFillLong = fa.getLong(0);
           }
         }
-        if (sourceMissingLong == null && !Double.isNaN(sourceMissingDouble)) {
-          sourceMissingLong = (long) sourceMissingDouble;
-        }
-        if (sourceFillLong == null && !Double.isNaN(sourceFillDouble)) {
-          sourceFillLong = (long) sourceFillDouble;
+        if (destPAType != PAType.ULONG) {
+          if (sourceMissingLong == null && !Double.isNaN(sourceMissingDouble)) {
+            sourceMissingLong = (long) sourceMissingDouble;
+          }
+          if (sourceFillLong == null && !Double.isNaN(sourceFillDouble)) {
+            sourceFillLong = (long) sourceFillDouble;
+          }
         }
       } else {
         Object parsedFV = metadata.parsedFillValue();
@@ -844,7 +874,6 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           chunkData = zarray.readChunk(chunkCoords);
         } catch (Throwable t) {
           if (isMissingChunkException(t)) {
-            // Unwritten, missing, or empty chunk -> treated as missing fill region
             chunkData = null;
           } else {
             throw t;
@@ -859,41 +888,47 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           chunkIterTotal *= overlapShape[d];
         }
 
+        ucar.ma2.Index ma2Idx = chunkData != null ? chunkData.getIndex() : null;
+
         int[] localK = new int[rank];
         int[] chunkLocalOffset = new int[rank];
+        int outIdx = 0;
+        for (int d = 0; d < rank; d++) {
+          localK[d] = kMin[d];
+          chunkLocalOffset[d] = (int) (start[d] + (long) kMin[d] * stride[d] - physStart[d]);
+          outIdx += localK[d] * outStrides[d];
+        }
 
         for (int iter = 0; iter < chunkIterTotal; iter++) {
-          int tempIter = iter;
-          int outIdx = 0;
-
-          for (int d = rank - 1; d >= 0; d--) {
-            int offsetInOverlap = tempIter % overlapShape[d];
-            tempIter /= overlapShape[d];
-
-            localK[d] = kMin[d] + offsetInOverlap;
-            outIdx += localK[d] * outStrides[d];
-
-            long fullIdx = start[d] + (long) localK[d] * stride[d];
-            chunkLocalOffset[d] = (int) (fullIdx - physStart[d]);
-          }
-
           if (chunkData == null) {
             // Fill missing chunk elements with missing value
             setMissingInDest(destPA, outIdx, destPAType, destMissingDouble);
           } else {
-            ucar.ma2.Index ma2Idx = chunkData.getIndex();
             ma2Idx.set(chunkLocalOffset);
 
             if (destPAType == PAType.STRING || destPAType == PAType.CHAR) {
               Object obj = chunkData.getObject(ma2Idx);
               String sVal = obj != null ? obj.toString() : "";
               destPA.setString(outIdx, sVal);
-            } else if ((destPAType == PAType.LONG || destPAType == PAType.ULONG) && !unpack) {
+            } else if (destPAType == PAType.ULONG && !unpack) {
               long rawLong = chunkData.getLong(ma2Idx);
               boolean isMissing =
                   (sourceMissingLong != null && rawLong == sourceMissingLong)
                       || (sourceFillLong != null && rawLong == sourceFillLong);
-
+              if (isMissing) {
+                setMissingInDest(destPA, outIdx, destPAType, destMissingDouble);
+              } else {
+                BigInteger ulongVal =
+                    rawLong >= 0
+                        ? BigInteger.valueOf(rawLong)
+                        : BigInteger.valueOf(rawLong & Long.MAX_VALUE).setBit(63);
+                destPA.setULong(outIdx, ulongVal);
+              }
+            } else if (destPAType == PAType.LONG && !unpack) {
+              long rawLong = chunkData.getLong(ma2Idx);
+              boolean isMissing =
+                  (sourceMissingLong != null && rawLong == sourceMissingLong)
+                      || (sourceFillLong != null && rawLong == sourceFillLong);
               if (isMissing) {
                 setMissingInDest(destPA, outIdx, destPAType, destMissingDouble);
               } else {
@@ -919,6 +954,21 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               }
             }
           }
+
+          if (iter + 1 < chunkIterTotal) {
+            for (int d = rank - 1; d >= 0; d--) {
+              localK[d]++;
+              chunkLocalOffset[d] += stride[d];
+              outIdx += outStrides[d];
+              if (localK[d] <= kMax[d]) {
+                break;
+              }
+              int overflowSteps = localK[d] - kMin[d];
+              localK[d] = kMin[d];
+              chunkLocalOffset[d] -= overflowSteps * stride[d];
+              outIdx -= overflowSteps * outStrides[d];
+            }
+          }
         }
       }
 
@@ -932,9 +982,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       PrimitiveArray destPA, int index, PAType paType, double missingDouble) {
     if (paType == PAType.STRING || paType == PAType.CHAR) {
       destPA.setString(index, "");
-    } else if (paType == PAType.LONG || paType == PAType.ULONG) {
-      destPA.setLong(
-          index, Double.isNaN(missingDouble) ? Long.MAX_VALUE : (long) missingDouble);
+    } else if (paType == PAType.ULONG) {
+      destPA.setULong(index, null);
     } else if (Double.isNaN(missingDouble)) {
       destPA.setDouble(index, Double.NaN);
     } else {
@@ -1078,24 +1127,21 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
           if (dvInfo != null && dvInfo.shape != null && dvInfo.shape.length > 0) {
             int outerDimIdx = -1;
-            boolean isFallback = isFallbackDimensionNames(dvInfo);
-
-            if (!isFallback) {
+            if (dvInfo.dimensionNames != null
+                && dvInfo.dimensionNames.length == dvInfo.shape.length) {
               for (int d = 0; d < dvInfo.dimensionNames.length; d++) {
                 if (isDimNameMatch(outerAxisSourceName, dvInfo.dimensionNames[d])) {
                   outerDimIdx = d;
                   break;
                 }
               }
-              if (outerDimIdx < 0) continue;
-            } else {
-              if (dvInfo.shape.length == axisVariables.length) {
-                outerDimIdx = 0;
-              } else {
-                continue;
-              }
+            } else if (outerAxisSourceName.equals(dvInfo.name)) {
+              outerDimIdx = 0;
             }
-
+            if (outerDimIdx < 0) {
+              // Data variable does not depend on the outer axis (e.g., static topography or depth-only layer)
+              continue;
+            }
             long dvOuterShape = dvInfo.shape[outerDimIdx];
             if (dvOuterShape < newAxisLength) {
               String2.log(
@@ -1157,6 +1203,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         this.zarrStore = freshStore;
         this.s3Client = freshHolder.s3Client();
         this.zarrGroup = freshGroup;
+        this.zarrArrayMap = freshArrayMap;
         this.axisVariables[0] = newAxisVar;
 
         // Update temporal global attributes if primary axis is time
@@ -1549,7 +1596,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     }
   }
 
-  protected static boolean isMissingChunkException(Throwable t) {
+  private static boolean isMissingChunkException(Throwable t) {
     Throwable current = t;
     while (current != null) {
       if (current instanceof java.nio.file.NoSuchFileException
@@ -2067,16 +2114,6 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     return axesList.toArray(new EDVGridAxis[0]);
   }
 
-  /**
-   * Builds ERDDAP EDV data variables for gridded data arrays.
-   *
-   * @param tDataVariables explicit data variable specifications from XML (or null/empty for
-   *     auto-discovery)
-   * @param arrayMap map of Zarr array metadata
-   * @param axisSourceNames set of array names used as coordinate axes
-   * @return EDV[] array of constructed data variables
-   * @throws Throwable if error
-   */
   private static boolean isFallbackDimensionNames(ZarrArrayInfo info) {
     if (info == null) return true;
     if (!info.hasExplicitDimensionNames) return true;
