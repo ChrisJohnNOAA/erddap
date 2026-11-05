@@ -803,7 +803,8 @@ public class EDDTableFromDapSequence extends EDDTable {
       // String outerSequenceName, String innerSequenceName, boolean sortColumnsByName)
       throws Throwable {
 
-    if (tLocalSourceUrl != null && (tLocalSourceUrl.startsWith("dap4://") || tLocalSourceUrl.startsWith("dap4:"))) {
+    if (tLocalSourceUrl != null
+        && (tLocalSourceUrl.startsWith("dap4://") || tLocalSourceUrl.startsWith("dap4:"))) {
       if (tLocalSourceUrl.startsWith("dap4://")) {
         tLocalSourceUrl = "dap4://" + EDStatic.updateUrls(tLocalSourceUrl.substring(7));
       } else {

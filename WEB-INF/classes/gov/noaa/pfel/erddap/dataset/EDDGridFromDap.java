@@ -1220,7 +1220,8 @@ public class EDDGridFromDap extends EDDGrid {
       Attributes externalAddGlobalAttributes)
       throws Throwable {
 
-    if (tLocalSourceUrl != null && (tLocalSourceUrl.startsWith("dap4://") || tLocalSourceUrl.startsWith("dap4:"))) {
+    if (tLocalSourceUrl != null
+        && (tLocalSourceUrl.startsWith("dap4://") || tLocalSourceUrl.startsWith("dap4:"))) {
       if (tLocalSourceUrl.startsWith("dap4://")) {
         tLocalSourceUrl = "dap4://" + EDStatic.updateUrls(tLocalSourceUrl.substring(7));
       } else {
