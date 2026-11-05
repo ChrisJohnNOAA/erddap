@@ -6,8 +6,6 @@ import com.cohort.array.Attributes;
 import com.cohort.array.PAType;
 import com.cohort.array.StringArray;
 import com.cohort.util.String2;
-import com.cohort.util.SimpleException;
-import java.util.Map;
 import gov.noaa.pfel.coastwatch.util.SimpleXMLReader;
 import gov.noaa.pfel.erddap.GenerateDatasetsXml;
 import gov.noaa.pfel.erddap.dataset.metadata.LocalizedAttributes;
@@ -21,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import testDataset.EDDTestDataset;
 import testDataset.Initialization;
@@ -1873,7 +1872,8 @@ class EDDGridFromZarrTests {
       // 2. Explicit XML specification must fail-fast with SimpleException on mismatched arrays
       List<DataVariableInfo> invalidDataVars = new ArrayList<>();
       invalidDataVars.add(
-          new DataVariableInfo("mismatched_rank", "mismatched_rank", new LocalizedAttributes(), "double"));
+          new DataVariableInfo(
+              "mismatched_rank", "mismatched_rank", new LocalizedAttributes(), "double"));
 
       assertThrows(
           Throwable.class,
@@ -1949,7 +1949,8 @@ class EDDGridFromZarrTests {
               mb -> mb.withShape(1).withDataType(float64).withDimensionNames("depth"),
               true)
           .write(
-              ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {1}, new double[] {-50.0}));
+              ucar.ma2.Array.factory(
+                  ucar.ma2.DataType.DOUBLE, new int[] {1}, new double[] {-50.0}));
 
       LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
       addGlobalAtts.set(0, "title", "Test Dataset");
@@ -1961,7 +1962,8 @@ class EDDGridFromZarrTests {
       axisVars.add(new AxisVariableInfo("time", "time", new LocalizedAttributes(), null));
 
       List<DataVariableInfo> dataVars = new ArrayList<>();
-      dataVars.add(new DataVariableInfo("temperature", "temperature", new LocalizedAttributes(), "double"));
+      dataVars.add(
+          new DataVariableInfo("temperature", "temperature", new LocalizedAttributes(), "double"));
 
       EDDGridFromZarr dataset =
           new EDDGridFromZarr(
@@ -2006,9 +2008,7 @@ class EDDGridFromZarrTests {
       tempArrUp.setAttributes(tempAttrs);
       tempArrUp.write(
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE,
-              new int[] {4},
-              new double[] {15.0, 16.0, 17.0, 18.0}));
+              ucar.ma2.DataType.DOUBLE, new int[] {4}, new double[] {15.0, 16.0, 17.0, 18.0}));
 
       // Topography remains static with shape 1, but lacks the outer axis 'time'.
       // lowUpdate must succeed and NOT be deferred!
@@ -2056,7 +2056,9 @@ class EDDGridFromZarrTests {
           EDDGridFromZarr.parseZarrMetadata(subGroup);
 
       assertNotNull(arrayMap);
-      assertTrue(arrayMap.containsKey("temperature"), "ArrayMap should contain relative key 'temperature'");
+      assertTrue(
+          arrayMap.containsKey("temperature"),
+          "ArrayMap should contain relative key 'temperature'");
       assertTrue(arrayMap.containsKey("time"), "ArrayMap should contain relative key 'time'");
       assertFalse(
           arrayMap.containsKey("models/gfs/models/gfs/temperature"),
@@ -2099,7 +2101,8 @@ class EDDGridFromZarrTests {
       tempAtts.set("ioos_category", "Temperature");
       tempArray.setAttributes(tempAtts);
       tempArray.write(
-          ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {15.0, 16.0}));
+          ucar.ma2.Array.factory(
+              ucar.ma2.DataType.DOUBLE, new int[] {2}, new double[] {15.0, 16.0}));
 
       LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
       addGlobalAtts.set(0, "title", "Rethrow Network Exception Test");
@@ -2138,17 +2141,21 @@ class EDDGridFromZarrTests {
               -1,
               true);
 
-      // Create a directory where the chunk file should be: reading a directory as a file throws an IOException
+      // Create a directory where the chunk file should be: reading a directory as a file throws an
+      // IOException
       Path chunkPath = tempDir.resolve("temperature").resolve("c").resolve("0");
       if (Files.exists(chunkPath)) {
         Files.delete(chunkPath);
       }
       Files.createDirectory(chunkPath);
 
-      // getSourceDataFromFile should rethrow the IOException rather than swallowing it into null/NaN
+      // getSourceDataFromFile should rethrow the IOException rather than swallowing it into
+      // null/NaN
       assertThrows(
           Throwable.class,
-          () -> dataset.getSourceDataFromFile(dataset.dataVariables()[0], new int[] {0}, new int[] {1}, new int[] {0}));
+          () ->
+              dataset.getSourceDataFromFile(
+                  dataset.dataVariables()[0], new int[] {0}, new int[] {1}, new int[] {0}));
 
     } finally {
       com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
@@ -2250,13 +2257,15 @@ class EDDGridFromZarrTests {
               true);
 
       com.cohort.array.PrimitiveArray longPA =
-          dataset.getSourceDataFromFile(dataset.dataVariables()[0], new int[] {0}, new int[] {1}, new int[] {1});
+          dataset.getSourceDataFromFile(
+              dataset.dataVariables()[0], new int[] {0}, new int[] {1}, new int[] {1});
       assertEquals(PAType.LONG, longPA.elementType());
       assertEquals(largeLong1, longPA.getLong(0));
       assertEquals(largeLong2, longPA.getLong(1));
 
       com.cohort.array.PrimitiveArray ulongPA =
-          dataset.getSourceDataFromFile(dataset.dataVariables()[1], new int[] {0}, new int[] {1}, new int[] {1});
+          dataset.getSourceDataFromFile(
+              dataset.dataVariables()[1], new int[] {0}, new int[] {1}, new int[] {1});
       assertEquals(PAType.ULONG, ulongPA.elementType());
       assertEquals("18446744073709551612", ulongPA.getString(0));
       assertEquals(new java.math.BigInteger("18446744073709551612"), ulongPA.getULong(0));
@@ -2267,5 +2276,4 @@ class EDDGridFromZarrTests {
       com.cohort.util.File2.deleteAllFiles(tempDir.toString(), true, true);
     }
   }
-
 }

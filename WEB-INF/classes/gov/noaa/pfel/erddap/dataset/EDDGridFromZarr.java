@@ -13,7 +13,6 @@ import com.cohort.array.StringArray;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
-import java.math.BigInteger;
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
 import dev.zarr.zarrjava.core.ArrayMetadata;
@@ -43,6 +42,7 @@ import gov.noaa.pfel.erddap.variable.EDVTimeGridAxis;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import gov.noaa.pfel.erddap.variable.EDVTimeStampGridAxis;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -655,7 +655,9 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       // Retrieve Zarr array handle from cached zarrArrayMap
       ZarrArrayInfo info = zarrArrayMap != null ? zarrArrayMap.get(sourceName) : null;
       if (info == null) {
-        info = getOrOpenZarrArrayInfo(sourceName, zarrArrayMap != null ? zarrArrayMap : new LinkedHashMap<>());
+        info =
+            getOrOpenZarrArrayInfo(
+                sourceName, zarrArrayMap != null ? zarrArrayMap : new LinkedHashMap<>());
       }
       Array zarray = info != null ? info.array : null;
       if (zarray == null && zarrGroup != null) {
@@ -1139,7 +1141,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               outerDimIdx = 0;
             }
             if (outerDimIdx < 0) {
-              // Data variable does not depend on the outer axis (e.g., static topography or depth-only layer)
+              // Data variable does not depend on the outer axis (e.g., static topography or
+              // depth-only layer)
               continue;
             }
             long dvOuterShape = dvInfo.shape[outerDimIdx];
@@ -1862,7 +1865,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     return info;
   }
 
-  private static String[] extractDimensionNames(ArrayMetadata metadata, int rank, boolean[] hasExplicit) {
+  private static String[] extractDimensionNames(
+      ArrayMetadata metadata, int rank, boolean[] hasExplicit) {
     if (hasExplicit != null && hasExplicit.length > 0) hasExplicit[0] = false;
 
     // 1. Check Zarr v3 dimensionNames
@@ -2137,7 +2141,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
 
     if (isFallbackDimensionNames(info)) {
       for (int i = 0; i < axisCount; i++) {
-        long expectedLen = (axes[i] != null && axes[i].sourceValues() != null) ? axes[i].sourceValues().size() : -1;
+        long expectedLen =
+            (axes[i] != null && axes[i].sourceValues() != null)
+                ? axes[i].sourceValues().size()
+                : -1;
         if (expectedLen >= 0 && info.shape[i] != expectedLen) {
           return false;
         }
@@ -2149,7 +2156,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         if (!isDimNameMatch(expectedName, info.dimensionNames[i])) {
           return false;
         }
-        long expectedLen = (axes[i] != null && axes[i].sourceValues() != null) ? axes[i].sourceValues().size() : -1;
+        long expectedLen =
+            (axes[i] != null && axes[i].sourceValues() != null)
+                ? axes[i].sourceValues().size()
+                : -1;
         if (expectedLen >= 0 && info.shape[i] != expectedLen) {
           return false;
         }
@@ -2225,9 +2235,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         if (info != null && this.axisVariables != null && this.axisVariables.length > 0) {
           if (!isMatchingGridDimensions(info, this.axisVariables)) {
             throw new SimpleException(
-                "Data variable '"
-                    + tDataSourceName
-                    + "' dimensions do not match the grid axes.");
+                "Data variable '" + tDataSourceName + "' dimensions do not match the grid axes.");
           }
         }
 
