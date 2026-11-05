@@ -187,6 +187,32 @@ public class EDDTableFromDapSequence extends EDDTable {
         tSkipDapperSpacerRows);
   }
 
+  public static NetcdfDataset openDataset(String url) throws Exception {
+    DatasetUrl durl;
+    if (url.startsWith("dap4:") || url.startsWith("dap4://") || url.endsWith("#dap4")) {
+      String cleanUrl = url;
+      if (cleanUrl.startsWith("dap4://")) {
+        // Strip dap4:// and keep standard http/https transport
+        cleanUrl =
+            (cleanUrl.contains(":443") || cleanUrl.contains("https"))
+                ? "https://" + cleanUrl.substring(7)
+                : "http://" + cleanUrl.substring(7);
+      } else if (cleanUrl.startsWith("dap4:")) {
+        cleanUrl = cleanUrl.substring(5);
+      }
+
+      if (cleanUrl.endsWith("#dap4")) {
+        cleanUrl = cleanUrl.substring(0, cleanUrl.length() - 5);
+      }
+
+      String dap4Url = cleanUrl + "#dap4";
+      durl = DatasetUrl.create(ServiceType.DAP4, dap4Url);
+    } else {
+      durl = DatasetUrl.create(ServiceType.OPENDAP, url);
+    }
+    return NetcdfDatasets.openDataset(durl, EnumSet.noneOf(Enhance.class), -1, null, null);
+  }
+
   /**
    * The constructor.
    *
@@ -392,9 +418,7 @@ public class EDDTableFromDapSequence extends EDDTable {
       }
     } else {
       // Fetch from NetcdfDataset
-      DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, localSourceUrl);
-      try (NetcdfDataset dataset =
-          NetcdfDatasets.openDataset(durl, EnumSet.noneOf(Enhance.class), -1, null, null)) {
+      try (NetcdfDataset dataset = openDataset(localSourceUrl)) {
         sourceGlobalAttributes = new Attributes();
         NcHelper.getGroupAttributes(dataset.getRootGroup(), sourceGlobalAttributes);
 
@@ -779,7 +803,15 @@ public class EDDTableFromDapSequence extends EDDTable {
       // String outerSequenceName, String innerSequenceName, boolean sortColumnsByName)
       throws Throwable {
 
-    tLocalSourceUrl = EDStatic.updateUrls(tLocalSourceUrl); // http: to https:
+    if (tLocalSourceUrl != null && (tLocalSourceUrl.startsWith("dap4://") || tLocalSourceUrl.startsWith("dap4:"))) {
+      if (tLocalSourceUrl.startsWith("dap4://")) {
+        tLocalSourceUrl = "dap4://" + EDStatic.updateUrls(tLocalSourceUrl.substring(7));
+      } else {
+        tLocalSourceUrl = "dap4:" + EDStatic.updateUrls(tLocalSourceUrl.substring(5));
+      }
+    } else {
+      tLocalSourceUrl = EDStatic.updateUrls(tLocalSourceUrl); // http: to https:
+    }
     String2.log(
         "EDDTableFromDapSequence.generateDatasetsXml"
             + "\ntLocalSourceUrl="
@@ -803,9 +835,7 @@ public class EDDTableFromDapSequence extends EDDTable {
     int nOuterVars = 0; // so outerVars are first in dataAddTable
     Attributes gridMappingAtts = null;
 
-    DatasetUrl durl = DatasetUrl.create(ServiceType.OPENDAP, tLocalSourceUrl);
-    try (NetcdfDataset dataset =
-        NetcdfDatasets.openDataset(durl, EnumSet.noneOf(Enhance.class), -1, null, null)) {
+    try (NetcdfDataset dataset = openDataset(tLocalSourceUrl)) {
 
       // get source global attributes
       NcHelper.getGroupAttributes(dataset.getRootGroup(), dataSourceTable.globalAttributes());

@@ -255,11 +255,14 @@ public class EDDGridFromDap extends EDDGrid {
                 : "http://" + cleanUrl.substring(7);
       } else if (cleanUrl.startsWith("dap4:")) {
         cleanUrl = cleanUrl.substring(5);
-      } else if (cleanUrl.endsWith("#dap4")) {
+      }
+
+      if (cleanUrl.endsWith("#dap4")) {
         cleanUrl = cleanUrl.substring(0, cleanUrl.length() - 5);
       }
 
-      durl = DatasetUrl.create(ServiceType.DAP4, cleanUrl);
+      String dap4Url = cleanUrl + "#dap4";
+      durl = DatasetUrl.create(ServiceType.DAP4, dap4Url);
     } else {
       durl = DatasetUrl.create(ServiceType.OPENDAP, url);
     }
@@ -1217,7 +1220,15 @@ public class EDDGridFromDap extends EDDGrid {
       Attributes externalAddGlobalAttributes)
       throws Throwable {
 
-    tLocalSourceUrl = EDStatic.updateUrls(tLocalSourceUrl); // http: to https:
+    if (tLocalSourceUrl != null && (tLocalSourceUrl.startsWith("dap4://") || tLocalSourceUrl.startsWith("dap4:"))) {
+      if (tLocalSourceUrl.startsWith("dap4://")) {
+        tLocalSourceUrl = "dap4://" + EDStatic.updateUrls(tLocalSourceUrl.substring(7));
+      } else {
+        tLocalSourceUrl = "dap4:" + EDStatic.updateUrls(tLocalSourceUrl.substring(5));
+      }
+    } else {
+      tLocalSourceUrl = EDStatic.updateUrls(tLocalSourceUrl); // http: to https:
+    }
     String2.log(
         "\n*** EDDGridFromDap.generateDatasetsXml"
             + "\ntLocalSourceUrl="
