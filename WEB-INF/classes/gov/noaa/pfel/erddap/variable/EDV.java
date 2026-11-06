@@ -1798,6 +1798,23 @@ public class EDV {
    *
    * @return the raw attributes from the source.
    */
+  /**
+   * Updates sourceAttributes and recomputes combinedAttributes for this variable.
+   *
+   * @param newSourceAtts the new source Attributes
+   * @param language the language index (usually 0)
+   */
+  public void setSourceAttributes(Attributes newSourceAtts, int language) {
+    if (newSourceAtts == null) return;
+    this.sourceAttributes = new Attributes(newSourceAtts);
+    this.combinedAttributes = new LocalizedAttributes(this.addAttributes, this.sourceAttributes);
+    try {
+      extractAndSetActualRange(language);
+    } catch (Throwable t) {
+      // ignore range setting errors if actual_range is missing/invalid
+    }
+  }
+
   public Attributes sourceAttributes() {
     return sourceAttributes;
   }

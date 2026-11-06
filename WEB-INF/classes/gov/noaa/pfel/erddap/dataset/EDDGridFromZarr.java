@@ -3,6 +3,8 @@
  * See the LICENSE.txt file in this file's directory.
  */
 package gov.noaa.pfel.erddap.dataset;
+import com.cohort.util.File2;
+import java.io.File;
 
 import com.cohort.array.Attributes;
 import com.cohort.array.IntArray;
@@ -92,6 +94,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
   private Group zarrGroup;
   private Map<String, ZarrArrayInfo> zarrArrayMap;
   private final ReentrantReadWriteLock zarrReadWriteLock = new ReentrantReadWriteLock();
+  private volatile long lastStoreModified = 0;
 
   /**
    * Static factory method to construct an EDDGridFromZarr dataset from an XML configuration.
@@ -338,6 +341,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
 
       // Cache arrayMap
       this.zarrArrayMap = arrayMap;
+      this.lastStoreModified = getStoreLastModified(this.zarrStorePath);
 
       // Build data variables
       this.dataVariables = buildDataVariables(tDataVariables, arrayMap, axisSourceNames);
@@ -359,6 +363,42 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               + "ms\n");
 
     if (!dimensionValuesInMemory) saveDimensionValuesInFile();
+  }
+
+  /**
+   * Helper method to determine the last modified timestamp of a Zarr store.
+   */
+  private static long getStoreLastModified(String storePath) {
+    if (storePath == null) return 0;
+    try {
+      if (storePath.startsWith("http://") || storePath.startsWith("https://")
+          || storePath.startsWith("s3://") || storePath.startsWith("s3a://")) {
+        return File2.getLastModified(storePath);
+      }
+      File file = new File(storePath);
+      if (!file.exists()) return 0;
+      if (file.isFile()) return file.lastModified();
+      return getMaxModifiedRecursive(file);
+    } catch (Throwable t) {
+      return 0;
+    }
+  }
+
+  private static long getMaxModifiedRecursive(File dir) {
+    long max = dir.lastModified();
+    File[] children = dir.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        if (child.isDirectory()) {
+          long childMax = getMaxModifiedRecursive(child);
+          if (childMax > max) max = childMax;
+        } else {
+          long childMod = child.lastModified();
+          if (childMod > max) max = childMod;
+        }
+      }
+    }
+    return max;
   }
 
   /**
@@ -1072,7 +1112,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     }
 
     String outerAxisSourceName = outerAxis.sourceName();
-    int currentAxisLength = outerAxis.sourceValues().size();
+    int currentAxisLength = outerAxis.sourceValues() != null ? outerAxis.sourceValues().size() : 0;
+
+    long currentStoreModified = getStoreLastModified(this.zarrStorePath);
+    boolean storeTimeChanged = (currentStoreModified > 0 && currentStoreModified != this.lastStoreModified);
 
     ZarrStoreHolder freshHolder = null;
     try {
@@ -1106,23 +1149,24 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       }
       int newAxisLength = (int) newAxisLengthLong;
 
-      if (newAxisLength <= currentAxisLength) {
+      if (newAxisLength < 1) {
         if (reallyVerbose) {
           String2.log(
               msg
-                  + "EDDGridFromZarr.lowUpdate: No change to outer axis '"
-                  + outerAxisSourceName
-                  + "' (newLength="
+                  + "EDDGridFromZarr.lowUpdate: Outer axis length cannot be less than 1 (newLength="
                   + newAxisLength
-                  + " <= currentLength="
-                  + currentAxisLength
                   + ").");
         }
         return false;
       }
 
-      // Verify that all dependent data variables sharing the outer dimension have reached
-      // newAxisLength
+      boolean lengthChanged = (newAxisLength != currentAxisLength);
+
+      if (!lengthChanged && !storeTimeChanged) {
+        return false;
+      }
+
+      // Verify that all dependent data variables sharing the outer dimension have caught up or match newAxisLength
       if (dataVariables != null) {
         for (EDV dv : dataVariables) {
           if (dv == null || !String2.isSomething(dv.sourceName())) continue;
@@ -1141,12 +1185,23 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               outerDimIdx = 0;
             }
             if (outerDimIdx < 0) {
-              // Data variable does not depend on the outer axis (e.g., static topography or
-              // depth-only layer)
               continue;
             }
             long dvOuterShape = dvInfo.shape[outerDimIdx];
-            if (dvOuterShape < newAxisLength) {
+            if (newAxisLength < currentAxisLength) {
+              if (dvOuterShape != newAxisLength) {
+                String2.log(
+                    msg
+                        + " Data variable '"
+                        + dv.sourceName()
+                        + "' shape ("
+                        + dvOuterShape
+                        + ") does not match truncated axis length ("
+                        + newAxisLength
+                        + "). Deferring update.");
+                return false;
+              }
+            } else if (dvOuterShape < newAxisLength) {
               String2.log(
                   msg
                       + " Data variable '"
@@ -1183,16 +1238,66 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         return false;
       }
 
-      // Atomically construct new EDVGridAxis
-      EDVGridAxis newAxisVar =
-          makeAxisVariable(
-              datasetID,
-              0,
-              outerAxis.sourceName(),
-              outerAxis.destinationName(),
-              outerAxis.sourceAttributes(),
-              outerAxis.addAttributes(),
-              newSourceValues);
+      if (newSourceValues.size() > newAxisLength) {
+        newSourceValues = newSourceValues.subset(0, 1, newAxisLength - 1);
+      }
+
+      Attributes outerSourceAtts = outerAxis.sourceAttributes();
+      if (outerAxisInfo.attributes != null) {
+        outerSourceAtts = new Attributes(outerAxis.sourceAttributes());
+        outerSourceAtts.set(outerAxisInfo.attributes);
+      }
+      outerSourceAtts.remove("_FillValue");
+      outerSourceAtts.remove("missing_value");
+      if ((outerAxis instanceof EDVTimeGridAxis || outerAxis instanceof EDVTimeStampGridAxis)
+          && outerSourceAtts.get("units") == null) {
+        outerSourceAtts.set("units", outerAxis.units());
+      }
+
+      // Atomically construct new EDVGridAxis with coordinate monotonicity validation
+      EDVGridAxis newAxisVar;
+      try {
+        newAxisVar =
+            makeAxisVariable(
+                datasetID,
+                0,
+                outerAxis.sourceName(),
+                outerAxis.destinationName(),
+                outerSourceAtts,
+                outerAxis.addAttributes(),
+                newSourceValues);
+      } catch (Throwable tAxis) {
+        String2.log(
+            msg
+                + "EDDGridFromZarr.lowUpdate: Failed to reconstruct axis '"
+                + outerAxisSourceName
+                + "' (e.g. non-monotonic coordinates): "
+                + tAxis.getMessage());
+        return false;
+      }
+
+      // Refresh global attributes
+      if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
+        Attributes freshGlobalAtts = new Attributes();
+        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshGlobalAtts);
+        String[] gNames = freshGlobalAtts.getNames();
+        for (String gName : gNames) {
+          combinedGlobalAttributes.set(language, gName, freshGlobalAtts.get(gName));
+        }
+      }
+
+      // Refresh variable attributes
+      if (dataVariables != null) {
+        for (EDV dv : dataVariables) {
+          if (dv == null || !String2.isSomething(dv.sourceName())) continue;
+          ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
+          if (dvInfo != null && dvInfo.attributes != null) {
+            Attributes newSrcAtts = new Attributes(dv.sourceAttributes());
+            newSrcAtts.set(dvInfo.attributes);
+            dv.setSourceAttributes(newSrcAtts, language);
+          }
+        }
+      }
 
       // Atomically swap store handles, axisVariables[0], and combinedGlobalAttributes under write
       // lock
@@ -1208,6 +1313,18 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         this.zarrGroup = freshGroup;
         this.zarrArrayMap = freshArrayMap;
         this.axisVariables[0] = newAxisVar;
+        this.lastStoreModified = currentStoreModified > 0 ? currentStoreModified : System.currentTimeMillis();
+
+        if (!dimensionValuesInMemory) {
+          try {
+            saveDimensionValuesInFile();
+          } catch (Throwable tSave) {
+            String2.log(
+                msg
+                    + "EDDGridFromZarr.lowUpdate: Warning - failed to saveDimensionValuesInFile: "
+                    + tSave.getMessage());
+          }
+        }
 
         // Update temporal global attributes if primary axis is time
         if (newAxisVar.destinationName().equals(EDV.TIME_NAME)
@@ -1216,9 +1333,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           String startTimeStr = newAxisVar.destinationMinString();
           String endTimeStr = newAxisVar.destinationMaxString();
 
-          if (combinedGlobalAttributes.getString(language, "time_coverage_start") == null) {
-            combinedGlobalAttributes.set(language, "time_coverage_start", startTimeStr);
-          }
+          combinedGlobalAttributes.set(language, "time_coverage_start", startTimeStr);
           combinedGlobalAttributes.set(language, "time_coverage_end", endTimeStr);
 
           try {
@@ -1229,11 +1344,16 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               if (durationSec >= 0) {
                 long durationIntSec = Math.round(durationSec);
                 combinedGlobalAttributes.set(
-                    language, "time_coverage_duration", "PT" + durationIntSec + "S");
+                    language, "time_coverage_duration", "P" + durationIntSec + "S");
               }
             }
           } catch (Throwable tDuration) {
-            // ignore duration calc errors
+            if (verbose) {
+              String2.log(
+                  msg
+                      + "EDDGridFromZarr.lowUpdate: Warning - failed to update time_coverage_duration: "
+                      + tDuration.getMessage());
+            }
           }
         }
       } finally {
@@ -1283,14 +1403,6 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     }
   }
 
-  /**
-   * Generates a suggested datasets.xml configuration block for a Zarr store.
-   *
-   * @param zarrStorePath path or URL to the Zarr store
-   * @param zarrGroupName group name within the store
-   * @return suggested XML string
-   * @throws Throwable if error
-   */
   public static String generateDatasetsXml(String zarrStorePath, String zarrGroupName)
       throws Throwable {
     return generateDatasetsXml(
