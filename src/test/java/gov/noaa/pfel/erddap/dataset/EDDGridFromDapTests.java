@@ -11484,7 +11484,7 @@ class EDDGridFromDapTests extends WireMockLifecycle {
 
     // Test openDataset directly to verify DAP4 DMR protocol resolution against Hyrax reference
     // server
-    try (NetcdfDataset ncd = EDDGridFromDap.openDataset(url)) {
+    try (NetcdfDataset ncd = NcHelper.openDapDataset(url)) {
       Test.ensureNotNull(ncd, "NetcdfDataset from Hyrax DAP4 should not be null");
 
       // Verify coordinate axis variables exist in DMR
