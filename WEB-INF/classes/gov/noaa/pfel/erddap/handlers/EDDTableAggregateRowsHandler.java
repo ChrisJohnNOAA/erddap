@@ -25,6 +25,7 @@ public class EDDTableAggregateRowsHandler extends BaseTableHandler {
   public void startElement(String uri, String localName, String qName, Attributes attributes)
       throws SAXException {
     handleAttributes(localName);
+    handleDataVariables(localName);
     if ("dataset".equals(localName)) {
       String tType = attributes.getValue("type");
       if (tType == null || !tType.startsWith("EDDTable")) {
@@ -81,6 +82,7 @@ public class EDDTableAggregateRowsHandler extends BaseTableHandler {
         tGlobalAttributes,
         tReloadEveryNMinutes,
         tUpdateEveryNMillis,
-        ttChildren);
+        ttChildren,
+        tDataVariables);
   }
 }

@@ -16,7 +16,7 @@ public class EDDTableFromDatabaseHandler extends BaseTableHandler {
   }
 
   private String tDataSourceName = null;
-  private String tLocalSourceUrl = null;
+
   private String tDriverName = null;
   private String tCatalogName = "";
   private String tSchemaName = "";
@@ -46,7 +46,7 @@ public class EDDTableFromDatabaseHandler extends BaseTableHandler {
       return true;
     }
     switch (localName) {
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "dataSourceName" -> tDataSourceName = contentStr;
       case "driverName" -> tDriverName = contentStr;
       case "connectionProperty" -> tConnectionProperties.add(contentStr);
@@ -85,7 +85,7 @@ public class EDDTableFromDatabaseHandler extends BaseTableHandler {
         tDataVariables,
         tReloadEveryNMinutes,
         tDataSourceName,
-        tLocalSourceUrl,
+        tSourceUrl,
         tDriverName,
         tConnectionProperties.toArray(),
         tCatalogName,

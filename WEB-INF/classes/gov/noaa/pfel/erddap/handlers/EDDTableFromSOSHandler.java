@@ -22,7 +22,7 @@ public class EDDTableFromSOSHandler extends BaseTableHandler {
   private String tTimeSourceName = null;
   String tTimeSourceFormat = null;
 
-  private String tLocalSourceUrl = null, tObservationOfferingIdRegex = null;
+  private String tObservationOfferingIdRegex = null;
   private boolean tRequestObservedPropertiesSeparately = false;
   private String tResponseFormat = null;
   private String tBBoxOffering = null;
@@ -55,7 +55,7 @@ public class EDDTableFromSOSHandler extends BaseTableHandler {
           tAltitudeMetersPerSourceUnit = String2.parseDouble(contentStr);
       case "timeSourceName" -> tTimeSourceName = contentStr;
       case "timeSourceFormat" -> tTimeSourceFormat = contentStr;
-      case "sourceUrl" -> tLocalSourceUrl = contentStr;
+      // sourceUrl is handled by BaseTableHandler
       case "observationOfferingIdRegex" -> tObservationOfferingIdRegex = contentStr;
       case "requestObservedPropertiesSeparately" ->
           tRequestObservedPropertiesSeparately = contentStr.equals("true");
@@ -98,7 +98,7 @@ public class EDDTableFromSOSHandler extends BaseTableHandler {
         tTimeSourceFormat,
         tDataVariables,
         tReloadEveryNMinutes,
-        tLocalSourceUrl,
+        tSourceUrl,
         tSosVersion,
         tObservationOfferingIdRegex,
         tRequestObservedPropertiesSeparately,

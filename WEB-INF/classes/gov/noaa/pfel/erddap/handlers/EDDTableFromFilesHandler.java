@@ -615,7 +615,9 @@ public class EDDTableFromFilesHandler extends BaseTableHandler {
         } else {
           EDDTableFromHyraxFiles.makeDownloadFileTasks(
               datasetID,
-              tGlobalAttributes.getString(language, "sourceUrl"),
+              (tSourceUrl != null
+                  ? tSourceUrl
+                  : tGlobalAttributes.getString(language, "sourceUrl")),
               tFileNameRegex,
               tRecursive,
               tPathRegex);
@@ -680,7 +682,9 @@ public class EDDTableFromFilesHandler extends BaseTableHandler {
         } else {
           EDDTableFromThreddsFiles.makeDownloadFileTasks(
               datasetID,
-              tGlobalAttributes.getString(language, "sourceUrl"),
+              (tSourceUrl != null
+                  ? tSourceUrl
+                  : tGlobalAttributes.getString(language, "sourceUrl")),
               tFileNameRegex,
               tRecursive,
               tPathRegex,
@@ -748,7 +752,9 @@ public class EDDTableFromFilesHandler extends BaseTableHandler {
           File2.makeDirectory(fileDir);
           String error =
               EDDTableFromWFSFiles.downloadData(
-                  tGlobalAttributes.getString(language, "sourceUrl"),
+                  (tSourceUrl != null
+                      ? tSourceUrl
+                      : tGlobalAttributes.getString(language, "sourceUrl")),
                   tGlobalAttributes.getString(language, "rowElementXPath"),
                   fileDir + fileName);
           if (!error.isEmpty()) String2.log(error);
