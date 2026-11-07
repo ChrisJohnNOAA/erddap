@@ -2187,19 +2187,18 @@ public class EDDTableFromZarr extends EDDTable {
       }
 
       // Stage global attributes outside writeLock
-      Attributes freshSourceGlobalAtts = null;
-      LocalizedAttributes freshCombinedGlobalAtts = null;
+      Attributes freshSourceGlobalAtts = new Attributes();
       if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        freshSourceGlobalAtts = new Attributes();
         populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
-        freshCombinedGlobalAtts = new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
-        String tLicense = freshCombinedGlobalAtts.getString(language, "license");
-        if (tLicense != null) {
-          freshCombinedGlobalAtts.set(
-              language, "license", String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
-        }
-        freshCombinedGlobalAtts.removeValue("\"null\"");
       }
+      LocalizedAttributes freshCombinedGlobalAtts =
+          new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
+      String tLicense = freshCombinedGlobalAtts.getString(language, "license");
+      if (tLicense != null) {
+        freshCombinedGlobalAtts.set(
+            language, "license", String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
+      }
+      freshCombinedGlobalAtts.removeValue("\"null\"");
 
       Store oldStore = null;
       zarrLock.writeLock().lock();
@@ -2214,11 +2213,9 @@ public class EDDTableFromZarr extends EDDTable {
           this.rowDimensionName = targetRowDimName;
         }
 
-        if (freshCombinedGlobalAtts != null) {
-          this.sourceGlobalAttributes = freshSourceGlobalAtts;
-          this.combinedGlobalAttributes = freshCombinedGlobalAtts;
-          detectAndSetCdmDataType(freshArrayMap);
-        }
+        this.sourceGlobalAttributes = freshSourceGlobalAtts;
+        this.combinedGlobalAttributes = freshCombinedGlobalAtts;
+        detectAndSetCdmDataType(freshArrayMap);
 
         if (newNumRows == 0) {
           this.combinedGlobalAttributes.remove("time_coverage_start");
@@ -2430,14 +2427,6 @@ public class EDDTableFromZarr extends EDDTable {
   }
 
   /**
-   * Generates a suggested datasets.xml configuration block for a Zarr store using default settings.
-   *
-   * @param zarrStorePath path or URL to the Zarr store
-   * @param zarrGroupName group name within the store (or "" for root)
-   * @return suggested XML string
-   * @throws Throwable if error
-   */
-  /**
    * Helper method to determine the last modified timestamp of a Zarr store.
    */
   private static long getStoreLastModified(String storePath) {
@@ -2482,6 +2471,14 @@ public class EDDTableFromZarr extends EDDTable {
     return max;
   }
 
+  /**
+   * Generates a suggested datasets.xml configuration block for a Zarr store using default settings.
+   *
+   * @param zarrStorePath path or URL to the Zarr store
+   * @param zarrGroupName group name within the store (or "" for root)
+   * @return suggested XML string
+   * @throws Throwable if error
+   */
   public static String generateDatasetsXml(String zarrStorePath, String zarrGroupName)
       throws Throwable {
     return generateDatasetsXml(

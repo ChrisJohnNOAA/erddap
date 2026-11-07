@@ -1831,6 +1831,14 @@ public class EDV {
    * @param language the language index
    */
   public void setMissingAndFillValues(int language) {
+    // Reset defaults before parsing so removed attributes do not persist
+    stringMissingValue = "";
+    sourceMissingValue = Double.NaN;
+    destinationMissingValue = Double.NaN;
+    stringFillValue = "";
+    sourceFillValue = Double.NaN;
+    destinationFillValue = Double.NaN;
+
     PrimitiveArray pa = combinedAttributes.get(language, "missing_value");
     if (pa != null) {
       stringMissingValue = pa.getString(0);

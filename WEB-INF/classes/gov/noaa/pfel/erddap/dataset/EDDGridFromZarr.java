@@ -1284,24 +1284,22 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       }
 
       // Stage global attributes outside writeLock
-      Attributes freshSourceGlobalAtts = null;
-      LocalizedAttributes freshCombinedGlobalAtts = null;
+      Attributes freshSourceGlobalAtts = new Attributes();
       if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        freshSourceGlobalAtts = new Attributes();
         populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
-        freshCombinedGlobalAtts =
-            new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
-        String tLicense = freshCombinedGlobalAtts.getString(language, "license");
-        if (tLicense != null) {
-          freshCombinedGlobalAtts.set(
-              language,
-              "license",
-              String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
-        }
-        freshCombinedGlobalAtts.removeValue("\"null\"");
-        if (freshCombinedGlobalAtts.getString(language, "cdm_data_type") == null) {
-          freshCombinedGlobalAtts.set(language, "cdm_data_type", "Grid");
-        }
+      }
+      LocalizedAttributes freshCombinedGlobalAtts =
+          new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
+      String tLicense = freshCombinedGlobalAtts.getString(language, "license");
+      if (tLicense != null) {
+        freshCombinedGlobalAtts.set(
+            language,
+            "license",
+            String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
+      }
+      freshCombinedGlobalAtts.removeValue("\"null\"");
+      if (freshCombinedGlobalAtts.getString(language, "cdm_data_type") == null) {
+        freshCombinedGlobalAtts.set(language, "cdm_data_type", "Grid");
       }
 
       // Atomically swap store handles, axisVariables[0], and combinedGlobalAttributes under write
@@ -1320,10 +1318,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         this.axisVariables[0] = newAxisVar;
         this.lastStoreModified = currentStoreModified > 0 ? currentStoreModified : System.currentTimeMillis();
 
-        if (freshCombinedGlobalAtts != null) {
-          this.sourceGlobalAttributes = freshSourceGlobalAtts;
-          this.combinedGlobalAttributes = freshCombinedGlobalAtts;
-        }
+        this.sourceGlobalAttributes = freshSourceGlobalAtts;
+        this.combinedGlobalAttributes = freshCombinedGlobalAtts;
 
         if (!dimensionValuesInMemory) {
           try {
@@ -1363,6 +1359,25 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
                   msg
                       + "EDDGridFromZarr.lowUpdate: Warning - failed to update time_coverage_duration: "
                       + tDuration.getMessage());
+            }
+          }
+        }
+
+        // Refresh non-outer axis variable attributes under writeLock
+        if (axisVariables != null) {
+          for (int av = 1; av < axisVariables.length; av++) {
+            EDVGridAxis axis = axisVariables[av];
+            if (axis == null || !String2.isSomething(axis.sourceName())) continue;
+            ZarrArrayInfo aInfo = getOrOpenZarrArrayInfo(freshGroup, axis.sourceName(), freshArrayMap);
+            if (aInfo != null && aInfo.attributes != null) {
+              Attributes aSrcAtts = new Attributes(aInfo.attributes);
+              aSrcAtts.remove("_FillValue");
+              aSrcAtts.remove("missing_value");
+              if ((axis instanceof EDVTimeGridAxis || axis instanceof EDVTimeStampGridAxis)
+                  && aSrcAtts.get("units") == null) {
+                aSrcAtts.set("units", axis.units());
+              }
+              axis.setSourceAttributes(aSrcAtts, language);
             }
           }
         }
