@@ -1732,8 +1732,7 @@ class EDDTableFromZarrTests {
       group.setAttributes(globalAtts);
 
       LocalizedAttributes globalAttsLoc = new LocalizedAttributes();
-      globalAttsLoc.set(0, "title", "Initial Table Dataset");
-      globalAttsLoc.set(0, "summary", "Test Table Summary");
+            globalAttsLoc.set(0, "summary", "Test Table Summary");
       globalAttsLoc.set(0, "institution", "NOAA");
       globalAttsLoc.set(0, "infoUrl", "https://example.org");
       globalAttsLoc.set(0, "cdm_data_type", "Other");
@@ -1830,10 +1829,18 @@ class EDDTableFromZarrTests {
       globalAtts.set("title", "Modified Table Dataset");
       group.setAttributes(globalAtts);
 
+      // Also modify tempZattrs by setting custom_att and removing old comment
+      tempZattrs.set("custom_att", "new_value");
+      tempTrunc.setAttributes(tempZattrs);
+
       boolean inPlaceUpdated = dataset.lowUpdate(0, "testInPlace", System.currentTimeMillis());
       assertTrue(inPlaceUpdated, "lowUpdate should return true after in-place modification");
       assertEquals(3, dataset.numRows());
       assertEquals("Modified Table Dataset", dataset.combinedGlobalAttributes().getString(0, "title"));
+      assertEquals("1970-01-01T00:25:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
+      assertEquals("1970-01-01T00:50:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals("PT1500S", dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
+      assertEquals("new_value", dataset.dataVariables()[1].combinedAttributes().getString(0, "custom_att"));
 
       TableWriterAllWithMetadata tw2 =
           new TableWriterAllWithMetadata(

@@ -373,7 +373,16 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     try {
       if (storePath.startsWith("http://") || storePath.startsWith("https://")
           || storePath.startsWith("s3://") || storePath.startsWith("s3a://")) {
-        return File2.getLastModified(storePath);
+        String base = storePath.endsWith("/") ? storePath : storePath + "/";
+        long mod = File2.getLastModified(base + "zarr.json");
+        if (mod > 0) return mod;
+        mod = File2.getLastModified(base + ".zmetadata");
+        if (mod > 0) return mod;
+        mod = File2.getLastModified(base + ".zgroup");
+        if (mod > 0) return mod;
+        mod = File2.getLastModified(base + ".zattrs");
+        if (mod > 0) return mod;
+        return 0;
       }
       File file = new File(storePath);
       if (!file.exists()) return 0;
@@ -1278,11 +1287,20 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
 
       // Refresh global attributes
       if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        Attributes freshGlobalAtts = new Attributes();
-        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshGlobalAtts);
-        String[] gNames = freshGlobalAtts.getNames();
-        for (String gName : gNames) {
-          combinedGlobalAttributes.set(language, gName, freshGlobalAtts.get(gName));
+        sourceGlobalAttributes = new Attributes();
+        populateAttributesFromZarr(freshGroup.metadata().attributes(), sourceGlobalAttributes);
+        combinedGlobalAttributes =
+            new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
+        String tLicense = combinedGlobalAttributes.getString(language, "license");
+        if (tLicense != null) {
+          combinedGlobalAttributes.set(
+              language,
+              "license",
+              String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
+        }
+        combinedGlobalAttributes.removeValue("\"null\"");
+        if (combinedGlobalAttributes.getString(language, "cdm_data_type") == null) {
+          combinedGlobalAttributes.set(language, "cdm_data_type", "Grid");
         }
       }
 
@@ -1292,8 +1310,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           if (dv == null || !String2.isSomething(dv.sourceName())) continue;
           ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
           if (dvInfo != null && dvInfo.attributes != null) {
-            Attributes newSrcAtts = new Attributes(dv.sourceAttributes());
-            newSrcAtts.set(dvInfo.attributes);
+            Attributes newSrcAtts = new Attributes(dvInfo.attributes);
             dv.setSourceAttributes(newSrcAtts, language);
           }
         }
@@ -1344,7 +1361,7 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
               if (durationSec >= 0) {
                 long durationIntSec = Math.round(durationSec);
                 combinedGlobalAttributes.set(
-                    language, "time_coverage_duration", "P" + durationIntSec + "S");
+                    language, "time_coverage_duration", "PT" + durationIntSec + "S");
               }
             }
           } catch (Throwable tDuration) {

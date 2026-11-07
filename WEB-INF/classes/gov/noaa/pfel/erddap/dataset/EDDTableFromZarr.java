@@ -2169,11 +2169,19 @@ public class EDDTableFromZarr extends EDDTable {
             timeInfo = getOrOpenZarrArrayInfo(freshGroup, sName, freshArrayMap);
           }
           if (timeInfo != null && timeInfo.array != null) {
-            PrimitiveArray timePa =
+            // Read row 0 for timeStartSec
+            PrimitiveArray timeStartPa =
+                readChunkDataForVar(sName, timeInfo.array, timeInfo, timeEdv, 0, 1, true);
+            if (timeStartPa != null && timeStartPa.size() > 0) {
+              timeStartSec = timeStartPa.getDouble(0);
+            }
+
+            // Read row newNumRows - 1 for newTimeEndSec
+            PrimitiveArray timeEndPa =
                 readChunkDataForVar(
                     sName, timeInfo.array, timeInfo, timeEdv, newNumRows - 1, 1, true);
-            if (timePa != null && timePa.size() > 0) {
-              newTimeEndSec = timePa.getDouble(0);
+            if (timeEndPa != null && timeEndPa.size() > 0) {
+              newTimeEndSec = timeEndPa.getDouble(0);
               if (!Double.isNaN(newTimeEndSec)) {
                 newTimeEndIso = Calendar2.epochSecondsToIsoStringTZ(newTimeEndSec);
               }
@@ -2184,12 +2192,18 @@ public class EDDTableFromZarr extends EDDTable {
 
       // Refresh global attributes
       if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        Attributes freshGlobalAtts = new Attributes();
-        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshGlobalAtts);
-        String[] gNames = freshGlobalAtts.getNames();
-        for (String gName : gNames) {
-          combinedGlobalAttributes.set(language, gName, freshGlobalAtts.get(gName));
+        sourceGlobalAttributes = new Attributes();
+        populateAttributesFromZarr(freshGroup.metadata().attributes(), sourceGlobalAttributes);
+        combinedGlobalAttributes =
+            new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
+        String tLicense = combinedGlobalAttributes.getString(language, "license");
+        if (tLicense != null) {
+          combinedGlobalAttributes.set(
+              language,
+              "license",
+              String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
         }
+        combinedGlobalAttributes.removeValue("\"null\"");
       }
 
       // Refresh variable attributes
@@ -2201,8 +2215,7 @@ public class EDDTableFromZarr extends EDDTable {
             vInfo = getOrOpenZarrArrayInfo(freshGroup, edv.sourceName(), freshArrayMap);
           }
           if (vInfo != null && vInfo.attributes != null) {
-            Attributes newSrcAtts = new Attributes(edv.sourceAttributes());
-            newSrcAtts.set(vInfo.attributes);
+            Attributes newSrcAtts = new Attributes(vInfo.attributes);
             edv.setSourceAttributes(newSrcAtts, language);
           }
         }
@@ -2225,19 +2238,20 @@ public class EDDTableFromZarr extends EDDTable {
           combinedGlobalAttributes.remove("time_coverage_start");
           combinedGlobalAttributes.remove("time_coverage_end");
           combinedGlobalAttributes.remove("time_coverage_duration");
-        } else if (newTimeEndIso != null) {
-          combinedGlobalAttributes.set(language, "time_coverage_end", newTimeEndIso);
-          String timeStartStr =
-              combinedGlobalAttributes.getString(language, "time_coverage_start");
-          if (timeStartStr != null) {
-            timeStartSec = Calendar2.isoStringToEpochSeconds(timeStartStr);
-            if (!Double.isNaN(timeStartSec)
-                && !Double.isNaN(newTimeEndSec)
-                && newTimeEndSec >= timeStartSec) {
-              long durationIntSec = Math.round(newTimeEndSec - timeStartSec);
-              combinedGlobalAttributes.set(
-                  language, "time_coverage_duration", "PT" + durationIntSec + "S");
-            }
+        } else {
+          if (!Double.isNaN(timeStartSec)) {
+            combinedGlobalAttributes.set(
+                language, "time_coverage_start", Calendar2.epochSecondsToIsoStringTZ(timeStartSec));
+          }
+          if (newTimeEndIso != null) {
+            combinedGlobalAttributes.set(language, "time_coverage_end", newTimeEndIso);
+          }
+          if (!Double.isNaN(timeStartSec)
+              && !Double.isNaN(newTimeEndSec)
+              && newTimeEndSec >= timeStartSec) {
+            long durationIntSec = Math.round(newTimeEndSec - timeStartSec);
+            combinedGlobalAttributes.set(
+                language, "time_coverage_duration", "PT" + durationIntSec + "S");
           }
         }
       } finally {
@@ -2431,7 +2445,16 @@ public class EDDTableFromZarr extends EDDTable {
     try {
       if (storePath.startsWith("http://") || storePath.startsWith("https://")
           || storePath.startsWith("s3://") || storePath.startsWith("s3a://")) {
-        return File2.getLastModified(storePath);
+        String base = storePath.endsWith("/") ? storePath : storePath + "/";
+        long mod = File2.getLastModified(base + "zarr.json");
+        if (mod > 0) return mod;
+        mod = File2.getLastModified(base + ".zmetadata");
+        if (mod > 0) return mod;
+        mod = File2.getLastModified(base + ".zgroup");
+        if (mod > 0) return mod;
+        mod = File2.getLastModified(base + ".zattrs");
+        if (mod > 0) return mod;
+        return 0;
       }
       File file = new File(storePath);
       if (!file.exists()) return 0;

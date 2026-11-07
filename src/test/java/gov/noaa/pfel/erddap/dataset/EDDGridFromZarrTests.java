@@ -2363,8 +2363,7 @@ class EDDGridFromZarrTests {
       group.setAttributes(globalAtts);
 
       LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
-      addGlobalAtts.set(0, "title", "Initial Grid Dataset");
-      addGlobalAtts.set(0, "summary", "Test Grid Summary");
+            addGlobalAtts.set(0, "summary", "Test Grid Summary");
       addGlobalAtts.set(0, "institution", "NOAA");
       addGlobalAtts.set(0, "infoUrl", "https://example.org");
       addGlobalAtts.set(0, "cdm_data_type", "Grid");
@@ -2488,11 +2487,17 @@ class EDDGridFromZarrTests {
       globalAtts.set("title", "Modified Grid Dataset");
       group.setAttributes(globalAtts);
 
+      tempAtts.set("grid_custom_att", "grid_new_val");
+      tempTrunc.setAttributes(tempAtts);
+
       boolean inPlaceUpdated = dataset.lowUpdate(0, "testInPlace", System.currentTimeMillis());
       assertTrue(inPlaceUpdated, "lowUpdate should return true after in-place modification");
       assertEquals(3, dataset.axisVariables()[0].sourceValues().size());
       assertEquals("Modified Grid Dataset", dataset.combinedGlobalAttributes().getString(0, "title"));
       assertEquals("1970-01-01T00:20:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
+      assertEquals("1970-01-01T00:50:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals("PT1800S", dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
+      assertEquals("grid_new_val", dataset.dataVariables()[0].combinedAttributes().getString(0, "grid_custom_att"));
 
       com.cohort.array.PrimitiveArray modSlice0 =
           dataset.getSourceDataFromFile(

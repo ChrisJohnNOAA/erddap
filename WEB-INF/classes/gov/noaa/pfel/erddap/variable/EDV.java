@@ -1808,11 +1808,71 @@ public class EDV {
     if (newSourceAtts == null) return;
     this.sourceAttributes = new Attributes(newSourceAtts);
     this.combinedAttributes = new LocalizedAttributes(this.addAttributes, this.sourceAttributes);
+
+    this.units = combinedAttributes.getString(language, "units");
+    this.scaleFactor = combinedAttributes.getDouble(language, "scale_factor");
+    this.addOffset = combinedAttributes.getDouble(language, "add_offset");
+    this.scaleAddOffset =
+        (!Double.isNaN(scaleFactor) && scaleFactor != 1.0)
+            || (!Double.isNaN(addOffset) && addOffset != 0.0);
+
+    setMissingAndFillValues(language);
+
     try {
       extractAndSetActualRange(language);
     } catch (Throwable t) {
       // ignore range setting errors if actual_range is missing/invalid
     }
+  }
+
+  /**
+   * Helper method to refresh missing_value and _FillValue fields from combinedAttributes.
+   *
+   * @param language the language index
+   */
+  public void setMissingAndFillValues(int language) {
+    PrimitiveArray pa = combinedAttributes.get(language, "missing_value");
+    if (pa != null) {
+      stringMissingValue = pa.getString(0);
+      sourceMissingValue = sourceIsUnsigned ? pa.getUnsignedDouble(0) : pa.getNiceDouble(0);
+      destinationMissingValue =
+          !Double.isNaN(scaleFactor) && !Double.isNaN(addOffset)
+              ? sourceMissingValue * scaleFactor + addOffset
+              : sourceMissingValue;
+      if (destinationDataPAType == PAType.STRING || destinationDataPAType == PAType.CHAR) {
+        stringMissingValue =
+            String2.canonical(stringMissingValue == null ? "" : stringMissingValue);
+        combinedAttributes.remove("missing_value");
+      } else {
+        stringMissingValue = "";
+        PrimitiveArray pa2 = PrimitiveArray.factory(destinationDataPAType, 1, false);
+        pa2.addDouble(destinationMissingValue);
+        combinedAttributes.set(language, "missing_value", pa2);
+      }
+    }
+
+    pa = combinedAttributes.get(language, "_FillValue");
+    if (pa != null) {
+      stringFillValue = pa.getString(0);
+      sourceFillValue = sourceIsUnsigned ? pa.getUnsignedDouble(0) : pa.getNiceDouble(0);
+      destinationFillValue =
+          !Double.isNaN(scaleFactor) && !Double.isNaN(addOffset)
+              ? sourceFillValue * scaleFactor + addOffset
+              : sourceFillValue;
+      if (destinationDataPAType == PAType.STRING || destinationDataPAType == PAType.CHAR) {
+        stringFillValue = String2.canonical(stringFillValue == null ? "" : stringFillValue);
+        combinedAttributes.remove("_FillValue");
+      } else {
+        stringFillValue = "";
+        PrimitiveArray pa2 = PrimitiveArray.factory(destinationDataPAType, 1, false);
+        pa2.addDouble(destinationFillValue);
+        combinedAttributes.set(language, "_FillValue", pa2);
+      }
+    }
+    safeDestinationMissingValue =
+        Double.isNaN(destinationFillValue) ? destinationMissingValue : destinationFillValue;
+    safeStringMissingValue =
+        String2.isSomething(stringFillValue) ? stringFillValue : stringMissingValue;
   }
 
   public Attributes sourceAttributes() {
