@@ -2060,11 +2060,9 @@ public class EDDTableFromZarr extends EDDTable {
       }
 
       if (newNumRowsL < 0) {
-        {
-          String2.log(
-              msg
-                  + "EDDTableFromZarr.lowUpdate: Could not determine valid row count from fresh store.");
-        }
+        String2.log(
+            msg
+                + "EDDTableFromZarr.lowUpdate: Could not determine valid row count from fresh store.");
         return false;
       }
 
@@ -2072,13 +2070,11 @@ public class EDDTableFromZarr extends EDDTable {
       boolean rowCountChanged = (newNumRows != this.numRows);
 
       if (!rowCountChanged && !storeTimeChanged) {
-        {
-          String2.log(
-              msg
-                  + "EDDTableFromZarr.lowUpdate: No change to row count or store timestamps (numRows="
-                  + this.numRows
-                  + ").");
-        }
+        String2.log(
+            msg
+                + "EDDTableFromZarr.lowUpdate: No change to row count or store timestamps (numRows="
+                + this.numRows
+                + ").");
         return false;
       }
 
@@ -2190,35 +2186,19 @@ public class EDDTableFromZarr extends EDDTable {
         }
       }
 
-      // Refresh global attributes
+      // Stage global attributes outside writeLock
+      Attributes freshSourceGlobalAtts = null;
+      LocalizedAttributes freshCombinedGlobalAtts = null;
       if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        sourceGlobalAttributes = new Attributes();
-        populateAttributesFromZarr(freshGroup.metadata().attributes(), sourceGlobalAttributes);
-        combinedGlobalAttributes =
-            new LocalizedAttributes(addGlobalAttributes, sourceGlobalAttributes);
-        String tLicense = combinedGlobalAttributes.getString(language, "license");
+        freshSourceGlobalAtts = new Attributes();
+        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
+        freshCombinedGlobalAtts = new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
+        String tLicense = freshCombinedGlobalAtts.getString(language, "license");
         if (tLicense != null) {
-          combinedGlobalAttributes.set(
-              language,
-              "license",
-              String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
+          freshCombinedGlobalAtts.set(
+              language, "license", String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
         }
-        combinedGlobalAttributes.removeValue("\"null\"");
-      }
-
-      // Refresh variable attributes
-      if (dataVariables != null) {
-        for (EDV edv : dataVariables) {
-          if (edv == null || !String2.isSomething(edv.sourceName())) continue;
-          ZarrArrayInfo vInfo = freshArrayMap.get(edv.sourceName());
-          if (vInfo == null) {
-            vInfo = getOrOpenZarrArrayInfo(freshGroup, edv.sourceName(), freshArrayMap);
-          }
-          if (vInfo != null && vInfo.attributes != null) {
-            Attributes newSrcAtts = new Attributes(vInfo.attributes);
-            edv.setSourceAttributes(newSrcAtts, language);
-          }
-        }
+        freshCombinedGlobalAtts.removeValue("\"null\"");
       }
 
       Store oldStore = null;
@@ -2234,24 +2214,44 @@ public class EDDTableFromZarr extends EDDTable {
           this.rowDimensionName = targetRowDimName;
         }
 
+        if (freshCombinedGlobalAtts != null) {
+          this.sourceGlobalAttributes = freshSourceGlobalAtts;
+          this.combinedGlobalAttributes = freshCombinedGlobalAtts;
+          detectAndSetCdmDataType(freshArrayMap);
+        }
+
         if (newNumRows == 0) {
-          combinedGlobalAttributes.remove("time_coverage_start");
-          combinedGlobalAttributes.remove("time_coverage_end");
-          combinedGlobalAttributes.remove("time_coverage_duration");
+          this.combinedGlobalAttributes.remove("time_coverage_start");
+          this.combinedGlobalAttributes.remove("time_coverage_end");
+          this.combinedGlobalAttributes.remove("time_coverage_duration");
         } else {
           if (!Double.isNaN(timeStartSec)) {
-            combinedGlobalAttributes.set(
+            this.combinedGlobalAttributes.set(
                 language, "time_coverage_start", Calendar2.epochSecondsToIsoStringTZ(timeStartSec));
           }
           if (newTimeEndIso != null) {
-            combinedGlobalAttributes.set(language, "time_coverage_end", newTimeEndIso);
+            this.combinedGlobalAttributes.set(language, "time_coverage_end", newTimeEndIso);
           }
           if (!Double.isNaN(timeStartSec)
               && !Double.isNaN(newTimeEndSec)
               && newTimeEndSec >= timeStartSec) {
             long durationIntSec = Math.round(newTimeEndSec - timeStartSec);
-            combinedGlobalAttributes.set(
+            this.combinedGlobalAttributes.set(
                 language, "time_coverage_duration", "PT" + durationIntSec + "S");
+          }
+        }
+
+        // Refresh variable attributes under writeLock
+        if (dataVariables != null) {
+          for (EDV edv : dataVariables) {
+            if (edv == null || !String2.isSomething(edv.sourceName())) continue;
+            ZarrArrayInfo vInfo = freshArrayMap.get(edv.sourceName());
+            if (vInfo == null) {
+              vInfo = getOrOpenZarrArrayInfo(freshGroup, edv.sourceName(), freshArrayMap);
+            }
+            if (vInfo != null && vInfo.attributes != null) {
+              edv.setSourceAttributes(new Attributes(vInfo.attributes), language);
+            }
           }
         }
       } finally {
