@@ -1867,9 +1867,7 @@ public class EDV {
       stringMissingValue = pa.getString(0);
       sourceMissingValue = sourceIsUnsigned ? pa.getUnsignedDouble(0) : pa.getNiceDouble(0);
       destinationMissingValue =
-          scaleAddOffset
-              ? sourceMissingValue * scaleFactor + addOffset
-              : sourceMissingValue;
+          scaleAddOffset ? sourceMissingValue * scaleFactor + addOffset : sourceMissingValue;
       if (destinationDataPAType == PAType.STRING || destinationDataPAType == PAType.CHAR) {
         stringMissingValue =
             String2.canonical(stringMissingValue == null ? "" : stringMissingValue);
@@ -1887,9 +1885,7 @@ public class EDV {
       stringFillValue = pa.getString(0);
       sourceFillValue = sourceIsUnsigned ? pa.getUnsignedDouble(0) : pa.getNiceDouble(0);
       destinationFillValue =
-          scaleAddOffset
-              ? sourceFillValue * scaleFactor + addOffset
-              : sourceFillValue;
+          scaleAddOffset ? sourceFillValue * scaleFactor + addOffset : sourceFillValue;
       if (destinationDataPAType == PAType.STRING || destinationDataPAType == PAType.CHAR) {
         stringFillValue = String2.canonical(stringFillValue == null ? "" : stringFillValue);
         combinedAttributes.remove("_FillValue");
@@ -1906,7 +1902,7 @@ public class EDV {
         String2.isSomething(stringFillValue) ? stringFillValue : stringMissingValue;
   }
 
-    public Attributes sourceAttributes() {
+  public Attributes sourceAttributes() {
     return sourceAttributes;
   }
 

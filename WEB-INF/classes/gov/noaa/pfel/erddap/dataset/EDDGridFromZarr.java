@@ -3,8 +3,6 @@
  * See the LICENSE.txt file in this file's directory.
  */
 package gov.noaa.pfel.erddap.dataset;
-import com.cohort.util.File2;
-import java.io.File;
 
 import com.cohort.array.Attributes;
 import com.cohort.array.IntArray;
@@ -12,6 +10,7 @@ import com.cohort.array.PAOne;
 import com.cohort.array.PAType;
 import com.cohort.array.PrimitiveArray;
 import com.cohort.array.StringArray;
+import com.cohort.util.File2;
 import com.cohort.util.SimpleException;
 import com.cohort.util.String2;
 import com.cohort.util.XML;
@@ -43,6 +42,7 @@ import gov.noaa.pfel.erddap.variable.EDVTime;
 import gov.noaa.pfel.erddap.variable.EDVTimeGridAxis;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
 import gov.noaa.pfel.erddap.variable.EDVTimeStampGridAxis;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Paths;
@@ -365,14 +365,14 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     if (!dimensionValuesInMemory) saveDimensionValuesInFile();
   }
 
-  /**
-   * Helper method to determine the last modified timestamp of a Zarr store.
-   */
+  /** Helper method to determine the last modified timestamp of a Zarr store. */
   private static long getStoreLastModified(String storePath) {
     if (storePath == null) return 0;
     try {
-      if (storePath.startsWith("http://") || storePath.startsWith("https://")
-          || storePath.startsWith("s3://") || storePath.startsWith("s3a://")) {
+      if (storePath.startsWith("http://")
+          || storePath.startsWith("https://")
+          || storePath.startsWith("s3://")
+          || storePath.startsWith("s3a://")) {
         String base = storePath.endsWith("/") ? storePath : storePath + "/";
         long mod = File2.getLastModified(base + "zarr.json");
         if (mod > 0) return mod;
@@ -1124,7 +1124,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
     int currentAxisLength = outerAxis.sourceValues() != null ? outerAxis.sourceValues().size() : 0;
 
     long currentStoreModified = getStoreLastModified(this.zarrStorePath);
-    boolean storeTimeChanged = (currentStoreModified > 0 && currentStoreModified != this.lastStoreModified);
+    boolean storeTimeChanged =
+        (currentStoreModified > 0 && currentStoreModified != this.lastStoreModified);
 
     ZarrStoreHolder freshHolder = null;
     try {
@@ -1175,7 +1176,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         return false;
       }
 
-      // Verify that all dependent data variables sharing the outer dimension have caught up or match newAxisLength
+      // Verify that all dependent data variables sharing the outer dimension have caught up or
+      // match newAxisLength
       if (dataVariables != null) {
         for (EDV dv : dataVariables) {
           if (dv == null || !String2.isSomething(dv.sourceName())) continue;
@@ -1251,9 +1253,10 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         newSourceValues = newSourceValues.subset(0, 1, newAxisLength - 1);
       }
 
-      Attributes outerSourceAtts = (outerAxisInfo != null && outerAxisInfo.attributes != null)
-          ? new Attributes(outerAxisInfo.attributes)
-          : new Attributes();
+      Attributes outerSourceAtts =
+          (outerAxisInfo != null && outerAxisInfo.attributes != null)
+              ? new Attributes(outerAxisInfo.attributes)
+              : new Attributes();
       outerSourceAtts.remove("_FillValue");
       outerSourceAtts.remove("missing_value");
       if ((outerAxis instanceof EDVTimeGridAxis || outerAxis instanceof EDVTimeStampGridAxis)
@@ -1316,7 +1319,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         this.zarrGroup = freshGroup;
         this.zarrArrayMap = freshArrayMap;
         this.axisVariables[0] = newAxisVar;
-        this.lastStoreModified = currentStoreModified > 0 ? currentStoreModified : System.currentTimeMillis();
+        this.lastStoreModified =
+            currentStoreModified > 0 ? currentStoreModified : System.currentTimeMillis();
 
         this.sourceGlobalAttributes = freshSourceGlobalAtts;
         this.combinedGlobalAttributes = freshCombinedGlobalAtts;
@@ -1368,7 +1372,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
           for (int av = 1; av < axisVariables.length; av++) {
             EDVGridAxis axis = axisVariables[av];
             if (axis == null || !String2.isSomething(axis.sourceName())) continue;
-            ZarrArrayInfo aInfo = getOrOpenZarrArrayInfo(freshGroup, axis.sourceName(), freshArrayMap);
+            ZarrArrayInfo aInfo =
+                getOrOpenZarrArrayInfo(freshGroup, axis.sourceName(), freshArrayMap);
             if (aInfo != null && aInfo.attributes != null) {
               Attributes aSrcAtts = new Attributes(aInfo.attributes);
               aSrcAtts.remove("_FillValue");
@@ -1386,7 +1391,8 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         if (dataVariables != null) {
           for (EDV dv : dataVariables) {
             if (dv == null || !String2.isSomething(dv.sourceName())) continue;
-            ZarrArrayInfo dvInfo = getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
+            ZarrArrayInfo dvInfo =
+                getOrOpenZarrArrayInfo(freshGroup, dv.sourceName(), freshArrayMap);
             if (dvInfo != null && dvInfo.attributes != null) {
               dv.setSourceAttributes(new Attributes(dvInfo.attributes), language);
             }

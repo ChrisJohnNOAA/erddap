@@ -2303,7 +2303,9 @@ class EDDGridFromZarrTests {
       timeArr.setAttributes(timeAtts);
       timeArr.write(
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {1000.0, 2000.0, 3000.0, 4000.0, 5000.0}));
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {5},
+              new double[] {1000.0, 2000.0, 3000.0, 4000.0, 5000.0}));
 
       dev.zarr.zarrjava.core.Attributes latAtts = new dev.zarr.zarrjava.core.Attributes();
       latAtts.set("units", "degrees_north");
@@ -2354,8 +2356,7 @@ class EDDGridFromZarrTests {
       double[] initTempData = new double[20];
       for (int i = 0; i < 20; i++) initTempData[i] = 10.0 + i;
       tempArr.write(
-          ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {5, 2, 2}, initTempData));
+          ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {5, 2, 2}, initTempData));
 
       dev.zarr.zarrjava.core.Attributes globalAtts = new dev.zarr.zarrjava.core.Attributes();
       globalAtts.set("title", "Initial Grid Dataset");
@@ -2363,7 +2364,7 @@ class EDDGridFromZarrTests {
       group.setAttributes(globalAtts);
 
       LocalizedAttributes addGlobalAtts = new LocalizedAttributes();
-            addGlobalAtts.set(0, "summary", "Test Grid Summary");
+      addGlobalAtts.set(0, "summary", "Test Grid Summary");
       addGlobalAtts.set(0, "institution", "NOAA");
       addGlobalAtts.set(0, "infoUrl", "https://example.org");
       addGlobalAtts.set(0, "cdm_data_type", "Grid");
@@ -2402,8 +2403,12 @@ class EDDGridFromZarrTests {
               true);
 
       assertEquals(5, dataset.axisVariables()[0].sourceValues().size());
-      assertEquals("1970-01-01T00:16:40Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
-      assertEquals("1970-01-01T01:23:20Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals(
+          "1970-01-01T00:16:40Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
+      assertEquals(
+          "1970-01-01T01:23:20Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
 
       // 1. Unmodified store returns false
       boolean updatedNoOp = dataset.lowUpdate(0, "testNoOp", System.currentTimeMillis());
@@ -2438,14 +2443,15 @@ class EDDGridFromZarrTests {
       double[] truncTempData = new double[12];
       for (int i = 0; i < 12; i++) truncTempData[i] = 10.0 + i;
       tempTrunc.write(
-          ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {3, 2, 2}, truncTempData));
+          ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {3, 2, 2}, truncTempData));
 
       boolean truncated = dataset.lowUpdate(0, "testTruncation", System.currentTimeMillis());
       assertTrue(truncated, "lowUpdate should return true after outer axis truncation");
-      assertEquals(3, dataset.axisVariables()[0].sourceValues().size(), "Outer axis length should be 3");
+      assertEquals(
+          3, dataset.axisVariables()[0].sourceValues().size(), "Outer axis length should be 3");
 
-      // Assert time_coverage_end matches coordinate index 2 (3000 epoch seconds = 1970-01-01T00:50:00Z)
+      // Assert time_coverage_end matches coordinate index 2 (3000 epoch seconds =
+      // 1970-01-01T00:50:00Z)
       String timeEnd = dataset.combinedGlobalAttributes().getString(0, "time_coverage_end");
       assertNotNull(timeEnd);
       assertEquals("1970-01-01T00:50:00Z", timeEnd);
@@ -2477,12 +2483,13 @@ class EDDGridFromZarrTests {
       Thread.sleep(50);
       timeTrunc.write(
           new long[] {0},
-          ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {1}, new double[] {1200.0}));
+          ucar.ma2.Array.factory(ucar.ma2.DataType.DOUBLE, new int[] {1}, new double[] {1200.0}));
       tempTrunc.write(
           new long[] {0, 0, 0},
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {1, 2, 2}, new double[] {99.0, 98.0, 97.0, 96.0}));
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {1, 2, 2},
+              new double[] {99.0, 98.0, 97.0, 96.0}));
 
       globalAtts.set("title", "Modified Grid Dataset");
       group.setAttributes(globalAtts);
@@ -2493,11 +2500,19 @@ class EDDGridFromZarrTests {
       boolean inPlaceUpdated = dataset.lowUpdate(0, "testInPlace", System.currentTimeMillis());
       assertTrue(inPlaceUpdated, "lowUpdate should return true after in-place modification");
       assertEquals(3, dataset.axisVariables()[0].sourceValues().size());
-      assertEquals("Modified Grid Dataset", dataset.combinedGlobalAttributes().getString(0, "title"));
-      assertEquals("1970-01-01T00:20:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
-      assertEquals("1970-01-01T00:50:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
-      assertEquals("PT1800S", dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
-      assertEquals("grid_new_val", dataset.dataVariables()[0].combinedAttributes().getString(0, "grid_custom_att"));
+      assertEquals(
+          "Modified Grid Dataset", dataset.combinedGlobalAttributes().getString(0, "title"));
+      assertEquals(
+          "1970-01-01T00:20:00Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
+      assertEquals(
+          "1970-01-01T00:50:00Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals(
+          "PT1800S", dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
+      assertEquals(
+          "grid_new_val",
+          dataset.dataVariables()[0].combinedAttributes().getString(0, "grid_custom_att"));
 
       com.cohort.array.PrimitiveArray modSlice0 =
           dataset.getSourceDataFromFile(
@@ -2508,14 +2523,20 @@ class EDDGridFromZarrTests {
       assertNotNull(modSlice0);
       assertEquals(99.0, modSlice0.getDouble(0), 1e-6);
 
-      // 4. Non-monotonic coordinates protection: write non-monotonic values and ensure lowUpdate safely catches and rejects
+      // 4. Non-monotonic coordinates protection: write non-monotonic values and ensure lowUpdate
+      // safely catches and rejects
       Thread.sleep(50);
       timeTrunc.write(
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {3}, new double[] {2000.0, 1000.0, 3000.0})); // non-monotonic!
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {3},
+              new double[] {2000.0, 1000.0, 3000.0})); // non-monotonic!
 
-      boolean nonMonotonicHandled = dataset.lowUpdate(0, "testNonMonotonic", System.currentTimeMillis());
-      assertFalse(nonMonotonicHandled, "lowUpdate should gracefully defer and return false on non-monotonic coordinates");
+      boolean nonMonotonicHandled =
+          dataset.lowUpdate(0, "testNonMonotonic", System.currentTimeMillis());
+      assertFalse(
+          nonMonotonicHandled,
+          "lowUpdate should gracefully defer and return false on non-monotonic coordinates");
 
       // 5. Grid outer axis cannot be 0 slices
       Thread.sleep(50);
@@ -2530,7 +2551,8 @@ class EDDGridFromZarrTests {
               true);
       timeZero.setAttributes(timeAtts);
 
-      boolean zeroSlicesRejected = dataset.lowUpdate(0, "testZeroSlices", System.currentTimeMillis());
+      boolean zeroSlicesRejected =
+          dataset.lowUpdate(0, "testZeroSlices", System.currentTimeMillis());
       assertFalse(zeroSlicesRejected, "lowUpdate should reject outer axis length < 1");
 
     } finally {

@@ -1238,8 +1238,7 @@ class EDDTableFromZarrTests {
   @Test
   void testLowUpdateNoChange() throws Throwable {
     Initialization.edStatic();
-    EDDTableFromZarr dataset =
-        (EDDTableFromZarr) EDDTestDataset.gettestZarr_table_compressedData();
+    EDDTableFromZarr dataset = (EDDTableFromZarr) EDDTestDataset.gettestZarr_table_compressedData();
     assertNotNull(dataset);
     boolean updated = dataset.lowUpdate(0, "testLowUpdateNoChange: ", System.currentTimeMillis());
     assertFalse(updated, "lowUpdate on static dataset should return false");
@@ -1292,7 +1291,8 @@ class EDDTableFromZarrTests {
 
       dev.zarr.zarrjava.v3.Array.create(
               store.resolve("salinity"),
-              mb -> mb.withShape(3).withChunkShape(3).withDataType(float64).withDimensionNames("obs"),
+              mb ->
+                  mb.withShape(3).withChunkShape(3).withDataType(float64).withDimensionNames("obs"),
               true)
           .write(
               ucar.ma2.Array.factory(
@@ -1384,8 +1384,7 @@ class EDDTableFromZarrTests {
                   new double[] {35.0, 35.1, 35.2, 35.3, 35.4}));
 
       boolean updated =
-          dataset.lowUpdate(
-              0, "testLowUpdateWithAppendedRows: ", System.currentTimeMillis());
+          dataset.lowUpdate(0, "testLowUpdateWithAppendedRows: ", System.currentTimeMillis());
       assertTrue(updated, "lowUpdate should return true when rows are appended");
       assertEquals(5, dataset.numRows());
 
@@ -1489,8 +1488,7 @@ class EDDTableFromZarrTests {
                   new double[] {100.0, 101.0, 102.0, 103.0, 104.0}));
 
       boolean updated1 =
-          dataset.lowUpdate(
-              0, "testLowUpdateLaggingColumnDeferral: ", System.currentTimeMillis());
+          dataset.lowUpdate(0, "testLowUpdateLaggingColumnDeferral: ", System.currentTimeMillis());
       assertFalse(updated1, "lowUpdate should defer (return false) when a column lags behind");
       assertEquals(3, dataset.numRows(), "numRows should remain 3 when update is deferred");
 
@@ -1506,8 +1504,7 @@ class EDDTableFromZarrTests {
                   new double[] {35.0, 35.1, 35.2, 35.3, 35.4}));
 
       boolean updated2 =
-          dataset.lowUpdate(
-              0, "testLowUpdateLaggingColumnDeferral: ", System.currentTimeMillis());
+          dataset.lowUpdate(0, "testLowUpdateLaggingColumnDeferral: ", System.currentTimeMillis());
       assertTrue(updated2, "lowUpdate should return true after lagging column catches up");
       assertEquals(5, dataset.numRows());
 
@@ -1604,7 +1601,8 @@ class EDDTableFromZarrTests {
       dev.zarr.zarrjava.v3.Array salArr =
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("salinity"),
-              mb -> mb.withShape(5).withChunkShape(3).withDataType(float64).withDimensionNames("obs"),
+              mb ->
+                  mb.withShape(5).withChunkShape(3).withDataType(float64).withDimensionNames("obs"),
               true);
       salArr.write(
           new long[] {0},
@@ -1641,11 +1639,13 @@ class EDDTableFromZarrTests {
                   dataset.getDataForDapQuery(0, null, "", "time,salinity", tw);
                   Table t = tw.cumulativeTable();
                   if (t == null || (t.nRows() != 3 && t.nRows() != 5)) {
-                    com.cohort.util.String2.log("Unexpected nRows=" + (t == null ? "null" : t.nRows()));
+                    com.cohort.util.String2.log(
+                        "Unexpected nRows=" + (t == null ? "null" : t.nRows()));
                     queryErrorCount.incrementAndGet();
                   }
                 } catch (Throwable ex) {
-                  com.cohort.util.String2.log("Query exception: " + com.cohort.util.MustBe.throwableToString(ex));
+                  com.cohort.util.String2.log(
+                      "Query exception: " + com.cohort.util.MustBe.throwableToString(ex));
                   queryErrorCount.incrementAndGet();
                 }
               }
@@ -1699,15 +1699,14 @@ class EDDTableFromZarrTests {
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
               mb ->
-                  mb.withShape(5)
-                      .withChunkShape(2)
-                      .withDataType(float64)
-                      .withDimensionNames("obs"),
+                  mb.withShape(5).withChunkShape(2).withDataType(float64).withDimensionNames("obs"),
               true);
       timeArr.setAttributes(timeZattrs);
       timeArr.write(
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {1000.0, 2000.0, 3000.0, 4000.0, 5000.0}));
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {5},
+              new double[] {1000.0, 2000.0, 3000.0, 4000.0, 5000.0}));
 
       dev.zarr.zarrjava.core.Attributes tempZattrs = new dev.zarr.zarrjava.core.Attributes();
       tempZattrs.set("units", "degree_C");
@@ -1716,15 +1715,14 @@ class EDDTableFromZarrTests {
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("temperature"),
               mb ->
-                  mb.withShape(5)
-                      .withChunkShape(2)
-                      .withDataType(float64)
-                      .withDimensionNames("obs"),
+                  mb.withShape(5).withChunkShape(2).withDataType(float64).withDimensionNames("obs"),
               true);
       tempArr.setAttributes(tempZattrs);
       tempArr.write(
           ucar.ma2.Array.factory(
-              ucar.ma2.DataType.DOUBLE, new int[] {5}, new double[] {10.0, 20.0, 30.0, 40.0, 50.0}));
+              ucar.ma2.DataType.DOUBLE,
+              new int[] {5},
+              new double[] {10.0, 20.0, 30.0, 40.0, 50.0}));
 
       dev.zarr.zarrjava.core.Attributes globalAtts = new dev.zarr.zarrjava.core.Attributes();
       globalAtts.set("title", "Initial Table Dataset");
@@ -1732,7 +1730,7 @@ class EDDTableFromZarrTests {
       group.setAttributes(globalAtts);
 
       LocalizedAttributes globalAttsLoc = new LocalizedAttributes();
-            globalAttsLoc.set(0, "summary", "Test Table Summary");
+      globalAttsLoc.set(0, "summary", "Test Table Summary");
       globalAttsLoc.set(0, "institution", "NOAA");
       globalAttsLoc.set(0, "infoUrl", "https://example.org");
       globalAttsLoc.set(0, "cdm_data_type", "Other");
@@ -1741,7 +1739,8 @@ class EDDTableFromZarrTests {
 
       List<DataVariableInfo> dataVars = new ArrayList<>();
       dataVars.add(new DataVariableInfo("time", "time", new LocalizedAttributes(), "double"));
-      dataVars.add(new DataVariableInfo("temperature", "temperature", new LocalizedAttributes(), "double"));
+      dataVars.add(
+          new DataVariableInfo("temperature", "temperature", new LocalizedAttributes(), "double"));
 
       EDDTableFromZarr dataset =
           new EDDTableFromZarr(
@@ -1766,7 +1765,9 @@ class EDDTableFromZarrTests {
               null);
 
       assertEquals(5, dataset.numRows());
-      assertEquals("1970-01-01T01:23:20Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals(
+          "1970-01-01T01:23:20Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
 
       // 1. No-op call without changes should return false
       boolean updatedNoOp = dataset.lowUpdate(0, "testNoOp", System.currentTimeMillis());
@@ -1778,10 +1779,7 @@ class EDDTableFromZarrTests {
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
               mb ->
-                  mb.withShape(3)
-                      .withChunkShape(2)
-                      .withDataType(float64)
-                      .withDimensionNames("obs"),
+                  mb.withShape(3).withChunkShape(2).withDataType(float64).withDimensionNames("obs"),
               true);
       timeTrunc.setAttributes(timeZattrs);
       timeTrunc.write(
@@ -1792,10 +1790,7 @@ class EDDTableFromZarrTests {
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("temperature"),
               mb ->
-                  mb.withShape(3)
-                      .withChunkShape(2)
-                      .withDataType(float64)
-                      .withDimensionNames("obs"),
+                  mb.withShape(3).withChunkShape(2).withDataType(float64).withDimensionNames("obs"),
               true);
       tempTrunc.setAttributes(tempZattrs);
       tempTrunc.write(
@@ -1805,11 +1800,12 @@ class EDDTableFromZarrTests {
       boolean truncated = dataset.lowUpdate(0, "testTruncation", System.currentTimeMillis());
       assertTrue(truncated, "lowUpdate should return true after truncation");
       assertEquals(3, dataset.numRows());
-      assertEquals("1970-01-01T00:50:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals(
+          "1970-01-01T00:50:00Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
 
       TableWriterAllWithMetadata tw1 =
-          new TableWriterAllWithMetadata(
-              0, dataset, "", dataset.cacheDirectory(), "trunc1.twawm");
+          new TableWriterAllWithMetadata(0, dataset, "", dataset.cacheDirectory(), "trunc1.twawm");
       dataset.getDataForDapQuery(0, null, "", "temperature", tw1);
       Table resTable = tw1.cumulativeTable();
       assertEquals(3, resTable.nRows());
@@ -1836,15 +1832,21 @@ class EDDTableFromZarrTests {
       boolean inPlaceUpdated = dataset.lowUpdate(0, "testInPlace", System.currentTimeMillis());
       assertTrue(inPlaceUpdated, "lowUpdate should return true after in-place modification");
       assertEquals(3, dataset.numRows());
-      assertEquals("Modified Table Dataset", dataset.combinedGlobalAttributes().getString(0, "title"));
-      assertEquals("1970-01-01T00:25:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
-      assertEquals("1970-01-01T00:50:00Z", dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
-      assertEquals("PT1500S", dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
-      assertEquals("new_value", dataset.dataVariables()[1].combinedAttributes().getString(0, "custom_att"));
+      assertEquals(
+          "Modified Table Dataset", dataset.combinedGlobalAttributes().getString(0, "title"));
+      assertEquals(
+          "1970-01-01T00:25:00Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_start"));
+      assertEquals(
+          "1970-01-01T00:50:00Z",
+          dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
+      assertEquals(
+          "PT1500S", dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
+      assertEquals(
+          "new_value", dataset.dataVariables()[1].combinedAttributes().getString(0, "custom_att"));
 
       TableWriterAllWithMetadata tw2 =
-          new TableWriterAllWithMetadata(
-              0, dataset, "", dataset.cacheDirectory(), "trunc2.twawm");
+          new TableWriterAllWithMetadata(0, dataset, "", dataset.cacheDirectory(), "trunc2.twawm");
       dataset.getDataForDapQuery(0, null, "", "temperature", tw2);
       Table resTable2 = tw2.cumulativeTable();
       assertEquals(3, resTable2.nRows());
@@ -1858,10 +1860,7 @@ class EDDTableFromZarrTests {
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("time"),
               mb ->
-                  mb.withShape(0)
-                      .withChunkShape(2)
-                      .withDataType(float64)
-                      .withDimensionNames("obs"),
+                  mb.withShape(0).withChunkShape(2).withDataType(float64).withDimensionNames("obs"),
               true);
       timeZero.setAttributes(timeZattrs);
 
@@ -1869,10 +1868,7 @@ class EDDTableFromZarrTests {
           dev.zarr.zarrjava.v3.Array.create(
               store.resolve("temperature"),
               mb ->
-                  mb.withShape(0)
-                      .withChunkShape(2)
-                      .withDataType(float64)
-                      .withDimensionNames("obs"),
+                  mb.withShape(0).withChunkShape(2).withDataType(float64).withDimensionNames("obs"),
               true);
       tempZero.setAttributes(tempZattrs);
 
@@ -1883,7 +1879,8 @@ class EDDTableFromZarrTests {
       assertNull(dataset.combinedGlobalAttributes().getString(0, "time_coverage_end"));
       assertNull(dataset.combinedGlobalAttributes().getString(0, "time_coverage_duration"));
 
-      // 5. Querying 0-row truncated table should cleanly throw SimpleException (0 rows matched) via TableWriterAll
+      // 5. Querying 0-row truncated table should cleanly throw SimpleException (0 rows matched) via
+      // TableWriterAll
       TableWriterAllWithMetadata twZero =
           new TableWriterAllWithMetadata(
               0, dataset, "", dataset.cacheDirectory(), "zero_query.twawm");

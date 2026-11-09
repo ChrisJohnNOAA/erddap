@@ -3,7 +3,6 @@
  * See the LICENSE.txt file in this file's directory.
  */
 package gov.noaa.pfel.erddap.dataset;
-import java.io.File;
 
 import com.cohort.array.Attributes;
 import com.cohort.array.PAOne;
@@ -43,6 +42,7 @@ import gov.noaa.pfel.erddap.variable.EDVLat;
 import gov.noaa.pfel.erddap.variable.EDVLon;
 import gov.noaa.pfel.erddap.variable.EDVTime;
 import gov.noaa.pfel.erddap.variable.EDVTimeStamp;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -1411,7 +1411,12 @@ public class EDDTableFromZarr extends EDDTable {
         // Pass 1: Evaluate constraints against chunk data
         BitSet rowMask =
             evaluateChunkConstraints(
-                startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap, activeGroup);
+                startRow,
+                currentChunkSize,
+                constraintVarsAndOps,
+                zarrArrayMap,
+                metadataMap,
+                activeGroup);
 
         int cardinal = rowMask.cardinality();
         if (cardinal == 0) {
@@ -1423,7 +1428,13 @@ public class EDDTableFromZarr extends EDDTable {
         // Pass 2: Extract requested variable row batch
         Table batchTable =
             extractRowBatch(
-                startRow, currentChunkSize, rowMask, requestedVarNames, zarrArrayMap, metadataMap, activeGroup);
+                startRow,
+                currentChunkSize,
+                rowMask,
+                requestedVarNames,
+                zarrArrayMap,
+                metadataMap,
+                activeGroup);
 
         if (cumulativeBatchTable == null) {
           cumulativeBatchTable = batchTable;
@@ -1503,7 +1514,12 @@ public class EDDTableFromZarr extends EDDTable {
       Map<String, ZarrArrayInfo> metadataMap)
       throws Throwable {
     return evaluateChunkConstraints(
-        startRow, currentChunkSize, constraintVarsAndOps, zarrArrayMap, metadataMap, this.zarrGroup);
+        startRow,
+        currentChunkSize,
+        constraintVarsAndOps,
+        zarrArrayMap,
+        metadataMap,
+        this.zarrGroup);
   }
 
   protected BitSet evaluateChunkConstraints(
@@ -1977,12 +1993,12 @@ public class EDDTableFromZarr extends EDDTable {
     try {
       // 1. Store Re-inspection & Shape Detection
       freshStore =
-          createZarrStore(
-              this.zarrStorePath, this.cacheFromUrl, this.awsRegion, this.awsEndpoint);
+          createZarrStore(this.zarrStorePath, this.cacheFromUrl, this.awsRegion, this.awsEndpoint);
       Group freshGroup = openZarrGroup(freshStore, this.zarrGroupName);
       Map<String, ZarrArrayInfo> freshArrayMap = parseZarrMetadata(freshGroup);
       long currentStoreModified = getStoreLastModified(this.zarrStorePath);
-      boolean storeTimeChanged = (currentStoreModified > 0 && currentStoreModified != this.lastStoreModified);
+      boolean storeTimeChanged =
+          (currentStoreModified > 0 && currentStoreModified != this.lastStoreModified);
 
       String targetRowDimName = this.rowDimensionName;
       long newNumRowsL = -1;
@@ -2118,7 +2134,9 @@ public class EDDTableFromZarr extends EDDTable {
           } else if (info.is2DStringOrChar()) {
             if (info.shape != null && info.shape.length == 2) {
               long colLen = info.shape[0];
-              if (this.numRows > 0 && info.shape[1] == this.numRows && info.shape[0] != this.numRows) {
+              if (this.numRows > 0
+                  && info.shape[1] == this.numRows
+                  && info.shape[0] != this.numRows) {
                 colLen = info.shape[1];
               }
               if (newNumRows < this.numRows) {
@@ -2196,7 +2214,9 @@ public class EDDTableFromZarr extends EDDTable {
       String tLicense = freshCombinedGlobalAtts.getString(language, "license");
       if (tLicense != null) {
         freshCombinedGlobalAtts.set(
-            language, "license", String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
+            language,
+            "license",
+            String2.replaceAll(tLicense, "[standard]", EDStatic.messages.standardLicense));
       }
       freshCombinedGlobalAtts.removeValue("\"null\"");
 
@@ -2208,7 +2228,8 @@ public class EDDTableFromZarr extends EDDTable {
         this.zarrGroup = freshGroup;
         this.zarrArrayInfoMap = freshArrayMap;
         this.numRows = newNumRows;
-        this.lastStoreModified = currentStoreModified > 0 ? currentStoreModified : System.currentTimeMillis();
+        this.lastStoreModified =
+            currentStoreModified > 0 ? currentStoreModified : System.currentTimeMillis();
         if (String2.isSomething(targetRowDimName)) {
           this.rowDimensionName = targetRowDimName;
         }
@@ -2278,7 +2299,7 @@ public class EDDTableFromZarr extends EDDTable {
 
     } catch (Throwable t) {
       String2.log(msg + " Error during lowUpdate: " + MustBe.throwableToString(t));
-            return false;
+      return false;
     } finally {
       if (freshStore != null && freshStore != this.zarrStore) {
         if (freshStore instanceof AutoCloseable ac) {
@@ -2426,14 +2447,14 @@ public class EDDTableFromZarr extends EDDTable {
     return suggested;
   }
 
-  /**
-   * Helper method to determine the last modified timestamp of a Zarr store.
-   */
+  /** Helper method to determine the last modified timestamp of a Zarr store. */
   private static long getStoreLastModified(String storePath) {
     if (storePath == null) return 0;
     try {
-      if (storePath.startsWith("http://") || storePath.startsWith("https://")
-          || storePath.startsWith("s3://") || storePath.startsWith("s3a://")) {
+      if (storePath.startsWith("http://")
+          || storePath.startsWith("https://")
+          || storePath.startsWith("s3://")
+          || storePath.startsWith("s3a://")) {
         String base = storePath.endsWith("/") ? storePath : storePath + "/";
         long mod = File2.getLastModified(base + "zarr.json");
         if (mod > 0) return mod;
