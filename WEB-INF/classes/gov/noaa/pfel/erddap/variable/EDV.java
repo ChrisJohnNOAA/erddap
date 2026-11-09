@@ -1812,9 +1812,32 @@ public class EDV {
     this.units = combinedAttributes.getString(language, "units");
     this.scaleFactor = combinedAttributes.getDouble(language, "scale_factor");
     this.addOffset = combinedAttributes.getDouble(language, "add_offset");
-    this.scaleAddOffset =
-        (!Double.isNaN(scaleFactor) && scaleFactor != 1.0)
-            || (!Double.isNaN(addOffset) && addOffset != 0.0);
+    if (Double.isNaN(scaleFactor) && !Double.isNaN(addOffset)) {
+      scaleFactor = 1;
+    }
+    if (!Double.isNaN(scaleFactor) && Double.isNaN(addOffset)) {
+      addOffset = 0;
+    }
+    this.scaleAddOffset = !Double.isNaN(scaleFactor);
+    if (scaleAddOffset && (scaleFactor == 0 || Double.isInfinite(scaleFactor))) {
+      scaleFactor = Double.NaN;
+      addOffset = Double.NaN;
+      scaleAddOffset = false;
+    }
+    if (scaleAddOffset && Double.isInfinite(addOffset)) {
+      scaleFactor = Double.NaN;
+      addOffset = Double.NaN;
+      scaleAddOffset = false;
+    }
+    if (scaleAddOffset && scaleFactor == 1 && addOffset == 0) {
+      scaleAddOffset = false;
+    }
+
+    this.longName = combinedAttributes.getString(language, "long_name");
+    if (this.longName == null) {
+      this.longName = destinationName;
+      combinedAttributes.set(language, "long_name", this.longName);
+    }
 
     setMissingAndFillValues(language);
 
@@ -1844,7 +1867,7 @@ public class EDV {
       stringMissingValue = pa.getString(0);
       sourceMissingValue = sourceIsUnsigned ? pa.getUnsignedDouble(0) : pa.getNiceDouble(0);
       destinationMissingValue =
-          !Double.isNaN(scaleFactor) && !Double.isNaN(addOffset)
+          scaleAddOffset
               ? sourceMissingValue * scaleFactor + addOffset
               : sourceMissingValue;
       if (destinationDataPAType == PAType.STRING || destinationDataPAType == PAType.CHAR) {
@@ -1864,7 +1887,7 @@ public class EDV {
       stringFillValue = pa.getString(0);
       sourceFillValue = sourceIsUnsigned ? pa.getUnsignedDouble(0) : pa.getNiceDouble(0);
       destinationFillValue =
-          !Double.isNaN(scaleFactor) && !Double.isNaN(addOffset)
+          scaleAddOffset
               ? sourceFillValue * scaleFactor + addOffset
               : sourceFillValue;
       if (destinationDataPAType == PAType.STRING || destinationDataPAType == PAType.CHAR) {
@@ -1883,7 +1906,7 @@ public class EDV {
         String2.isSomething(stringFillValue) ? stringFillValue : stringMissingValue;
   }
 
-  public Attributes sourceAttributes() {
+    public Attributes sourceAttributes() {
     return sourceAttributes;
   }
 
