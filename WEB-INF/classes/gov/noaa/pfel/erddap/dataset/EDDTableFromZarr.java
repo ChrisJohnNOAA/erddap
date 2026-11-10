@@ -2084,8 +2084,13 @@ public class EDDTableFromZarr extends EDDTable {
 
       long newNumRows = newNumRowsL;
       boolean rowCountChanged = (newNumRows != this.numRows);
-
-      if (!rowCountChanged && !storeTimeChanged) {
+      // Stage global attributes outside writeLock
+      Attributes freshSourceGlobalAtts = new Attributes();
+      if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
+        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
+      }
+      boolean attributesChanged = !freshSourceGlobalAtts.equals(this.sourceGlobalAttributes);
+      if (!rowCountChanged && !storeTimeChanged && !attributesChanged) {
         String2.log(
             msg
                 + "EDDTableFromZarr.lowUpdate: No change to row count or store timestamps (numRows="
@@ -2204,11 +2209,6 @@ public class EDDTableFromZarr extends EDDTable {
         }
       }
 
-      // Stage global attributes outside writeLock
-      Attributes freshSourceGlobalAtts = new Attributes();
-      if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
-      }
       LocalizedAttributes freshCombinedGlobalAtts =
           new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
       String tLicense = freshCombinedGlobalAtts.getString(language, "license");

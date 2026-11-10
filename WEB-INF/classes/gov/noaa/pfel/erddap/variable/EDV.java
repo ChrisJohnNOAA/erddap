@@ -1806,6 +1806,8 @@ public class EDV {
    */
   public void setSourceAttributes(Attributes newSourceAtts, int language) {
     if (newSourceAtts == null) return;
+    this.ucumUnits = null;
+    this.sliderCsvValues = null;
     this.sourceAttributes = new Attributes(newSourceAtts);
     this.combinedAttributes = new LocalizedAttributes(this.addAttributes, this.sourceAttributes);
 
