@@ -1171,8 +1171,13 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
       }
 
       boolean lengthChanged = (newAxisLength != currentAxisLength);
-
-      if (!lengthChanged && !storeTimeChanged) {
+      // Stage global attributes outside writeLock
+      Attributes freshSourceGlobalAtts = new Attributes();
+      if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
+        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
+      }
+      boolean attributesChanged = !freshSourceGlobalAtts.equals(this.sourceGlobalAttributes);
+      if (!lengthChanged && !storeTimeChanged && !attributesChanged) {
         return false;
       }
 
@@ -1286,11 +1291,6 @@ public class EDDGridFromZarr extends EDDGrid implements AutoCloseable {
         return false;
       }
 
-      // Stage global attributes outside writeLock
-      Attributes freshSourceGlobalAtts = new Attributes();
-      if (freshGroup.metadata() != null && freshGroup.metadata().attributes() != null) {
-        populateAttributesFromZarr(freshGroup.metadata().attributes(), freshSourceGlobalAtts);
-      }
       LocalizedAttributes freshCombinedGlobalAtts =
           new LocalizedAttributes(addGlobalAttributes, freshSourceGlobalAtts);
       String tLicense = freshCombinedGlobalAtts.getString(language, "license");
