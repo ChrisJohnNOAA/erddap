@@ -15131,6 +15131,7 @@ class EDDGridFromNcFilesTests {
               + "    <title>ERDDAP: Wind, QuikSCAT, Global, Science Quality (1 Day Composite)</title>\n"
               + "    <description>This RSS feed changes when the dataset changes.</description>\n"
               + "    <link>&erddapUrl;/griddap/testGriddedNcFiles.html</link>\n"
+              + "    <lastBuildDate>LAST_BUILD_DATE</lastBuildDate>\n"
               + "    <pubDate>PUBLISHED_DATE</pubDate>\n"
               + "    <item>\n"
               + "      <title>This dataset changed YYYY-MM-DDThh:mm:ssZ</title>\n"
@@ -15152,6 +15153,10 @@ class EDDGridFromNcFilesTests {
               + "  </channel>\n"
               + "</rss>\n";
       rss = rss.replaceAll("<pubDate>.*</pubDate>", "<pubDate>PUBLISHED_DATE</pubDate>");
+      rss =
+          rss.replaceAll(
+              "<lastBuildDate>.*</lastBuildDate>",
+              "<lastBuildDate>LAST_BUILD_DATE</lastBuildDate>");
       rss =
           rss.replaceAll(
               "<title>This dataset changed ....-..-..T..:..:..Z</title>",
@@ -15208,6 +15213,7 @@ class EDDGridFromNcFilesTests {
             + "    <title>ERDDAP: Wind, QuikSCAT, Global, Science Quality (1 Day Composite)</title>\n"
             + "    <description>This RSS feed changes when the dataset changes.</description>\n"
             + "    <link>&erddapUrl;/griddap/testGriddedNcFiles.html</link>\n"
+            + "    <lastBuildDate>LAST_BUILD_DATE</lastBuildDate>\n"
             + "    <pubDate>PUBLISHED_DATE</pubDate>\n"
             + "    <item>\n"
             + "      <title>This dataset changed YYYY-MM-DDThh:mm:ssZ</title>\n"
@@ -15229,6 +15235,9 @@ class EDDGridFromNcFilesTests {
             + "  </channel>\n"
             + "</rss>\n";
     rss = rss.replaceAll("<pubDate>.*</pubDate>", "<pubDate>PUBLISHED_DATE</pubDate>");
+    rss =
+        rss.replaceAll(
+            "<lastBuildDate>.*</lastBuildDate>", "<lastBuildDate>LAST_BUILD_DATE</lastBuildDate>");
     rss =
         rss.replaceAll(
             "<title>This dataset changed ....-..-..T..:..:..Z</title>",
@@ -15284,6 +15293,10 @@ class EDDGridFromNcFilesTests {
       rss = rss.replaceAll("<pubDate>.*</pubDate>", "<pubDate>PUBLISHED_DATE</pubDate>");
       rss =
           rss.replaceAll(
+              "<lastBuildDate>.*</lastBuildDate>",
+              "<lastBuildDate>LAST_BUILD_DATE</lastBuildDate>");
+      rss =
+          rss.replaceAll(
               "<title>This dataset changed ....-..-..T..:..:..Z</title>",
               "<title>This dataset changed YYYY-MM-DDThh:mm:ssZ</title>");
       Test.ensureEqual(rss, rssExpected, "results=\n" + rss);
@@ -15335,6 +15348,9 @@ class EDDGridFromNcFilesTests {
     rssAr = Erddap.rssHashMap.get(datasetId);
     rss = String2.utf8BytesToString(rssAr);
     rss = rss.replaceAll("<pubDate>.*</pubDate>", "<pubDate>PUBLISHED_DATE</pubDate>");
+    rss =
+        rss.replaceAll(
+            "<lastBuildDate>.*</lastBuildDate>", "<lastBuildDate>LAST_BUILD_DATE</lastBuildDate>");
     rss =
         rss.replaceAll(
             "<title>This dataset changed ....-..-..T..:..:..Z</title>",
@@ -15409,6 +15425,7 @@ class EDDGridFromNcFilesTests {
               + "    <title>ERDDAP: Wind, QuikSCAT, Global, Science Quality (1 Day Composite)</title>\n"
               + "    <description>This RSS feed changes when the dataset changes.</description>\n"
               + "    <link>&erddapUrl;/griddap/testGriddedNcFiles.html</link>\n"
+              + "    <lastBuildDate>LAST_BUILD_DATE</lastBuildDate>\n"
               + "    <pubDate>PUBLISHED_DATE</pubDate>\n"
               + "    <item>\n"
               + "      <title>This dataset changed YYYY-MM-DDThh:mm:ssZ</title>\n"
@@ -15430,6 +15447,10 @@ class EDDGridFromNcFilesTests {
               + "  </channel>\n"
               + "</rss>\n";
       rss = rss.replaceAll("<pubDate>.*</pubDate>", "<pubDate>PUBLISHED_DATE</pubDate>");
+      rss =
+          rss.replaceAll(
+              "<lastBuildDate>.*</lastBuildDate>",
+              "<lastBuildDate>LAST_BUILD_DATE</lastBuildDate>");
       rss =
           rss.replaceAll(
               "<title>This dataset changed ....-..-..T..:..:..Z</title>",
@@ -15472,6 +15493,7 @@ class EDDGridFromNcFilesTests {
             + "    <title>ERDDAP: Wind, QuikSCAT, Global, Science Quality (1 Day Composite)</title>\n"
             + "    <description>This RSS feed changes when the dataset changes.</description>\n"
             + "    <link>&erddapUrl;/griddap/testGriddedNcFiles.html</link>\n"
+            + "    <lastBuildDate>LAST_BUILD_DATE</lastBuildDate>\n"
             + "    <pubDate>PUBLISHED_DATE</pubDate>\n"
             + "    <item>\n"
             + "      <title>This dataset changed YYYY-MM-DDThh:mm:ssZ</title>\n"
@@ -15493,6 +15515,9 @@ class EDDGridFromNcFilesTests {
             + "  </channel>\n"
             + "</rss>\n";
     rss = rss.replaceAll("<pubDate>.*</pubDate>", "<pubDate>PUBLISHED_DATE</pubDate>");
+    rss =
+        rss.replaceAll(
+            "<lastBuildDate>.*</lastBuildDate>", "<lastBuildDate>LAST_BUILD_DATE</lastBuildDate>");
     rss =
         rss.replaceAll(
             "<title>This dataset changed ....-..-..T..:..:..Z</title>",

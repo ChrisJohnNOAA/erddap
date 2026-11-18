@@ -3687,6 +3687,7 @@ public abstract class EDDTableFromFiles extends EDDTable implements WatchUpdateH
    *
    * @throw Throwable if trouble
    */
+  @Override
   public Table getFileTable() throws Throwable {
     Table tFileTable =
         fileTableInMemory

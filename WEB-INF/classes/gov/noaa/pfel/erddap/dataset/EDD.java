@@ -74,6 +74,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -343,6 +344,8 @@ public abstract class EDD {
   // *********** END OF STATIC DECLARATIONS ***************************
 
   public long creationTimeMillis = System.currentTimeMillis();
+  protected long lastActualEditMillis = 0L;
+  protected String lastActualEditIso = "";
 
   /**
    * The constructor must set all of these protected variables (see definitions below in their
@@ -1112,6 +1115,9 @@ public abstract class EDD {
     accessibleViaWCS();
     accessibleViaWMS();
     accessibleViaNcCF();
+
+    // Call this at the end of dataset construction
+    refreshDatasetHistory();
     // handle at end of EDDGrid/Table.ensureValid:
     //  accessibleViaFGDC();
     //  accessibleViaISO19115();
@@ -1464,9 +1470,18 @@ public abstract class EDD {
       //  So this treats every change as a new item with a different title,
       //    replacing the previous item.
       StringBuilder rss = new StringBuilder();
-      ZonedDateTime zd = ZonedDateTime.now(ZoneOffset.UTC);
-      String pubDate = "    <pubDate>" + Calendar2.formatAsRFC822GMT(zd) + "</pubDate>\n";
+      long editMillis = getLastActualEditMillis();
+      ZonedDateTime zd = Instant.ofEpochMilli(editMillis).atZone(ZoneOffset.UTC);
+      String rfcDate = DatasetHistory.formatRfc1123(editMillis);
+      String pubDate =
+          "    <lastBuildDate>"
+              + rfcDate
+              + "</lastBuildDate>\n"
+              + "    <pubDate>"
+              + rfcDate
+              + "</pubDate>\n";
       String link = "    <link>&erddapUrl;" + "/" + dapProtocol() + "/" + datasetID();
+
       rss.append(
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
               + "<rss version=\"2.0\" xmlns=\"http://backend.userland.com/rss2\">\n"
@@ -2942,6 +2957,68 @@ public abstract class EDD {
    */
   public long creationTimeMillis() {
     return creationTimeMillis;
+  }
+
+  public long getLastActualEditMillis() {
+    return lastActualEditMillis > 0L ? lastActualEditMillis : creationTimeMillis;
+  }
+
+  public String getLastActualEditIso() {
+    if (!lastActualEditIso.isEmpty()) {
+      return lastActualEditIso;
+    }
+    return DatasetHistory.formatIsoUtc(getLastActualEditMillis());
+  }
+
+  /**
+   * If the subclass is EDD*FromFiles or EDDGridCopy, this returns the fileTable (or throws
+   * Throwable). Other subclasses return null.
+   *
+   * @throws Throwable if trouble
+   */
+  public Table getFileTable() throws Throwable {
+    return null;
+  }
+
+  /**
+   * Call at the end of dataset initialization (after combinedGlobalAttributes, dataVariables, and
+   * fileTable are populated).
+   */
+  protected void refreshDatasetHistory() {
+    if (datasetID.equals(EDDTableFromAllDatasets.DATASET_ID)) {
+      return; // don't record history for the allDatasets dataset
+    }
+    Table ft = null;
+    try {
+      ft = getFileTable();
+    } catch (Throwable t) {
+      String2.log(
+          "Warning: getFileTable() failed in refreshDatasetHistory for "
+              + datasetID
+              + ": "
+              + MustBe.throwableToString(t));
+    }
+    long maxFileMod = 0L;
+    if (ft != null && ft.nRows() > 0) {
+      int modCol = ft.findColumnNumber("lastModified");
+      if (modCol >= 0) {
+        for (int r = 0; r < ft.nRows(); r++) {
+          long mod = ft.getLongData(modCol, r);
+          if (mod > maxFileMod) {
+            maxFileMod = mod;
+          }
+        }
+      }
+    }
+
+    String fingerprint =
+        DatasetHistory.computeFingerprint(combinedGlobalAttributes, dataVariables, ft);
+    DatasetHistory.Record record =
+        DatasetHistory.reconcile(
+            datasetID, fingerprint, maxFileMod > 0L ? maxFileMod : creationTimeMillis);
+
+    this.lastActualEditMillis = record.lastActualEditMillis();
+    this.lastActualEditIso = record.lastActualEditIso();
   }
 
   /**

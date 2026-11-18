@@ -239,16 +239,6 @@ public abstract class EDDGrid extends EDD {
   }
 
   /**
-   * If the subclass is EDDGridFromFiles or EDDGridCopy, this returns the fileTable (or throws
-   * Throwable). Other subclasses return null.
-   *
-   * @throws Throwable if trouble
-   */
-  public Table getFileTable() throws Throwable {
-    return null;
-  }
-
-  /**
    * If dimensionValuesInMemory=false, the constructor should call this after ensureValid() to save
    * the dimension sourceValues in a file and tell the EDVGridAxis variables to set sourceValues to
    * null. Test of this system is EDDGridFromAudioFiles.testBasic().
